@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(vulkan_testing)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(glfw3)
+find_package(VulkanHeaders)
+find_package(Vulkan)
+find_package(vulkan-validationlayers)
+find_package(shaderc)
+find_package(spdlog)
+
+set(source_files src/main.cpp src/mve.hpp src/mve.cpp src/app.cpp src/app.hpp)
+
+add_executable(${PROJECT_NAME} ${source_files})
+
+target_link_libraries(${PROJECT_NAME}
+        glfw
+        Vulkan::Headers
+        Vulkan::Vulkan
+        vulkan-validationlayers::vulkan-validationlayers
+        shaderc::shaderc
+        spdlog::spdlog
+        )
