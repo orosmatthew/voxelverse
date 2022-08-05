@@ -10,7 +10,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <optional>
 #include <set>
 
@@ -709,11 +708,11 @@ namespace mve
 
         auto renderPassBeginInfo
             = vk::RenderPassBeginInfo()
-                .setRenderPass(renderPass.get())
-                .setFramebuffer(framebuffers[imageIndex].get())
-                .setRenderArea(vk::Rect2D().setOffset(vk::Offset2D(0, 0)).setExtent(extent))
-                .setClearValueCount(1)
-                .setPClearValues(&clearColor);
+                  .setRenderPass(renderPass.get())
+                  .setFramebuffer(framebuffers[imageIndex].get())
+                  .setRenderArea(vk::Rect2D().setOffset(vk::Offset2D(0, 0)).setExtent(extent))
+                  .setClearValueCount(1)
+                  .setPClearValues(&clearColor);
 
         commandBuffer->beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
@@ -721,12 +720,12 @@ namespace mve
 
         auto viewport
             = vk::Viewport()
-                .setX(0.0f)
-                .setY(0.0f)
-                .setWidth(static_cast<float>(extent.width))
-                .setHeight(static_cast<float>(extent.height))
-                .setMinDepth(0.0f)
-                .setMaxDepth(1.0f);
+                  .setX(0.0f)
+                  .setY(0.0f)
+                  .setWidth(static_cast<float>(extent.width))
+                  .setHeight(static_cast<float>(extent.height))
+                  .setMinDepth(0.0f)
+                  .setMaxDepth(1.0f);
 
         commandBuffer->setViewport(0, 1, &viewport);
 
