@@ -6,12 +6,12 @@
 
 #include <shaderc/shaderc.hpp>
 
-#include <spdlog/spdlog.h>
-
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <set>
+
+#include "logger.hpp"
 
 struct SwapchainSupportDetails
 {
@@ -174,7 +174,7 @@ namespace mve
             throw std::runtime_error("Validation layers requested but not "
                                      "available");
         }
-        spdlog::info("Vulkan validation layers enabled");
+        LOG->info("Vulkan validation layers enabled");
 #endif
 
         auto applicationInfo
@@ -238,7 +238,7 @@ namespace mve
         {
             if (isDeviceSuitable(device, surface))
             {
-                spdlog::info("Using Vulkan device: {}", device.getProperties().deviceName);
+                LOG->info("Using Vulkan device: {}", device.getProperties().deviceName);
                 return device;
             }
         }

@@ -11,7 +11,7 @@ find_package(vulkan-validationlayers)
 find_package(shaderc)
 find_package(spdlog)
 
-set(source_files src/main.cpp src/mve.hpp src/mve.cpp src/app.cpp src/app.hpp)
+set(source_files src/main.cpp src/mve.hpp src/mve.cpp src/app.cpp src/app.hpp src/logger.hpp src/logger.cpp)
 
 add_executable(${PROJECT_NAME} ${source_files})
 
