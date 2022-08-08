@@ -85,6 +85,10 @@ namespace mve
         const std::vector<vk::UniqueFramebuffer>& framebuffers,
         const vk::UniqueCommandBuffer& commandBuffer,
         uint32_t imageIndex);
+
+    vk::UniqueSemaphore createSemaphore(const vk::UniqueDevice& device);
+
+    vk::UniqueFence createFence(const vk::UniqueDevice& device, bool signaled);
 }
 
 #endif // MVE_HPP

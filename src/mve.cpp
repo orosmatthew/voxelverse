@@ -604,7 +604,12 @@ namespace mve
                   .setBasePipelineHandle(nullptr)
                   .setBasePipelineIndex(-1);
 
-        vk::UniquePipeline graphicsPipeline = device->createGraphicsPipelineUnique(nullptr, pipelineInfo).value;
+        auto pipelineCreationResult = device->createGraphicsPipelineUnique(nullptr, pipelineInfo);
+        if (pipelineCreationResult.result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("Failed to create graphics pipeline");
+        }
+        vk::UniquePipeline graphicsPipeline = std::move(pipelineCreationResult.value);
         return graphicsPipeline;
     }
 
@@ -629,12 +634,23 @@ namespace mve
                            .setColorAttachmentCount(1)
                            .setPColorAttachments(&colorAttachmentRef);
 
+        auto dependency
+            = vk::SubpassDependency()
+                  .setSrcSubpass(VK_SUBPASS_EXTERNAL)
+                  .setDstSubpass(0)
+                  .setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+                  .setSrcAccessMask(vk::AccessFlagBits::eNone)
+                  .setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput)
+                  .setDstAccessMask(vk::AccessFlagBits::eColorAttachmentWrite);
+
         auto renderPassInfo
             = vk::RenderPassCreateInfo()
                   .setAttachmentCount(1)
                   .setPAttachments(&colorAttachment)
                   .setSubpassCount(1)
-                  .setPSubpasses(&subpass);
+                  .setPSubpasses(&subpass)
+                  .setDependencyCount(1)
+                  .setPDependencies(&dependency);
 
         vk::UniqueRenderPass renderPass = device->createRenderPassUnique(renderPassInfo);
         return renderPass;
@@ -738,5 +754,21 @@ namespace mve
         commandBuffer->endRenderPass();
 
         commandBuffer->end();
+    }
+
+    vk::UniqueFence createFence(const vk::UniqueDevice& device, bool signaled)
+    {
+        auto fenceInfo = vk::FenceCreateInfo();
+        if (signaled)
+        {
+            fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+        }
+        return device->createFenceUnique(fenceInfo);
+    }
+
+    vk::UniqueSemaphore createSemaphore(const vk::UniqueDevice& device)
+    {
+        auto semaphoreInfo = vk::SemaphoreCreateInfo();
+        return device->createSemaphoreUnique(semaphoreInfo);
     }
 }

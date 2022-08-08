@@ -4,18 +4,112 @@
 
 #include <spdlog/spdlog.h>
 
-void drawFrame()
+void drawFrame(
+    const vk::UniqueDevice& device,
+    const vk::UniqueFence& inFlightFence,
+    const vk::UniqueSwapchainKHR& swapchain,
+    const vk::UniqueSemaphore& imageAvailableSemaphore,
+    const vk::UniqueCommandBuffer& commandBuffer,
+    const vk::Extent2D& extent,
+    const vk::UniqueRenderPass& renderPass,
+    const vk::UniquePipeline& graphicsPipeline,
+    const std::vector<vk::UniqueFramebuffer>& framebuffers,
+    const vk::UniqueSemaphore& renderFinishedSemaphore,
+    const vk::Queue& graphicsQueue,
+    const vk::Queue& presentQueue)
 {
+    vk::Result fencesWaitResult = device->waitForFences(1, &inFlightFence.get(), true, UINT64_MAX);
+    if (fencesWaitResult != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Waiting for frame failed");
+    }
+    vk::Result resetFencesResult = device->resetFences(1, &inFlightFence.get());
+    if (resetFencesResult != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Resetting fences failed");
+    }
 
+    vk::ResultValue<uint32_t> nextImageResult
+        = device->acquireNextImageKHR(swapchain.get(), UINT64_MAX, imageAvailableSemaphore.get(), nullptr);
+    if (nextImageResult.result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Failed to acquire swapchain image");
+    }
+    uint32_t imageIndex = nextImageResult.value;
+
+    commandBuffer->reset(vk::CommandBufferResetFlags());
+
+    mve::recordCommandBuffer(extent, renderPass, graphicsPipeline, framebuffers, commandBuffer, imageIndex);
+
+    vk::Semaphore waitSemaphores[] = { imageAvailableSemaphore.get() };
+    vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    vk::Semaphore signalSemaphores[] = { renderFinishedSemaphore.get() };
+
+    auto submitInfo
+        = vk::SubmitInfo()
+              .setWaitSemaphoreCount(1)
+              .setPWaitSemaphores(waitSemaphores)
+              .setPWaitDstStageMask(waitStages)
+              .setCommandBufferCount(1)
+              .setPCommandBuffers(&commandBuffer.get())
+              .setSignalSemaphoreCount(1)
+              .setPSignalSemaphores(signalSemaphores);
+
+    if (graphicsQueue.submit(1, &submitInfo, inFlightFence.get()) != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Failed to submit draw command");
+    }
+
+    vk::SwapchainKHR swapchains[] = { swapchain.get() };
+
+    auto presentInfo
+        = vk::PresentInfoKHR()
+              .setWaitSemaphoreCount(1)
+              .setPWaitSemaphores(signalSemaphores)
+              .setSwapchainCount(1)
+              .setPSwapchains(swapchains)
+              .setPImageIndices(&imageIndex);
+
+    if (presentQueue.presentKHR(presentInfo) != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Failed to present");
+    }
 }
 
-void mainLoop(const mve::UniqueGlfwWindow& window)
+void mainLoop(
+    const mve::UniqueGlfwWindow& window,
+    const vk::UniqueDevice& device,
+    const vk::UniqueFence& inFlightFence,
+    const vk::UniqueSwapchainKHR& swapchain,
+    const vk::UniqueSemaphore& imageAvailableSemaphore,
+    const vk::UniqueCommandBuffer& commandBuffer,
+    const vk::Extent2D& extent,
+    const vk::UniqueRenderPass& renderPass,
+    const vk::UniquePipeline& graphicsPipeline,
+    const std::vector<vk::UniqueFramebuffer>& framebuffers,
+    const vk::UniqueSemaphore& renderFinishedSemaphore,
+    const vk::Queue& graphicsQueue,
+    const vk::Queue& presentQueue)
 {
     while (!glfwWindowShouldClose(window.get()))
     {
         glfwPollEvents();
-        drawFrame();
+        drawFrame(
+            device,
+            inFlightFence,
+            swapchain,
+            imageAvailableSemaphore,
+            commandBuffer,
+            extent,
+            renderPass,
+            graphicsPipeline,
+            framebuffers,
+            renderFinishedSemaphore,
+            graphicsQueue,
+            presentQueue);
     }
+    spdlog::info("Exiting");
+    device->waitIdle();
 }
 
 namespace app
@@ -83,7 +177,25 @@ namespace app
         spdlog::debug("Creating Vulkan command buffer");
         vk::UniqueCommandBuffer commandBuffer = mve::createCommandBuffer(device, commandPool);
 
+        spdlog::debug("Creating sync objects");
+        vk::UniqueSemaphore imageAvailableSemaphore = mve::createSemaphore(device);
+        vk::UniqueSemaphore renderFinishedSemaphore = mve::createSemaphore(device);
+        vk::UniqueFence inFlightFence = mve::createFence(device, true);
+
         spdlog::debug("Entering main loop");
-        mainLoop(window);
+        mainLoop(
+            window,
+            device,
+            inFlightFence,
+            swapchain,
+            imageAvailableSemaphore,
+            commandBuffer,
+            extent,
+            renderPass,
+            graphicsPipeline,
+            framebuffers,
+            renderFinishedSemaphore,
+            graphicsQueue,
+            presentQueue);
     }
 }
