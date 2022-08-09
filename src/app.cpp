@@ -56,10 +56,10 @@ void drawFrame(const VulkanState& vulkanState, int drawFrame)
 
     mve::recordCommandBuffer(
         vulkanState.extent,
-        vulkanState.renderPass,
-        vulkanState.graphicsPipeline,
+        vulkanState.renderPass.get(),
+        vulkanState.graphicsPipeline.get(),
         vulkanState.framebuffers,
-        vulkanState.commandBuffers[drawFrame],
+        vulkanState.commandBuffers[drawFrame].get(),
         imageIndex);
 
     vk::Semaphore waitSemaphores[] = { vulkanState.imageAvailableSemaphores[drawFrame].get() };
@@ -122,60 +122,62 @@ namespace app
         vk::UniqueInstance instance = mve::createInstance("Hello Vulkan", 1);
 
         LOG->debug("Creating Vulkan surface");
-        vk::UniqueSurfaceKHR surface = mve::createSurface(window, instance);
+        vk::UniqueSurfaceKHR surface = mve::createSurface(window.get(), instance.get());
 
         LOG->debug("Getting Vulkan physical device");
-        vk::PhysicalDevice physicalDevice = mve::getBestPhysicalDevice(instance, surface);
+        vk::PhysicalDevice physicalDevice = mve::getBestPhysicalDevice(instance.get(), surface.get());
 
         LOG->debug("Creating Vulkan logical device");
-        vk::UniqueDevice device = mve::createDevice(surface, physicalDevice);
+        vk::UniqueDevice device = mve::createDevice(surface.get(), physicalDevice);
 
         LOG->debug("Getting Vulkan graphics Queue");
-        vk::Queue graphicsQueue = mve::getGraphicsQueue(surface, physicalDevice, device);
+        vk::Queue graphicsQueue = mve::getGraphicsQueue(surface.get(), physicalDevice, device.get());
 
         LOG->debug("Getting Vulkan present Queue");
-        vk::Queue presentQueue = mve::getPresentQueue(surface, physicalDevice, device);
+        vk::Queue presentQueue = mve::getPresentQueue(surface.get(), physicalDevice, device.get());
 
         LOG->debug("Getting bet Vulkan surface format");
-        vk::SurfaceFormatKHR surfaceFormat = mve::getBestSurfaceFormat(surface, physicalDevice);
+        vk::SurfaceFormatKHR surfaceFormat = mve::getBestSurfaceFormat(surface.get(), physicalDevice);
 
         LOG->debug("Getting best Vulkan extent");
-        vk::Extent2D extent = mve::getBestExtent(window, surface, physicalDevice);
+        vk::Extent2D extent = mve::getBestExtent(window.get(), surface.get(), physicalDevice);
 
         LOG->debug("Creating Vulkan swapchain");
-        vk::UniqueSwapchainKHR swapchain = mve::createSwapchain(surface, physicalDevice, device, surfaceFormat, extent);
+        vk::UniqueSwapchainKHR swapchain
+            = mve::createSwapchain(surface.get(), physicalDevice, device.get(), surfaceFormat, extent);
 
         LOG->debug("Getting Vulkan swapchain Images");
-        std::vector<vk::Image> swapchainImages = mve::getSwapchainImages(device, swapchain);
+        std::vector<vk::Image> swapchainImages = mve::getSwapchainImages(device.get(), swapchain.get());
 
         LOG->debug("Getting Vulkan image views");
-        std::vector<vk::UniqueImageView> imageViews = mve::createImageViews(device, surfaceFormat, swapchainImages);
+        std::vector<vk::UniqueImageView> imageViews
+            = mve::createImageViews(device.get(), surfaceFormat, swapchainImages);
 
         LOG->debug("Creating Vulkan vertex shader module");
         vk::UniqueShaderModule vertexShaderModule = mve::createShaderModule(
-            device, "C:/dev/vulkan_testing/shaders/simple.vert", mve::ShaderType::eVertex, true);
+            device.get(), "C:/dev/vulkan_testing/shaders/simple.vert", mve::ShaderType::eVertex, true);
 
         LOG->debug("Creating Vulkan fragment shader module");
         vk::UniqueShaderModule fragmentShaderModule = mve::createShaderModule(
-            device, "C:/dev/vulkan_testing/shaders/simple.frag", mve::ShaderType::eFragment, true);
+            device.get(), "C:/dev/vulkan_testing/shaders/simple.frag", mve::ShaderType::eFragment, true);
 
         LOG->debug("Creating Vulkan render pass");
-        vk::UniqueRenderPass renderPass = mve::createRenderPass(device, surfaceFormat);
+        vk::UniqueRenderPass renderPass = mve::createRenderPass(device.get(), surfaceFormat);
 
         LOG->debug("Creating Vulkan graphics pipeline");
-        vk::UniquePipeline graphicsPipeline
-            = mve::createGraphicsPipeline(device, extent, vertexShaderModule, fragmentShaderModule, renderPass);
+        vk::UniquePipeline graphicsPipeline = mve::createGraphicsPipeline(
+            device.get(), extent, vertexShaderModule.get(), fragmentShaderModule.get(), renderPass.get());
 
         LOG->debug("Creating Vulkan frame buffers");
         std::vector<vk::UniqueFramebuffer> framebuffers
-            = mve::createFramebuffers(device, extent, imageViews, renderPass);
+            = mve::createFramebuffers(device.get(), extent, imageViews, renderPass.get());
 
         LOG->debug("Creating Vulkan command pool");
-        vk::UniqueCommandPool commandPool = mve::createCommandPool(physicalDevice, device, surface);
+        vk::UniqueCommandPool commandPool = mve::createCommandPool(physicalDevice, device.get(), surface.get());
 
         LOG->debug("Creating Vulkan command buffer");
         std::vector<vk::UniqueCommandBuffer> commandBuffers
-            = mve::createCommandBuffers(device, commandPool, MVE_FRAMES_IN_FLIGHT);
+            = mve::createCommandBuffers(device.get(), commandPool.get(), MVE_FRAMES_IN_FLIGHT);
 
         LOG->debug("Creating sync objects");
         std::vector<vk::UniqueSemaphore> imageAvailableSemaphores = mve::createSemaphores(device, MVE_FRAMES_IN_FLIGHT);

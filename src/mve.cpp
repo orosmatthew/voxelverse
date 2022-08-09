@@ -28,13 +28,12 @@ struct QueueFamilyIndices
     [[nodiscard]] bool isComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
 };
 
-SwapchainSupportDetails getSwapchainSupportDetails(
-    const vk::PhysicalDevice& physicalDevice, const vk::UniqueSurfaceKHR& surface)
+SwapchainSupportDetails getSwapchainSupportDetails(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface)
 {
     SwapchainSupportDetails details {};
-    details.surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface.get());
-    details.surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface.get());
-    details.surfacePresentModes = physicalDevice.getSurfacePresentModesKHR(surface.get());
+    details.surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+    details.surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface);
+    details.surfacePresentModes = physicalDevice.getSurfacePresentModesKHR(surface);
 
     return details;
 }
@@ -68,7 +67,7 @@ bool hasValidationLayerSupport()
     return true;
 }
 
-QueueFamilyIndices getQueueFamilyIndices(const vk::PhysicalDevice& device, const vk::UniqueSurfaceKHR& surface)
+QueueFamilyIndices getQueueFamilyIndices(vk::PhysicalDevice device, vk::SurfaceKHR surface)
 {
     QueueFamilyIndices indices {};
 
@@ -81,7 +80,7 @@ QueueFamilyIndices getQueueFamilyIndices(const vk::PhysicalDevice& device, const
         {
             indices.graphicsFamily = i;
         }
-        if (device.getSurfaceSupportKHR(i, surface.get()))
+        if (device.getSurfaceSupportKHR(i, surface))
         {
             indices.presentFamily = i;
         }
@@ -115,8 +114,7 @@ bool hasExtensionSupport(vk::PhysicalDevice physicalDevice)
     return true;
 }
 
-vk::PresentModeKHR getBestSwapchainPresentMode(
-    const vk::PhysicalDevice& physicalDevice, const vk::UniqueSurfaceKHR& surface)
+vk::PresentModeKHR getBestSwapchainPresentMode(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface)
 {
     SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
     std::vector<vk::PresentModeKHR> availablePresentModes = swapchainSupportDetails.surfacePresentModes;
@@ -130,7 +128,7 @@ vk::PresentModeKHR getBestSwapchainPresentMode(
     return vk::PresentModeKHR::eFifo;
 }
 
-bool isDeviceSuitable(const vk::PhysicalDevice& physicalDevice, const vk::UniqueSurfaceKHR& surface)
+bool isDeviceSuitable(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface)
 {
     QueueFamilyIndices indices = getQueueFamilyIndices(physicalDevice, surface);
 
@@ -214,21 +212,21 @@ namespace mve
         return instance;
     }
 
-    vk::UniqueSurfaceKHR createSurface(const UniqueGlfwWindow& window, const vk::UniqueInstance& instance)
+    vk::UniqueSurfaceKHR createSurface(GLFWwindow* window, vk::Instance instance)
     {
         VkSurfaceKHR surface;
-        VkResult result = glfwCreateWindowSurface(instance.get(), window.get(), nullptr, &surface);
+        VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
         if (result != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create window surface");
         }
-        vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> surfaceDeleter(instance.get());
+        vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> surfaceDeleter(instance);
         return vk::UniqueSurfaceKHR(surface, surfaceDeleter);
     }
 
-    vk::PhysicalDevice getBestPhysicalDevice(const vk::UniqueInstance& instance, const vk::UniqueSurfaceKHR& surface)
+    vk::PhysicalDevice getBestPhysicalDevice(vk::Instance instance, vk::SurfaceKHR surface)
     {
-        const std::vector<vk::PhysicalDevice> devices = instance->enumeratePhysicalDevices();
+        const std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
         if (devices.empty())
         {
             throw std::runtime_error("Failed to find GPUs with Vulkan support");
@@ -245,7 +243,7 @@ namespace mve
         throw std::runtime_error("Failed to find suitable GPU");
     }
 
-    vk::UniqueDevice createDevice(const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice)
+    vk::UniqueDevice createDevice(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice)
     {
         QueueFamilyIndices indices = ::getQueueFamilyIndices(physicalDevice, surface);
 
@@ -296,22 +294,19 @@ namespace mve
         return physicalDevice.createDeviceUnique(deviceCreateInfo);
     }
 
-    vk::Queue getGraphicsQueue(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device)
+    vk::Queue getGraphicsQueue(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::Device device)
     {
         QueueFamilyIndices indices = getQueueFamilyIndices(physicalDevice, surface);
-        return device->getQueue(indices.graphicsFamily.value(), 0);
+        return device.getQueue(indices.graphicsFamily.value(), 0);
     }
 
-    vk::Queue getPresentQueue(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device)
+    vk::Queue getPresentQueue(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::Device device)
     {
         QueueFamilyIndices indices = getQueueFamilyIndices(physicalDevice, surface);
-        return device->getQueue(indices.presentFamily.value(), 0);
+        return device.getQueue(indices.presentFamily.value(), 0);
     }
 
-    vk::SurfaceFormatKHR getBestSurfaceFormat(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice)
+    vk::SurfaceFormatKHR getBestSurfaceFormat(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice)
     {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
         std::vector<vk::SurfaceFormatKHR> availableFormats = swapchainSupportDetails.surfaceFormats;
@@ -326,8 +321,7 @@ namespace mve
         return availableFormats[0];
     }
 
-    vk::Extent2D getBestExtent(
-        const UniqueGlfwWindow& window, const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice)
+    vk::Extent2D getBestExtent(GLFWwindow* window, vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice)
     {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
         vk::SurfaceCapabilitiesKHR capabilities = swapchainSupportDetails.surfaceCapabilities;
@@ -339,7 +333,7 @@ namespace mve
         {
             int width;
             int height;
-            glfwGetFramebufferSize(window.get(), &width, &height);
+            glfwGetFramebufferSize(window, &width, &height);
 
             vk::Extent2D actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
@@ -352,11 +346,11 @@ namespace mve
     }
 
     vk::UniqueSwapchainKHR createSwapchain(
-        const vk::UniqueSurfaceKHR& surface,
-        const vk::PhysicalDevice& physicalDevice,
-        const vk::UniqueDevice& device,
-        const vk::SurfaceFormatKHR& format,
-        const vk::Extent2D& extent)
+        vk::SurfaceKHR surface,
+        vk::PhysicalDevice physicalDevice,
+        vk::Device device,
+        vk::SurfaceFormatKHR format,
+        vk::Extent2D extent)
     {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
 
@@ -390,7 +384,7 @@ namespace mve
         auto swapchainCreateInfo
             = vk::SwapchainCreateInfoKHR()
                   .setFlags(vk::SwapchainCreateFlagBitsKHR())
-                  .setSurface(surface.get())
+                  .setSurface(surface)
                   .setMinImageCount(imageCount)
                   .setImageFormat(format.format)
                   .setImageColorSpace(format.colorSpace)
@@ -406,19 +400,17 @@ namespace mve
                   .setClipped(true)
                   .setOldSwapchain(nullptr);
 
-        return device->createSwapchainKHRUnique(swapchainCreateInfo);
+        return device.createSwapchainKHRUnique(swapchainCreateInfo);
     }
 
-    std::vector<vk::Image> getSwapchainImages(const vk::UniqueDevice& device, const vk::UniqueSwapchainKHR& swapchain)
+    std::vector<vk::Image> getSwapchainImages(vk::Device device, vk::SwapchainKHR swapchain)
     {
-        std::vector<vk::Image> images = device->getSwapchainImagesKHR(swapchain.get());
+        std::vector<vk::Image> images = device.getSwapchainImagesKHR(swapchain);
         return images;
     }
 
     std::vector<vk::UniqueImageView> createImageViews(
-        const vk::UniqueDevice& device,
-        const vk::SurfaceFormatKHR& surfaceFormat,
-        const std::vector<vk::Image>& swapchainImages)
+        vk::Device device, vk::SurfaceFormatKHR surfaceFormat, const std::vector<vk::Image>& swapchainImages)
     {
         auto imageViews = std::vector<vk::UniqueImageView>(swapchainImages.size());
 
@@ -438,14 +430,14 @@ namespace mve
                           vk::ComponentSwizzle::eIdentity))
                       .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
-            imageViews[i] = device->createImageViewUnique(imageViewCreateInfo);
+            imageViews[i] = device.createImageViewUnique(imageViewCreateInfo);
             i++;
         }
         return imageViews;
     }
 
     vk::UniqueShaderModule createShaderModule(
-        const vk::UniqueDevice& device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize)
+        vk::Device device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize)
     {
         auto file = std::ifstream(filePath);
         if (!file.is_open())
@@ -491,25 +483,25 @@ namespace mve
                   .setFlags(vk::ShaderModuleCreateFlags())
                   .setCodeSize(sizeof(uint32_t) * shaderCode.size())
                   .setPCode(shaderCode.data());
-        return device->createShaderModuleUnique(shaderModuleCreateInfo);
+        return device.createShaderModuleUnique(shaderModuleCreateInfo);
     }
 
     vk::UniquePipeline createGraphicsPipeline(
-        const vk::UniqueDevice& device,
-        const vk::Extent2D& extent,
-        const vk::UniqueShaderModule& vertexShader,
-        const vk::UniqueShaderModule& fragmentShader,
-        const vk::UniqueRenderPass& renderPass)
+        vk::Device device,
+        vk::Extent2D extent,
+        vk::ShaderModule vertexShader,
+        vk::ShaderModule fragmentShader,
+        vk::RenderPass renderPass)
     {
         auto vertexShaderStageInfo
             = vk::PipelineShaderStageCreateInfo()
                   .setStage(vk::ShaderStageFlagBits::eVertex)
-                  .setModule(vertexShader.get())
+                  .setModule(vertexShader)
                   .setPName("main");
         auto fragmentShaderStageInfo
             = vk::PipelineShaderStageCreateInfo()
                   .setStage(vk::ShaderStageFlagBits::eFragment)
-                  .setModule(fragmentShader.get())
+                  .setModule(fragmentShader)
                   .setPName("main");
 
         vk::PipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageInfo, fragmentShaderStageInfo };
@@ -584,7 +576,7 @@ namespace mve
                   .setPushConstantRangeCount(0)
                   .setPPushConstantRanges(nullptr);
 
-        vk::UniquePipelineLayout pipelineLayout = device->createPipelineLayoutUnique(pipelineLayoutCreateInfo);
+        vk::UniquePipelineLayout pipelineLayout = device.createPipelineLayoutUnique(pipelineLayoutCreateInfo);
 
         auto pipelineInfo
             = vk::GraphicsPipelineCreateInfo()
@@ -599,12 +591,12 @@ namespace mve
                   .setPColorBlendState(&colorBlendStateCreateInfo)
                   .setPDynamicState(&dynamicStateCreateInfo)
                   .setLayout(pipelineLayout.get())
-                  .setRenderPass(renderPass.get())
+                  .setRenderPass(renderPass)
                   .setSubpass(0)
                   .setBasePipelineHandle(nullptr)
                   .setBasePipelineIndex(-1);
 
-        auto pipelineCreationResult = device->createGraphicsPipelineUnique(nullptr, pipelineInfo);
+        auto pipelineCreationResult = device.createGraphicsPipelineUnique(nullptr, pipelineInfo);
         if (pipelineCreationResult.result != vk::Result::eSuccess)
         {
             throw std::runtime_error("Failed to create graphics pipeline");
@@ -613,7 +605,7 @@ namespace mve
         return graphicsPipeline;
     }
 
-    vk::UniqueRenderPass createRenderPass(const vk::UniqueDevice& device, const vk::SurfaceFormatKHR& swapchainFormat)
+    vk::UniqueRenderPass createRenderPass(vk::Device device, vk::SurfaceFormatKHR swapchainFormat)
     {
         auto colorAttachment
             = vk::AttachmentDescription()
@@ -652,15 +644,15 @@ namespace mve
                   .setDependencyCount(1)
                   .setPDependencies(&dependency);
 
-        vk::UniqueRenderPass renderPass = device->createRenderPassUnique(renderPassInfo);
+        vk::UniqueRenderPass renderPass = device.createRenderPassUnique(renderPassInfo);
         return renderPass;
     }
 
     std::vector<vk::UniqueFramebuffer> createFramebuffers(
-        const vk::UniqueDevice& device,
-        const vk::Extent2D& extent,
+        vk::Device device,
+        vk::Extent2D extent,
         const std::vector<vk::UniqueImageView>& imageViews,
-        const vk::UniqueRenderPass& renderPass)
+        vk::RenderPass renderPass)
     {
         auto framebuffers = std::vector<vk::UniqueFramebuffer>(imageViews.size());
 
@@ -668,20 +660,20 @@ namespace mve
         {
             auto framebufferInfo
                 = vk::FramebufferCreateInfo()
-                      .setRenderPass(renderPass.get())
+                      .setRenderPass(renderPass)
                       .setAttachmentCount(1)
                       .setPAttachments(&imageViews[i].get())
                       .setWidth(extent.width)
                       .setHeight(extent.height)
                       .setLayers(1);
 
-            framebuffers[i] = device->createFramebufferUnique(framebufferInfo);
+            framebuffers[i] = device.createFramebufferUnique(framebufferInfo);
         }
         return framebuffers;
     }
 
     vk::UniqueCommandPool createCommandPool(
-        const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device, const vk::UniqueSurfaceKHR& surface)
+        vk::PhysicalDevice physicalDevice, vk::Device device, vk::SurfaceKHR surface)
     {
         QueueFamilyIndices indices = ::getQueueFamilyIndices(physicalDevice, surface);
 
@@ -689,35 +681,35 @@ namespace mve
                                    .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
                                    .setQueueFamilyIndex(indices.graphicsFamily.value());
 
-        vk::UniqueCommandPool commandPool = device->createCommandPoolUnique(commandPoolInfo);
+        vk::UniqueCommandPool commandPool = device.createCommandPoolUnique(commandPoolInfo);
         return commandPool;
     }
 
     void recordCommandBuffer(
-        const vk::Extent2D& extent,
-        const vk::UniqueRenderPass& renderPass,
-        const vk::UniquePipeline& graphicsPipeline,
+        vk::Extent2D extent,
+        vk::RenderPass renderPass,
+        vk::Pipeline graphicsPipeline,
         const std::vector<vk::UniqueFramebuffer>& framebuffers,
-        const vk::UniqueCommandBuffer& commandBuffer,
+        vk::CommandBuffer commandBuffer,
         uint32_t imageIndex)
     {
         auto beginInfo = vk::CommandBufferBeginInfo();
 
-        commandBuffer->begin(beginInfo);
+        commandBuffer.begin(beginInfo);
 
         auto clearColor = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
 
         auto renderPassBeginInfo
             = vk::RenderPassBeginInfo()
-                  .setRenderPass(renderPass.get())
+                  .setRenderPass(renderPass)
                   .setFramebuffer(framebuffers[imageIndex].get())
                   .setRenderArea(vk::Rect2D().setOffset(vk::Offset2D(0, 0)).setExtent(extent))
                   .setClearValueCount(1)
                   .setPClearValues(&clearColor);
 
-        commandBuffer->beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+        commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-        commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline.get());
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
         auto viewport
             = vk::Viewport()
@@ -728,17 +720,17 @@ namespace mve
                   .setMinDepth(0.0f)
                   .setMaxDepth(1.0f);
 
-        commandBuffer->setViewport(0, 1, &viewport);
+        commandBuffer.setViewport(0, 1, &viewport);
 
         auto scissorRect = vk::Rect2D().setOffset(vk::Offset2D(0, 0)).setExtent(extent);
 
-        commandBuffer->setScissor(0, 1, &scissorRect);
+        commandBuffer.setScissor(0, 1, &scissorRect);
 
-        commandBuffer->draw(3, 1, 0, 0);
+        commandBuffer.draw(3, 1, 0, 0);
 
-        commandBuffer->endRenderPass();
+        commandBuffer.endRenderPass();
 
-        commandBuffer->end();
+        commandBuffer.end();
     }
     std::vector<vk::UniqueSemaphore> createSemaphores(const vk::UniqueDevice& device, int count)
     {
@@ -764,17 +756,16 @@ namespace mve
         }
         return fences;
     }
-    std::vector<vk::UniqueCommandBuffer> createCommandBuffers(
-        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool, int count)
+    std::vector<vk::UniqueCommandBuffer> createCommandBuffers(vk::Device device, vk::CommandPool commandPool, int count)
     {
         auto commandBufferAllocateInfo
             = vk::CommandBufferAllocateInfo()
-                  .setCommandPool(commandPool.get())
+                  .setCommandPool(commandPool)
                   .setLevel(vk::CommandBufferLevel::ePrimary)
                   .setCommandBufferCount(static_cast<uint32_t>(count));
 
         std::vector<vk::UniqueCommandBuffer> commandBuffers
-            = device->allocateCommandBuffersUnique(commandBufferAllocateInfo);
+            = device.allocateCommandBuffersUnique(commandBufferAllocateInfo);
 
         return commandBuffers;
     }

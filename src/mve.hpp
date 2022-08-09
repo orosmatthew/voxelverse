@@ -24,68 +24,62 @@ namespace mve
 
     vk::UniqueInstance createInstance(const std::string& applicationName, uint32_t applicationVersion);
 
-    vk::UniqueSurfaceKHR createSurface(const UniqueGlfwWindow& window, const vk::UniqueInstance& instance);
+    vk::UniqueSurfaceKHR createSurface(GLFWwindow* window, vk::Instance instance);
 
-    vk::PhysicalDevice getBestPhysicalDevice(const vk::UniqueInstance& instance, const vk::UniqueSurfaceKHR& surface);
+    vk::PhysicalDevice getBestPhysicalDevice(vk::Instance instance, vk::SurfaceKHR surface);
 
-    vk::UniqueDevice createDevice(const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice);
+    vk::UniqueDevice createDevice(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice);
 
-    vk::Queue getGraphicsQueue(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device);
+    vk::Queue getGraphicsQueue(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::Device device);
 
-    vk::Queue getPresentQueue(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device);
+    vk::Queue getPresentQueue(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::Device device);
 
-    vk::SurfaceFormatKHR getBestSurfaceFormat(
-        const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice);
+    vk::SurfaceFormatKHR getBestSurfaceFormat(vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice);
 
-    vk::Extent2D getBestExtent(
-        const UniqueGlfwWindow& window, const vk::UniqueSurfaceKHR& surface, const vk::PhysicalDevice& physicalDevice);
+    vk::Extent2D getBestExtent(GLFWwindow* window, vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice);
 
     vk::UniqueSwapchainKHR createSwapchain(
-        const vk::UniqueSurfaceKHR& surface,
-        const vk::PhysicalDevice& physicalDevice,
-        const vk::UniqueDevice& device,
-        const vk::SurfaceFormatKHR& format,
-        const vk::Extent2D& extent);
+        vk::SurfaceKHR surface,
+        vk::PhysicalDevice physicalDevice,
+        vk::Device device,
+        vk::SurfaceFormatKHR format,
+        vk::Extent2D extent);
 
-    std::vector<vk::Image> getSwapchainImages(const vk::UniqueDevice& device, const vk::UniqueSwapchainKHR& swapchain);
+    std::vector<vk::Image> getSwapchainImages(vk::Device device, vk::SwapchainKHR swapchain);
 
     std::vector<vk::UniqueImageView> createImageViews(
-        const vk::UniqueDevice& device,
-        const vk::SurfaceFormatKHR& surfaceFormat,
-        const std::vector<vk::Image>& swapchainImages);
+        vk::Device device, vk::SurfaceFormatKHR surfaceFormat, const std::vector<vk::Image>& swapchainImages);
 
     vk::UniqueShaderModule createShaderModule(
-        const vk::UniqueDevice& device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize);
+        vk::Device device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize);
 
-    vk::UniqueRenderPass createRenderPass(const vk::UniqueDevice& device, const vk::SurfaceFormatKHR& swapchainFormat);
+    vk::UniqueRenderPass createRenderPass(vk::Device device, vk::SurfaceFormatKHR swapchainFormat);
 
     vk::UniquePipeline createGraphicsPipeline(
-        const vk::UniqueDevice& device,
-        const vk::Extent2D& extent,
-        const vk::UniqueShaderModule& vertexShader,
-        const vk::UniqueShaderModule& fragmentShader,
-        const vk::UniqueRenderPass& renderPass);
+        vk::Device device,
+        vk::Extent2D extent,
+        vk::ShaderModule vertexShader,
+        vk::ShaderModule fragmentShader,
+        vk::RenderPass renderPass);
 
     std::vector<vk::UniqueFramebuffer> createFramebuffers(
-        const vk::UniqueDevice& device,
-        const vk::Extent2D& extent,
+        vk::Device device,
+        vk::Extent2D extent,
         const std::vector<vk::UniqueImageView>& imageViews,
-        const vk::UniqueRenderPass& renderPass);
+        vk::RenderPass renderPass);
 
     vk::UniqueCommandPool createCommandPool(
-        const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device, const vk::UniqueSurfaceKHR& surface);
+        vk::PhysicalDevice physicalDevice, vk::Device device, vk::SurfaceKHR surface);
 
     std::vector<vk::UniqueCommandBuffer> createCommandBuffers(
-        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool, int count);
+        vk::Device device, vk::CommandPool commandPool, int count);
 
     void recordCommandBuffer(
-        const vk::Extent2D& extent,
-        const vk::UniqueRenderPass& renderPass,
-        const vk::UniquePipeline& graphicsPipeline,
+        vk::Extent2D extent,
+        vk::RenderPass renderPass,
+        vk::Pipeline graphicsPipeline,
         const std::vector<vk::UniqueFramebuffer>& framebuffers,
-        const vk::UniqueCommandBuffer& commandBuffer,
+        vk::CommandBuffer commandBuffer,
         uint32_t imageIndex);
 
     std::vector<vk::UniqueSemaphore> createSemaphores(const vk::UniqueDevice& device, int count);
