@@ -23,47 +23,48 @@ struct VulkanState
     vk::UniquePipeline graphicsPipeline;
     std::vector<vk::UniqueFramebuffer> framebuffers;
     vk::UniqueCommandPool commandPool;
-    vk::UniqueCommandBuffer commandBuffer;
-    vk::UniqueSemaphore imageAvailableSemaphore;
-    vk::UniqueSemaphore renderFinishedSemaphore;
-    vk::UniqueFence inFlightFence;
+    std::vector<vk::UniqueCommandBuffer> commandBuffers;
+    std::vector<vk::UniqueSemaphore> imageAvailableSemaphores;
+    std::vector<vk::UniqueSemaphore> renderFinishedSemaphores;
+    std::vector<vk::UniqueFence> inFlightFences;
 };
 
-void drawFrame(const VulkanState& vulkanState)
+void drawFrame(const VulkanState& vulkanState, int drawFrame)
 {
+
     vk::Result fencesWaitResult
-        = vulkanState.device->waitForFences(1, &vulkanState.inFlightFence.get(), true, UINT64_MAX);
+        = vulkanState.device->waitForFences(vulkanState.inFlightFences[drawFrame].get(), true, UINT64_MAX);
     if (fencesWaitResult != vk::Result::eSuccess)
     {
         throw std::runtime_error("Waiting for frame failed");
     }
-    vk::Result resetFencesResult = vulkanState.device->resetFences(1, &vulkanState.inFlightFence.get());
+    vk::Result resetFencesResult = vulkanState.device->resetFences(1, &vulkanState.inFlightFences[drawFrame].get());
     if (resetFencesResult != vk::Result::eSuccess)
     {
         throw std::runtime_error("Resetting fences failed");
     }
 
     vk::ResultValue<uint32_t> nextImageResult = vulkanState.device->acquireNextImageKHR(
-        vulkanState.swapchain.get(), UINT64_MAX, vulkanState.imageAvailableSemaphore.get(), nullptr);
+        vulkanState.swapchain.get(), UINT64_MAX, vulkanState.imageAvailableSemaphores[drawFrame].get(), nullptr);
     if (nextImageResult.result != vk::Result::eSuccess)
     {
         throw std::runtime_error("Failed to acquire swapchain image");
     }
     uint32_t imageIndex = nextImageResult.value;
 
-    vulkanState.commandBuffer->reset(vk::CommandBufferResetFlags());
+    vulkanState.commandBuffers[drawFrame]->reset(vk::CommandBufferResetFlags());
 
     mve::recordCommandBuffer(
         vulkanState.extent,
         vulkanState.renderPass,
         vulkanState.graphicsPipeline,
         vulkanState.framebuffers,
-        vulkanState.commandBuffer,
+        vulkanState.commandBuffers[drawFrame],
         imageIndex);
 
-    vk::Semaphore waitSemaphores[] = { vulkanState.imageAvailableSemaphore.get() };
+    vk::Semaphore waitSemaphores[] = { vulkanState.imageAvailableSemaphores[drawFrame].get() };
     vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    vk::Semaphore signalSemaphores[] = { vulkanState.renderFinishedSemaphore.get() };
+    vk::Semaphore signalSemaphores[] = { vulkanState.renderFinishedSemaphores[drawFrame].get() };
 
     auto submitInfo
         = vk::SubmitInfo()
@@ -71,11 +72,12 @@ void drawFrame(const VulkanState& vulkanState)
               .setPWaitSemaphores(waitSemaphores)
               .setPWaitDstStageMask(waitStages)
               .setCommandBufferCount(1)
-              .setPCommandBuffers(&vulkanState.commandBuffer.get())
+              .setPCommandBuffers(&vulkanState.commandBuffers[drawFrame].get())
               .setSignalSemaphoreCount(1)
               .setPSignalSemaphores(signalSemaphores);
 
-    if (vulkanState.graphicsQueue.submit(1, &submitInfo, vulkanState.inFlightFence.get()) != vk::Result::eSuccess)
+    if (vulkanState.graphicsQueue.submit(1, &submitInfo, vulkanState.inFlightFences[drawFrame].get())
+        != vk::Result::eSuccess)
     {
         throw std::runtime_error("Failed to submit draw command");
     }
@@ -98,10 +100,12 @@ void drawFrame(const VulkanState& vulkanState)
 
 void mainLoop(const mve::UniqueGlfwWindow& window, const VulkanState& vulkanState)
 {
+    int currentDrawFrame = 0;
     while (!glfwWindowShouldClose(window.get()))
     {
         glfwPollEvents();
-        drawFrame(vulkanState);
+        drawFrame(vulkanState, currentDrawFrame);
+        currentDrawFrame = (currentDrawFrame + 1) % MVE_FRAMES_IN_FLIGHT;
     }
     LOG->info("Exiting");
     vulkanState.device->waitIdle();
@@ -170,12 +174,13 @@ namespace app
         vk::UniqueCommandPool commandPool = mve::createCommandPool(physicalDevice, device, surface);
 
         LOG->debug("Creating Vulkan command buffer");
-        vk::UniqueCommandBuffer commandBuffer = mve::createCommandBuffer(device, commandPool);
+        std::vector<vk::UniqueCommandBuffer> commandBuffers
+            = mve::createCommandBuffers(device, commandPool, MVE_FRAMES_IN_FLIGHT);
 
         LOG->debug("Creating sync objects");
-        vk::UniqueSemaphore imageAvailableSemaphore = mve::createSemaphore(device);
-        vk::UniqueSemaphore renderFinishedSemaphore = mve::createSemaphore(device);
-        vk::UniqueFence inFlightFence = mve::createFence(device, true);
+        std::vector<vk::UniqueSemaphore> imageAvailableSemaphores = mve::createSemaphores(device, MVE_FRAMES_IN_FLIGHT);
+        std::vector<vk::UniqueSemaphore> renderFinishedSemaphores = mve::createSemaphores(device, MVE_FRAMES_IN_FLIGHT);
+        std::vector<vk::UniqueFence> inFlightFences = mve::createFences(device, true, MVE_FRAMES_IN_FLIGHT);
 
         auto vulkanState = VulkanState {
             std::move(instance),
@@ -195,10 +200,10 @@ namespace app
             std::move(graphicsPipeline),
             std::move(framebuffers),
             std::move(commandPool),
-            std::move(commandBuffer),
-            std::move(imageAvailableSemaphore),
-            std::move(renderFinishedSemaphore),
-            std::move(inFlightFence)
+            std::move(commandBuffers),
+            std::move(imageAvailableSemaphores),
+            std::move(renderFinishedSemaphores),
+            std::move(inFlightFences)
         };
 
         LOG->debug("Entering main loop");

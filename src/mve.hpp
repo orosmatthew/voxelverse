@@ -8,6 +8,8 @@
 
 #include <filesystem>
 
+#define MVE_FRAMES_IN_FLIGHT 2
+
 namespace mve
 {
     typedef std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> UniqueGlfwWindow;
@@ -75,8 +77,8 @@ namespace mve
     vk::UniqueCommandPool createCommandPool(
         const vk::PhysicalDevice& physicalDevice, const vk::UniqueDevice& device, const vk::UniqueSurfaceKHR& surface);
 
-    vk::UniqueCommandBuffer createCommandBuffer(
-        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool);
+    std::vector<vk::UniqueCommandBuffer> createCommandBuffers(
+        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool, int count);
 
     void recordCommandBuffer(
         const vk::Extent2D& extent,
@@ -86,9 +88,9 @@ namespace mve
         const vk::UniqueCommandBuffer& commandBuffer,
         uint32_t imageIndex);
 
-    vk::UniqueSemaphore createSemaphore(const vk::UniqueDevice& device);
+    std::vector<vk::UniqueSemaphore> createSemaphores(const vk::UniqueDevice& device, int count);
 
-    vk::UniqueFence createFence(const vk::UniqueDevice& device, bool signaled);
+    std::vector<vk::UniqueFence> createFences(const vk::UniqueDevice& device, bool signaled, int count);
 }
 
 #endif // MVE_HPP

@@ -693,21 +693,6 @@ namespace mve
         return commandPool;
     }
 
-    vk::UniqueCommandBuffer createCommandBuffer(
-        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool)
-    {
-        auto commandBufferAllocateInfo
-            = vk::CommandBufferAllocateInfo()
-                  .setCommandPool(commandPool.get())
-                  .setLevel(vk::CommandBufferLevel::ePrimary)
-                  .setCommandBufferCount(1);
-
-        vk::UniqueCommandBuffer commandBuffer
-            = std::move(device->allocateCommandBuffersUnique(commandBufferAllocateInfo)[0]);
-
-        return commandBuffer;
-    }
-
     void recordCommandBuffer(
         const vk::Extent2D& extent,
         const vk::UniqueRenderPass& renderPass,
@@ -755,20 +740,42 @@ namespace mve
 
         commandBuffer->end();
     }
-
-    vk::UniqueFence createFence(const vk::UniqueDevice& device, bool signaled)
+    std::vector<vk::UniqueSemaphore> createSemaphores(const vk::UniqueDevice& device, int count)
     {
-        auto fenceInfo = vk::FenceCreateInfo();
-        if (signaled)
+        auto semaphores = std::vector<vk::UniqueSemaphore>(count);
+        for (int i = 0; i < count; i++)
         {
-            fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+            semaphores[i] = device->createSemaphoreUnique(vk::SemaphoreCreateInfo());
         }
-        return device->createFenceUnique(fenceInfo);
+        return semaphores;
     }
 
-    vk::UniqueSemaphore createSemaphore(const vk::UniqueDevice& device)
+    std::vector<vk::UniqueFence> createFences(const vk::UniqueDevice& device, bool signaled, int count)
     {
-        auto semaphoreInfo = vk::SemaphoreCreateInfo();
-        return device->createSemaphoreUnique(semaphoreInfo);
+        auto fences = std::vector<vk::UniqueFence>(count);
+        for (int i = 0; i < count; i++)
+        {
+            auto fenceInfo = vk::FenceCreateInfo();
+            if (signaled)
+            {
+                fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
+            }
+            fences[i] = device->createFenceUnique(fenceInfo);
+        }
+        return fences;
+    }
+    std::vector<vk::UniqueCommandBuffer> createCommandBuffers(
+        const vk::UniqueDevice& device, const vk::UniqueCommandPool& commandPool, int count)
+    {
+        auto commandBufferAllocateInfo
+            = vk::CommandBufferAllocateInfo()
+                  .setCommandPool(commandPool.get())
+                  .setLevel(vk::CommandBufferLevel::ePrimary)
+                  .setCommandBufferCount(static_cast<uint32_t>(count));
+
+        std::vector<vk::UniqueCommandBuffer> commandBuffers
+            = device->allocateCommandBuffersUnique(commandBufferAllocateInfo);
+
+        return commandBuffers;
     }
 }
