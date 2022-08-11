@@ -155,18 +155,18 @@ namespace app
 
         LOG->debug("Creating Vulkan vertex shader module");
         vk::UniqueShaderModule vertexShaderModule = mve::createShaderModule(
-            device.get(), "C:/dev/vulkan_testing/shaders/simple.vert", mve::ShaderType::eVertex, true);
+            device.get(), "C:/dev/vulkan-testing/shaders/simple.vert", mve::ShaderType::eVertex, true);
 
         LOG->debug("Creating Vulkan fragment shader module");
         vk::UniqueShaderModule fragmentShaderModule = mve::createShaderModule(
-            device.get(), "C:/dev/vulkan_testing/shaders/simple.frag", mve::ShaderType::eFragment, true);
+            device.get(), "C:/dev/vulkan-testing/shaders/simple.frag", mve::ShaderType::eFragment, true);
 
         LOG->debug("Creating Vulkan render pass");
         vk::UniqueRenderPass renderPass = mve::createRenderPass(device.get(), surfaceFormat);
 
         LOG->debug("Creating Vulkan graphics pipeline");
         vk::UniquePipeline graphicsPipeline = mve::createGraphicsPipeline(
-            device.get(), extent, vertexShaderModule.get(), fragmentShaderModule.get(), renderPass.get());
+            device.get(), vertexShaderModule.get(), fragmentShaderModule.get(), renderPass.get());
 
         LOG->debug("Creating Vulkan frame buffers");
         std::vector<vk::UniqueFramebuffer> framebuffers

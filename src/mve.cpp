@@ -234,6 +234,14 @@ namespace mve
 
         for (const vk::PhysicalDevice& device : devices)
         {
+            LOG->debug(
+                "Found Vulkan Device: [{0}] of type [{1}]",
+                device.getProperties().deviceName,
+                to_string(device.getProperties().deviceType));
+        }
+
+        for (const vk::PhysicalDevice& device : devices)
+        {
             if (isDeviceSuitable(device, surface))
             {
                 LOG->info("Using Vulkan device: {}", device.getProperties().deviceName);
@@ -412,7 +420,8 @@ namespace mve
     std::vector<vk::UniqueImageView> createImageViews(
         vk::Device device, vk::SurfaceFormatKHR surfaceFormat, const std::vector<vk::Image>& swapchainImages)
     {
-        auto imageViews = std::vector<vk::UniqueImageView>(swapchainImages.size());
+        std::vector<vk::UniqueImageView> imageViews;
+        imageViews.reserve(swapchainImages.size());
 
         int i = 0;
         for (const vk::Image& image : swapchainImages)
@@ -430,7 +439,7 @@ namespace mve
                           vk::ComponentSwizzle::eIdentity))
                       .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
-            imageViews[i] = device.createImageViewUnique(imageViewCreateInfo);
+            imageViews.push_back(device.createImageViewUnique(imageViewCreateInfo));
             i++;
         }
         return imageViews;
@@ -487,11 +496,7 @@ namespace mve
     }
 
     vk::UniquePipeline createGraphicsPipeline(
-        vk::Device device,
-        vk::Extent2D extent,
-        vk::ShaderModule vertexShader,
-        vk::ShaderModule fragmentShader,
-        vk::RenderPass renderPass)
+        vk::Device device, vk::ShaderModule vertexShader, vk::ShaderModule fragmentShader, vk::RenderPass renderPass)
     {
         auto vertexShaderStageInfo
             = vk::PipelineShaderStageCreateInfo()
@@ -654,20 +659,21 @@ namespace mve
         const std::vector<vk::UniqueImageView>& imageViews,
         vk::RenderPass renderPass)
     {
-        auto framebuffers = std::vector<vk::UniqueFramebuffer>(imageViews.size());
+        std::vector<vk::UniqueFramebuffer> framebuffers;
+        framebuffers.reserve(imageViews.size());
 
-        for (size_t i = 0; i < imageViews.size(); i++)
+        for (const auto & imageView : imageViews)
         {
             auto framebufferInfo
                 = vk::FramebufferCreateInfo()
                       .setRenderPass(renderPass)
                       .setAttachmentCount(1)
-                      .setPAttachments(&imageViews[i].get())
+                      .setPAttachments(&imageView.get())
                       .setWidth(extent.width)
                       .setHeight(extent.height)
                       .setLayers(1);
 
-            framebuffers[i] = device.createFramebufferUnique(framebufferInfo);
+            framebuffers.push_back(device.createFramebufferUnique(framebufferInfo));
         }
         return framebuffers;
     }
@@ -734,17 +740,19 @@ namespace mve
     }
     std::vector<vk::UniqueSemaphore> createSemaphores(const vk::UniqueDevice& device, int count)
     {
-        auto semaphores = std::vector<vk::UniqueSemaphore>(count);
+        std::vector<vk::UniqueSemaphore> semaphores;
+        semaphores.reserve(count);
         for (int i = 0; i < count; i++)
         {
-            semaphores[i] = device->createSemaphoreUnique(vk::SemaphoreCreateInfo());
+            semaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
         }
         return semaphores;
     }
 
     std::vector<vk::UniqueFence> createFences(const vk::UniqueDevice& device, bool signaled, int count)
     {
-        auto fences = std::vector<vk::UniqueFence>(count);
+        std::vector<vk::UniqueFence> fences;
+        fences.reserve(count);
         for (int i = 0; i < count; i++)
         {
             auto fenceInfo = vk::FenceCreateInfo();
@@ -752,7 +760,7 @@ namespace mve
             {
                 fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
             }
-            fences[i] = device->createFenceUnique(fenceInfo);
+            fences.push_back(device->createFenceUnique(fenceInfo));
         }
         return fences;
     }

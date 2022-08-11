@@ -56,11 +56,7 @@ namespace mve
     vk::UniqueRenderPass createRenderPass(vk::Device device, vk::SurfaceFormatKHR swapchainFormat);
 
     vk::UniquePipeline createGraphicsPipeline(
-        vk::Device device,
-        vk::Extent2D extent,
-        vk::ShaderModule vertexShader,
-        vk::ShaderModule fragmentShader,
-        vk::RenderPass renderPass);
+        vk::Device device, vk::ShaderModule vertexShader, vk::ShaderModule fragmentShader, vk::RenderPass renderPass);
 
     std::vector<vk::UniqueFramebuffer> createFramebuffers(
         vk::Device device,
