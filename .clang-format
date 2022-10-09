@@ -5,8 +5,10 @@ BinPackParameters: false
 BinPackArguments: false
 AllowAllParametersOfDeclarationOnNextLine: true
 NamespaceIndentation: All
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Stroustrup
 ColumnLimit: 120
 PenaltyReturnTypeOnItsOwnLine: 200
 PenaltyIndentedWhitespace: 1
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: None
 ...

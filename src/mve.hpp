@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <filesystem>
+#include <functional>
 
 #define MVE_FRAMES_IN_FLIGHT 2
 
@@ -14,13 +15,7 @@ namespace mve
 {
     typedef std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> UniqueGlfwWindow;
 
-    enum class ShaderType
-    {
-        eVertex,
-        eFragment,
-    };
-
-    UniqueGlfwWindow createWindow(int width, int height, const std::string& title);
+    UniqueGlfwWindow create_window(int width, int height, const std::string& title);
 
     vk::UniqueInstance createInstance(const std::string& applicationName, uint32_t applicationVersion);
 
@@ -49,9 +44,6 @@ namespace mve
 
     std::vector<vk::UniqueImageView> createImageViews(
         vk::Device device, vk::SurfaceFormatKHR surfaceFormat, const std::vector<vk::Image>& swapchainImages);
-
-    vk::UniqueShaderModule createShaderModule(
-        vk::Device device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize);
 
     vk::UniqueRenderPass createRenderPass(vk::Device device, vk::SurfaceFormatKHR swapchainFormat);
 

@@ -13,15 +13,13 @@
 
 #include "logger.hpp"
 
-struct SwapchainSupportDetails
-{
+struct SwapchainSupportDetails {
     vk::SurfaceCapabilitiesKHR surfaceCapabilities;
     std::vector<vk::SurfaceFormatKHR> surfaceFormats;
     std::vector<vk::PresentModeKHR> surfacePresentModes;
 };
 
-struct QueueFamilyIndices
-{
+struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
@@ -48,19 +46,15 @@ bool hasValidationLayerSupport()
 
     const std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 
-    for (const std::string& validationLayer : validationLayers)
-    {
+    for (const std::string& validationLayer : validationLayers) {
         bool layerFound = false;
-        for (const vk::LayerProperties& layerProperties : availableLayers)
-        {
-            if (validationLayer == layerProperties.layerName)
-            {
+        for (const vk::LayerProperties& layerProperties : availableLayers) {
+            if (validationLayer == layerProperties.layerName) {
                 layerFound = true;
                 break;
             }
         }
-        if (!layerFound)
-        {
+        if (!layerFound) {
             return false;
         }
     }
@@ -74,14 +68,11 @@ QueueFamilyIndices getQueueFamilyIndices(vk::PhysicalDevice device, vk::SurfaceK
     std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
     int i = 0;
-    for (const vk::QueueFamilyProperties& queueFamily : queueFamilies)
-    {
-        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
-        {
+    for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphicsFamily = i;
         }
-        if (device.getSurfaceSupportKHR(i, surface))
-        {
+        if (device.getSurfaceSupportKHR(i, surface)) {
             indices.presentFamily = i;
         }
         i++;
@@ -95,19 +86,15 @@ bool hasExtensionSupport(vk::PhysicalDevice physicalDevice)
 
     std::vector<const char*> requiredExtensions = getRequiredDeviceExtensions();
 
-    for (const std::string& requiredExtension : requiredExtensions)
-    {
+    for (const std::string& requiredExtension : requiredExtensions) {
         bool found = false;
-        for (const vk::ExtensionProperties& extensionProperties : availableExtensions)
-        {
-            if (requiredExtension == extensionProperties.extensionName)
-            {
+        for (const vk::ExtensionProperties& extensionProperties : availableExtensions) {
+            if (requiredExtension == extensionProperties.extensionName) {
                 found = true;
                 break;
             }
         }
-        if (!found)
-        {
+        if (!found) {
             return false;
         }
     }
@@ -118,10 +105,8 @@ vk::PresentModeKHR getBestSwapchainPresentMode(vk::PhysicalDevice physicalDevice
 {
     SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
     std::vector<vk::PresentModeKHR> availablePresentModes = swapchainSupportDetails.surfacePresentModes;
-    for (const vk::PresentModeKHR& availablePresentMode : availablePresentModes)
-    {
-        if (availablePresentMode == vk::PresentModeKHR::eMailbox)
-        {
+    for (const vk::PresentModeKHR& availablePresentMode : availablePresentModes) {
+        if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
             return availablePresentMode;
         }
     }
@@ -135,8 +120,7 @@ bool isDeviceSuitable(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface)
     bool isExtensionsSupported = hasExtensionSupport(physicalDevice);
 
     bool isSwapchainSupported = false;
-    if (isExtensionsSupported)
-    {
+    if (isExtensionsSupported) {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
         isSwapchainSupported
             = !swapchainSupportDetails.surfaceFormats.empty() && !swapchainSupportDetails.surfacePresentModes.empty();
@@ -145,16 +129,14 @@ bool isDeviceSuitable(vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface)
     return indices.isComplete() && isSwapchainSupported;
 }
 
-namespace mve
-{
-    UniqueGlfwWindow createWindow(int width, int height, const std::string& title)
+namespace mve {
+    UniqueGlfwWindow create_window(int width, int height, const std::string& title)
     {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-        auto windowDeleter = [](GLFWwindow* window)
-        {
+        auto windowDeleter = [](GLFWwindow* window) {
             glfwDestroyWindow(window);
             glfwTerminate();
         };
@@ -167,8 +149,7 @@ namespace mve
     {
 
 #ifdef ENABLE_VALIDATION_LAYERS
-        if (!hasValidationLayerSupport())
-        {
+        if (!hasValidationLayerSupport()) {
             throw std::runtime_error("Validation layers requested but not "
                                      "available");
         }
@@ -216,8 +197,7 @@ namespace mve
     {
         VkSurfaceKHR surface;
         VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
+        if (result != VK_SUCCESS) {
             throw std::runtime_error("Failed to create window surface");
         }
         vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> surfaceDeleter(instance);
@@ -227,23 +207,19 @@ namespace mve
     vk::PhysicalDevice getBestPhysicalDevice(vk::Instance instance, vk::SurfaceKHR surface)
     {
         const std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
-        if (devices.empty())
-        {
+        if (devices.empty()) {
             throw std::runtime_error("Failed to find GPUs with Vulkan support");
         }
 
-        for (const vk::PhysicalDevice& device : devices)
-        {
+        for (const vk::PhysicalDevice& device : devices) {
             LOG->debug(
                 "Found Vulkan Device: [{0}] of type [{1}]",
                 device.getProperties().deviceName,
                 to_string(device.getProperties().deviceType));
         }
 
-        for (const vk::PhysicalDevice& device : devices)
-        {
-            if (isDeviceSuitable(device, surface))
-            {
+        for (const vk::PhysicalDevice& device : devices) {
+            if (isDeviceSuitable(device, surface)) {
                 LOG->info("Using Vulkan device: {}", device.getProperties().deviceName);
                 return device;
             }
@@ -260,8 +236,7 @@ namespace mve
 
         float queuePriority = 1.0f;
 
-        for (uint32_t queueFamily : uniqueQueueFamilies)
-        {
+        for (uint32_t queueFamily : uniqueQueueFamilies) {
             auto queueCreateInfo
                 = vk::DeviceQueueCreateInfo()
                       .setFlags(vk::DeviceQueueCreateFlags())
@@ -318,11 +293,9 @@ namespace mve
     {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
         std::vector<vk::SurfaceFormatKHR> availableFormats = swapchainSupportDetails.surfaceFormats;
-        for (const vk::SurfaceFormatKHR& availableFormat : availableFormats)
-        {
+        for (const vk::SurfaceFormatKHR& availableFormat : availableFormats) {
             if (availableFormat.format == vk::Format::eB8G8R8A8Srgb
-                && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
-            {
+                && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
                 return availableFormat;
             }
         }
@@ -333,12 +306,10 @@ namespace mve
     {
         SwapchainSupportDetails swapchainSupportDetails = getSwapchainSupportDetails(physicalDevice, surface);
         vk::SurfaceCapabilitiesKHR capabilities = swapchainSupportDetails.surfaceCapabilities;
-        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-        {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
             return capabilities.currentExtent;
         }
-        else
-        {
+        else {
             int width;
             int height;
             glfwGetFramebufferSize(window, &width, &height);
@@ -365,8 +336,7 @@ namespace mve
         uint32_t imageCount = swapchainSupportDetails.surfaceCapabilities.minImageCount + 1;
 
         if (swapchainSupportDetails.surfaceCapabilities.maxImageCount > 0
-            && imageCount > swapchainSupportDetails.surfaceCapabilities.maxImageCount)
-        {
+            && imageCount > swapchainSupportDetails.surfaceCapabilities.maxImageCount) {
 
             imageCount = swapchainSupportDetails.surfaceCapabilities.maxImageCount;
         }
@@ -377,14 +347,12 @@ namespace mve
         vk::SharingMode sharingMode;
         uint32_t queueFamilyIndexCount;
         uint32_t* pQueueFamilyIndices;
-        if (indices.graphicsFamily != indices.presentFamily)
-        {
+        if (indices.graphicsFamily != indices.presentFamily) {
             sharingMode = vk::SharingMode::eConcurrent;
             queueFamilyIndexCount = 2;
             pQueueFamilyIndices = queueFamilyIndices;
         }
-        else
-        {
+        else {
             sharingMode = vk::SharingMode::eExclusive;
             queueFamilyIndexCount = 0;
             pQueueFamilyIndices = nullptr;
@@ -424,8 +392,7 @@ namespace mve
         imageViews.reserve(swapchainImages.size());
 
         int i = 0;
-        for (const vk::Image& image : swapchainImages)
-        {
+        for (const vk::Image& image : swapchainImages) {
             auto imageViewCreateInfo
                 = vk::ImageViewCreateInfo()
                       .setFlags(vk::ImageViewCreateFlags())
@@ -443,56 +410,6 @@ namespace mve
             i++;
         }
         return imageViews;
-    }
-
-    vk::UniqueShaderModule createShaderModule(
-        vk::Device device, const std::filesystem::path& filePath, ShaderType shaderType, bool optimize)
-    {
-        auto file = std::ifstream(filePath);
-        if (!file.is_open())
-        {
-            throw std::runtime_error("Failed to open shader file: " + filePath.string());
-        }
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string source = buffer.str();
-
-        auto compiler = shaderc::Compiler();
-        auto options = shaderc::CompileOptions();
-
-        if (optimize)
-        {
-            options.SetOptimizationLevel(shaderc_optimization_level_performance);
-        }
-
-        shaderc_shader_kind shaderKind;
-        switch (shaderType)
-        {
-        case ShaderType::eVertex:
-            shaderKind = shaderc_glsl_vertex_shader;
-            break;
-        case ShaderType::eFragment:
-            shaderKind = shaderc_glsl_fragment_shader;
-            break;
-        }
-
-        shaderc::SpvCompilationResult result
-            = compiler.CompileGlslToSpv(source, shaderKind, filePath.filename().string().c_str(), options);
-
-        if (result.GetCompilationStatus() != shaderc_compilation_status_success)
-        {
-            throw std::runtime_error(
-                "Failed to compile shader: " + filePath.string() + "\n" + result.GetErrorMessage());
-        }
-
-        std::vector<uint32_t> shaderCode = { result.cbegin(), result.cend() };
-
-        auto shaderModuleCreateInfo
-            = vk::ShaderModuleCreateInfo()
-                  .setFlags(vk::ShaderModuleCreateFlags())
-                  .setCodeSize(sizeof(uint32_t) * shaderCode.size())
-                  .setPCode(shaderCode.data());
-        return device.createShaderModuleUnique(shaderModuleCreateInfo);
     }
 
     vk::UniquePipeline createGraphicsPipeline(
@@ -602,8 +519,7 @@ namespace mve
                   .setBasePipelineIndex(-1);
 
         auto pipelineCreationResult = device.createGraphicsPipelineUnique(nullptr, pipelineInfo);
-        if (pipelineCreationResult.result != vk::Result::eSuccess)
-        {
+        if (pipelineCreationResult.result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed to create graphics pipeline");
         }
         vk::UniquePipeline graphicsPipeline = std::move(pipelineCreationResult.value);
@@ -662,8 +578,7 @@ namespace mve
         std::vector<vk::UniqueFramebuffer> framebuffers;
         framebuffers.reserve(imageViews.size());
 
-        for (const auto & imageView : imageViews)
-        {
+        for (const auto& imageView : imageViews) {
             auto framebufferInfo
                 = vk::FramebufferCreateInfo()
                       .setRenderPass(renderPass)
@@ -742,8 +657,7 @@ namespace mve
     {
         std::vector<vk::UniqueSemaphore> semaphores;
         semaphores.reserve(count);
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             semaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
         }
         return semaphores;
@@ -753,11 +667,9 @@ namespace mve
     {
         std::vector<vk::UniqueFence> fences;
         fences.reserve(count);
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             auto fenceInfo = vk::FenceCreateInfo();
-            if (signaled)
-            {
+            if (signaled) {
                 fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
             }
             fences.push_back(device->createFenceUnique(fenceInfo));
