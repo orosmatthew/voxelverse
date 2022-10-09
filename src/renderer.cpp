@@ -748,7 +748,7 @@ namespace mve {
             throw std::runtime_error("Failed to present frame");
         }
 
-        m_current_frame = (m_current_frame + 1) & m_frames_in_flight;
+        m_current_frame = (m_current_frame + 1) % m_frames_in_flight;
     }
 
     Renderer::~Renderer()
