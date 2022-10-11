@@ -6,6 +6,8 @@
 
 #include "renderer.hpp"
 
+#include "window.hpp"
+
 struct VulkanState {
     vk::UniqueInstance instance;
     vk::UniqueSurfaceKHR surface;
@@ -107,22 +109,24 @@ void mainLoop(const mve::UniqueGlfwWindow &window, const VulkanState &vulkanStat
 }
 
 namespace app {
+
     void run()
     {
-        LOG->debug("Creating GLFW window");
-        mve::UniqueGlfwWindow window = mve::create_window(800, 600, "Mini Vulkan Engine");
+        LOG->debug("Creating window");
+
+        auto window = mve::Window("Mini Vulkan Engine", glm::ivec2(800, 600));
 
         auto vertex_shader = mve::Shader("shaders/simple.vert", mve::ShaderType::e_vertex, true);
         auto fragment_shader = mve::Shader("shaders/simple.frag", mve::ShaderType::e_fragment, true);
 
-        mve::Renderer renderer(window.get(), "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader);
+        auto renderer = mve::Renderer(window, "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader);
 
-        while (!glfwWindowShouldClose(window.get())) {
-            glfwPollEvents();
+        window.set_resize_callback([&](glm::ivec2 new_size) { renderer.draw_frame(window); });
 
-            renderer.draw_frame();
+        while (!window.should_close()) {
+            window.update();
+            renderer.draw_frame(window);
         }
-
         //        LOG->debug("Creating window");
         //        mve::UniqueGlfwWindow window = mve::createWindow(800, 600, "Mini Vulkan Engine");
         //

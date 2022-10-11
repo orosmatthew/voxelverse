@@ -3,9 +3,13 @@
 #include <set>
 #include <shaderc/shaderc.hpp>
 
+#include "window.hpp"
+
+#include <glm/glm.hpp>
+
 namespace mve {
     Renderer::Renderer(
-        GLFWwindow *window,
+        const Window &window,
         const std::string &app_name,
         int app_version_major,
         int app_version_minor,
@@ -16,52 +20,48 @@ namespace mve {
         : m_frames_in_flight(frames_in_flight)
     {
         m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
-        m_vk_surface = create_vk_surface(m_vk_instance.get(), window);
-        m_vk_physical_device = pick_vk_physical_device(m_vk_instance.get(), m_vk_surface.get());
-        m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_surface.get());
+        m_vk_surface = create_vk_surface(m_vk_instance, window.get_glfw_handle());
+        m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
+        m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_surface);
 
         VkSwapchainSupportDetails swapchain_support_details
-            = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface.get());
+            = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
 
         m_vk_swapchain_image_format = choose_vk_swapchain_surface_format(swapchain_support_details.formats);
-        m_vk_swapchain_extent = get_vk_swapchain_extent(swapchain_support_details.capabilities, window);
+        m_vk_swapchain_extent
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
         m_vk_swapchain = create_vk_swapchain(
-            m_vk_physical_device,
-            m_vk_device.get(),
-            m_vk_surface.get(),
-            m_vk_swapchain_image_format,
-            m_vk_swapchain_extent);
+            m_vk_physical_device, m_vk_device, m_vk_surface, m_vk_swapchain_image_format, m_vk_swapchain_extent);
 
-        m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device.get(), m_vk_swapchain.get());
+        m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
 
-        m_vk_swapchain_image_views = create_vk_swapchain_image_views(
-            m_vk_device.get(), m_vk_swapchain_images, m_vk_swapchain_image_format.format);
+        m_vk_swapchain_image_views
+            = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
 
-        VkQueueFamilyIndices indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface.get());
-        m_vk_graphics_queue = m_vk_device->getQueue(indices.graphics_family.value(), 0);
-        m_vk_present_queue = m_vk_device->getQueue(indices.present_family.value(), 0);
+        VkQueueFamilyIndices indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
+        m_vk_graphics_queue = m_vk_device.getQueue(indices.graphics_family.value(), 0);
+        m_vk_present_queue = m_vk_device.getQueue(indices.present_family.value(), 0);
 
-        m_vk_pipeline_layout = create_vk_pipeline_layout(m_vk_device.get());
+        m_vk_pipeline_layout = create_vk_pipeline_layout(m_vk_device);
 
-        m_vk_render_pass = create_vk_render_pass(m_vk_device.get(), m_vk_swapchain_image_format.format);
+        m_vk_render_pass = create_vk_render_pass(m_vk_device, m_vk_swapchain_image_format.format);
 
         m_vk_graphics_pipeline = create_vk_graphics_pipeline(
-            m_vk_device.get(), vertex_shader, fragment_shader, m_vk_pipeline_layout.get(), m_vk_render_pass.get());
+            m_vk_device, vertex_shader, fragment_shader, m_vk_pipeline_layout, m_vk_render_pass);
 
-        m_vk_swapchain_framebuffers = create_vk_framebuffers(
-            m_vk_device.get(), m_vk_swapchain_image_views, m_vk_render_pass.get(), m_vk_swapchain_extent);
+        m_vk_swapchain_framebuffers
+            = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
 
-        m_vk_command_pool = create_vk_command_pool(m_vk_physical_device, m_vk_surface.get(), m_vk_device.get());
+        m_vk_command_pool = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device);
 
-        m_vk_command_buffers
-            = create_vk_command_buffers(m_vk_device.get(), m_vk_command_pool.get(), m_frames_in_flight);
+        m_vk_command_buffers = create_vk_command_buffers(m_vk_device, m_vk_command_pool, m_frames_in_flight);
 
         auto semaphore_info = vk::SemaphoreCreateInfo();
         auto fence_info = vk::FenceCreateInfo().setFlags(vk::FenceCreateFlagBits::eSignaled);
         for (int i = 0; i < m_frames_in_flight; i++) {
-            m_vk_image_available_semaphores.push_back(m_vk_device->createSemaphoreUnique(semaphore_info));
-            m_vk_render_finished_semaphores.push_back(m_vk_device->createSemaphoreUnique(semaphore_info));
-            m_vk_in_flight_fences.push_back(m_vk_device->createFenceUnique(fence_info));
+            m_vk_image_available_semaphores.push_back(m_vk_device.createSemaphore(semaphore_info));
+            m_vk_render_finished_semaphores.push_back(m_vk_device.createSemaphore(semaphore_info));
+            m_vk_in_flight_fences.push_back(m_vk_device.createFence(fence_info));
         }
     }
 
@@ -86,7 +86,7 @@ namespace mve {
         return true;
     }
 
-    vk::UniqueInstance Renderer::create_vk_instance(
+    vk::Instance Renderer::create_vk_instance(
         const std::string &app_name, int app_version_major, int app_version_minor, int app_version_patch)
     {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -127,7 +127,7 @@ namespace mve {
                   .setEnabledLayerCount(0);
 #endif
 
-        return vk::createInstanceUnique(instance_create_info);
+        return vk::createInstance(instance_create_info);
     }
 
     std::vector<const char *> Renderer::get_vk_validation_layer_exts()
@@ -209,16 +209,16 @@ namespace mve {
         }
         return indices;
     }
-    vk::UniqueDevice Renderer::create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
+    vk::Device Renderer::create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
     {
         VkQueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
 
         std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
-        std::set<uint32_t> unique_queue_families = { indices.graphics_family.value(), indices.present_family.value() };
+        std::set<uint32_t> _queue_families = { indices.graphics_family.value(), indices.present_family.value() };
 
         float queue_priority = 1.0f;
 
-        for (uint32_t queue_family : unique_queue_families) {
+        for (uint32_t queue_family : _queue_families) {
             auto queue_create_info
                 = vk::DeviceQueueCreateInfo()
                       .setQueueFamilyIndex(queue_family)
@@ -255,17 +255,16 @@ namespace mve {
                   .setEnabledLayerCount(0);
 #endif
 
-        return physical_device.createDeviceUnique(device_create_info);
+        return physical_device.createDevice(device_create_info);
     }
-    vk::UniqueSurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow *window)
+    vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow *window)
     {
         VkSurfaceKHR surface;
         VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("Failed to create window surface");
         }
-        vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> surface_deleter(instance);
-        return vk::UniqueSurfaceKHR(surface, surface_deleter);
+        return { surface };
     }
 
     std::vector<const char *> Renderer::get_vk_required_device_exts()
@@ -325,7 +324,7 @@ namespace mve {
             return actual_extent;
         }
     }
-    vk::UniqueSwapchainKHR Renderer::create_vk_swapchain(
+    vk::SwapchainKHR Renderer::create_vk_swapchain(
         vk::PhysicalDevice physical_device,
         vk::Device device,
         vk::SurfaceKHR surface,
@@ -371,7 +370,7 @@ namespace mve {
                 .setQueueFamilyIndexCount(0)
                 .setPQueueFamilyIndices(nullptr);
         }
-        return device.createSwapchainKHRUnique(swapchain_create_info);
+        return device.createSwapchainKHR(swapchain_create_info);
     }
 
     std::vector<vk::Image> Renderer::get_vk_swapchain_images(vk::Device device, vk::SwapchainKHR swapchain)
@@ -379,10 +378,10 @@ namespace mve {
         return device.getSwapchainImagesKHR(swapchain);
     }
 
-    std::vector<vk::UniqueImageView> Renderer::create_vk_swapchain_image_views(
+    std::vector<vk::ImageView> Renderer::create_vk_swapchain_image_views(
         vk::Device device, const std::vector<vk::Image> &swapchain_images, vk::Format image_format)
     {
-        std::vector<vk::UniqueImageView> image_views;
+        std::vector<vk::ImageView> image_views;
 
         for (vk::Image swapchain_image : swapchain_images) {
             auto image_view_create_info
@@ -402,13 +401,13 @@ namespace mve {
                                                .setBaseArrayLayer(0)
                                                .setLayerCount(1));
 
-            image_views.push_back(device.createImageViewUnique(image_view_create_info));
+            image_views.push_back(device.createImageView(image_view_create_info));
         }
 
         return image_views;
     }
 
-    vk::UniquePipeline Renderer::create_vk_graphics_pipeline(
+    vk::Pipeline Renderer::create_vk_graphics_pipeline(
         vk::Device device,
         const Shader &vertex_shader,
         const Shader &fragment_shader,
@@ -421,7 +420,7 @@ namespace mve {
                   .setCodeSize(sizeof(uint32_t) * vertex_spv_code.size())
                   .setPCode(vertex_spv_code.data());
 
-        vk::UniqueShaderModule vertex_shader_module = device.createShaderModuleUnique(vertex_shader_create_info);
+        vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
         std::vector<uint32_t> fragment_spv_code = fragment_shader.get_spv_code();
         auto fragment_shader_create_info
@@ -429,18 +428,18 @@ namespace mve {
                   .setCodeSize(sizeof(uint32_t) * fragment_spv_code.size())
                   .setPCode(fragment_spv_code.data());
 
-        vk::UniqueShaderModule fragment_shader_module = device.createShaderModuleUnique(fragment_shader_create_info);
+        vk::ShaderModule fragment_shader_module = device.createShaderModule(fragment_shader_create_info);
 
         auto vertex_shader_stage_info
             = vk::PipelineShaderStageCreateInfo()
                   .setStage(vk::ShaderStageFlagBits::eVertex)
-                  .setModule(vertex_shader_module.get())
+                  .setModule(vertex_shader_module)
                   .setPName("main");
 
         auto fragment_shader_stage_info
             = vk::PipelineShaderStageCreateInfo()
                   .setStage(vk::ShaderStageFlagBits::eFragment)
-                  .setModule(fragment_shader_module.get())
+                  .setModule(fragment_shader_module)
                   .setPName("main");
 
         vk::PipelineShaderStageCreateInfo shader_stages[] = { vertex_shader_stage_info, fragment_shader_stage_info };
@@ -526,16 +525,19 @@ namespace mve {
                   .setBasePipelineHandle(nullptr)
                   .setBasePipelineIndex(-1);
 
-        vk::ResultValue<vk::UniquePipeline> pipeline_result
-            = device.createGraphicsPipelineUnique(nullptr, graphics_pipeline_info);
+        vk::ResultValue<vk::Pipeline> pipeline_result = device.createGraphicsPipeline(nullptr, graphics_pipeline_info);
         if (pipeline_result.result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed to create graphics pipeline");
         }
-        vk::UniquePipeline graphics_pipeline = std::move(pipeline_result.value);
+        vk::Pipeline graphics_pipeline = pipeline_result.value;
+
+        device.destroy(vertex_shader_module);
+        device.destroy(fragment_shader_module);
+
         return graphics_pipeline;
     }
 
-    vk::UniquePipelineLayout Renderer::create_vk_pipeline_layout(vk::Device device)
+    vk::PipelineLayout Renderer::create_vk_pipeline_layout(vk::Device device)
     {
         auto pipeline_layout_info
             = vk::PipelineLayoutCreateInfo()
@@ -544,10 +546,10 @@ namespace mve {
                   .setPushConstantRangeCount(0)
                   .setPPushConstantRanges(nullptr);
 
-        return device.createPipelineLayoutUnique(pipeline_layout_info);
+        return device.createPipelineLayout(pipeline_layout_info);
     }
 
-    vk::UniqueRenderPass Renderer::create_vk_render_pass(vk::Device device, vk::Format swapchain_format)
+    vk::RenderPass Renderer::create_vk_render_pass(vk::Device device, vk::Format swapchain_format)
     {
         auto color_attachment
             = vk::AttachmentDescription()
@@ -586,19 +588,19 @@ namespace mve {
                   .setSubpassCount(1)
                   .setPDependencies(&subpass_dependency);
 
-        return device.createRenderPassUnique(render_pass_info);
+        return device.createRenderPass(render_pass_info);
     }
 
-    std::vector<vk::UniqueFramebuffer> Renderer::create_vk_framebuffers(
+    std::vector<vk::Framebuffer> Renderer::create_vk_framebuffers(
         vk::Device device,
-        const std::vector<vk::UniqueImageView> &swapchain_image_views,
+        const std::vector<vk::ImageView> &swapchain_image_views,
         vk::RenderPass render_pass,
         vk::Extent2D swapchain_extent)
     {
-        std::vector<vk::UniqueFramebuffer> framebuffers;
+        std::vector<vk::Framebuffer> framebuffers;
 
-        for (const vk::UniqueImageView &swapchain_image_view : swapchain_image_views) {
-            vk::ImageView attachments[] = { swapchain_image_view.get() };
+        for (const vk::ImageView &swapchain_image_view : swapchain_image_views) {
+            vk::ImageView attachments[] = { swapchain_image_view };
 
             auto framebuffer_info
                 = vk::FramebufferCreateInfo()
@@ -609,12 +611,12 @@ namespace mve {
                       .setHeight(swapchain_extent.height)
                       .setLayers(1);
 
-            framebuffers.push_back(device.createFramebufferUnique(framebuffer_info));
+            framebuffers.push_back(device.createFramebuffer(framebuffer_info));
         }
         return framebuffers;
     }
 
-    vk::UniqueCommandPool Renderer::create_vk_command_pool(
+    vk::CommandPool Renderer::create_vk_command_pool(
         vk::PhysicalDevice physical_device, vk::SurfaceKHR surface, vk::Device device)
     {
         VkQueueFamilyIndices queue_family_indices = get_vk_queue_family_indices(physical_device, surface);
@@ -623,10 +625,10 @@ namespace mve {
                                      .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
                                      .setQueueFamilyIndex(queue_family_indices.graphics_family.value());
 
-        return device.createCommandPoolUnique(command_pool_info);
+        return device.createCommandPool(command_pool_info);
     }
 
-    std::vector<vk::UniqueCommandBuffer> Renderer::create_vk_command_buffers(
+    std::vector<vk::CommandBuffer> Renderer::create_vk_command_buffers(
         vk::Device device, vk::CommandPool command_pool, int frames_in_flight)
     {
         auto buffer_alloc_info
@@ -635,7 +637,7 @@ namespace mve {
                   .setLevel(vk::CommandBufferLevel::ePrimary)
                   .setCommandBufferCount(static_cast<uint32_t>(frames_in_flight));
 
-        std::vector<vk::UniqueCommandBuffer> command_buffers = device.allocateCommandBuffersUnique(buffer_alloc_info);
+        std::vector<vk::CommandBuffer> command_buffers = device.allocateCommandBuffers(buffer_alloc_info);
         return command_buffers;
     }
 
@@ -643,7 +645,7 @@ namespace mve {
         vk::CommandBuffer command_buffer,
         uint32_t image_index,
         vk::RenderPass render_pass,
-        const std::vector<vk::UniqueFramebuffer> &swapchain_framebuffers,
+        const std::vector<vk::Framebuffer> &swapchain_framebuffers,
         vk::Extent2D swapchain_extent,
         vk::Pipeline graphics_pipeline)
     {
@@ -655,7 +657,7 @@ namespace mve {
         auto render_pass_begin_info
             = vk::RenderPassBeginInfo()
                   .setRenderPass(render_pass)
-                  .setFramebuffer(swapchain_framebuffers[image_index].get())
+                  .setFramebuffer(swapchain_framebuffers[image_index])
                   .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(swapchain_extent))
                   .setClearValueCount(1)
                   .setPClearValues(&clear_color);
@@ -686,53 +688,51 @@ namespace mve {
         command_buffer.end();
     }
 
-    void Renderer::draw_frame()
+    void Renderer::draw_frame(const Window &window)
     {
+        if (window.was_resized()) {
+            recreate_swapchain(window);
+        }
         vk::Result fence_wait_result
-            = m_vk_device->waitForFences(m_vk_in_flight_fences[m_current_frame].get(), true, UINT64_MAX);
+            = m_vk_device.waitForFences(m_vk_in_flight_fences[m_current_frame], true, UINT64_MAX);
         if (fence_wait_result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed waiting for frame (fences)");
         }
 
-        vk::ResultValue<uint32_t> acquire_result = m_vk_device->acquireNextImageKHR(
-            m_vk_swapchain.get(), UINT64_MAX, m_vk_image_available_semaphores[m_current_frame].get(), nullptr);
-
-        if (acquire_result.result == vk::Result::eErrorOutOfDateKHR) {
-            recreate_swapchain();
-            return;
-        }
-        else if (acquire_result.result != vk::Result::eSuccess) {
+        vk::ResultValue<uint32_t> acquire_result = m_vk_device.acquireNextImageKHR(
+            m_vk_swapchain, UINT64_MAX, m_vk_image_available_semaphores[m_current_frame], nullptr);
+        if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
         uint32_t image_index = acquire_result.value;
 
-        m_vk_device->resetFences({ m_vk_in_flight_fences[m_current_frame].get() });
+        m_vk_device.resetFences({ m_vk_in_flight_fences[m_current_frame] });
 
-        m_vk_command_buffers[m_current_frame]->reset();
+        m_vk_command_buffers[m_current_frame].reset();
 
         record_vk_command_buffer(
-            m_vk_command_buffers[m_current_frame].get(),
+            m_vk_command_buffers[m_current_frame],
             image_index,
-            m_vk_render_pass.get(),
+            m_vk_render_pass,
             m_vk_swapchain_framebuffers,
             m_vk_swapchain_extent,
-            m_vk_graphics_pipeline.get());
+            m_vk_graphics_pipeline);
 
-        vk::Semaphore wait_semaphores[] = { m_vk_image_available_semaphores[m_current_frame].get() };
+        vk::Semaphore wait_semaphores[] = { m_vk_image_available_semaphores[m_current_frame] };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-        vk::Semaphore signal_semaphores[] = { m_vk_render_finished_semaphores[m_current_frame].get() };
+        vk::Semaphore signal_semaphores[] = { m_vk_render_finished_semaphores[m_current_frame] };
 
         auto submit_info
             = vk::SubmitInfo()
                   .setWaitSemaphores(wait_semaphores)
                   .setWaitDstStageMask(wait_stages)
                   .setCommandBufferCount(1)
-                  .setPCommandBuffers(&(m_vk_command_buffers[m_current_frame].get()))
+                  .setPCommandBuffers(&(m_vk_command_buffers[m_current_frame]))
                   .setSignalSemaphores(signal_semaphores);
 
-        m_vk_graphics_queue.submit({ submit_info }, m_vk_in_flight_fences[m_current_frame].get());
+        m_vk_graphics_queue.submit({ submit_info }, m_vk_in_flight_fences[m_current_frame]);
 
-        vk::SwapchainKHR swapchains[] = { m_vk_swapchain.get() };
+        vk::SwapchainKHR swapchains[] = { m_vk_swapchain };
 
         auto present_info
             = vk::PresentInfoKHR()
@@ -741,8 +741,9 @@ namespace mve {
                   .setPImageIndices(&image_index);
 
         vk::Result present_result = m_vk_present_queue.presentKHR(present_info);
-        if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR) {
-            recreate_swapchain();
+
+        if (present_result == vk::Result::eSuboptimalKHR) {
+            recreate_swapchain(window);
         }
         else if (present_result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed to present frame");
@@ -753,25 +754,68 @@ namespace mve {
 
     Renderer::~Renderer()
     {
-        m_vk_device->waitIdle();
+        m_vk_device.waitIdle();
+
+        cleanup_vk_swapchain();
+
+        m_vk_device.destroy(m_vk_graphics_pipeline);
+        m_vk_device.destroy(m_vk_pipeline_layout);
+        m_vk_device.destroy(m_vk_render_pass);
+
+        for (int i = 0; i < m_frames_in_flight; i++) {
+            m_vk_device.destroy(m_vk_render_finished_semaphores[i]);
+            m_vk_device.destroy(m_vk_image_available_semaphores[i]);
+            m_vk_device.destroy(m_vk_in_flight_fences[i]);
+        }
+
+        m_vk_device.destroy(m_vk_command_pool);
+
+        m_vk_device.destroy();
+
+        m_vk_instance.destroy(m_vk_surface);
+        m_vk_instance.destroy();
     }
 
-    void Renderer::recreate_swapchain()
+    void Renderer::recreate_swapchain(const Window &window)
     {
-        m_vk_device->waitIdle();
+        glm::ivec2 window_size = window.get_size();
+
+        while (window_size == glm::ivec2(0, 0)) {
+            window_size = window.get_size();
+            window.wait_for_events();
+        }
+
+        m_vk_device.waitIdle();
+
+        cleanup_vk_swapchain();
+
+        VkSwapchainSupportDetails swapchain_support_details
+            = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
+
+        m_vk_swapchain_extent
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
 
         m_vk_swapchain = create_vk_swapchain(
-            m_vk_physical_device,
-            m_vk_device.get(),
-            m_vk_surface.get(),
-            m_vk_swapchain_image_format.format,
-            m_vk_swapchain_extent);
+            m_vk_physical_device, m_vk_device, m_vk_surface, m_vk_swapchain_image_format, m_vk_swapchain_extent);
 
-        m_vk_swapchain_image_views = create_vk_swapchain_image_views(
-            m_vk_device.get(), m_vk_swapchain_images, m_vk_swapchain_image_format.format);
+        m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
 
-        m_vk_swapchain_framebuffers = create_vk_framebuffers(
-            m_vk_device.get(), m_vk_swapchain_image_views, m_vk_render_pass.get(), m_vk_swapchain_extent);
+        m_vk_swapchain_image_views
+            = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
+
+        m_vk_swapchain_framebuffers
+            = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
+    }
+
+    void Renderer::cleanup_vk_swapchain()
+    {
+        for (vk::Framebuffer framebuffer : m_vk_swapchain_framebuffers) {
+            m_vk_device.destroy(framebuffer);
+        }
+        for (vk::ImageView image_view : m_vk_swapchain_image_views) {
+            m_vk_device.destroy(image_view);
+        }
+        m_vk_device.destroy(m_vk_swapchain);
     };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
@@ -812,6 +856,7 @@ namespace mve {
 
         m_spv_code = { result.cbegin(), result.cend() };
     }
+
     std::vector<uint32_t> Shader::get_spv_code() const
     {
         return m_spv_code;

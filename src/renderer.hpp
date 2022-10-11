@@ -15,6 +15,8 @@
 
 namespace mve {
 
+    class Window;
+
     enum class ShaderType {
         e_vertex,
         e_fragment,
@@ -33,7 +35,7 @@ namespace mve {
     class Renderer {
     public:
         Renderer(
-            GLFWwindow *window,
+            const Window &window,
             const std::string &app_name,
             int app_version_major,
             int app_version_minor,
@@ -44,7 +46,9 @@ namespace mve {
 
         ~Renderer();
 
-        void draw_frame();
+        void draw_frame(const Window &window);
+
+        void recreate_swapchain(const Window &window);
 
     private:
         struct VkQueueFamilyIndices {
@@ -63,34 +67,34 @@ namespace mve {
             std::vector<vk::PresentModeKHR> present_modes;
         };
 
-        const int m_frames_in_flight;
-        vk::UniqueInstance m_vk_instance;
-        vk::UniqueSurfaceKHR m_vk_surface;
+        int m_frames_in_flight;
+        vk::Instance m_vk_instance;
+        vk::SurfaceKHR m_vk_surface;
         vk::PhysicalDevice m_vk_physical_device;
-        vk::UniqueDevice m_vk_device;
+        vk::Device m_vk_device;
         vk::Queue m_vk_graphics_queue;
         vk::Queue m_vk_present_queue;
         vk::SurfaceFormatKHR m_vk_swapchain_image_format;
         vk::Extent2D m_vk_swapchain_extent;
-        vk::UniqueSwapchainKHR m_vk_swapchain;
+        vk::SwapchainKHR m_vk_swapchain;
         std::vector<vk::Image> m_vk_swapchain_images;
-        std::vector<vk::UniqueImageView> m_vk_swapchain_image_views;
-        vk::UniquePipelineLayout m_vk_pipeline_layout;
-        vk::UniqueRenderPass m_vk_render_pass;
-        vk::UniquePipeline m_vk_graphics_pipeline;
-        std::vector<vk::UniqueFramebuffer> m_vk_swapchain_framebuffers;
-        vk::UniqueCommandPool m_vk_command_pool;
-        std::vector<vk::UniqueCommandBuffer> m_vk_command_buffers;
-        std::vector<vk::UniqueSemaphore> m_vk_image_available_semaphores;
-        std::vector<vk::UniqueSemaphore> m_vk_render_finished_semaphores;
-        std::vector<vk::UniqueFence> m_vk_in_flight_fences;
+        std::vector<vk::ImageView> m_vk_swapchain_image_views;
+        vk::PipelineLayout m_vk_pipeline_layout;
+        vk::RenderPass m_vk_render_pass;
+        vk::Pipeline m_vk_graphics_pipeline;
+        std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
+        vk::CommandPool m_vk_command_pool;
+        std::vector<vk::CommandBuffer> m_vk_command_buffers;
+        std::vector<vk::Semaphore> m_vk_image_available_semaphores;
+        std::vector<vk::Semaphore> m_vk_render_finished_semaphores;
+        std::vector<vk::Fence> m_vk_in_flight_fences;
         uint32_t m_current_frame = 0;
 
-        void recreate_swapchain();
+        void cleanup_vk_swapchain();
 
         static bool has_validation_layer_support();
 
-        static vk::UniqueInstance create_vk_instance(
+        static vk::Instance create_vk_instance(
             const std::string &app_name, int app_version_major, int app_version_minor, int app_version_patch);
 
         static std::vector<const char *> get_vk_validation_layer_exts();
@@ -101,12 +105,12 @@ namespace mve {
 
         static bool is_vk_physical_device_suitable(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
-        static vk::UniqueDevice create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
+        static vk::Device create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
         static VkQueueFamilyIndices get_vk_queue_family_indices(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
-        static vk::UniqueSurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow *window);
+        static vk::SurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow *window);
 
         static VkSwapchainSupportDetails get_vk_swapchain_support_details(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
@@ -119,7 +123,7 @@ namespace mve {
 
         static vk::Extent2D get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR &capabilities, GLFWwindow *window);
 
-        static vk::UniqueSwapchainKHR create_vk_swapchain(
+        static vk::SwapchainKHR create_vk_swapchain(
             vk::PhysicalDevice physical_device,
             vk::Device device,
             vk::SurfaceKHR surface,
@@ -128,39 +132,38 @@ namespace mve {
 
         static std::vector<vk::Image> get_vk_swapchain_images(vk::Device device, vk::SwapchainKHR swapchain);
 
-        static std::vector<vk::UniqueImageView> create_vk_swapchain_image_views(
+        static std::vector<vk::ImageView> create_vk_swapchain_image_views(
             vk::Device device, const std::vector<vk::Image> &swapchain_images, vk::Format image_format);
 
-        static vk::UniquePipeline create_vk_graphics_pipeline(
+        static vk::Pipeline create_vk_graphics_pipeline(
             vk::Device device,
             const Shader &vertex_shader,
             const Shader &fragment_shader,
             vk::PipelineLayout pipeline_layout,
             vk::RenderPass render_pass);
 
-        static vk::UniquePipelineLayout create_vk_pipeline_layout(vk::Device device);
+        static vk::PipelineLayout create_vk_pipeline_layout(vk::Device device);
 
-        static vk::UniqueRenderPass create_vk_render_pass(vk::Device device, vk::Format swapchain_format);
+        static vk::RenderPass create_vk_render_pass(vk::Device device, vk::Format swapchain_format);
 
-        static std::vector<vk::UniqueFramebuffer> create_vk_framebuffers(
+        static std::vector<vk::Framebuffer> create_vk_framebuffers(
             vk::Device device,
-            const std::vector<vk::UniqueImageView> &swapchain_image_views,
+            const std::vector<vk::ImageView> &swapchain_image_views,
             vk::RenderPass render_pass,
             vk::Extent2D swapchain_extent);
 
-        static vk::UniqueCommandPool create_vk_command_pool(
+        static vk::CommandPool create_vk_command_pool(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR, vk::Device device);
 
-        static std::vector<vk::UniqueCommandBuffer> create_vk_command_buffers(
+        static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
         static void record_vk_command_buffer(
             vk::CommandBuffer command_buffer,
             uint32_t image_index,
             vk::RenderPass render_pass,
-            const std::vector<vk::UniqueFramebuffer> &swapchain_framebuffers,
+            const std::vector<vk::Framebuffer> &swapchain_framebuffers,
             vk::Extent2D swapchain_extent,
             vk::Pipeline graphics_pipeline);
     };
-
 }
