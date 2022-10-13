@@ -7,7 +7,7 @@ set(common_SOURCES context.c init.c input.c monitor.c vulkan.c window.c)
 
 add_custom_target(update_mappings
     COMMAND "${CMAKE_COMMAND}" -P "${GLFW_SOURCE_DIR}/CMake/GenerateMappings.cmake" mappings.h.in mappings.h
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    WORKING_DIRECTORY "."
     COMMENT "Updating gamepad mappings from upstream repository"
     SOURCES mappings.h.in "${GLFW_SOURCE_DIR}/CMake/GenerateMappings.cmake"
     VERBATIM)

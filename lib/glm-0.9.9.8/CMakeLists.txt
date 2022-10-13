@@ -8,8 +8,8 @@ enable_testing()
 add_subdirectory(glm)
 add_library(glm::glm ALIAS glm)
 
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+if(${CMAKE_SOURCE_DIR} STREQUAL .)
 
 add_subdirectory(test)
 
-endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+endif(${CMAKE_SOURCE_DIR} STREQUAL .)

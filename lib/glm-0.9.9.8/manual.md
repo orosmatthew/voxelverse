@@ -1,8 +1,8 @@
-![Alt](./doc/manual/logo-mini.png "GLM Logo")
+![Alt](doc/manual/logo-mini.png "GLM Logo")
 
 # GLM 0.9.9 Manual
 
-![Alt](./doc/manual/g-truc.png "G-Truc Logo")
+![Alt](doc/manual/g-truc.png "G-Truc Logo")
 
 ---
 <div style="page-break-after: always;"> </div>
@@ -139,7 +139,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-![](./doc/manual/frontpage1.png)
+![](doc/manual/frontpage1.png)
 
 ### The MIT License
 
@@ -164,7 +164,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-![](./doc/manual/frontpage2.png)
+![](doc/manual/frontpage2.png)
 
 ---
 <div style="page-break-after: always;"> </div>

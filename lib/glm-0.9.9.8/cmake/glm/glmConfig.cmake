@@ -3,7 +3,7 @@ cmake_policy(VERSION 3.2)
 
 set(GLM_VERSION 0.9.9)
 
-get_filename_component(_IMPORT_PREFIX "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(_IMPORT_PREFIX "glmConfig.cmake" PATH)
 get_filename_component(_IMPORT_PREFIX "${_IMPORT_PREFIX}" PATH)
 get_filename_component(_IMPORT_PREFIX "${_IMPORT_PREFIX}" PATH)
 if (_IMPORT_PREFIX STREQUAL "/")
