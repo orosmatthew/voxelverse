@@ -20,6 +20,9 @@ namespace mve {
         : m_frames_in_flight(frames_in_flight)
     {
         m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
+#ifdef MVE_ENABLE_VALIDATION_LAYERS
+        m_vk_debug_utils_messenger = create_vk_debug_messenger(m_vk_instance);
+#endif
         m_vk_surface = create_vk_surface(m_vk_instance, window.get_glfw_handle());
         m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
         m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_surface);
@@ -103,9 +106,7 @@ namespace mve {
                   .setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
                   .setApiVersion(VK_API_VERSION_1_0);
 
-        uint32_t glfw_ext_count = 0;
-        const char **glfw_exts;
-        glfw_exts = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
+        std::vector<const char *> exts = get_vk_instance_required_exts();
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
 
@@ -114,16 +115,16 @@ namespace mve {
         auto instance_create_info
             = vk::InstanceCreateInfo()
                   .setPApplicationInfo(&application_info)
-                  .setEnabledExtensionCount(glfw_ext_count)
-                  .setPpEnabledExtensionNames(glfw_exts)
+                  .setEnabledExtensionCount(static_cast<uint32_t>(exts.size()))
+                  .setPpEnabledExtensionNames(exts.data())
                   .setEnabledLayerCount(static_cast<uint32_t>(validation_layers.size()))
                   .setPpEnabledLayerNames(validation_layers.data());
 #else
         auto instance_create_info
             = vk::InstanceCreateInfo()
                   .setPApplicationInfo(&application_info)
-                  .setEnabledExtensionCount(glfw_ext_count)
-                  .setPpEnabledExtensionNames(glfw_exts)
+                  .setEnabledExtensionCount(static_cast<uint32_t>(exts.size()))
+                  .setPpEnabledExtensionNames(exts.data())
                   .setEnabledLayerCount(0);
 #endif
 
@@ -754,6 +755,9 @@ namespace mve {
 
     Renderer::~Renderer()
     {
+#ifdef MVE_ENABLE_VALIDATION_LAYERS
+        cleanup_vk_debug_messenger();
+#endif
         m_vk_device.waitIdle();
 
         cleanup_vk_swapchain();
@@ -816,7 +820,69 @@ namespace mve {
             m_vk_device.destroy(image_view);
         }
         m_vk_device.destroy(m_vk_swapchain);
-    };
+    }
+
+    std::vector<const char *> Renderer::get_vk_instance_required_exts()
+    {
+        uint32_t glfw_ext_count = 0;
+        const char **glfw_exts;
+        glfw_exts = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
+
+        std::vector<const char *> exts(glfw_exts, glfw_exts + glfw_ext_count);
+
+#ifdef MVE_ENABLE_VALIDATION_LAYERS
+        exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
+
+        return exts;
+    }
+
+    vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance instance)
+    {
+        VkDebugUtilsMessengerCreateInfoEXT debug_create_info {};
+        debug_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+            | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_create_info.pfnUserCallback = vk_debug_callback;
+        debug_create_info.pUserData = nullptr;
+
+        auto func
+            = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+
+        if (func != nullptr) {
+            VkDebugUtilsMessengerEXT debug_messenger;
+            func(instance, &debug_create_info, nullptr, &debug_messenger);
+            return { debug_messenger };
+        }
+        else {
+            throw std::runtime_error("Failed to create Vulkan debug messenger");
+        }
+    }
+
+    VkBool32 Renderer::vk_debug_callback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
+        VkDebugUtilsMessageTypeFlagsEXT msg_type,
+        const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+        void *user_data_ptr)
+    {
+        if (msg_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            LOG->warn("[Vulkan Debug] " + std::string(callback_data->pMessage));
+        }
+
+        return false;
+    }
+
+    void Renderer::cleanup_vk_debug_messenger()
+    {
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            m_vk_instance, "vkDestroyDebugUtilsMessengerEXT");
+
+        if (func != nullptr) {
+            func(m_vk_instance, m_vk_debug_utils_messenger, nullptr);
+        }
+    }
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
     {

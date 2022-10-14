@@ -13,7 +13,6 @@ add_subdirectory(lib/glm-0.9.9.8)
 
 set(source_files
         src/main.cpp
-        src/mve.hpp src/mve.cpp
         src/app.hpp src/app.cpp
         src/logger.hpp src/logger.cpp
         src/renderer.hpp src/renderer.cpp

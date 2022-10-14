@@ -69,6 +69,7 @@ namespace mve {
 
         int m_frames_in_flight;
         vk::Instance m_vk_instance;
+        vk::DebugUtilsMessengerEXT m_vk_debug_utils_messenger;
         vk::SurfaceKHR m_vk_surface;
         vk::PhysicalDevice m_vk_physical_device;
         vk::Device m_vk_device;
@@ -92,14 +93,26 @@ namespace mve {
 
         void cleanup_vk_swapchain();
 
+        void cleanup_vk_debug_messenger();
+
+        static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
+            VkDebugUtilsMessageTypeFlagsEXT msg_type,
+            const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+            void *user_data);
+
         static bool has_validation_layer_support();
 
         static vk::Instance create_vk_instance(
             const std::string &app_name, int app_version_major, int app_version_minor, int app_version_patch);
 
+        static vk::DebugUtilsMessengerEXT create_vk_debug_messenger(vk::Instance instance);
+
         static std::vector<const char *> get_vk_validation_layer_exts();
 
         static std::vector<const char *> get_vk_required_device_exts();
+
+        static std::vector<const char *> get_vk_instance_required_exts();
 
         static vk::PhysicalDevice pick_vk_physical_device(vk::Instance instance, vk::SurfaceKHR surface);
 
