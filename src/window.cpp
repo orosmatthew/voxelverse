@@ -74,4 +74,21 @@ namespace mve {
     {
         m_resize_callback.reset();
     }
+
+    InputState Window::get_key(InputKey key)
+    {
+        return static_cast<InputState>(glfwGetKey(m_glfw_window.get(), static_cast<int>(key)));
+    }
+
+    glm::vec2 Window::get_cursor_pos(bool clamped_to_window)
+    {
+        glm::dvec2 mouse_pos;
+        glfwGetCursorPos(m_glfw_window.get(), &(mouse_pos.x), &(mouse_pos.y));
+        if (clamped_to_window) {
+            glm::ivec2 window_size = get_size();
+            mouse_pos.x = glm::clamp(mouse_pos.x, 0.0, static_cast<double>(window_size.x));
+            mouse_pos.y = glm::clamp(mouse_pos.y, 0.0, static_cast<double>(window_size.y));
+        }
+        return { mouse_pos };
+    }
 }
