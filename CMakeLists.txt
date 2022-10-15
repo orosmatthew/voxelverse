@@ -27,4 +27,5 @@ target_link_libraries(${PROJECT_NAME}
         glm)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-        lib/spdlog-1.10.0/include)
+        lib/spdlog-1.10.0/include
+        lib/vma-3.0.1/include)

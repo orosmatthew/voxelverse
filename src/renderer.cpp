@@ -5,7 +5,10 @@
 
 #include "window.hpp"
 
-#include <glm/glm.hpp>
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
+#include <unordered_map>
 
 namespace mve {
     Renderer::Renderer(
@@ -27,7 +30,7 @@ namespace mve {
         m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
         m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_surface);
 
-        VkSwapchainSupportDetails swapchain_support_details
+        SwapchainSupportDetails swapchain_support_details
             = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
 
         m_vk_swapchain_image_format = choose_vk_swapchain_surface_format(swapchain_support_details.formats);
@@ -41,7 +44,7 @@ namespace mve {
         m_vk_swapchain_image_views
             = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
 
-        VkQueueFamilyIndices indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
+        QueueFamilyIndices indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
         m_vk_graphics_queue = m_vk_device.getQueue(indices.graphics_family.value(), 0);
         m_vk_present_queue = m_vk_device.getQueue(indices.present_family.value(), 0);
 
@@ -56,6 +59,27 @@ namespace mve {
             = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
 
         m_vk_command_pool = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device);
+
+        VmaVulkanFunctions vulkanFunctions = {};
+        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+        allocatorCreateInfo.physicalDevice = m_vk_physical_device;
+        allocatorCreateInfo.device = m_vk_device;
+        allocatorCreateInfo.instance = m_vk_instance;
+        allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+        vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
+
+        const std::vector<Vertex> vertices = {
+            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+        };
+
+        m_vertex_buffer = create_vertex_buffer(m_vma_allocator, vertices);
 
         m_vk_command_buffers = create_vk_command_buffers(m_vk_device, m_vk_command_pool, m_frames_in_flight);
 
@@ -160,7 +184,7 @@ namespace mve {
 
     bool Renderer::is_vk_physical_device_suitable(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
     {
-        VkQueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
+        QueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
 
         std::vector<vk::ExtensionProperties> available_exts = physical_device.enumerateDeviceExtensionProperties();
 
@@ -179,18 +203,17 @@ namespace mve {
             }
         }
 
-        VkSwapchainSupportDetails swapchain_support_details
-            = get_vk_swapchain_support_details(physical_device, surface);
+        SwapchainSupportDetails swapchain_support_details = get_vk_swapchain_support_details(physical_device, surface);
         bool is_swapchain_adequate
             = !swapchain_support_details.formats.empty() && !swapchain_support_details.present_modes.empty();
 
         return indices.is_complete() && is_swapchain_adequate;
     }
 
-    Renderer::VkQueueFamilyIndices Renderer::get_vk_queue_family_indices(
+    Renderer::QueueFamilyIndices Renderer::get_vk_queue_family_indices(
         vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
     {
-        VkQueueFamilyIndices indices;
+        QueueFamilyIndices indices;
 
         std::vector<vk::QueueFamilyProperties> queue_families = physical_device.getQueueFamilyProperties();
         int i = 0;
@@ -212,7 +235,7 @@ namespace mve {
     }
     vk::Device Renderer::create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
     {
-        VkQueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
+        QueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
 
         std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
         std::set<uint32_t> _queue_families = { indices.graphics_family.value(), indices.present_family.value() };
@@ -273,10 +296,10 @@ namespace mve {
         return std::vector<const char *> { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     }
 
-    Renderer::VkSwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
+    Renderer::SwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
         vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
     {
-        VkSwapchainSupportDetails details;
+        SwapchainSupportDetails details;
 
         details.capabilities = physical_device.getSurfaceCapabilitiesKHR(surface);
         details.formats = physical_device.getSurfaceFormatsKHR(surface);
@@ -332,8 +355,7 @@ namespace mve {
         vk::SurfaceFormatKHR surface_format,
         vk::Extent2D surface_extent)
     {
-        VkSwapchainSupportDetails swapchain_support_details
-            = get_vk_swapchain_support_details(physical_device, surface);
+        SwapchainSupportDetails swapchain_support_details = get_vk_swapchain_support_details(physical_device, surface);
 
         vk::PresentModeKHR present_mode = choose_vk_swapchain_present_mode(swapchain_support_details.present_modes);
 
@@ -343,7 +365,7 @@ namespace mve {
             image_count = swapchain_support_details.capabilities.maxImageCount;
         }
 
-        VkQueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
+        QueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
         uint32_t indices_arr[] = { indices.graphics_family.value(), indices.present_family.value() };
 
         auto swapchain_create_info
@@ -445,12 +467,16 @@ namespace mve {
 
         vk::PipelineShaderStageCreateInfo shader_stages[] = { vertex_shader_stage_info, fragment_shader_stage_info };
 
+        vk::VertexInputBindingDescription binding_description = Vertex::get_binding_description();
+        std::array<vk::VertexInputAttributeDescription, 2> attribute_descriptions
+            = Vertex::get_attribute_descriptions();
+
         auto vertex_input_info
             = vk::PipelineVertexInputStateCreateInfo()
-                  .setVertexBindingDescriptionCount(0)
-                  .setPVertexBindingDescriptions(nullptr)
-                  .setVertexAttributeDescriptionCount(0)
-                  .setPVertexAttributeDescriptions(nullptr);
+                  .setVertexBindingDescriptionCount(1)
+                  .setPVertexBindingDescriptions(&binding_description)
+                  .setVertexAttributeDescriptionCount(static_cast<uint32_t>(attribute_descriptions.size()))
+                  .setPVertexAttributeDescriptions(attribute_descriptions.data());
 
         auto input_assembly_info
             = vk::PipelineInputAssemblyStateCreateInfo()
@@ -620,7 +646,7 @@ namespace mve {
     vk::CommandPool Renderer::create_vk_command_pool(
         vk::PhysicalDevice physical_device, vk::SurfaceKHR surface, vk::Device device)
     {
-        VkQueueFamilyIndices queue_family_indices = get_vk_queue_family_indices(physical_device, surface);
+        QueueFamilyIndices queue_family_indices = get_vk_queue_family_indices(physical_device, surface);
 
         auto command_pool_info = vk::CommandPoolCreateInfo()
                                      .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
@@ -648,7 +674,8 @@ namespace mve {
         vk::RenderPass render_pass,
         const std::vector<vk::Framebuffer> &swapchain_framebuffers,
         vk::Extent2D swapchain_extent,
-        vk::Pipeline graphics_pipeline)
+        vk::Pipeline graphics_pipeline,
+        VertexBuffer vertex_buffer)
     {
         auto buffer_begin_info = vk::CommandBufferBeginInfo();
         command_buffer.begin(buffer_begin_info);
@@ -667,6 +694,10 @@ namespace mve {
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline);
 
+        vk::Buffer vertex_buffers[] = { vertex_buffer.buffer };
+        vk::DeviceSize offsets[] = { 0 };
+        command_buffer.bindVertexBuffers(0, 1, vertex_buffers, offsets);
+
         auto viewport
             = vk::Viewport()
                   .setX(0.0f)
@@ -682,7 +713,13 @@ namespace mve {
 
         command_buffer.setScissor(0, { scissor });
 
-        command_buffer.draw(3, 1, 0, 0);
+        const std::vector<Vertex> vertices = {
+            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+        };
+
+        command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
         command_buffer.endRenderPass();
 
@@ -717,7 +754,8 @@ namespace mve {
             m_vk_render_pass,
             m_vk_swapchain_framebuffers,
             m_vk_swapchain_extent,
-            m_vk_graphics_pipeline);
+            m_vk_graphics_pipeline,
+            m_vertex_buffer);
 
         vk::Semaphore wait_semaphores[] = { m_vk_image_available_semaphores[m_current_frame] };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -762,6 +800,9 @@ namespace mve {
 
         cleanup_vk_swapchain();
 
+        vmaDestroyBuffer(m_vma_allocator, m_vertex_buffer.buffer, m_vertex_buffer.allocation);
+        vmaDestroyAllocator(m_vma_allocator);
+
         m_vk_device.destroy(m_vk_graphics_pipeline);
         m_vk_device.destroy(m_vk_pipeline_layout);
         m_vk_device.destroy(m_vk_render_pass);
@@ -793,7 +834,7 @@ namespace mve {
 
         cleanup_vk_swapchain();
 
-        VkSwapchainSupportDetails swapchain_support_details
+        SwapchainSupportDetails swapchain_support_details
             = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
 
         m_vk_swapchain_extent
@@ -883,6 +924,93 @@ namespace mve {
             func(m_vk_instance, m_vk_debug_utils_messenger, nullptr);
         }
     }
+
+    vk::Buffer Renderer::create_vk_vertex_buffer(vk::Device device)
+    {
+        const std::vector<Vertex> vertices = {
+            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+        };
+
+        auto buffer_info = vk::BufferCreateInfo()
+                               .setSize(sizeof(Vertex) * vertices.size())
+                               .setUsage(vk::BufferUsageFlagBits::eVertexBuffer)
+                               .setSharingMode(vk::SharingMode::eExclusive);
+
+        return device.createBuffer(buffer_info);
+    }
+
+    uint32_t Renderer::find_vk_memory_type(
+        vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties)
+    {
+        vk::PhysicalDeviceMemoryProperties mem_props = physical_device.getMemoryProperties();
+        for (uint32_t i = 0; i < mem_props.memoryTypeCount; i++) {
+            if ((type_filter & (1 << i)) && (mem_props.memoryTypes[i].propertyFlags & properties) == properties) {
+                return i;
+            }
+        }
+        throw std::runtime_error("Failed to find suitable Vulkan memory type");
+    }
+
+    vk::DeviceMemory Renderer::create_vk_vertex_buffer_memory(
+        vk::PhysicalDevice physical_device, vk::Device device, vk::Buffer vertex_buffer)
+    {
+        vk::MemoryRequirements mem_requirements = device.getBufferMemoryRequirements(vertex_buffer);
+
+        auto alloc_info
+            = vk::MemoryAllocateInfo()
+                  .setAllocationSize(mem_requirements.size)
+                  .setMemoryTypeIndex(find_vk_memory_type(
+                      physical_device,
+                      mem_requirements.memoryTypeBits,
+                      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+
+        return device.allocateMemory(alloc_info);
+    }
+
+    //    void Renderer::bind_vk_vertex_data()
+    //    {
+    //        const std::vector<Vertex> vertices = {
+    //            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    //            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+    //            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+    //        };
+    //
+    //        m_vk_device.bindBufferMemory(m_vertex_buffer.buffer, , vk::DeviceSize(0));
+    //
+    //        uint32_t buffer_size = sizeof(Vertex) * vertices.size();
+    //
+    //        void *data;
+    //        vk::Result result = m_vk_device.mapMemory(m_vk_vertex_memory, 0, buffer_size, vk::MemoryMapFlags(),
+    //        &data); if (result != vk::Result::eSuccess) {
+    //            throw std::runtime_error("Failed to map vertex buffer memory");
+    //        }
+    //        memcpy(data, vertices.data(), static_cast<size_t>(buffer_size));
+    //        m_vk_device.unmapMemory(m_vk_vertex_memory);
+    //    }
+
+    Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const std::vector<Vertex> &vertices)
+    {
+        auto buffer_info = VkBufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        buffer_info.size = sizeof(Vertex) * vertices.size();
+        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        auto alloc_info = VmaAllocationCreateInfo {};
+        alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+        VkBuffer buffer;
+        VmaAllocation allocation;
+        vmaCreateBuffer(allocator, &buffer_info, &alloc_info, &buffer, &allocation, nullptr);
+
+        void *data;
+        vmaMapMemory(allocator, allocation, &data);
+        memcpy(data, vertices.data(), vertices.size() * sizeof(Vertex));
+        vmaUnmapMemory(allocator, allocation);
+
+        return { buffer, allocation };
+    };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
     {

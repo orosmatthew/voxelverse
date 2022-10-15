@@ -16,8 +16,8 @@ namespace app {
 
         auto window = Window("Mini Vulkan Engine", glm::ivec2(800, 600));
 
-        auto vertex_shader = Shader("shaders/simple.vert", ShaderType::e_vertex, true);
-        auto fragment_shader = Shader("shaders/simple.frag", ShaderType::e_fragment, true);
+        auto vertex_shader = Shader("../shaders/simple.vert", ShaderType::e_vertex, true);
+        auto fragment_shader = Shader("../shaders/simple.frag", ShaderType::e_fragment, true);
 
         auto renderer = Renderer(window, "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader);
 

@@ -13,6 +13,10 @@
 
 #include <filesystem>
 
+#include <glm/glm.hpp>
+
+#include <vk_mem_alloc.h>
+
 namespace mve {
 
     class Window;
@@ -20,6 +24,43 @@ namespace mve {
     enum class ShaderType {
         e_vertex,
         e_fragment,
+    };
+
+    struct Vertex {
+        glm::vec2 pos;
+        glm::vec3 color;
+
+        static vk::VertexInputBindingDescription get_binding_description()
+        {
+            auto binding_description
+                = vk::VertexInputBindingDescription()
+                      .setBinding(0)
+                      .setStride(sizeof(Vertex))
+                      .setInputRate(vk::VertexInputRate::eVertex);
+
+            return binding_description;
+        }
+
+        static std::array<vk::VertexInputAttributeDescription, 2> get_attribute_descriptions()
+        {
+            auto attribute_descriptions = std::array<vk::VertexInputAttributeDescription, 2>();
+
+            attribute_descriptions[0]
+                = vk::VertexInputAttributeDescription()
+                      .setBinding(0)
+                      .setLocation(0)
+                      .setFormat(vk::Format::eR32G32Sfloat)
+                      .setOffset(offsetof(Vertex, pos));
+
+            attribute_descriptions[1]
+                = vk::VertexInputAttributeDescription()
+                      .setBinding(0)
+                      .setLocation(1)
+                      .setFormat(vk::Format::eR32G32B32Sfloat)
+                      .setOffset(offsetof(Vertex, color));
+
+            return attribute_descriptions;
+        }
     };
 
     class Shader {
@@ -34,6 +75,8 @@ namespace mve {
 
     class Renderer {
     public:
+        using Resource = uint32_t;
+
         Renderer(
             const Window &window,
             const std::string &app_name,
@@ -51,7 +94,7 @@ namespace mve {
         void recreate_swapchain(const Window &window);
 
     private:
-        struct VkQueueFamilyIndices {
+        struct QueueFamilyIndices {
             std::optional<uint32_t> graphics_family;
             std::optional<uint32_t> present_family;
 
@@ -61,10 +104,15 @@ namespace mve {
             }
         };
 
-        struct VkSwapchainSupportDetails {
+        struct SwapchainSupportDetails {
             vk::SurfaceCapabilitiesKHR capabilities;
             std::vector<vk::SurfaceFormatKHR> formats;
             std::vector<vk::PresentModeKHR> present_modes;
+        };
+
+        struct VertexBuffer {
+            vk::Buffer buffer;
+            VmaAllocation allocation;
         };
 
         int m_frames_in_flight;
@@ -90,10 +138,15 @@ namespace mve {
         std::vector<vk::Semaphore> m_vk_render_finished_semaphores;
         std::vector<vk::Fence> m_vk_in_flight_fences;
         uint32_t m_current_frame = 0;
+        VmaAllocator m_vma_allocator {};
+        VertexBuffer m_vertex_buffer;
+        Resource resource_id_count = 0;
 
         void cleanup_vk_swapchain();
 
         void cleanup_vk_debug_messenger();
+
+        //        void bind_vk_vertex_data();
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
             VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
@@ -120,12 +173,12 @@ namespace mve {
 
         static vk::Device create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
-        static VkQueueFamilyIndices get_vk_queue_family_indices(
+        static QueueFamilyIndices get_vk_queue_family_indices(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
         static vk::SurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow *window);
 
-        static VkSwapchainSupportDetails get_vk_swapchain_support_details(
+        static SwapchainSupportDetails get_vk_swapchain_support_details(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
         static vk::SurfaceFormatKHR choose_vk_swapchain_surface_format(
@@ -177,6 +230,17 @@ namespace mve {
             vk::RenderPass render_pass,
             const std::vector<vk::Framebuffer> &swapchain_framebuffers,
             vk::Extent2D swapchain_extent,
-            vk::Pipeline graphics_pipeline);
+            vk::Pipeline graphics_pipeline,
+            VertexBuffer vertex_buffer);
+
+        static vk::Buffer create_vk_vertex_buffer(vk::Device device);
+
+        static uint32_t find_vk_memory_type(
+            vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties);
+
+        static vk::DeviceMemory create_vk_vertex_buffer_memory(
+            vk::PhysicalDevice physical_device, vk::Device device, vk::Buffer vertex_buffer);
+
+        static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const std::vector<Vertex> &vertices);
     };
 }
