@@ -1,9 +1,12 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
 #include <functional>
-#include <glm/glm.hpp>
 #include <optional>
+#include <string>
+#include <memory>
+
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 namespace mve {
 
