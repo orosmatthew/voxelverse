@@ -188,7 +188,7 @@ namespace mve {
 
         std::vector<vk::ExtensionProperties> available_exts = physical_device.enumerateDeviceExtensionProperties();
 
-        std::vector<const char *> required_exts = get_vk_required_device_exts();
+        std::vector<const char *> required_exts = get_vk_device_required_exts();
 
         for (const std::string &required_ext : required_exts) {
             bool is_available = false;
@@ -254,7 +254,7 @@ namespace mve {
 
         vk::PhysicalDeviceFeatures device_features;
 
-        std::vector<const char *> required_exts = get_vk_required_device_exts();
+        std::vector<const char *> required_exts = get_vk_device_required_exts();
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
         const std::vector<const char *> validation_layers = get_vk_validation_layer_exts();
@@ -291,7 +291,7 @@ namespace mve {
         return { surface };
     }
 
-    std::vector<const char *> Renderer::get_vk_required_device_exts()
+    std::vector<const char *> Renderer::get_vk_device_required_exts()
     {
         return std::vector<const char *> { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     }

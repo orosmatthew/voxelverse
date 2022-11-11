@@ -163,7 +163,7 @@ namespace mve {
 
         static std::vector<const char *> get_vk_validation_layer_exts();
 
-        static std::vector<const char *> get_vk_required_device_exts();
+        static std::vector<const char *> get_vk_device_required_exts();
 
         static std::vector<const char *> get_vk_instance_required_exts();
 
