@@ -28,7 +28,8 @@ namespace mve {
 #endif
         m_vk_surface = create_vk_surface(m_vk_instance, window.get_glfw_handle());
         m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
-        m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_surface);
+        m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
+        m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_queue_family_indices);
 
         SwapchainSupportDetails swapchain_support_details
             = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
@@ -37,16 +38,20 @@ namespace mve {
         m_vk_swapchain_extent
             = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
         m_vk_swapchain = create_vk_swapchain(
-            m_vk_physical_device, m_vk_device, m_vk_surface, m_vk_swapchain_image_format, m_vk_swapchain_extent);
+            m_vk_physical_device,
+            m_vk_device,
+            m_vk_surface,
+            m_vk_swapchain_image_format,
+            m_vk_swapchain_extent,
+            m_vk_queue_family_indices);
 
         m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
 
         m_vk_swapchain_image_views
             = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
 
-        QueueFamilyIndices indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
-        m_vk_graphics_queue = m_vk_device.getQueue(indices.graphics_family.value(), 0);
-        m_vk_present_queue = m_vk_device.getQueue(indices.present_family.value(), 0);
+        m_vk_graphics_queue = m_vk_device.getQueue(m_vk_queue_family_indices.graphics_family.value(), 0);
+        m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0);
 
         m_vk_pipeline_layout = create_vk_pipeline_layout(m_vk_device);
 
@@ -58,7 +63,8 @@ namespace mve {
         m_vk_swapchain_framebuffers
             = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
 
-        m_vk_command_pool = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device);
+        m_vk_command_pool
+            = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device, m_vk_queue_family_indices);
 
         VmaVulkanFunctions vulkanFunctions = {};
         vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
@@ -233,12 +239,15 @@ namespace mve {
         }
         return indices;
     }
-    vk::Device Renderer::create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
+    vk::Device Renderer::create_vk_logical_device(
+        vk::PhysicalDevice physical_device, QueueFamilyIndices queue_family_indices)
     {
-        QueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
-
         std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
-        std::set<uint32_t> _queue_families = { indices.graphics_family.value(), indices.present_family.value() };
+
+        assert(queue_family_indices.is_complete());
+
+        std::set<uint32_t> _queue_families
+            = { queue_family_indices.graphics_family.value(), queue_family_indices.present_family.value() };
 
         float queue_priority = 1.0f;
 
@@ -353,7 +362,8 @@ namespace mve {
         vk::Device device,
         vk::SurfaceKHR surface,
         vk::SurfaceFormatKHR surface_format,
-        vk::Extent2D surface_extent)
+        vk::Extent2D surface_extent,
+        QueueFamilyIndices queue_family_indices)
     {
         SwapchainSupportDetails swapchain_support_details = get_vk_swapchain_support_details(physical_device, surface);
 
@@ -365,8 +375,10 @@ namespace mve {
             image_count = swapchain_support_details.capabilities.maxImageCount;
         }
 
-        QueueFamilyIndices indices = get_vk_queue_family_indices(physical_device, surface);
-        uint32_t indices_arr[] = { indices.graphics_family.value(), indices.present_family.value() };
+        assert(queue_family_indices.is_complete());
+
+        uint32_t indices_arr[]
+            = { queue_family_indices.graphics_family.value(), queue_family_indices.present_family.value() };
 
         auto swapchain_create_info
             = vk::SwapchainCreateInfoKHR()
@@ -383,7 +395,7 @@ namespace mve {
                   .setClipped(true)
                   .setOldSwapchain(nullptr);
 
-        if (indices.graphics_family != indices.present_family) {
+        if (queue_family_indices.graphics_family != queue_family_indices.present_family) {
             swapchain_create_info.setImageSharingMode(vk::SharingMode::eConcurrent)
                 .setQueueFamilyIndexCount(2)
                 .setPQueueFamilyIndices(indices_arr);
@@ -644,9 +656,12 @@ namespace mve {
     }
 
     vk::CommandPool Renderer::create_vk_command_pool(
-        vk::PhysicalDevice physical_device, vk::SurfaceKHR surface, vk::Device device)
+        vk::PhysicalDevice physical_device,
+        vk::SurfaceKHR surface,
+        vk::Device device,
+        QueueFamilyIndices queue_family_indices)
     {
-        QueueFamilyIndices queue_family_indices = get_vk_queue_family_indices(physical_device, surface);
+        assert(queue_family_indices.is_complete());
 
         auto command_pool_info = vk::CommandPoolCreateInfo()
                                      .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
@@ -841,7 +856,12 @@ namespace mve {
             = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
 
         m_vk_swapchain = create_vk_swapchain(
-            m_vk_physical_device, m_vk_device, m_vk_surface, m_vk_swapchain_image_format, m_vk_swapchain_extent);
+            m_vk_physical_device,
+            m_vk_device,
+            m_vk_surface,
+            m_vk_swapchain_image_format,
+            m_vk_swapchain_extent,
+            m_vk_queue_family_indices);
 
         m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
 

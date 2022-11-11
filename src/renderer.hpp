@@ -137,6 +137,7 @@ namespace mve {
         std::vector<vk::Semaphore> m_vk_image_available_semaphores;
         std::vector<vk::Semaphore> m_vk_render_finished_semaphores;
         std::vector<vk::Fence> m_vk_in_flight_fences;
+        QueueFamilyIndices m_vk_queue_family_indices;
         uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator {};
         VertexBuffer m_vertex_buffer;
@@ -171,7 +172,8 @@ namespace mve {
 
         static bool is_vk_physical_device_suitable(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
-        static vk::Device create_vk_logical_device(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
+        static vk::Device create_vk_logical_device(
+            vk::PhysicalDevice physical_device, QueueFamilyIndices queue_family_indices);
 
         static QueueFamilyIndices get_vk_queue_family_indices(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
@@ -194,7 +196,8 @@ namespace mve {
             vk::Device device,
             vk::SurfaceKHR surface,
             vk::SurfaceFormatKHR surface_format,
-            vk::Extent2D surface_extent);
+            vk::Extent2D surface_extent,
+            QueueFamilyIndices queue_family_indices);
 
         static std::vector<vk::Image> get_vk_swapchain_images(vk::Device device, vk::SwapchainKHR swapchain);
 
@@ -219,7 +222,10 @@ namespace mve {
             vk::Extent2D swapchain_extent);
 
         static vk::CommandPool create_vk_command_pool(
-            vk::PhysicalDevice physical_device, vk::SurfaceKHR, vk::Device device);
+            vk::PhysicalDevice physical_device,
+            vk::SurfaceKHR,
+            vk::Device device,
+            QueueFamilyIndices queue_family_indices);
 
         static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
