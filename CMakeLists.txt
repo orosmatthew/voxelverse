@@ -8,6 +8,10 @@ find_package(Vulkan REQUIRED
         OPTIONAL_COMPONENTS
         shaderc_combined)
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(lib/glfw-3.3.8)
 add_subdirectory(lib/glm-0.9.9.8)
 
