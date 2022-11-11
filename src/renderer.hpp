@@ -91,6 +91,8 @@ namespace mve {
 
         void draw_frame(const Window &window);
 
+        void record_vk_command_buffer(uint32_t image_index);
+
         void recreate_swapchain(const Window &window);
 
     private:
@@ -229,15 +231,6 @@ namespace mve {
 
         static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
-
-        static void record_vk_command_buffer(
-            vk::CommandBuffer command_buffer,
-            uint32_t image_index,
-            vk::RenderPass render_pass,
-            const std::vector<vk::Framebuffer> &swapchain_framebuffers,
-            vk::Extent2D swapchain_extent,
-            vk::Pipeline graphics_pipeline,
-            VertexBuffer vertex_buffer);
 
         static vk::Buffer create_vk_vertex_buffer(vk::Device device);
 

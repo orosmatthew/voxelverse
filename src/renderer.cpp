@@ -683,64 +683,6 @@ namespace mve {
         return command_buffers;
     }
 
-    void Renderer::record_vk_command_buffer(
-        vk::CommandBuffer command_buffer,
-        uint32_t image_index,
-        vk::RenderPass render_pass,
-        const std::vector<vk::Framebuffer> &swapchain_framebuffers,
-        vk::Extent2D swapchain_extent,
-        vk::Pipeline graphics_pipeline,
-        VertexBuffer vertex_buffer)
-    {
-        auto buffer_begin_info = vk::CommandBufferBeginInfo();
-        command_buffer.begin(buffer_begin_info);
-
-        auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
-
-        auto render_pass_begin_info
-            = vk::RenderPassBeginInfo()
-                  .setRenderPass(render_pass)
-                  .setFramebuffer(swapchain_framebuffers[image_index])
-                  .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(swapchain_extent))
-                  .setClearValueCount(1)
-                  .setPClearValues(&clear_color);
-
-        command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline);
-
-        vk::Buffer vertex_buffers[] = { vertex_buffer.buffer };
-        vk::DeviceSize offsets[] = { 0 };
-        command_buffer.bindVertexBuffers(0, 1, vertex_buffers, offsets);
-
-        auto viewport
-            = vk::Viewport()
-                  .setX(0.0f)
-                  .setY(0.0f)
-                  .setWidth(static_cast<float>(swapchain_extent.width))
-                  .setHeight(static_cast<float>(swapchain_extent.height))
-                  .setMinDepth(0.0f)
-                  .setMaxDepth(1.0f);
-
-        command_buffer.setViewport(0, { viewport });
-
-        auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(swapchain_extent);
-
-        command_buffer.setScissor(0, { scissor });
-
-        const std::vector<Vertex> vertices = {
-            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-        };
-
-        command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-
-        command_buffer.endRenderPass();
-
-        command_buffer.end();
-    }
-
     void Renderer::draw_frame(const Window &window)
     {
         if (window.was_resized()) {
@@ -763,14 +705,7 @@ namespace mve {
 
         m_vk_command_buffers[m_current_frame].reset();
 
-        record_vk_command_buffer(
-            m_vk_command_buffers[m_current_frame],
-            image_index,
-            m_vk_render_pass,
-            m_vk_swapchain_framebuffers,
-            m_vk_swapchain_extent,
-            m_vk_graphics_pipeline,
-            m_vertex_buffer);
+        record_vk_command_buffer(image_index);
 
         vk::Semaphore wait_semaphores[] = { m_vk_image_available_semaphores[m_current_frame] };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -1032,6 +967,59 @@ namespace mve {
         vmaUnmapMemory(allocator, allocation);
 
         return { buffer, allocation };
+    }
+
+    void Renderer::record_vk_command_buffer(uint32_t image_index)
+    {
+        vk::CommandBuffer command_buffer = m_vk_command_buffers[m_current_frame];
+
+        auto buffer_begin_info = vk::CommandBufferBeginInfo();
+        command_buffer.begin(buffer_begin_info);
+
+        auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+
+        auto render_pass_begin_info
+            = vk::RenderPassBeginInfo()
+                  .setRenderPass(m_vk_render_pass)
+                  .setFramebuffer(m_vk_swapchain_framebuffers[image_index])
+                  .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
+                  .setClearValueCount(1)
+                  .setPClearValues(&clear_color);
+
+        command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
+
+        vk::Buffer vertex_buffers[] = { m_vertex_buffer.buffer };
+        vk::DeviceSize offsets[] = { 0 };
+        command_buffer.bindVertexBuffers(0, 1, vertex_buffers, offsets);
+
+        auto viewport
+            = vk::Viewport()
+                  .setX(0.0f)
+                  .setY(0.0f)
+                  .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
+                  .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
+                  .setMinDepth(0.0f)
+                  .setMaxDepth(1.0f);
+
+        command_buffer.setViewport(0, { viewport });
+
+        auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
+
+        command_buffer.setScissor(0, { scissor });
+
+        const std::vector<Vertex> vertices = {
+            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+        };
+
+        command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+
+        command_buffer.endRenderPass();
+
+        command_buffer.end();
     };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
