@@ -141,7 +141,7 @@ namespace mve {
         std::vector<vk::Fence> m_vk_in_flight_fences;
         QueueFamilyIndices m_vk_queue_family_indices;
         uint32_t m_current_frame = 0;
-        VmaAllocator m_vma_allocator {};
+        VmaAllocator m_vma_allocator;
         VertexBuffer m_vertex_buffer;
         Resource resource_id_count = 0;
 

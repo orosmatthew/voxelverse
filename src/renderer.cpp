@@ -66,16 +66,10 @@ namespace mve {
         m_vk_command_pool
             = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device, m_vk_queue_family_indices);
 
-        VmaVulkanFunctions vulkanFunctions = {};
-        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
-        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
-
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
-        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
         allocatorCreateInfo.physicalDevice = m_vk_physical_device;
         allocatorCreateInfo.device = m_vk_device;
         allocatorCreateInfo.instance = m_vk_instance;
-        allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
 
         vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
 
@@ -892,8 +886,7 @@ namespace mve {
 
         auto buffer_info = vk::BufferCreateInfo()
                                .setSize(sizeof(Vertex) * vertices.size())
-                               .setUsage(vk::BufferUsageFlagBits::eVertexBuffer)
-                               .setSharingMode(vk::SharingMode::eExclusive);
+                               .setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
 
         return device.createBuffer(buffer_info);
     }
@@ -949,10 +942,10 @@ namespace mve {
 
     Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const std::vector<Vertex> &vertices)
     {
-        auto buffer_info = VkBufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        auto buffer_info = VkBufferCreateInfo {};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         buffer_info.size = sizeof(Vertex) * vertices.size();
         buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         auto alloc_info = VmaAllocationCreateInfo {};
         alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
