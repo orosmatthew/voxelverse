@@ -33,5 +33,7 @@ TEST_CASE("Test VertexData", "[VertexData]")
     vertex_data.add_data(3.0f);
     REQUIRE(vertex_data.is_complete() == false);
 
+    REQUIRE(vertex_data.get_data_count() == 5);
+
     REQUIRE(vertex_data.get_data_ptr() != nullptr);
 }
