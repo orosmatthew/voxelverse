@@ -15,7 +15,7 @@ namespace mve {
 
         m_data.push_back(value);
 
-        m_type_count++;
+        m_data_count++;
     }
 
     void VertexData::add_data(glm::vec2 value)
@@ -25,7 +25,7 @@ namespace mve {
         m_data.push_back(value[0]);
         m_data.push_back(value[1]);
 
-        m_type_count++;
+        m_data_count++;
     }
 
     void VertexData::add_data(glm::vec3 value)
@@ -36,7 +36,7 @@ namespace mve {
         m_data.push_back(value[1]);
         m_data.push_back(value[2]);
 
-        m_type_count++;
+        m_data_count++;
     }
 
     void VertexData::add_data(glm::vec4 value)
@@ -48,16 +48,26 @@ namespace mve {
         m_data.push_back(value[2]);
         m_data.push_back(value[3]);
 
-        m_type_count++;
+        m_data_count++;
     }
 
     VertexAttributeType VertexData::get_next_type() const
     {
-        return m_layout[m_type_count % m_layout.size()];
+        return m_layout[m_data_count % m_layout.size()];
     }
 
     const float *VertexData::get_data_ptr() const
     {
         return m_data.data();
+    }
+
+    int VertexData::get_data_count() const
+    {
+        return m_data_count;
+    }
+
+    bool VertexData::is_complete() const
+    {
+        return (m_data_count % m_layout.size()) == 0;
     }
 }

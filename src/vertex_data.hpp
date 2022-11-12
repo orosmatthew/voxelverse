@@ -68,6 +68,18 @@ namespace mve {
          */
         [[nodiscard]] const float *get_data_ptr() const;
 
+        /**
+         * Get number of values in vertex data
+         * @return - number of values in vertex data
+         */
+        [[nodiscard]] int get_data_count() const;
+
+        /**
+         * Determines if all vertices have all attribute values added
+         * @return - true if all values are defined
+         */
+        [[nodiscard]] bool is_complete() const;
+
     private:
         /// Layout for vertex data
         VertexLayout m_layout;
@@ -75,7 +87,7 @@ namespace mve {
         /// Array of floats for the actual data
         std::vector<float> m_data;
 
-        /// Count of how many values are added
-        int m_type_count = 0;
+        /// Count of how many values are added to data
+        int m_data_count = 0;
     };
 }

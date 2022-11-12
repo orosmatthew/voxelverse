@@ -19,23 +19,53 @@ set(LIB_SOURCE_FILES
         lib/whereami-ba364cd/src/whereami.c)
 
 set(SOURCE_FILES
-        src/main.cpp
-        src/app.hpp src/app.cpp
-        src/logger.hpp src/logger.cpp
-        src/renderer.hpp src/renderer.cpp
-        src/window.hpp src/window.cpp)
+        src/app.cpp
+        src/logger.cpp
+        src/renderer.cpp
+        src/window.cpp
+        src/vertex_data.cpp)
 
-add_executable(${PROJECT_NAME})
-
-target_sources(${PROJECT_NAME} PRIVATE ${LIB_SOURCE_FILES} ${SOURCE_FILES})
-
-target_link_libraries(${PROJECT_NAME}
+set(LIBS
         Vulkan::Vulkan
         Vulkan::shaderc_combined
         glfw
         glm)
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+set(LIB_INCLUDES
         lib/spdlog-1.11.0/include
         lib/vma-3.0.1/include
         lib/whereami-ba364cd/include)
+
+add_executable(${PROJECT_NAME})
+
+target_sources(${PROJECT_NAME} PRIVATE
+        ${LIB_SOURCE_FILES}
+        ${SOURCE_FILES}
+        src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${LIBS})
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIB_INCLUDES})
+
+set(TEST_LIB_SOURCE_FILES
+        lib/catch2-3.1.1/src/catch_amalgamated.cpp)
+
+set(TEST_SOURCE_FILES
+        tests/vertex_data.cpp)
+
+set(TEST_LIB_INCLUDES
+        lib/catch2-3.1.1/include)
+
+add_executable(tests)
+
+target_sources(tests PRIVATE
+        ${LIB_SOURCE_FILES}
+        ${SOURCE_FILES}
+        ${TEST_LIB_SOURCE_FILES}
+        ${TEST_SOURCE_FILES})
+
+target_link_libraries(tests ${LIBS})
+
+target_include_directories(tests PRIVATE
+        ${LIB_INCLUDES}
+        ${TEST_LIB_INCLUDES})
