@@ -12,10 +12,13 @@
 #include "logger.hpp"
 
 #include <filesystem>
+#include <optional>
 
 #include <glm/glm.hpp>
 
 #include <vk_mem_alloc.h>
+
+#include "vertex_data.hpp"
 
 namespace mve {
 
@@ -75,7 +78,7 @@ namespace mve {
 
     class Renderer {
     public:
-        using Resource = uint32_t;
+        using VertexDataHandle = uint32_t;
 
         Renderer(
             const Window &window,
@@ -94,6 +97,8 @@ namespace mve {
         void record_vk_command_buffer(uint32_t image_index);
 
         void recreate_swapchain(const Window &window);
+
+        VertexDataHandle upload_vertex_data(const VertexData &vertex_data);
 
     private:
         struct QueueFamilyIndices {
@@ -115,6 +120,7 @@ namespace mve {
         struct VertexBuffer {
             vk::Buffer buffer;
             VmaAllocation allocation;
+            int vertex_count;
         };
 
         int m_frames_in_flight;
@@ -142,8 +148,9 @@ namespace mve {
         QueueFamilyIndices m_vk_queue_family_indices;
         uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator;
-        VertexBuffer m_vertex_buffer;
-        Resource resource_id_count = 0;
+        VertexDataHandle m_vertex_data_handle_count = 0;
+
+        std::vector<std::pair<VertexDataHandle, VertexBuffer>> m_vertex_buffers;
 
         void cleanup_vk_swapchain();
 
@@ -223,23 +230,11 @@ namespace mve {
             vk::RenderPass render_pass,
             vk::Extent2D swapchain_extent);
 
-        static vk::CommandPool create_vk_command_pool(
-            vk::PhysicalDevice physical_device,
-            vk::SurfaceKHR,
-            vk::Device device,
-            QueueFamilyIndices queue_family_indices);
+        static vk::CommandPool create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices);
 
         static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
-        static vk::Buffer create_vk_vertex_buffer(vk::Device device);
-
-        static uint32_t find_vk_memory_type(
-            vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties);
-
-        static vk::DeviceMemory create_vk_vertex_buffer_memory(
-            vk::PhysicalDevice physical_device, vk::Device device, vk::Buffer vertex_buffer);
-
-        static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const std::vector<Vertex> &vertices);
+        static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data);
     };
 }

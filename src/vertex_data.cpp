@@ -4,6 +4,28 @@
 
 namespace mve {
 
+    int get_vertex_layout_bytes(const VertexLayout &vertex_layout)
+    {
+        int byte_count = 0;
+        for (VertexAttributeType type : vertex_layout) {
+            switch (type) {
+            case VertexAttributeType::e_float:
+                byte_count += sizeof(float);
+                break;
+            case VertexAttributeType::e_vec2:
+                byte_count += sizeof(glm::vec2);
+                break;
+            case VertexAttributeType::e_vec3:
+                byte_count += sizeof(glm::vec3);
+                break;
+            case VertexAttributeType::e_vec4:
+                byte_count += sizeof(glm::vec4);
+                break;
+            }
+        }
+        return byte_count;
+    }
+
     VertexData::VertexData(VertexLayout layout)
         : m_layout(std::move(layout))
     {
@@ -61,7 +83,7 @@ namespace mve {
         return m_data.data();
     }
 
-    int VertexData::get_data_count() const
+    int VertexData::get_count() const
     {
         return m_data_count;
     }
@@ -69,5 +91,10 @@ namespace mve {
     bool VertexData::is_complete() const
     {
         return (m_data_count % m_layout.size()) == 0;
+    }
+
+    VertexLayout VertexData::get_layout() const
+    {
+        return m_layout;
     }
 }

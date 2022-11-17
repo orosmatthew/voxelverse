@@ -10,9 +10,15 @@ TEST_CASE("Test VertexData", "[VertexData]")
     layout.push_back(mve::VertexAttributeType::e_vec3);
     layout.push_back(mve::VertexAttributeType::e_vec4);
 
+    REQUIRE(
+        mve::get_vertex_layout_bytes(layout)
+        == sizeof(float) + sizeof(glm::vec2) + sizeof(glm::vec3) + sizeof(glm::vec4));
+
     auto vertex_data = mve::VertexData(layout);
 
-    REQUIRE(vertex_data.get_data_count() == 0);
+    REQUIRE(vertex_data.get_layout() == layout);
+
+    REQUIRE(vertex_data.get_count() == 0);
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_float);
     vertex_data.add_data(2.0f);
@@ -33,7 +39,7 @@ TEST_CASE("Test VertexData", "[VertexData]")
     vertex_data.add_data(3.0f);
     REQUIRE(vertex_data.is_complete() == false);
 
-    REQUIRE(vertex_data.get_data_count() == 5);
+    REQUIRE(vertex_data.get_count() == 5);
 
     REQUIRE(vertex_data.get_data_ptr() != nullptr);
 }

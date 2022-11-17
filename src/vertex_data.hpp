@@ -22,6 +22,13 @@ namespace mve {
     using VertexLayout = std::vector<VertexAttributeType>;
 
     /**
+     * Calculate number of bytes for each vertex given a layout
+     * @param vertex_layout - Vertex layout to calculate bytes
+     * @return - Number of bytes for each vertex in the layout
+     */
+    [[nodiscard]] int get_vertex_layout_bytes(const VertexLayout &vertex_layout);
+
+    /**
      * Class for holding vertex data
      */
     class VertexData {
@@ -72,13 +79,19 @@ namespace mve {
          * Get number of values in vertex data
          * @return - number of values in vertex data
          */
-        [[nodiscard]] int get_data_count() const;
+        [[nodiscard]] int get_count() const;
 
         /**
          * Determines if all vertices have all attribute values added
          * @return - true if all values are defined
          */
         [[nodiscard]] bool is_complete() const;
+
+        /**
+         * Get vertex layout of data
+         * @return - Vertex layout of data
+         */
+        [[nodiscard]] VertexLayout get_layout() const;
 
     private:
         /// Layout for vertex data

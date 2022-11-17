@@ -63,8 +63,7 @@ namespace mve {
         m_vk_swapchain_framebuffers
             = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
 
-        m_vk_command_pool
-            = create_vk_command_pool(m_vk_physical_device, m_vk_surface, m_vk_device, m_vk_queue_family_indices);
+        m_vk_command_pool = create_vk_command_pool(m_vk_device, m_vk_queue_family_indices);
 
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
         allocatorCreateInfo.physicalDevice = m_vk_physical_device;
@@ -72,14 +71,6 @@ namespace mve {
         allocatorCreateInfo.instance = m_vk_instance;
 
         vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
-
-        const std::vector<Vertex> vertices = {
-            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-        };
-
-        m_vertex_buffer = create_vertex_buffer(m_vma_allocator, vertices);
 
         m_vk_command_buffers = create_vk_command_buffers(m_vk_device, m_vk_command_pool, m_frames_in_flight);
 
@@ -649,11 +640,7 @@ namespace mve {
         return framebuffers;
     }
 
-    vk::CommandPool Renderer::create_vk_command_pool(
-        vk::PhysicalDevice physical_device,
-        vk::SurfaceKHR surface,
-        vk::Device device,
-        QueueFamilyIndices queue_family_indices)
+    vk::CommandPool Renderer::create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices)
     {
         assert(queue_family_indices.is_complete());
 
@@ -744,7 +731,9 @@ namespace mve {
 
         cleanup_vk_swapchain();
 
-        vmaDestroyBuffer(m_vma_allocator, m_vertex_buffer.buffer, m_vertex_buffer.allocation);
+        for (auto vertex_buffer_pair : m_vertex_buffers) {
+            vmaDestroyBuffer(m_vma_allocator, vertex_buffer_pair.second.buffer, vertex_buffer_pair.second.allocation);
+        }
         vmaDestroyAllocator(m_vma_allocator);
 
         m_vk_device.destroy(m_vk_graphics_pipeline);
@@ -876,92 +865,6 @@ namespace mve {
         }
     }
 
-    vk::Buffer Renderer::create_vk_vertex_buffer(vk::Device device)
-    {
-        const std::vector<Vertex> vertices = {
-            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-        };
-
-        auto buffer_info = vk::BufferCreateInfo()
-                               .setSize(sizeof(Vertex) * vertices.size())
-                               .setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
-
-        return device.createBuffer(buffer_info);
-    }
-
-    uint32_t Renderer::find_vk_memory_type(
-        vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties)
-    {
-        vk::PhysicalDeviceMemoryProperties mem_props = physical_device.getMemoryProperties();
-        for (uint32_t i = 0; i < mem_props.memoryTypeCount; i++) {
-            if ((type_filter & (1 << i)) && (mem_props.memoryTypes[i].propertyFlags & properties) == properties) {
-                return i;
-            }
-        }
-        throw std::runtime_error("Failed to find suitable Vulkan memory type");
-    }
-
-    vk::DeviceMemory Renderer::create_vk_vertex_buffer_memory(
-        vk::PhysicalDevice physical_device, vk::Device device, vk::Buffer vertex_buffer)
-    {
-        vk::MemoryRequirements mem_requirements = device.getBufferMemoryRequirements(vertex_buffer);
-
-        auto alloc_info
-            = vk::MemoryAllocateInfo()
-                  .setAllocationSize(mem_requirements.size)
-                  .setMemoryTypeIndex(find_vk_memory_type(
-                      physical_device,
-                      mem_requirements.memoryTypeBits,
-                      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-
-        return device.allocateMemory(alloc_info);
-    }
-
-    //    void Renderer::bind_vk_vertex_data()
-    //    {
-    //        const std::vector<Vertex> vertices = {
-    //            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-    //            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-    //            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-    //        };
-    //
-    //        m_vk_device.bindBufferMemory(m_vertex_buffer.buffer, , vk::DeviceSize(0));
-    //
-    //        uint32_t buffer_size = sizeof(Vertex) * vertices.size();
-    //
-    //        void *data;
-    //        vk::Result result = m_vk_device.mapMemory(m_vk_vertex_memory, 0, buffer_size, vk::MemoryMapFlags(),
-    //        &data); if (result != vk::Result::eSuccess) {
-    //            throw std::runtime_error("Failed to map vertex buffer memory");
-    //        }
-    //        memcpy(data, vertices.data(), static_cast<size_t>(buffer_size));
-    //        m_vk_device.unmapMemory(m_vk_vertex_memory);
-    //    }
-
-    Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const std::vector<Vertex> &vertices)
-    {
-        auto buffer_info = VkBufferCreateInfo {};
-        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size = sizeof(Vertex) * vertices.size();
-        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-        auto alloc_info = VmaAllocationCreateInfo {};
-        alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-        VkBuffer buffer;
-        VmaAllocation allocation;
-        vmaCreateBuffer(allocator, &buffer_info, &alloc_info, &buffer, &allocation, nullptr);
-
-        void *data;
-        vmaMapMemory(allocator, allocation, &data);
-        memcpy(data, vertices.data(), vertices.size() * sizeof(Vertex));
-        vmaUnmapMemory(allocator, allocation);
-
-        return { buffer, allocation };
-    }
-
     void Renderer::record_vk_command_buffer(uint32_t image_index)
     {
         vk::CommandBuffer command_buffer = m_vk_command_buffers[m_current_frame];
@@ -983,10 +886,6 @@ namespace mve {
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
 
-        vk::Buffer vertex_buffers[] = { m_vertex_buffer.buffer };
-        vk::DeviceSize offsets[] = { 0 };
-        command_buffer.bindVertexBuffers(0, 1, vertex_buffers, offsets);
-
         auto viewport
             = vk::Viewport()
                   .setX(0.0f)
@@ -1002,18 +901,49 @@ namespace mve {
 
         command_buffer.setScissor(0, { scissor });
 
-        const std::vector<Vertex> vertices = {
-            { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-            { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-            { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-        };
-
-        command_buffer.draw(static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        for (auto vertex_data_pair : m_vertex_buffers) {
+            command_buffer.bindVertexBuffers(0, vertex_data_pair.second.buffer, { 0 });
+            command_buffer.draw(vertex_data_pair.second.vertex_count, 1, 0, 0);
+        }
 
         command_buffer.endRenderPass();
 
         command_buffer.end();
-    };
+    }
+
+    Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data)
+    {
+        auto buffer_info = VkBufferCreateInfo {};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_count();
+        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+        auto alloc_info = VmaAllocationCreateInfo {};
+        alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+        VkBuffer buffer;
+        VmaAllocation allocation;
+        vmaCreateBuffer(allocator, &buffer_info, &alloc_info, &buffer, &allocation, nullptr);
+
+        void *data;
+        vmaMapMemory(allocator, allocation, &data);
+        memcpy(
+            data,
+            vertex_data.get_data_ptr(),
+            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_count());
+        vmaUnmapMemory(allocator, allocation);
+
+        return { buffer, allocation, vertex_data.get_count() };
+    }
+
+    Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
+    {
+        VertexBuffer vertex_buffer = create_vertex_buffer(m_vma_allocator, vertex_data);
+        m_vertex_buffers.emplace_back(m_vertex_data_handle_count, vertex_buffer);
+        m_vertex_data_handle_count++;
+
+        return m_vertex_data_handle_count - 1;
+    }
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
     {
