@@ -7,8 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 function(add_shader THING SHADER)
     find_program(GLSLC glslc)
 
-    set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER})
-    set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER}.spv)
+    set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
+    set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
 
     # Add a custom command to compile GLSL to SPIR-V.
     get_filename_component(current-output-dir ${current-output-path} DIRECTORY)
