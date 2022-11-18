@@ -434,19 +434,19 @@ namespace mve {
         vk::PipelineLayout pipeline_layout,
         vk::RenderPass render_pass)
     {
-        std::vector<uint32_t> vertex_spv_code = vertex_shader.get_spv_code();
+        std::vector<char> vertex_spv_code = vertex_shader.get_spv_code();
         auto vertex_shader_create_info
             = vk::ShaderModuleCreateInfo()
-                  .setCodeSize(sizeof(uint32_t) * vertex_spv_code.size())
-                  .setPCode(vertex_spv_code.data());
+                  .setCodeSize(vertex_spv_code.size())
+                  .setPCode(reinterpret_cast<const uint32_t *>(vertex_spv_code.data()));
 
         vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
-        std::vector<uint32_t> fragment_spv_code = fragment_shader.get_spv_code();
+        std::vector<char> fragment_spv_code = fragment_shader.get_spv_code();
         auto fragment_shader_create_info
             = vk::ShaderModuleCreateInfo()
-                  .setCodeSize(sizeof(uint32_t) * fragment_spv_code.size())
-                  .setPCode(fragment_spv_code.data());
+                  .setCodeSize(fragment_spv_code.size())
+                  .setPCode(reinterpret_cast<const uint32_t *>(fragment_spv_code.data()));
 
         vk::ShaderModule fragment_shader_module = device.createShaderModule(fragment_shader_create_info);
 
@@ -945,46 +945,67 @@ namespace mve {
         return m_vertex_data_handle_count - 1;
     }
 
-    Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
+    //    Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
+    //    {
+    //        LOG->info("Compiling shader: " + file_path.string());
+    //        auto file = std::ifstream(file_path);
+    //        if (!file.is_open()) {
+    //            throw std::runtime_error("Failed to open shader file: " + file_path.string());
+    //        }
+    //        std::stringstream buffer;
+    //        buffer << file.rdbuf();
+    //        std::string source = buffer.str();
+    //
+    //        auto compiler = shaderc::Compiler();
+    //        auto options = shaderc::CompileOptions();
+    //
+    //        if (optimize) {
+    //            options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    //        }
+    //
+    //        shaderc_shader_kind shader_kind;
+    //        switch (shader_type) {
+    //        case ShaderType::e_vertex:
+    //            shader_kind = shaderc_glsl_vertex_shader;
+    //            break;
+    //        case ShaderType::e_fragment:
+    //            shader_kind = shaderc_glsl_fragment_shader;
+    //            break;
+    //        }
+    //
+    //        shaderc::SpvCompilationResult result
+    //            = compiler.CompileGlslToSpv(source, shader_kind, file_path.filename().string().c_str(), options);
+    //
+    //        if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+    //            throw std::runtime_error(
+    //                "Failed to compile shader: " + file_path.string() + "\n" + result.GetErrorMessage());
+    //        }
+    //
+    //        m_spv_code = { result.cbegin(), result.cend() };
+    //    }
+
+    Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)
     {
-        LOG->info("Compiling shader: " + file_path.string());
-        auto file = std::ifstream(file_path);
+        LOG->debug("Loading shader: " + file_path.string());
+
+        auto file = std::ifstream(file_path, std::ios::ate | std::ios::binary);
+
         if (!file.is_open()) {
             throw std::runtime_error("Failed to open shader file: " + file_path.string());
         }
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string source = buffer.str();
 
-        auto compiler = shaderc::Compiler();
-        auto options = shaderc::CompileOptions();
+        size_t file_size = (size_t)file.tellg();
+        auto buffer = std::vector<char>(file_size);
 
-        if (optimize) {
-            options.SetOptimizationLevel(shaderc_optimization_level_performance);
-        }
+        file.seekg(0);
+        file.read(buffer.data(), file_size);
 
-        shaderc_shader_kind shader_kind;
-        switch (shader_type) {
-        case ShaderType::e_vertex:
-            shader_kind = shaderc_glsl_vertex_shader;
-            break;
-        case ShaderType::e_fragment:
-            shader_kind = shaderc_glsl_fragment_shader;
-            break;
-        }
+        file.close();
 
-        shaderc::SpvCompilationResult result
-            = compiler.CompileGlslToSpv(source, shader_kind, file_path.filename().string().c_str(), options);
+        m_spv_code = buffer;
+    };
 
-        if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-            throw std::runtime_error(
-                "Failed to compile shader: " + file_path.string() + "\n" + result.GetErrorMessage());
-        }
-
-        m_spv_code = { result.cbegin(), result.cend() };
-    }
-
-    std::vector<uint32_t> Shader::get_spv_code() const
+    std::vector<char> Shader::get_spv_code() const
     {
         return m_spv_code;
     }

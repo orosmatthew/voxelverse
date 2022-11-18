@@ -68,12 +68,14 @@ namespace mve {
 
     class Shader {
     public:
-        Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize);
+        // Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize);
 
-        [[nodiscard]] std::vector<uint32_t> get_spv_code() const;
+        Shader(const std::filesystem::path &file_path, ShaderType shader_type);
+
+        [[nodiscard]] std::vector<char> get_spv_code() const;
 
     private:
-        std::vector<uint32_t> m_spv_code;
+        std::vector<char> m_spv_code;
     };
 
     class Renderer {

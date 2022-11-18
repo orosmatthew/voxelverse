@@ -4,9 +4,29 @@ project(vulkan_testing)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Vulkan REQUIRED
-        OPTIONAL_COMPONENTS
-        shaderc_combined)
+function(add_shader THING SHADER)
+    find_program(GLSLC glslc)
+
+    set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER})
+    set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER}.spv)
+
+    # Add a custom command to compile GLSL to SPIR-V.
+    get_filename_component(current-output-dir ${current-output-path} DIRECTORY)
+    file(MAKE_DIRECTORY ${current-output-dir})
+
+    add_custom_command(
+            OUTPUT ${current-output-path}
+            COMMAND ${GLSLC} -o ${current-output-path} ${current-shader-path}
+            DEPENDS ${current-shader-path}
+            IMPLICIT_DEPENDS CXX ${current-shader-path}
+            VERBATIM)
+
+    # Make sure our build depends on this output.
+    set_source_files_properties(${current-output-path} PROPERTIES GENERATED TRUE)
+    target_sources(${THING} PRIVATE ${current-output-path})
+endfunction()
+
+find_package(Vulkan REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -27,7 +47,6 @@ set(SOURCE_FILES
 
 set(LIBS
         Vulkan::Vulkan
-        Vulkan::shaderc_combined
         glfw
         glm)
 
@@ -46,6 +65,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIB_INCLUDES})
+
+add_shader(vulkan_testing simple.frag)
+add_shader(vulkan_testing simple.vert)
 
 set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.1.1/src/catch_amalgamated.cpp)
