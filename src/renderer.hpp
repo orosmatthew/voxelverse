@@ -29,43 +29,6 @@ namespace mve {
         e_fragment,
     };
 
-    struct Vertex {
-        glm::vec2 pos;
-        glm::vec3 color;
-
-        static vk::VertexInputBindingDescription get_binding_description()
-        {
-            auto binding_description
-                = vk::VertexInputBindingDescription()
-                      .setBinding(0)
-                      .setStride(sizeof(Vertex))
-                      .setInputRate(vk::VertexInputRate::eVertex);
-
-            return binding_description;
-        }
-
-        static std::array<vk::VertexInputAttributeDescription, 2> get_attribute_descriptions()
-        {
-            auto attribute_descriptions = std::array<vk::VertexInputAttributeDescription, 2>();
-
-            attribute_descriptions[0]
-                = vk::VertexInputAttributeDescription()
-                      .setBinding(0)
-                      .setLocation(0)
-                      .setFormat(vk::Format::eR32G32Sfloat)
-                      .setOffset(offsetof(Vertex, pos));
-
-            attribute_descriptions[1]
-                = vk::VertexInputAttributeDescription()
-                      .setBinding(0)
-                      .setLocation(1)
-                      .setFormat(vk::Format::eR32G32B32Sfloat)
-                      .setOffset(offsetof(Vertex, color));
-
-            return attribute_descriptions;
-        }
-    };
-
     class Shader {
     public:
         // Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize);
@@ -90,6 +53,7 @@ namespace mve {
             int app_version_patch,
             const Shader &vertex_shader,
             const Shader &fragment_shader,
+            const VertexLayout &layout,
             int frames_in_flight = 2);
 
         ~Renderer();
@@ -220,7 +184,8 @@ namespace mve {
             const Shader &vertex_shader,
             const Shader &fragment_shader,
             vk::PipelineLayout pipeline_layout,
-            vk::RenderPass render_pass);
+            vk::RenderPass render_pass,
+            const VertexLayout &layout);
 
         static vk::PipelineLayout create_vk_pipeline_layout(vk::Device device);
 
@@ -238,5 +203,10 @@ namespace mve {
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
         static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data);
+
+        static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout &layout);
+
+        static std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_descriptions(
+            const VertexLayout &layout);
     };
 }

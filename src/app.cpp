@@ -17,13 +17,13 @@ namespace app {
         auto vertex_shader = mve::Shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::e_vertex);
         auto fragment_shader = mve::Shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::e_fragment);
 
-        auto renderer = mve::Renderer(window, "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader);
-
-        window.set_resize_callback([&](glm::ivec2 new_size) { renderer.draw_frame(window); });
-
         auto vertex_layout = mve::VertexLayout();
         vertex_layout.push_back(mve::VertexAttributeType::e_vec2); // 2D position
         vertex_layout.push_back(mve::VertexAttributeType::e_vec3); // Color
+
+        auto renderer = mve::Renderer(window, "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader, vertex_layout);
+
+        window.set_resize_callback([&](glm::ivec2 new_size) { renderer.draw_frame(window); });
 
         auto big_triangle = mve::VertexData(vertex_layout);
         big_triangle.add_data({ 0.0f, -0.5f });

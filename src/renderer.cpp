@@ -19,6 +19,7 @@ namespace mve {
         int app_version_patch,
         const Shader &vertex_shader,
         const Shader &fragment_shader,
+        const VertexLayout &layout,
         int frames_in_flight)
         : m_frames_in_flight(frames_in_flight)
     {
@@ -58,7 +59,7 @@ namespace mve {
         m_vk_render_pass = create_vk_render_pass(m_vk_device, m_vk_swapchain_image_format.format);
 
         m_vk_graphics_pipeline = create_vk_graphics_pipeline(
-            m_vk_device, vertex_shader, fragment_shader, m_vk_pipeline_layout, m_vk_render_pass);
+            m_vk_device, vertex_shader, fragment_shader, m_vk_pipeline_layout, m_vk_render_pass, layout);
 
         m_vk_swapchain_framebuffers
             = create_vk_framebuffers(m_vk_device, m_vk_swapchain_image_views, m_vk_render_pass, m_vk_swapchain_extent);
@@ -432,7 +433,8 @@ namespace mve {
         const Shader &vertex_shader,
         const Shader &fragment_shader,
         vk::PipelineLayout pipeline_layout,
-        vk::RenderPass render_pass)
+        vk::RenderPass render_pass,
+        const VertexLayout &layout)
     {
         std::vector<char> vertex_spv_code = vertex_shader.get_spv_code();
         auto vertex_shader_create_info
@@ -464,9 +466,9 @@ namespace mve {
 
         vk::PipelineShaderStageCreateInfo shader_stages[] = { vertex_shader_stage_info, fragment_shader_stage_info };
 
-        vk::VertexInputBindingDescription binding_description = Vertex::get_binding_description();
-        std::array<vk::VertexInputAttributeDescription, 2> attribute_descriptions
-            = Vertex::get_attribute_descriptions();
+        vk::VertexInputBindingDescription binding_description = create_vk_binding_description(layout);
+        std::vector<vk::VertexInputAttributeDescription> attribute_descriptions
+            = create_vk_attribute_descriptions(layout);
 
         auto vertex_input_info
             = vk::PipelineVertexInputStateCreateInfo()
@@ -945,44 +947,50 @@ namespace mve {
         return m_vertex_data_handle_count - 1;
     }
 
-    //    Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize)
-    //    {
-    //        LOG->info("Compiling shader: " + file_path.string());
-    //        auto file = std::ifstream(file_path);
-    //        if (!file.is_open()) {
-    //            throw std::runtime_error("Failed to open shader file: " + file_path.string());
-    //        }
-    //        std::stringstream buffer;
-    //        buffer << file.rdbuf();
-    //        std::string source = buffer.str();
-    //
-    //        auto compiler = shaderc::Compiler();
-    //        auto options = shaderc::CompileOptions();
-    //
-    //        if (optimize) {
-    //            options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    //        }
-    //
-    //        shaderc_shader_kind shader_kind;
-    //        switch (shader_type) {
-    //        case ShaderType::e_vertex:
-    //            shader_kind = shaderc_glsl_vertex_shader;
-    //            break;
-    //        case ShaderType::e_fragment:
-    //            shader_kind = shaderc_glsl_fragment_shader;
-    //            break;
-    //        }
-    //
-    //        shaderc::SpvCompilationResult result
-    //            = compiler.CompileGlslToSpv(source, shader_kind, file_path.filename().string().c_str(), options);
-    //
-    //        if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-    //            throw std::runtime_error(
-    //                "Failed to compile shader: " + file_path.string() + "\n" + result.GetErrorMessage());
-    //        }
-    //
-    //        m_spv_code = { result.cbegin(), result.cend() };
-    //    }
+    vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout &layout)
+    {
+        auto binding_description
+            = vk::VertexInputBindingDescription()
+                  .setBinding(0)
+                  .setStride(get_vertex_layout_bytes(layout))
+                  .setInputRate(vk::VertexInputRate::eVertex);
+        return binding_description;
+    }
+
+    std::vector<vk::VertexInputAttributeDescription> Renderer::create_vk_attribute_descriptions(
+        const VertexLayout &layout)
+    {
+        auto attribute_descriptions = std::vector<vk::VertexInputAttributeDescription>();
+        attribute_descriptions.reserve(layout.size());
+
+        int offset = 0;
+        for (int i = 0; i < layout.size(); i++) {
+            auto description = vk::VertexInputAttributeDescription().setBinding(0).setLocation(i).setOffset(offset);
+
+            switch (layout[i]) {
+            case VertexAttributeType::e_float:
+                description.setFormat(vk::Format::eR32Sfloat);
+                offset += sizeof(float);
+                break;
+            case VertexAttributeType::e_vec2:
+                description.setFormat(vk::Format::eR32G32Sfloat);
+                offset += sizeof(glm::vec2);
+                break;
+            case VertexAttributeType::e_vec3:
+                description.setFormat(vk::Format::eR32G32B32Sfloat);
+                offset += sizeof(glm::vec3);
+                break;
+            case VertexAttributeType::e_vec4:
+                description.setFormat(vk::Format::eR32G32B32A32Sfloat);
+                offset += sizeof(glm::vec4);
+                break;
+            }
+
+            attribute_descriptions.push_back(description);
+        }
+
+        return attribute_descriptions;
+    }
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)
     {
