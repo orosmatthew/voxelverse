@@ -14,8 +14,8 @@ namespace app {
 
         auto window = mve::Window("Mini Vulkan Engine", glm::ivec2(800, 600));
 
-        auto vertex_shader = mve::Shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::e_vertex);
-        auto fragment_shader = mve::Shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::e_fragment);
+        auto vertex_shader = mve::Shader("../res/bin/shader/simple.vert.spv");
+        auto fragment_shader = mve::Shader("../res/bin/shader/simple.frag.spv");
 
         auto vertex_layout = mve::VertexLayout();
         vertex_layout.push_back(mve::VertexAttributeType::e_vec2); // 2D position
