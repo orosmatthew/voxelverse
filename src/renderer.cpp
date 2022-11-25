@@ -21,7 +21,7 @@ namespace mve {
         const Shader &fragment_shader,
         const VertexLayout &layout,
         int frames_in_flight)
-        : m_frames_in_flight(frames_in_flight)
+        : c_frames_in_flight(frames_in_flight)
     {
         m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -73,15 +73,7 @@ namespace mve {
 
         vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
 
-        m_vk_command_buffers = create_vk_command_buffers(m_vk_device, m_vk_command_pool, m_frames_in_flight);
-
-        auto semaphore_info = vk::SemaphoreCreateInfo();
-        auto fence_info = vk::FenceCreateInfo().setFlags(vk::FenceCreateFlagBits::eSignaled);
-        for (int i = 0; i < m_frames_in_flight; i++) {
-            m_vk_image_available_semaphores.push_back(m_vk_device.createSemaphore(semaphore_info));
-            m_vk_render_finished_semaphores.push_back(m_vk_device.createSemaphore(semaphore_info));
-            m_vk_in_flight_fences.push_back(m_vk_device.createFence(fence_info));
-        }
+        m_frames_in_flight = create_frames_in_flight(m_vk_device, m_vk_command_pool, c_frames_in_flight);
     }
 
     bool Renderer::has_validation_layer_support()
@@ -671,38 +663,40 @@ namespace mve {
         if (window.was_resized()) {
             recreate_swapchain(window);
         }
-        vk::Result fence_wait_result
-            = m_vk_device.waitForFences(m_vk_in_flight_fences[m_current_frame], true, UINT64_MAX);
+
+        FrameInFlight frame = m_frames_in_flight[m_current_frame];
+
+        vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
         if (fence_wait_result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed waiting for frame (fences)");
         }
 
-        vk::ResultValue<uint32_t> acquire_result = m_vk_device.acquireNextImageKHR(
-            m_vk_swapchain, UINT64_MAX, m_vk_image_available_semaphores[m_current_frame], nullptr);
+        vk::ResultValue<uint32_t> acquire_result
+            = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
         if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
         uint32_t image_index = acquire_result.value;
 
-        m_vk_device.resetFences({ m_vk_in_flight_fences[m_current_frame] });
+        m_vk_device.resetFences({ frame.in_flight_fence });
 
-        m_vk_command_buffers[m_current_frame].reset();
+        frame.command_buffer.reset();
 
         record_vk_command_buffer(image_index);
 
-        vk::Semaphore wait_semaphores[] = { m_vk_image_available_semaphores[m_current_frame] };
+        vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-        vk::Semaphore signal_semaphores[] = { m_vk_render_finished_semaphores[m_current_frame] };
+        vk::Semaphore signal_semaphores[] = { frame.render_finished_semaphore };
 
         auto submit_info
             = vk::SubmitInfo()
                   .setWaitSemaphores(wait_semaphores)
                   .setWaitDstStageMask(wait_stages)
                   .setCommandBufferCount(1)
-                  .setPCommandBuffers(&(m_vk_command_buffers[m_current_frame]))
+                  .setPCommandBuffers(&(frame.command_buffer))
                   .setSignalSemaphores(signal_semaphores);
 
-        m_vk_graphics_queue.submit({ submit_info }, m_vk_in_flight_fences[m_current_frame]);
+        m_vk_graphics_queue.submit({ submit_info }, frame.in_flight_fence);
 
         vk::SwapchainKHR swapchains[] = { m_vk_swapchain };
 
@@ -721,7 +715,7 @@ namespace mve {
             throw std::runtime_error("Failed to present frame");
         }
 
-        m_current_frame = (m_current_frame + 1) % m_frames_in_flight;
+        m_current_frame = (m_current_frame + 1) % c_frames_in_flight;
     }
 
     Renderer::~Renderer()
@@ -742,10 +736,10 @@ namespace mve {
         m_vk_device.destroy(m_vk_pipeline_layout);
         m_vk_device.destroy(m_vk_render_pass);
 
-        for (int i = 0; i < m_frames_in_flight; i++) {
-            m_vk_device.destroy(m_vk_render_finished_semaphores[i]);
-            m_vk_device.destroy(m_vk_image_available_semaphores[i]);
-            m_vk_device.destroy(m_vk_in_flight_fences[i]);
+        for (FrameInFlight frame : m_frames_in_flight) {
+            m_vk_device.destroy(frame.render_finished_semaphore);
+            m_vk_device.destroy(frame.image_available_semaphore);
+            m_vk_device.destroy(frame.in_flight_fence);
         }
 
         m_vk_device.destroy(m_vk_command_pool);
@@ -869,7 +863,7 @@ namespace mve {
 
     void Renderer::record_vk_command_buffer(uint32_t image_index)
     {
-        vk::CommandBuffer command_buffer = m_vk_command_buffers[m_current_frame];
+        vk::CommandBuffer command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
 
         auto buffer_begin_info = vk::CommandBufferBeginInfo();
         command_buffer.begin(buffer_begin_info);
@@ -990,6 +984,29 @@ namespace mve {
         }
 
         return attribute_descriptions;
+    }
+
+    std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
+        vk::Device device, vk::CommandPool command_pool, int frame_count)
+    {
+        auto frames_in_flight = std::vector<FrameInFlight>();
+        frames_in_flight.reserve(frame_count);
+
+        std::vector<vk::CommandBuffer> command_buffers = create_vk_command_buffers(device, command_pool, frame_count);
+
+        auto semaphore_info = vk::SemaphoreCreateInfo();
+        auto fence_info = vk::FenceCreateInfo().setFlags(vk::FenceCreateFlagBits::eSignaled);
+
+        for (int i = 0; i < frame_count; i++) {
+            FrameInFlight frame;
+            frame.image_available_semaphore = device.createSemaphore(semaphore_info);
+            frame.render_finished_semaphore = device.createSemaphore(semaphore_info);
+            frame.in_flight_fence = device.createFence(fence_info);
+            frame.command_buffer = command_buffers.at(i);
+            frames_in_flight.push_back(frame);
+        }
+
+        return frames_in_flight;
     }
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)

@@ -89,7 +89,14 @@ namespace mve {
             int vertex_count;
         };
 
-        int m_frames_in_flight;
+        struct FrameInFlight {
+            vk::CommandBuffer command_buffer;
+            vk::Semaphore image_available_semaphore;
+            vk::Semaphore render_finished_semaphore;
+            vk::Fence in_flight_fence;
+        };
+
+        const int c_frames_in_flight;
         vk::Instance m_vk_instance;
         vk::DebugUtilsMessengerEXT m_vk_debug_utils_messenger;
         vk::SurfaceKHR m_vk_surface;
@@ -107,14 +114,12 @@ namespace mve {
         vk::Pipeline m_vk_graphics_pipeline;
         std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
         vk::CommandPool m_vk_command_pool;
-        std::vector<vk::CommandBuffer> m_vk_command_buffers;
-        std::vector<vk::Semaphore> m_vk_image_available_semaphores;
-        std::vector<vk::Semaphore> m_vk_render_finished_semaphores;
-        std::vector<vk::Fence> m_vk_in_flight_fences;
         QueueFamilyIndices m_vk_queue_family_indices;
         uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator;
         VertexDataHandle m_vertex_data_handle_count = 0;
+
+        std::vector<FrameInFlight> m_frames_in_flight;
 
         std::vector<std::pair<VertexDataHandle, VertexBuffer>> m_vertex_buffers;
 
@@ -208,5 +213,8 @@ namespace mve {
 
         static std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_descriptions(
             const VertexLayout &layout);
+
+        static std::vector<FrameInFlight> create_frames_in_flight(
+            vk::Device device, vk::CommandPool command_pool, int frame_count);
     };
 }
