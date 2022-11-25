@@ -33,7 +33,7 @@ namespace mve {
     public:
         // Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize);
 
-        Shader(const std::filesystem::path &file_path);
+        Shader(const std::filesystem::path &file_path, ShaderType shader_type);
 
         [[nodiscard]] std::vector<char> get_spv_code() const;
 
@@ -53,7 +53,8 @@ namespace mve {
             int app_version_patch,
             const Shader &vertex_shader,
             const Shader &fragment_shader,
-            const VertexLayout &layout);
+            const VertexLayout &layout,
+            int frames_in_flight = 2);
 
         ~Renderer();
 
@@ -88,6 +89,7 @@ namespace mve {
             int vertex_count;
         };
 
+        int m_frames_in_flight;
         vk::Instance m_vk_instance;
         vk::DebugUtilsMessengerEXT m_vk_debug_utils_messenger;
         vk::SurfaceKHR m_vk_surface;
@@ -105,11 +107,12 @@ namespace mve {
         vk::Pipeline m_vk_graphics_pipeline;
         std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
         vk::CommandPool m_vk_command_pool;
-        vk::CommandBuffer m_vk_command_buffer;
-        vk::Semaphore m_vk_image_available_semaphore;
-        vk::Semaphore m_vk_render_finished_semaphore;
-        vk::Fence m_vk_in_flight_fence;
+        std::vector<vk::CommandBuffer> m_vk_command_buffers;
+        std::vector<vk::Semaphore> m_vk_image_available_semaphores;
+        std::vector<vk::Semaphore> m_vk_render_finished_semaphores;
+        std::vector<vk::Fence> m_vk_in_flight_fences;
         QueueFamilyIndices m_vk_queue_family_indices;
+        uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator;
         VertexDataHandle m_vertex_data_handle_count = 0;
 
@@ -196,7 +199,8 @@ namespace mve {
 
         static vk::CommandPool create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices);
 
-        static vk::CommandBuffer create_vk_command_buffer(vk::Device device, vk::CommandPool command_pool);
+        static std::vector<vk::CommandBuffer> create_vk_command_buffers(
+            vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
         static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data);
 
