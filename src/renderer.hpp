@@ -88,9 +88,13 @@ namespace mve {
             std::vector<vk::PresentModeKHR> present_modes;
         };
 
+        struct Buffer {
+            vk::Buffer vk_handle;
+            VmaAllocation vma_allocation;
+        };
+
         struct VertexBuffer {
-            vk::Buffer buffer;
-            VmaAllocation allocation;
+            Buffer buffer;
             int vertex_count;
         };
 
@@ -213,6 +217,8 @@ namespace mve {
 
         static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
+
+        static Buffer create_buffer(VmaAllocator allocator, size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage);
 
         static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data);
 

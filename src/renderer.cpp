@@ -680,8 +680,8 @@ namespace mve {
             else {
                 vmaDestroyBuffer(
                     m_vma_allocator,
-                    m_vertex_buffers.at(handle_pair.first).buffer,
-                    m_vertex_buffers.at(handle_pair.first).allocation);
+                    m_vertex_buffers.at(handle_pair.first).buffer.vk_handle,
+                    m_vertex_buffers.at(handle_pair.first).buffer.vma_allocation);
                 m_vertex_buffers.erase(handle_pair.first);
                 destroyed.push_back(handle_pair.first);
             }
@@ -747,7 +747,7 @@ namespace mve {
         cleanup_vk_swapchain();
 
         for (auto buffer : m_vertex_buffers) {
-            vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer, buffer.second.allocation);
+            vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
         }
         vmaDestroyAllocator(m_vma_allocator);
 
@@ -920,7 +920,7 @@ namespace mve {
             if (m_vertex_buffer_deletion_queue.contains(vertex_data_pair.first)) {
                 continue;
             }
-            command_buffer.bindVertexBuffers(0, vertex_data_pair.second.buffer, { 0 });
+            command_buffer.bindVertexBuffers(0, vertex_data_pair.second.buffer.vk_handle, { 0 });
             command_buffer.draw(vertex_data_pair.second.vertex_count, 1, 0, 0);
         }
 
@@ -931,27 +931,21 @@ namespace mve {
 
     Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data)
     {
-        auto buffer_info = VkBufferCreateInfo {};
-        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
-        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-        auto alloc_info = VmaAllocationCreateInfo {};
-        alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-        VkBuffer buffer;
-        VmaAllocation allocation;
-        vmaCreateBuffer(allocator, &buffer_info, &alloc_info, &buffer, &allocation, nullptr);
+        Buffer buffer = create_buffer(
+            allocator,
+            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count(),
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VMA_MEMORY_USAGE_CPU_TO_GPU);
 
         void *data;
-        vmaMapMemory(allocator, allocation, &data);
+        vmaMapMemory(allocator, buffer.vma_allocation, &data);
         memcpy(
             data,
             vertex_data.get_data_ptr(),
             get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count());
-        vmaUnmapMemory(allocator, allocation);
+        vmaUnmapMemory(allocator, buffer.vma_allocation);
 
-        return { buffer, allocation, vertex_data.get_vertex_count() };
+        return { buffer, vertex_data.get_vertex_count() };
     }
 
     Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
@@ -1035,6 +1029,25 @@ namespace mve {
     {
         m_vertex_buffer_deletion_queue[handle] = 0;
     }
+
+    Renderer::Buffer Renderer::create_buffer(
+        VmaAllocator allocator, size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage)
+    {
+        VkBufferCreateInfo buffer_info = {};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size = size;
+        buffer_info.usage = usage;
+
+        VmaAllocationCreateInfo vma_alloc_info = {};
+        vma_alloc_info.usage = memory_usage;
+
+        VkBuffer vk_buffer;
+        VmaAllocation allocation;
+
+        vmaCreateBuffer(allocator, &buffer_info, &vma_alloc_info, &vk_buffer, &allocation, nullptr);
+
+        return { vk_buffer, allocation };
+    };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)
     {
