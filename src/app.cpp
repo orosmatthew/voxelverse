@@ -53,11 +53,18 @@ namespace app {
         mve::Renderer::VertexDataHandle vertex_data_handle2 = renderer.upload_vertex_data(bottom_right_triangle);
         mve::Renderer::VertexDataHandle vertex_data_handle3 = renderer.upload_vertex_data(top_left_triangle);
 
+        bool is_triangle_removed = false;
+
         while (!window.should_close()) {
             window.update();
 
             if (window.get_key(mve::InputKey::e_escape)) {
                 break;
+            }
+
+            if (!is_triangle_removed && window.get_key(mve::InputKey::e_t)) {
+                renderer.queue_destroy(vertex_data_handle3);
+                is_triangle_removed = true;
             }
 
             renderer.draw_frame(window);

@@ -18,7 +18,9 @@ TEST_CASE("Test VertexData", "[VertexData]")
 
     REQUIRE(vertex_data.get_layout() == layout);
 
-    REQUIRE(vertex_data.get_count() == 0);
+    REQUIRE(vertex_data.get_data_count() == 0);
+
+    REQUIRE(vertex_data.get_vertex_count() == 0);
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_float);
     vertex_data.add_data(2.0f);
@@ -36,10 +38,14 @@ TEST_CASE("Test VertexData", "[VertexData]")
 
     REQUIRE(vertex_data.is_complete() == true);
 
+    REQUIRE(vertex_data.get_vertex_count() == 1);
+
     vertex_data.add_data(3.0f);
     REQUIRE(vertex_data.is_complete() == false);
 
-    REQUIRE(vertex_data.get_count() == 5);
+    REQUIRE(vertex_data.get_data_count() == 5);
+
+    REQUIRE(vertex_data.get_vertex_count() == 1);
 
     REQUIRE(vertex_data.get_data_ptr() != nullptr);
 }

@@ -664,11 +664,30 @@ namespace mve {
             recreate_swapchain(window);
         }
 
-        FrameInFlight frame = m_frames_in_flight[m_current_frame];
+        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
 
         vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
         if (fence_wait_result != vk::Result::eSuccess) {
             throw std::runtime_error("Failed waiting for frame (fences)");
+        }
+
+        auto destroyed = std::vector<VertexDataHandle>();
+        for (auto &handle_pair : m_vertex_buffer_deletion_queue) {
+            if (handle_pair.second < c_frames_in_flight) {
+                handle_pair.second++;
+                break;
+            }
+            else {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_vertex_buffers.at(handle_pair.first).buffer,
+                    m_vertex_buffers.at(handle_pair.first).allocation);
+                m_vertex_buffers.erase(handle_pair.first);
+                destroyed.push_back(handle_pair.first);
+            }
+        }
+        for (VertexDataHandle v : destroyed) {
+            m_vertex_buffer_deletion_queue.erase(v);
         }
 
         vk::ResultValue<uint32_t> acquire_result
@@ -727,8 +746,8 @@ namespace mve {
 
         cleanup_vk_swapchain();
 
-        for (auto vertex_buffer_pair : m_vertex_buffers) {
-            vmaDestroyBuffer(m_vma_allocator, vertex_buffer_pair.second.buffer, vertex_buffer_pair.second.allocation);
+        for (auto buffer : m_vertex_buffers) {
+            vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer, buffer.second.allocation);
         }
         vmaDestroyAllocator(m_vma_allocator);
 
@@ -736,7 +755,7 @@ namespace mve {
         m_vk_device.destroy(m_vk_pipeline_layout);
         m_vk_device.destroy(m_vk_render_pass);
 
-        for (FrameInFlight frame : m_frames_in_flight) {
+        for (FrameInFlight &frame : m_frames_in_flight) {
             m_vk_device.destroy(frame.render_finished_semaphore);
             m_vk_device.destroy(frame.image_available_semaphore);
             m_vk_device.destroy(frame.in_flight_fence);
@@ -863,7 +882,7 @@ namespace mve {
 
     void Renderer::record_vk_command_buffer(uint32_t image_index)
     {
-        vk::CommandBuffer command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
+        vk::CommandBuffer &command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
 
         auto buffer_begin_info = vk::CommandBufferBeginInfo();
         command_buffer.begin(buffer_begin_info);
@@ -898,6 +917,9 @@ namespace mve {
         command_buffer.setScissor(0, { scissor });
 
         for (auto vertex_data_pair : m_vertex_buffers) {
+            if (m_vertex_buffer_deletion_queue.contains(vertex_data_pair.first)) {
+                continue;
+            }
             command_buffer.bindVertexBuffers(0, vertex_data_pair.second.buffer, { 0 });
             command_buffer.draw(vertex_data_pair.second.vertex_count, 1, 0, 0);
         }
@@ -911,7 +933,7 @@ namespace mve {
     {
         auto buffer_info = VkBufferCreateInfo {};
         buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_count();
+        buffer_info.size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
         buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
         auto alloc_info = VmaAllocationCreateInfo {};
@@ -926,16 +948,16 @@ namespace mve {
         memcpy(
             data,
             vertex_data.get_data_ptr(),
-            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_count());
+            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count());
         vmaUnmapMemory(allocator, allocation);
 
-        return { buffer, allocation, vertex_data.get_count() };
+        return { buffer, allocation, vertex_data.get_vertex_count() };
     }
 
     Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
     {
         VertexBuffer vertex_buffer = create_vertex_buffer(m_vma_allocator, vertex_data);
-        m_vertex_buffers.emplace_back(m_vertex_data_handle_count, vertex_buffer);
+        m_vertex_buffers[m_vertex_data_handle_count] = vertex_buffer;
         m_vertex_data_handle_count++;
 
         return m_vertex_data_handle_count - 1;
@@ -1007,6 +1029,11 @@ namespace mve {
         }
 
         return frames_in_flight;
+    }
+
+    void Renderer::queue_destroy(Renderer::VertexDataHandle handle)
+    {
+        m_vertex_buffer_deletion_queue[handle] = 0;
     }
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)

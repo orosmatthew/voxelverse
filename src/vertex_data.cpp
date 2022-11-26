@@ -83,7 +83,7 @@ namespace mve {
         return m_data.data();
     }
 
-    int VertexData::get_count() const
+    int VertexData::get_data_count() const
     {
         return m_data_count;
     }
@@ -96,5 +96,10 @@ namespace mve {
     VertexLayout VertexData::get_layout() const
     {
         return m_layout;
+    }
+
+    int VertexData::get_vertex_count() const
+    {
+        return m_data_count / m_layout.size();
     }
 }

@@ -79,7 +79,13 @@ namespace mve {
          * Get number of values in vertex data
          * @return - number of values in vertex data
          */
-        [[nodiscard]] int get_count() const;
+        [[nodiscard]] int get_data_count() const;
+
+        /**
+         * Get number of complete vertices
+         * @return - number of complete vertices
+         */
+        [[nodiscard]] int get_vertex_count() const;
 
         /**
          * Determines if all vertices have all attribute values added

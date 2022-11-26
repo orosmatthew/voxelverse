@@ -13,6 +13,9 @@
 
 #include <filesystem>
 #include <optional>
+#include <unordered_map>
+#include <vector>
+#include <set>
 
 #include <glm/glm.hpp>
 
@@ -65,6 +68,8 @@ namespace mve {
         void recreate_swapchain(const Window &window);
 
         VertexDataHandle upload_vertex_data(const VertexData &vertex_data);
+
+        void queue_destroy(VertexDataHandle handle);
 
     private:
         struct QueueFamilyIndices {
@@ -121,7 +126,9 @@ namespace mve {
 
         std::vector<FrameInFlight> m_frames_in_flight;
 
-        std::vector<std::pair<VertexDataHandle, VertexBuffer>> m_vertex_buffers;
+        std::unordered_map<VertexDataHandle, VertexBuffer> m_vertex_buffers;
+
+        std::unordered_map<VertexDataHandle, int> m_vertex_buffer_deletion_queue;
 
         void cleanup_vk_swapchain();
 
