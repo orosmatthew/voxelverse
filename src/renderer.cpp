@@ -929,28 +929,45 @@ namespace mve {
         command_buffer.end();
     }
 
-    Renderer::VertexBuffer Renderer::create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data)
+    Renderer::VertexBuffer Renderer::create_vertex_buffer(const VertexData &vertex_data)
     {
-        Buffer buffer = create_buffer(
-            allocator,
-            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count(),
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VMA_MEMORY_USAGE_CPU_TO_GPU);
+        size_t buffer_size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
+
+        Buffer staging_buffer = create_buffer(
+            m_vma_allocator,
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
         void *data;
-        vmaMapMemory(allocator, buffer.vma_allocation, &data);
-        memcpy(
-            data,
-            vertex_data.get_data_ptr(),
-            get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count());
-        vmaUnmapMemory(allocator, buffer.vma_allocation);
+        vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+        memcpy(data, vertex_data.get_data_ptr(), buffer_size);
+        vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-        return { buffer, vertex_data.get_vertex_count() };
+        Buffer vertex_buffer = create_buffer(
+            m_vma_allocator,
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+
+        copy_buffer(
+            m_vk_device,
+            m_vk_command_pool,
+            m_vk_graphics_queue,
+            staging_buffer.vk_handle,
+            vertex_buffer.vk_handle,
+            buffer_size);
+
+        vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+
+        return { vertex_buffer, vertex_data.get_vertex_count() };
     }
 
     Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
     {
-        VertexBuffer vertex_buffer = create_vertex_buffer(m_vma_allocator, vertex_data);
+        VertexBuffer vertex_buffer = create_vertex_buffer(vertex_data);
         m_vertex_buffers[m_vertex_data_handle_count] = vertex_buffer;
         m_vertex_data_handle_count++;
 
@@ -1031,7 +1048,11 @@ namespace mve {
     }
 
     Renderer::Buffer Renderer::create_buffer(
-        VmaAllocator allocator, size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage)
+        VmaAllocator allocator,
+        size_t size,
+        VkBufferUsageFlags usage,
+        VmaMemoryUsage memory_usage,
+        VmaAllocationCreateFlags flags)
     {
         VkBufferCreateInfo buffer_info = {};
         buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1040,6 +1061,7 @@ namespace mve {
 
         VmaAllocationCreateInfo vma_alloc_info = {};
         vma_alloc_info.usage = memory_usage;
+        vma_alloc_info.flags = flags;
 
         VkBuffer vk_buffer;
         VmaAllocation allocation;
@@ -1047,6 +1069,39 @@ namespace mve {
         vmaCreateBuffer(allocator, &buffer_info, &vma_alloc_info, &vk_buffer, &allocation, nullptr);
 
         return { vk_buffer, allocation };
+    }
+
+    void Renderer::copy_buffer(
+        vk::Device device,
+        vk::CommandPool command_pool,
+        vk::Queue graphics_queue,
+        vk::Buffer src_buffer,
+        vk::Buffer dst_buffer,
+        vk::DeviceSize size)
+    {
+        auto alloc_info = vk::CommandBufferAllocateInfo()
+                              .setLevel(vk::CommandBufferLevel::ePrimary)
+                              .setCommandPool(command_pool)
+                              .setCommandBufferCount(1);
+
+        vk::CommandBuffer command_buffer = device.allocateCommandBuffers(alloc_info)[0];
+
+        auto begin_info = vk::CommandBufferBeginInfo().setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        command_buffer.begin(begin_info);
+
+        auto copy_region = vk::BufferCopy().setSrcOffset(0).setDstOffset(0).setSize(size);
+        command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
+
+        command_buffer.end();
+
+        auto submit_info = vk::SubmitInfo().setCommandBufferCount(1).setPCommandBuffers(&command_buffer);
+        vk::Result result = graphics_queue.submit(1, &submit_info, VK_NULL_HANDLE);
+        if (result != vk::Result::eSuccess) {
+            throw std::runtime_error("[Renderer] Buffer copy submission failed.");
+        }
+        graphics_queue.waitIdle();
+
+        device.freeCommandBuffers(command_pool, 1, &command_buffer);
     };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)

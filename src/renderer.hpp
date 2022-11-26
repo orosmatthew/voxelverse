@@ -13,9 +13,9 @@
 
 #include <filesystem>
 #include <optional>
+#include <set>
 #include <unordered_map>
 #include <vector>
-#include <set>
 
 #include <glm/glm.hpp>
 
@@ -138,7 +138,7 @@ namespace mve {
 
         void cleanup_vk_debug_messenger();
 
-        //        void bind_vk_vertex_data();
+        VertexBuffer create_vertex_buffer(const VertexData &vertex_data);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
             VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
@@ -218,9 +218,20 @@ namespace mve {
         static std::vector<vk::CommandBuffer> create_vk_command_buffers(
             vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
-        static Buffer create_buffer(VmaAllocator allocator, size_t size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage);
+        static Buffer create_buffer(
+            VmaAllocator allocator,
+            size_t size,
+            VkBufferUsageFlags usage,
+            VmaMemoryUsage memory_usage,
+            VmaAllocationCreateFlags flags);
 
-        static VertexBuffer create_vertex_buffer(VmaAllocator allocator, const VertexData &vertex_data);
+        static void copy_buffer(
+            vk::Device device,
+            vk::CommandPool command_pool,
+            vk::Queue graphics_queue,
+            vk::Buffer src_buffer,
+            vk::Buffer dst_buffer,
+            vk::DeviceSize size);
 
         static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout &layout);
 
