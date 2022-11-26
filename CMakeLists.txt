@@ -53,7 +53,8 @@ set(LIBS
 set(LIB_INCLUDES
         lib/spdlog-1.11.0/include
         lib/vma-3.0.1/include
-        lib/whereami-ba364cd/include)
+        lib/whereami-ba364cd/include
+        lib/strong_type_6/include)
 
 add_executable(${PROJECT_NAME})
 

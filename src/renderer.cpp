@@ -690,6 +690,25 @@ namespace mve {
             m_vertex_buffer_deletion_queue.erase(v);
         }
 
+        auto index_destroyed = std::vector<IndexBufferHandle>();
+        for (auto &handle_pair : m_index_buffer_deletion_queue) {
+            if (handle_pair.second < c_frames_in_flight) {
+                handle_pair.second++;
+                break;
+            }
+            else {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_index_buffers.at(handle_pair.first).buffer.vk_handle,
+                    m_index_buffers.at(handle_pair.first).buffer.vma_allocation);
+                m_index_buffers.erase(handle_pair.first);
+                index_destroyed.push_back(handle_pair.first);
+            }
+        }
+        for (IndexBufferHandle v : index_destroyed) {
+            m_index_buffer_deletion_queue.erase(v);
+        }
+
         vk::ResultValue<uint32_t> acquire_result
             = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
         if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
@@ -746,9 +765,14 @@ namespace mve {
 
         cleanup_vk_swapchain();
 
-        for (auto buffer : m_vertex_buffers) {
+        for (auto &buffer : m_vertex_buffers) {
             vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
         }
+
+        for (auto &buffer : m_index_buffers) {
+            vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
+        }
+
         vmaDestroyAllocator(m_vma_allocator);
 
         m_vk_device.destroy(m_vk_graphics_pipeline);
@@ -968,10 +992,10 @@ namespace mve {
     Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
     {
         VertexBuffer vertex_buffer = create_vertex_buffer(vertex_data);
-        m_vertex_buffers[m_vertex_data_handle_count] = vertex_buffer;
-        m_vertex_data_handle_count++;
+        m_vertex_buffers[VertexDataHandle(m_resource_handle_count)] = vertex_buffer;
+        m_resource_handle_count++;
 
-        return m_vertex_data_handle_count - 1;
+        return VertexDataHandle(m_resource_handle_count - 1);
     }
 
     vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout &layout)
@@ -1102,6 +1126,56 @@ namespace mve {
         graphics_queue.waitIdle();
 
         device.freeCommandBuffers(command_pool, 1, &command_buffer);
+    }
+
+    Renderer::IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t> &index_data)
+    {
+        size_t buffer_size = sizeof(uint32_t) * index_data.size();
+
+        Buffer staging_buffer = create_buffer(
+            m_vma_allocator,
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+        void *data;
+        vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+        memcpy(data, index_data.data(), buffer_size);
+        vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+
+        Buffer vertex_buffer = create_buffer(
+            m_vma_allocator,
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+
+        copy_buffer(
+            m_vk_device,
+            m_vk_command_pool,
+            m_vk_graphics_queue,
+            staging_buffer.vk_handle,
+            vertex_buffer.vk_handle,
+            buffer_size);
+
+        vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+
+        return { vertex_buffer, index_data.size() };
+    }
+
+    Renderer::IndexBufferHandle Renderer::upload_index_data(const std::vector<uint32_t> &index_data)
+    {
+        IndexBuffer index_buffer = create_index_buffer(index_data);
+        m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
+        m_resource_handle_count++;
+
+        return IndexBufferHandle(m_resource_handle_count - 1);
+    }
+
+    void Renderer::queue_destroy(Renderer::IndexBufferHandle handle)
+    {
+        m_index_buffer_deletion_queue[handle] = 0;
     };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)

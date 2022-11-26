@@ -9,6 +9,8 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 
+#include <strong_type/strong_type.hpp>
+
 #include "logger.hpp"
 
 #include <filesystem>
@@ -46,7 +48,11 @@ namespace mve {
 
     class Renderer {
     public:
-        using VertexDataHandle = uint32_t;
+        using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
+        using VertexDataHandle
+            = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
+        using IndexBufferHandle
+            = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
 
         Renderer(
             const Window &window,
@@ -69,7 +75,11 @@ namespace mve {
 
         VertexDataHandle upload_vertex_data(const VertexData &vertex_data);
 
+        IndexBufferHandle upload_index_data(const std::vector<uint32_t> &index_data);
+
         void queue_destroy(VertexDataHandle handle);
+
+        void queue_destroy(IndexBufferHandle handle);
 
     private:
         struct QueueFamilyIndices {
@@ -96,6 +106,11 @@ namespace mve {
         struct VertexBuffer {
             Buffer buffer;
             int vertex_count;
+        };
+
+        struct IndexBuffer {
+            Buffer buffer;
+            size_t index_count;
         };
 
         struct FrameInFlight {
@@ -126,19 +141,23 @@ namespace mve {
         QueueFamilyIndices m_vk_queue_family_indices;
         uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator;
-        VertexDataHandle m_vertex_data_handle_count = 0;
+        uint32_t m_resource_handle_count;
 
         std::vector<FrameInFlight> m_frames_in_flight;
 
         std::unordered_map<VertexDataHandle, VertexBuffer> m_vertex_buffers;
-
         std::unordered_map<VertexDataHandle, int> m_vertex_buffer_deletion_queue;
+
+        std::unordered_map<IndexBufferHandle, IndexBuffer> m_index_buffers;
+        std::unordered_map<IndexBufferHandle, int> m_index_buffer_deletion_queue;
 
         void cleanup_vk_swapchain();
 
         void cleanup_vk_debug_messenger();
 
         VertexBuffer create_vertex_buffer(const VertexData &vertex_data);
+
+        IndexBuffer create_index_buffer(const std::vector<uint32_t> &index_data);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
             VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
