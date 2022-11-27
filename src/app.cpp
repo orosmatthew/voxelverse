@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
+#include "shader.hpp"
 
 namespace app {
 
