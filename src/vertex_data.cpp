@@ -31,7 +31,7 @@ namespace mve {
     {
     }
 
-    void VertexData::add_data(float value)
+    void VertexData::push_back(float value)
     {
         assert(get_next_type() == VertexAttributeType::e_float);
 
@@ -40,7 +40,7 @@ namespace mve {
         m_data_count++;
     }
 
-    void VertexData::add_data(glm::vec2 value)
+    void VertexData::push_back(glm::vec2 value)
     {
         assert(get_next_type() == VertexAttributeType::e_vec2);
 
@@ -50,7 +50,7 @@ namespace mve {
         m_data_count++;
     }
 
-    void VertexData::add_data(glm::vec3 value)
+    void VertexData::push_back(glm::vec3 value)
     {
         assert(get_next_type() == VertexAttributeType::e_vec3);
 
@@ -61,7 +61,7 @@ namespace mve {
         m_data_count++;
     }
 
-    void VertexData::add_data(glm::vec4 value)
+    void VertexData::push_back(glm::vec4 value)
     {
         assert(get_next_type() == VertexAttributeType::e_vec4);
 

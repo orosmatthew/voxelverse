@@ -23,7 +23,7 @@ namespace mve {
         glfwSetFramebufferSizeCallback(m_glfw_window.get(), glfw_framebuffer_resize_callback);
     }
 
-    GLFWwindow *Window::_get_glfw_handle() const
+    GLFWwindow *Window::get_glfw_handle() const
     {
         return m_glfw_window.get();
     }

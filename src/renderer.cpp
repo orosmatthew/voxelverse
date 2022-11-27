@@ -28,7 +28,7 @@ namespace mve {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
         m_vk_debug_utils_messenger = create_vk_debug_messenger(m_vk_instance);
 #endif
-        m_vk_surface = create_vk_surface(m_vk_instance, window._get_glfw_handle());
+        m_vk_surface = create_vk_surface(m_vk_instance, window.get_glfw_handle());
         m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
         m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
         m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_queue_family_indices);
@@ -38,7 +38,7 @@ namespace mve {
 
         m_vk_swapchain_image_format = choose_vk_swapchain_surface_format(swapchain_support_details.formats);
         m_vk_swapchain_extent
-            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window._get_glfw_handle());
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
         m_vk_swapchain = create_vk_swapchain(
             m_vk_physical_device,
             m_vk_device,
@@ -75,6 +75,11 @@ namespace mve {
         vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
 
         m_frames_in_flight = create_frames_in_flight(m_vk_device, m_vk_command_pool, c_frames_in_flight);
+
+        m_current_draw_state.is_drawing = false;
+        m_current_draw_state.frame = 0;
+        m_current_draw_state.image_index = 0;
+        m_current_draw_state.command_buffer = VK_NULL_HANDLE;
     }
 
     bool Renderer::has_validation_layer_support()
@@ -713,7 +718,7 @@ namespace mve {
             = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
 
         m_vk_swapchain_extent
-            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window._get_glfw_handle());
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
 
         m_vk_swapchain = create_vk_swapchain(
             m_vk_physical_device,
@@ -843,7 +848,7 @@ namespace mve {
         return { vertex_buffer, vertex_data.get_vertex_count() };
     }
 
-    Renderer::VertexBufferHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
+    Renderer::VertexBufferHandle Renderer::upload(const VertexData &vertex_data)
     {
         VertexBuffer vertex_buffer = create_vertex_buffer(vertex_data);
         m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
@@ -1018,7 +1023,7 @@ namespace mve {
         return { vertex_buffer, index_data.size() };
     }
 
-    Renderer::IndexBufferHandle Renderer::upload_index_data(const std::vector<uint32_t> &index_data)
+    Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t> &index_data)
     {
         IndexBuffer index_buffer = create_index_buffer(index_data);
         m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
@@ -1034,11 +1039,17 @@ namespace mve {
 
     void Renderer::begin(const Window &window)
     {
+        if (m_current_draw_state.is_drawing) {
+            throw std::runtime_error("[Renderer] Already drawing.");
+        }
+
+        m_current_draw_state.is_drawing = true;
+
         if (window.was_resized()) {
             recreate_swapchain(window);
         }
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
+        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame];
 
         vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
         if (fence_wait_result != vk::Result::eSuccess) {
@@ -1088,30 +1099,30 @@ namespace mve {
         if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
-        m_current_image_index = acquire_result.value;
+        m_current_draw_state.image_index = acquire_result.value;
 
         m_vk_device.resetFences({ frame.in_flight_fence });
 
         frame.command_buffer.reset();
 
-        m_current_command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
+        m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame].command_buffer;
 
         auto buffer_begin_info = vk::CommandBufferBeginInfo();
-        m_current_command_buffer.begin(buffer_begin_info);
+        m_current_draw_state.command_buffer.begin(buffer_begin_info);
 
         auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
 
         auto render_pass_begin_info
             = vk::RenderPassBeginInfo()
                   .setRenderPass(m_vk_render_pass)
-                  .setFramebuffer(m_vk_swapchain_framebuffers[m_current_image_index])
+                  .setFramebuffer(m_vk_swapchain_framebuffers[m_current_draw_state.image_index])
                   .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
                   .setClearValueCount(1)
                   .setPClearValues(&clear_color);
 
-        m_current_command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+        m_current_draw_state.command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-        m_current_command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
+        m_current_draw_state.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
 
         auto viewport
             = vk::Viewport()
@@ -1122,20 +1133,20 @@ namespace mve {
                   .setMinDepth(0.0f)
                   .setMaxDepth(1.0f);
 
-        m_current_command_buffer.setViewport(0, { viewport });
+        m_current_draw_state.command_buffer.setViewport(0, { viewport });
 
         auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
 
-        m_current_command_buffer.setScissor(0, { scissor });
+        m_current_draw_state.command_buffer.setScissor(0, { scissor });
     }
 
     void Renderer::end(const Window &window)
     {
-        m_current_command_buffer.endRenderPass();
+        m_current_draw_state.command_buffer.endRenderPass();
 
-        m_current_command_buffer.end();
+        m_current_draw_state.command_buffer.end();
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
+        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame];
 
         vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -1157,7 +1168,7 @@ namespace mve {
             = vk::PresentInfoKHR()
                   .setWaitSemaphores(signal_semaphores)
                   .setSwapchains(swapchains)
-                  .setPImageIndices(&m_current_image_index);
+                  .setPImageIndices(&(m_current_draw_state.image_index));
 
         vk::Result present_result = m_vk_present_queue.presentKHR(present_info);
 
@@ -1168,13 +1179,28 @@ namespace mve {
             throw std::runtime_error("Failed to present frame");
         }
 
-        m_current_frame = (m_current_frame + 1) % c_frames_in_flight;
+        m_current_draw_state.frame = (m_current_draw_state.frame + 1) % c_frames_in_flight;
+
+        m_current_draw_state.is_drawing = false;
     }
 
     void Renderer::draw(VertexBufferHandle handle)
     {
         VertexBuffer &vertex_buffer = m_vertex_buffers.at(handle);
-        m_current_command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
-        m_current_command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
-    };
+        m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
+        m_current_draw_state.command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
+    }
+
+    void Renderer::bind(Renderer::VertexBufferHandle handle)
+    {
+        m_current_draw_state.command_buffer.bindVertexBuffers(0, m_vertex_buffers.at(handle).buffer.vk_handle, { 0 });
+    }
+
+    void Renderer::draw(Renderer::IndexBufferHandle handle)
+    {
+        IndexBuffer &index_buffer = m_index_buffers.at(handle);
+        m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
+        m_current_draw_state.command_buffer.drawIndexed(index_buffer.index_count, 1, 0, 0, 0);
+    }
+
 }

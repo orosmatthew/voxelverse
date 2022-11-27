@@ -261,7 +261,7 @@ namespace mve {
          * @brief Get GLFW window handle
          * @return - Returns GLFW window pointer
          */
-        [[nodiscard]] GLFWwindow *_get_glfw_handle() const;
+        [[nodiscard]] GLFWwindow *get_glfw_handle() const;
 
         /**
          * @brief Get if window was resized since last update

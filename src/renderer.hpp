@@ -78,10 +78,22 @@ namespace mve {
         void begin(const Window &window);
 
         /**
-         * @brief Draw vertex buffer
+         * @brief Bind and draw vertex buffer
          * @param handle - Vertex buffer handle
          */
         void draw(VertexBufferHandle handle);
+
+        /**
+         * @brief Bind vertex buffer
+         * @param handle - Vertex buffer handle
+         */
+        void bind(VertexBufferHandle handle);
+
+        /**
+         * @brief Bind and draw index buffer
+         * @param handle - Index buffer handle
+         */
+        void draw(IndexBufferHandle handle);
 
         /**
          * @brief End recording commands
@@ -94,14 +106,14 @@ namespace mve {
          * @param vertex_data - Vertex data to upload
          * @return - Returns handle GPU vertex buffer
          */
-        VertexBufferHandle upload_vertex_data(const VertexData &vertex_data);
+        VertexBufferHandle upload(const VertexData &vertex_data);
 
         /**
          * @brief Upload index data to GPU index buffer
          * @param index_data - Index data to upload
          * @return - Returns handle to GPU index buffer
          */
-        IndexBufferHandle upload_index_data(const std::vector<uint32_t> &index_data);
+        IndexBufferHandle upload(const std::vector<uint32_t> &index_data);
 
         /**
          * @brief Destroy GPU vertex buffer
@@ -154,6 +166,13 @@ namespace mve {
             vk::Fence in_flight_fence;
         };
 
+        struct CurrentDrawState {
+            bool is_drawing;
+            uint32_t image_index;
+            vk::CommandBuffer command_buffer;
+            uint32_t frame;
+        };
+
         const int c_frames_in_flight;
         vk::Instance m_vk_instance;
         vk::DebugUtilsMessengerEXT m_vk_debug_utils_messenger;
@@ -173,12 +192,9 @@ namespace mve {
         std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
         vk::CommandPool m_vk_command_pool;
         QueueFamilyIndices m_vk_queue_family_indices;
-        uint32_t m_current_frame = 0;
         VmaAllocator m_vma_allocator;
         uint32_t m_resource_handle_count;
-
-        uint32_t m_current_image_index;
-        vk::CommandBuffer m_current_command_buffer;
+        CurrentDrawState m_current_draw_state;
 
         std::vector<FrameInFlight> m_frames_in_flight;
 

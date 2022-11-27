@@ -23,16 +23,16 @@ TEST_CASE("Test VertexData", "[VertexData]")
     REQUIRE(vertex_data.get_vertex_count() == 0);
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_float);
-    vertex_data.add_data(2.0f);
+    vertex_data.push_back(2.0f);
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_vec2);
-    vertex_data.add_data(glm::vec2(0, 1));
+    vertex_data.push_back(glm::vec2(0, 1));
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_vec3);
-    vertex_data.add_data(glm::vec3(0, 1, 2));
+    vertex_data.push_back(glm::vec3(0, 1, 2));
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_vec4);
-    vertex_data.add_data(glm::vec4(0, 1, 2, 3));
+    vertex_data.push_back(glm::vec4(0, 1, 2, 3));
 
     REQUIRE(vertex_data.get_next_type() == mve::VertexAttributeType::e_float);
 
@@ -40,7 +40,7 @@ TEST_CASE("Test VertexData", "[VertexData]")
 
     REQUIRE(vertex_data.get_vertex_count() == 1);
 
-    vertex_data.add_data(3.0f);
+    vertex_data.push(3.0f);
     REQUIRE(vertex_data.is_complete() == false);
 
     REQUIRE(vertex_data.get_data_count() == 5);

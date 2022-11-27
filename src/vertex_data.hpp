@@ -43,25 +43,25 @@ namespace mve {
          * Add float to data
          * @param value - float value
          */
-        void add_data(float value);
+        void push_back(float value);
 
         /**
          * Add vec2 to data
          * @param value - vec2 value
          */
-        void add_data(glm::vec2 value);
+        void push_back(glm::vec2 value);
 
         /**
          * Add vec3 to data
          * @param value - vec3 value
          */
-        void add_data(glm::vec3 value);
+        void push_back(glm::vec3 value);
 
         /**
          * Add vec4 to data
          * @param value - vec4 value
          */
-        void add_data(glm::vec4 value);
+        void push_back(glm::vec4 value);
 
         /**
          * Get the next attribute data type expected
