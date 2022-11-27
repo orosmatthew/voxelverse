@@ -10,6 +10,9 @@
 
 namespace mve {
 
+    /**
+     * @brief Keyboard input key
+     */
     enum class InputKey {
         e_unknown = GLFW_KEY_UNKNOWN,
         e_space = GLFW_KEY_SPACE,
@@ -135,6 +138,9 @@ namespace mve {
         e_last = GLFW_KEY_LAST,
     };
 
+    /**
+     * @brief Mouse button input
+     */
     enum class InputMouseButton {
         e_1 = GLFW_MOUSE_BUTTON_1,
         e_2 = GLFW_MOUSE_BUTTON_2,
@@ -150,6 +156,9 @@ namespace mve {
         e_middle = GLFW_MOUSE_BUTTON_MIDDLE,
     };
 
+    /**
+     * @brief Gamepad axis input
+     */
     enum class InputGamepadAxis {
         e_left_x = GLFW_GAMEPAD_AXIS_LEFT_X,
         e_left_y = GLFW_GAMEPAD_AXIS_LEFT_Y,
@@ -160,6 +169,9 @@ namespace mve {
         e_last = GLFW_GAMEPAD_AXIS_LAST,
     };
 
+    /**
+     * @brief Gamepad button input
+     */
     enum class InputGamepadButton {
         e_a = GLFW_GAMEPAD_BUTTON_A,
         e_b = GLFW_GAMEPAD_BUTTON_B,
@@ -183,6 +195,9 @@ namespace mve {
         e_triangle = GLFW_GAMEPAD_BUTTON_TRIANGLE,
     };
 
+    /**
+     * @brief Joystick hat input
+     */
     enum class InputJoystickHat {
         e_centered = GLFW_HAT_CENTERED,
         e_up = GLFW_HAT_UP,
@@ -195,6 +210,9 @@ namespace mve {
         e_left_down = GLFW_HAT_LEFT_DOWN,
     };
 
+    /**
+     * @brief Joystick input
+     */
     enum class InputJoystick {
         e_1 = GLFW_JOYSTICK_1,
         e_2 = GLFW_JOYSTICK_2,
@@ -215,6 +233,9 @@ namespace mve {
         e_last = GLFW_JOYSTICK_LAST,
     };
 
+    /**
+     * @brief Keyboard input modifiers
+     */
     enum InputKeyModifierBits {
         e_shift = GLFW_MOD_SHIFT,
         e_control = GLFW_MOD_CONTROL,
@@ -224,33 +245,75 @@ namespace mve {
         e_num_lock = GLFW_MOD_NUM_LOCK,
     };
 
-    enum InputState {
-        e_release = 0,
-        e_press = 1,
-    };
-
+    /**
+     * @brief Window class
+     */
     class Window {
     public:
+        /**
+         * @brief Construct window class
+         * @param title - Title of window
+         * @param size - Initial size of window
+         */
         Window(const std::string &title, glm::ivec2 size);
 
-        [[nodiscard]] GLFWwindow *get_glfw_handle() const;
+        /**
+         * @brief Get GLFW window handle
+         * @return - Returns GLFW window pointer
+         */
+        [[nodiscard]] GLFWwindow *_get_glfw_handle() const;
 
+        /**
+         * @brief Get if window was resized since last update
+         * @return - Returns true if window was resized since last update
+         */
         [[nodiscard]] bool was_resized() const;
 
+        /**
+         * @brief Get current size of window
+         * @return - Returns current window size
+         */
         [[nodiscard]] glm::ivec2 get_size() const;
 
+        /**
+         * @brief Determine if window should close such as if close button is pressed
+         * @return - Returns true if window should close
+         */
         [[nodiscard]] bool should_close() const;
 
+        /**
+         * @brief Set callback function when window is resized
+         * @param resize_callback - Resize callback. Takes ivec2 new size as parameter
+         */
         void set_resize_callback(const std::function<void(glm::ivec2)> &resize_callback);
 
+        /**
+         * @brief Remove window resize callback if set
+         */
         void remove_resize_callback();
 
+        /**
+         * @brief Update window. Updates inputs and checks if resized
+         */
         void update();
 
+        /**
+         * @brief Blocks until event occurs
+         */
         void wait_for_events() const;
 
-        InputState get_key(InputKey key);
+        /**
+         * @brief Determine if keyboard key pressed
+         * @param key - Keyboard key
+         * @return - Returns true if pressed
+         */
+        bool is_key_pressed(InputKey key);
 
+        /**
+         * @brief Get cursor position
+         * @param clamped_to_window - If true then returns value clamped inside of window
+         * @return - Returns vec2 of cursor position
+         */
         glm::vec2 get_cursor_pos(bool clamped_to_window = true);
 
     private:

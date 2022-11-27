@@ -100,13 +100,8 @@ namespace mve {
         [[nodiscard]] VertexLayout get_layout() const;
 
     private:
-        /// Layout for vertex data
         VertexLayout m_layout;
-
-        /// Array of floats for the actual data
         std::vector<float> m_data;
-
-        /// Count of how many values are added to data
         int m_data_count = 0;
     };
 }

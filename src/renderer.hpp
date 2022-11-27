@@ -8,10 +8,10 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.hpp>
-#include <strong_type/strong_type.hpp>
 #include <glm/glm.hpp>
+#include <strong_type/strong_type.hpp>
 #include <vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
 
 #include "vertex_data.hpp"
 
@@ -24,14 +24,40 @@ namespace mve {
     class Shader;
     class Window;
 
+    /**
+     * @brief Vulkan renderer class
+     */
     class Renderer {
     public:
+        /**
+         * @brief Handle for GPU resources
+         */
         using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
+
+        /**
+         * @brief Handle for GPU vertex buffer
+         */
         using VertexBufferHandle
             = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
+
+        /**
+         * @brief Handle for GPU index buffer
+         */
         using IndexBufferHandle
             = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
 
+        /**
+         * @brief Construct Vulkan renderer
+         * @param window - Window
+         * @param app_name - Name of application
+         * @param app_version_major - App version major
+         * @param app_version_minor - App version minor
+         * @param app_version_patch - App version patch
+         * @param vertex_shader - Vertex shader
+         * @param fragment_shader - Fragment shader
+         * @param layout - Vertex layout
+         * @param frames_in_flight - Number of frames in flight
+         */
         Renderer(
             const Window &window,
             const std::string &app_name,
@@ -45,20 +71,48 @@ namespace mve {
 
         ~Renderer();
 
-        void recreate_swapchain(const Window &window);
-
+        /**
+         * @brief Begin recording commands
+         * @param window - Window
+         */
         void begin(const Window &window);
 
+        /**
+         * @brief Draw vertex buffer
+         * @param handle - Vertex buffer handle
+         */
         void draw(VertexBufferHandle handle);
 
+        /**
+         * @brief End recording commands
+         * @param window - Window
+         */
         void end(const Window &window);
 
+        /**
+         * @brief Upload vertex data to GPU vertex buffer
+         * @param vertex_data - Vertex data to upload
+         * @return - Returns handle GPU vertex buffer
+         */
         VertexBufferHandle upload_vertex_data(const VertexData &vertex_data);
 
+        /**
+         * @brief Upload index data to GPU index buffer
+         * @param index_data - Index data to upload
+         * @return - Returns handle to GPU index buffer
+         */
         IndexBufferHandle upload_index_data(const std::vector<uint32_t> &index_data);
 
+        /**
+         * @brief Destroy GPU vertex buffer
+         * @param handle - Vertex buffer handle
+         */
         void queue_destroy(VertexBufferHandle handle);
 
+        /**
+         * @brief Destroy GPU index buffer
+         * @param handle - Index buffer handle
+         */
         void queue_destroy(IndexBufferHandle handle);
 
     private:
@@ -137,6 +191,8 @@ namespace mve {
         void cleanup_vk_swapchain();
 
         void cleanup_vk_debug_messenger();
+
+        void recreate_swapchain(const Window &window);
 
         VertexBuffer create_vertex_buffer(const VertexData &vertex_data);
 

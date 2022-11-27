@@ -29,7 +29,6 @@ namespace mve {
         [[nodiscard]] std::vector<char> get_spv_code() const;
 
     private:
-        /// byte (char) array of SPIR-V code
         std::vector<char> m_spv_code;
     };
 

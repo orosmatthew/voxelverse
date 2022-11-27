@@ -23,7 +23,7 @@ namespace mve {
         glfwSetFramebufferSizeCallback(m_glfw_window.get(), glfw_framebuffer_resize_callback);
     }
 
-    GLFWwindow *Window::get_glfw_handle() const
+    GLFWwindow *Window::_get_glfw_handle() const
     {
         return m_glfw_window.get();
     }
@@ -76,9 +76,9 @@ namespace mve {
         m_resize_callback.reset();
     }
 
-    InputState Window::get_key(InputKey key)
+    bool Window::is_key_pressed(InputKey key)
     {
-        return static_cast<InputState>(glfwGetKey(m_glfw_window.get(), static_cast<int>(key)));
+        return static_cast<bool>(glfwGetKey(m_glfw_window.get(), static_cast<int>(key)));
     }
 
     glm::vec2 Window::get_cursor_pos(bool clamped_to_window)

@@ -28,7 +28,7 @@ namespace mve {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
         m_vk_debug_utils_messenger = create_vk_debug_messenger(m_vk_instance);
 #endif
-        m_vk_surface = create_vk_surface(m_vk_instance, window.get_glfw_handle());
+        m_vk_surface = create_vk_surface(m_vk_instance, window._get_glfw_handle());
         m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_surface);
         m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_physical_device, m_vk_surface);
         m_vk_device = create_vk_logical_device(m_vk_physical_device, m_vk_queue_family_indices);
@@ -38,7 +38,7 @@ namespace mve {
 
         m_vk_swapchain_image_format = choose_vk_swapchain_surface_format(swapchain_support_details.formats);
         m_vk_swapchain_extent
-            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window._get_glfw_handle());
         m_vk_swapchain = create_vk_swapchain(
             m_vk_physical_device,
             m_vk_device,
@@ -713,7 +713,7 @@ namespace mve {
             = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
 
         m_vk_swapchain_extent
-            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.get_glfw_handle());
+            = get_vk_swapchain_extent(swapchain_support_details.capabilities, window._get_glfw_handle());
 
         m_vk_swapchain = create_vk_swapchain(
             m_vk_physical_device,

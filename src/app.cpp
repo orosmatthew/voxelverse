@@ -4,8 +4,8 @@
 
 #include "logger.hpp"
 #include "renderer.hpp"
-#include "window.hpp"
 #include "shader.hpp"
+#include "window.hpp"
 
 namespace app {
 
@@ -61,11 +61,11 @@ namespace app {
         while (!window.should_close()) {
             window.update();
 
-            if (window.get_key(mve::InputKey::e_escape)) {
+            if (window.is_key_pressed(mve::InputKey::e_escape)) {
                 break;
             }
 
-            if (!is_triangle_removed && window.get_key(mve::InputKey::e_t)) {
+            if (!is_triangle_removed && window.is_key_pressed(mve::InputKey::e_t)) {
                 renderer.queue_destroy(vertex_data_handle3);
                 is_triangle_removed = true;
             }
