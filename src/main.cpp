@@ -1,15 +1,12 @@
-
-#include "app.hpp"
+#include <iostream>
 
 #include <spdlog/spdlog.h>
 
-#include <iostream>
-
+#include "app.hpp"
 #include "logger.hpp"
 
 int main()
 {
-
     initLogger();
 
 #ifdef NDEBUG
@@ -20,12 +17,10 @@ int main()
 
     LOG->info("Starting");
 
-    try
-    {
+    try {
         app::run();
     }
-    catch (const std::exception& e)
-    {
+    catch (const std::exception &e) {
         LOG->error(e.what());
         return EXIT_FAILURE;
     }

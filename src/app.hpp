@@ -1,9 +1,5 @@
-#ifndef APP_HPP
-#define APP_HPP
+#pragma once
 
-namespace app
-{
+namespace app {
     void run();
 }
-
-#endif // APP_HPP

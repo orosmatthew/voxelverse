@@ -43,7 +43,8 @@ set(SOURCE_FILES
         src/logger.cpp
         src/renderer.cpp
         src/window.cpp
-        src/vertex_data.cpp)
+        src/vertex_data.cpp
+        src/shader.cpp)
 
 set(LIBS
         Vulkan::Vulkan

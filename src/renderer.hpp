@@ -1,50 +1,28 @@
 #pragma once
 
-#ifndef NDEBUG
-#define MVE_ENABLE_VALIDATION_LAYERS
-#endif
-
-#define GLFW_INCLUDE_VULKAN
-
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.hpp>
-
-#include <strong_type/strong_type.hpp>
-
-#include "logger.hpp"
-
 #include <filesystem>
 #include <optional>
 #include <set>
 #include <unordered_map>
 #include <vector>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.hpp>
+#include <strong_type/strong_type.hpp>
 #include <glm/glm.hpp>
-
 #include <vk_mem_alloc.h>
 
 #include "vertex_data.hpp"
 
+#ifndef NDEBUG
+#define MVE_ENABLE_VALIDATION_LAYERS
+#endif
+
 namespace mve {
 
+    class Shader;
     class Window;
-
-    enum class ShaderType {
-        e_vertex,
-        e_fragment,
-    };
-
-    class Shader {
-    public:
-        // Shader(const std::filesystem::path &file_path, ShaderType shader_type, bool optimize);
-
-        Shader(const std::filesystem::path &file_path, ShaderType shader_type);
-
-        [[nodiscard]] std::vector<char> get_spv_code() const;
-
-    private:
-        std::vector<char> m_spv_code;
-    };
 
     class Renderer {
     public:

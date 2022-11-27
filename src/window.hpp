@@ -1,9 +1,9 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
-#include <memory>
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
