@@ -658,104 +658,6 @@ namespace mve {
         return command_buffers;
     }
 
-    void Renderer::draw_frame(const Window &window)
-    {
-        if (window.was_resized()) {
-            recreate_swapchain(window);
-        }
-
-        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
-
-        vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
-        if (fence_wait_result != vk::Result::eSuccess) {
-            throw std::runtime_error("Failed waiting for frame (fences)");
-        }
-
-        auto destroyed = std::vector<VertexDataHandle>();
-        for (auto &handle_pair : m_vertex_buffer_deletion_queue) {
-            if (handle_pair.second < c_frames_in_flight) {
-                handle_pair.second++;
-                break;
-            }
-            else {
-                vmaDestroyBuffer(
-                    m_vma_allocator,
-                    m_vertex_buffers.at(handle_pair.first).buffer.vk_handle,
-                    m_vertex_buffers.at(handle_pair.first).buffer.vma_allocation);
-                m_vertex_buffers.erase(handle_pair.first);
-                destroyed.push_back(handle_pair.first);
-            }
-        }
-        for (VertexDataHandle v : destroyed) {
-            m_vertex_buffer_deletion_queue.erase(v);
-        }
-
-        auto index_destroyed = std::vector<IndexBufferHandle>();
-        for (auto &handle_pair : m_index_buffer_deletion_queue) {
-            if (handle_pair.second < c_frames_in_flight) {
-                handle_pair.second++;
-                break;
-            }
-            else {
-                vmaDestroyBuffer(
-                    m_vma_allocator,
-                    m_index_buffers.at(handle_pair.first).buffer.vk_handle,
-                    m_index_buffers.at(handle_pair.first).buffer.vma_allocation);
-                m_index_buffers.erase(handle_pair.first);
-                index_destroyed.push_back(handle_pair.first);
-            }
-        }
-        for (IndexBufferHandle v : index_destroyed) {
-            m_index_buffer_deletion_queue.erase(v);
-        }
-
-        vk::ResultValue<uint32_t> acquire_result
-            = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
-        if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
-            throw std::runtime_error("Failed to acquire swapchain image");
-        }
-        uint32_t image_index = acquire_result.value;
-
-        m_vk_device.resetFences({ frame.in_flight_fence });
-
-        frame.command_buffer.reset();
-
-        record_vk_command_buffer(image_index);
-
-        vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
-        vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-        vk::Semaphore signal_semaphores[] = { frame.render_finished_semaphore };
-
-        auto submit_info
-            = vk::SubmitInfo()
-                  .setWaitSemaphores(wait_semaphores)
-                  .setWaitDstStageMask(wait_stages)
-                  .setCommandBufferCount(1)
-                  .setPCommandBuffers(&(frame.command_buffer))
-                  .setSignalSemaphores(signal_semaphores);
-
-        m_vk_graphics_queue.submit({ submit_info }, frame.in_flight_fence);
-
-        vk::SwapchainKHR swapchains[] = { m_vk_swapchain };
-
-        auto present_info
-            = vk::PresentInfoKHR()
-                  .setWaitSemaphores(signal_semaphores)
-                  .setSwapchains(swapchains)
-                  .setPImageIndices(&image_index);
-
-        vk::Result present_result = m_vk_present_queue.presentKHR(present_info);
-
-        if (present_result == vk::Result::eSuboptimalKHR) {
-            recreate_swapchain(window);
-        }
-        else if (present_result != vk::Result::eSuccess) {
-            throw std::runtime_error("Failed to present frame");
-        }
-
-        m_current_frame = (m_current_frame + 1) % c_frames_in_flight;
-    }
-
     Renderer::~Renderer()
     {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -904,55 +806,6 @@ namespace mve {
         }
     }
 
-    void Renderer::record_vk_command_buffer(uint32_t image_index)
-    {
-        vk::CommandBuffer &command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
-
-        auto buffer_begin_info = vk::CommandBufferBeginInfo();
-        command_buffer.begin(buffer_begin_info);
-
-        auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
-
-        auto render_pass_begin_info
-            = vk::RenderPassBeginInfo()
-                  .setRenderPass(m_vk_render_pass)
-                  .setFramebuffer(m_vk_swapchain_framebuffers[image_index])
-                  .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
-                  .setClearValueCount(1)
-                  .setPClearValues(&clear_color);
-
-        command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
-
-        auto viewport
-            = vk::Viewport()
-                  .setX(0.0f)
-                  .setY(0.0f)
-                  .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
-                  .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
-                  .setMinDepth(0.0f)
-                  .setMaxDepth(1.0f);
-
-        command_buffer.setViewport(0, { viewport });
-
-        auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
-
-        command_buffer.setScissor(0, { scissor });
-
-        for (auto vertex_data_pair : m_vertex_buffers) {
-            if (m_vertex_buffer_deletion_queue.contains(vertex_data_pair.first)) {
-                continue;
-            }
-            command_buffer.bindVertexBuffers(0, vertex_data_pair.second.buffer.vk_handle, { 0 });
-            command_buffer.draw(vertex_data_pair.second.vertex_count, 1, 0, 0);
-        }
-
-        command_buffer.endRenderPass();
-
-        command_buffer.end();
-    }
-
     Renderer::VertexBuffer Renderer::create_vertex_buffer(const VertexData &vertex_data)
     {
         size_t buffer_size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
@@ -989,13 +842,13 @@ namespace mve {
         return { vertex_buffer, vertex_data.get_vertex_count() };
     }
 
-    Renderer::VertexDataHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
+    Renderer::VertexBufferHandle Renderer::upload_vertex_data(const VertexData &vertex_data)
     {
         VertexBuffer vertex_buffer = create_vertex_buffer(vertex_data);
-        m_vertex_buffers[VertexDataHandle(m_resource_handle_count)] = vertex_buffer;
+        m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
         m_resource_handle_count++;
 
-        return VertexDataHandle(m_resource_handle_count - 1);
+        return VertexBufferHandle(m_resource_handle_count - 1);
     }
 
     vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout &layout)
@@ -1066,7 +919,7 @@ namespace mve {
         return frames_in_flight;
     }
 
-    void Renderer::queue_destroy(Renderer::VertexDataHandle handle)
+    void Renderer::queue_destroy(Renderer::VertexBufferHandle handle)
     {
         m_vertex_buffer_deletion_queue[handle] = 0;
     }
@@ -1176,6 +1029,152 @@ namespace mve {
     void Renderer::queue_destroy(Renderer::IndexBufferHandle handle)
     {
         m_index_buffer_deletion_queue[handle] = 0;
+    }
+
+    void Renderer::begin(const Window &window)
+    {
+        if (window.was_resized()) {
+            recreate_swapchain(window);
+        }
+
+        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
+
+        vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
+        if (fence_wait_result != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed waiting for frame (fences)");
+        }
+
+        auto destroyed = std::vector<VertexBufferHandle>();
+        for (auto &handle_pair : m_vertex_buffer_deletion_queue) {
+            if (handle_pair.second < c_frames_in_flight) {
+                handle_pair.second++;
+                break;
+            }
+            else {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_vertex_buffers.at(handle_pair.first).buffer.vk_handle,
+                    m_vertex_buffers.at(handle_pair.first).buffer.vma_allocation);
+                m_vertex_buffers.erase(handle_pair.first);
+                destroyed.push_back(handle_pair.first);
+            }
+        }
+        for (VertexBufferHandle v : destroyed) {
+            m_vertex_buffer_deletion_queue.erase(v);
+        }
+
+        auto index_destroyed = std::vector<IndexBufferHandle>();
+        for (auto &handle_pair : m_index_buffer_deletion_queue) {
+            if (handle_pair.second < c_frames_in_flight) {
+                handle_pair.second++;
+                break;
+            }
+            else {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_index_buffers.at(handle_pair.first).buffer.vk_handle,
+                    m_index_buffers.at(handle_pair.first).buffer.vma_allocation);
+                m_index_buffers.erase(handle_pair.first);
+                index_destroyed.push_back(handle_pair.first);
+            }
+        }
+        for (IndexBufferHandle v : index_destroyed) {
+            m_index_buffer_deletion_queue.erase(v);
+        }
+
+        vk::ResultValue<uint32_t> acquire_result
+            = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
+        if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
+            throw std::runtime_error("Failed to acquire swapchain image");
+        }
+        m_current_image_index = acquire_result.value;
+
+        m_vk_device.resetFences({ frame.in_flight_fence });
+
+        frame.command_buffer.reset();
+
+        m_current_command_buffer = m_frames_in_flight[m_current_frame].command_buffer;
+
+        auto buffer_begin_info = vk::CommandBufferBeginInfo();
+        m_current_command_buffer.begin(buffer_begin_info);
+
+        auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+
+        auto render_pass_begin_info
+            = vk::RenderPassBeginInfo()
+                  .setRenderPass(m_vk_render_pass)
+                  .setFramebuffer(m_vk_swapchain_framebuffers[m_current_image_index])
+                  .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
+                  .setClearValueCount(1)
+                  .setPClearValues(&clear_color);
+
+        m_current_command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+        m_current_command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_vk_graphics_pipeline);
+
+        auto viewport
+            = vk::Viewport()
+                  .setX(0.0f)
+                  .setY(0.0f)
+                  .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
+                  .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
+                  .setMinDepth(0.0f)
+                  .setMaxDepth(1.0f);
+
+        m_current_command_buffer.setViewport(0, { viewport });
+
+        auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
+
+        m_current_command_buffer.setScissor(0, { scissor });
+    }
+
+    void Renderer::end(const Window &window)
+    {
+        m_current_command_buffer.endRenderPass();
+
+        m_current_command_buffer.end();
+
+        FrameInFlight &frame = m_frames_in_flight[m_current_frame];
+
+        vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
+        vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+        vk::Semaphore signal_semaphores[] = { frame.render_finished_semaphore };
+
+        auto submit_info
+            = vk::SubmitInfo()
+                  .setWaitSemaphores(wait_semaphores)
+                  .setWaitDstStageMask(wait_stages)
+                  .setCommandBufferCount(1)
+                  .setPCommandBuffers(&(frame.command_buffer))
+                  .setSignalSemaphores(signal_semaphores);
+
+        m_vk_graphics_queue.submit({ submit_info }, frame.in_flight_fence);
+
+        vk::SwapchainKHR swapchains[] = { m_vk_swapchain };
+
+        auto present_info
+            = vk::PresentInfoKHR()
+                  .setWaitSemaphores(signal_semaphores)
+                  .setSwapchains(swapchains)
+                  .setPImageIndices(&m_current_image_index);
+
+        vk::Result present_result = m_vk_present_queue.presentKHR(present_info);
+
+        if (present_result == vk::Result::eSuboptimalKHR) {
+            recreate_swapchain(window);
+        }
+        else if (present_result != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to present frame");
+        }
+
+        m_current_frame = (m_current_frame + 1) % c_frames_in_flight;
+    }
+
+    void Renderer::draw(VertexBufferHandle handle)
+    {
+        VertexBuffer &vertex_buffer = m_vertex_buffers.at(handle);
+        m_current_command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
+        m_current_command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
     };
 
     Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)

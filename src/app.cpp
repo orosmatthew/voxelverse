@@ -1,5 +1,7 @@
 #include "app.hpp"
 
+#include <chrono>
+
 #include "logger.hpp"
 
 #include "renderer.hpp"
@@ -23,7 +25,7 @@ namespace app {
 
         auto renderer = mve::Renderer(window, "Vulkan Testing", 0, 0, 1, vertex_shader, fragment_shader, vertex_layout);
 
-        window.set_resize_callback([&](glm::ivec2 new_size) { renderer.draw_frame(window); });
+        // window.set_resize_callback([&](glm::ivec2 new_size) { renderer.draw_frame(window); });
 
         auto big_triangle = mve::VertexData(vertex_layout);
         big_triangle.add_data({ 0.0f, -0.5f });
@@ -34,11 +36,11 @@ namespace app {
         big_triangle.add_data({ 0.0f, 0.0f, 1.0f });
 
         auto bottom_right_triangle = mve::VertexData(vertex_layout);
-        bottom_right_triangle.add_data({ 0.0f + 0.7f, -0.1f + 0.7f });
+        bottom_right_triangle.add_data({ 0.0f + 0.3f, -0.1f + 0.3f });
         bottom_right_triangle.add_data({ 1.0f, 0.0f, 0.0f });
-        bottom_right_triangle.add_data({ 0.1f + 0.7f, 0.1f + 0.7f });
+        bottom_right_triangle.add_data({ 0.1f + 0.3f, 0.1f + 0.3f });
         bottom_right_triangle.add_data({ 0.0f, 1.0f, 0.0f });
-        bottom_right_triangle.add_data({ -0.1f + 0.7f, 0.1f + 0.7f });
+        bottom_right_triangle.add_data({ -0.1f + 0.3f, 0.1f + 0.3f });
         bottom_right_triangle.add_data({ 0.0f, 0.0f, 1.0f });
 
         auto top_left_triangle = mve::VertexData(vertex_layout);
@@ -49,12 +51,14 @@ namespace app {
         top_left_triangle.add_data({ -0.1f - 0.7f, 0.1f - 0.7f });
         top_left_triangle.add_data({ 0.0f, 0.0f, 1.0f });
 
-        mve::Renderer::VertexDataHandle vertex_data_handle1 = renderer.upload_vertex_data(big_triangle);
-        mve::Renderer::VertexDataHandle vertex_data_handle2 = renderer.upload_vertex_data(bottom_right_triangle);
-        mve::Renderer::VertexDataHandle vertex_data_handle3 = renderer.upload_vertex_data(top_left_triangle);
+        mve::Renderer::VertexBufferHandle vertex_data_handle1 = renderer.upload_vertex_data(big_triangle);
+        mve::Renderer::VertexBufferHandle vertex_data_handle2 = renderer.upload_vertex_data(bottom_right_triangle);
+        mve::Renderer::VertexBufferHandle vertex_data_handle3 = renderer.upload_vertex_data(top_left_triangle);
 
         bool is_triangle_removed = false;
 
+        std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
+        int frame_count = 0;
         while (!window.should_close()) {
             window.update();
 
@@ -67,7 +71,26 @@ namespace app {
                 is_triangle_removed = true;
             }
 
-            renderer.draw_frame(window);
+            renderer.begin(window);
+
+            renderer.draw(vertex_data_handle1);
+            renderer.draw(vertex_data_handle2);
+
+            if (!is_triangle_removed) {
+                renderer.draw(vertex_data_handle3);
+            }
+
+            renderer.end(window);
+
+            std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+
+            if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - begin_time).count() >= 1000000) {
+                begin_time = std::chrono::steady_clock::now();
+                LOG->info("Framerate: {}", frame_count);
+                frame_count = 0;
+            }
+
+            frame_count++;
         }
     }
 }

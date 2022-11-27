@@ -49,7 +49,7 @@ namespace mve {
     class Renderer {
     public:
         using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
-        using VertexDataHandle
+        using VertexBufferHandle
             = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
         using IndexBufferHandle
             = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
@@ -67,17 +67,19 @@ namespace mve {
 
         ~Renderer();
 
-        void draw_frame(const Window &window);
-
-        void record_vk_command_buffer(uint32_t image_index);
-
         void recreate_swapchain(const Window &window);
 
-        VertexDataHandle upload_vertex_data(const VertexData &vertex_data);
+        void begin(const Window &window);
+
+        void draw(VertexBufferHandle handle);
+
+        void end(const Window &window);
+
+        VertexBufferHandle upload_vertex_data(const VertexData &vertex_data);
 
         IndexBufferHandle upload_index_data(const std::vector<uint32_t> &index_data);
 
-        void queue_destroy(VertexDataHandle handle);
+        void queue_destroy(VertexBufferHandle handle);
 
         void queue_destroy(IndexBufferHandle handle);
 
@@ -143,10 +145,13 @@ namespace mve {
         VmaAllocator m_vma_allocator;
         uint32_t m_resource_handle_count;
 
+        uint32_t m_current_image_index;
+        vk::CommandBuffer m_current_command_buffer;
+
         std::vector<FrameInFlight> m_frames_in_flight;
 
-        std::unordered_map<VertexDataHandle, VertexBuffer> m_vertex_buffers;
-        std::unordered_map<VertexDataHandle, int> m_vertex_buffer_deletion_queue;
+        std::unordered_map<VertexBufferHandle, VertexBuffer> m_vertex_buffers;
+        std::unordered_map<VertexBufferHandle, int> m_vertex_buffer_deletion_queue;
 
         std::unordered_map<IndexBufferHandle, IndexBuffer> m_index_buffers;
         std::unordered_map<IndexBufferHandle, int> m_index_buffer_deletion_queue;
