@@ -29,6 +29,13 @@ namespace mve {
      */
     class Renderer {
     public:
+        // TODO: Remove
+        struct UniformBufferObject {
+            glm::mat4 model;
+            glm::mat4 view;
+            glm::mat4 proj;
+        };
+
         /**
          * @brief Handle for GPU resources
          */
@@ -127,6 +134,8 @@ namespace mve {
          */
         void queue_destroy(IndexBufferHandle handle);
 
+        void update_uniforms();
+
     private:
         struct QueueFamilyIndices {
             std::optional<uint32_t> graphics_family;
@@ -159,18 +168,24 @@ namespace mve {
             size_t index_count;
         };
 
+        struct UniformBuffer {
+            Buffer buffer;
+        };
+
         struct FrameInFlight {
             vk::CommandBuffer command_buffer;
             vk::Semaphore image_available_semaphore;
             vk::Semaphore render_finished_semaphore;
             vk::Fence in_flight_fence;
+            UniformBuffer uniform_buffer;
+            vk::DescriptorSet descriptor_set;
         };
 
         struct CurrentDrawState {
             bool is_drawing;
             uint32_t image_index;
             vk::CommandBuffer command_buffer;
-            uint32_t frame;
+            uint32_t frame_index;
         };
 
         const int c_frames_in_flight;
@@ -192,6 +207,8 @@ namespace mve {
         std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
         vk::CommandPool m_vk_command_pool;
         QueueFamilyIndices m_vk_queue_family_indices;
+        vk::DescriptorSetLayout m_vk_descriptor_set_layout;
+        vk::DescriptorPool m_vk_descriptor_pool;
         VmaAllocator m_vma_allocator;
         uint32_t m_resource_handle_count;
         CurrentDrawState m_current_draw_state;
@@ -210,9 +227,27 @@ namespace mve {
 
         void recreate_swapchain(const Window &window);
 
-        VertexBuffer create_vertex_buffer(const VertexData &vertex_data);
+        void init_uniform_buffers();
 
-        IndexBuffer create_index_buffer(const std::vector<uint32_t> &index_data);
+        void update_uniform_buffer();
+
+        void init_descriptor_sets();
+
+        static VertexBuffer create_vertex_buffer(
+            vk::Device device,
+            vk::CommandPool command_pool,
+            vk::Queue graphics_queue,
+            VmaAllocator allocator,
+            const VertexData &vertex_data);
+
+        static IndexBuffer create_index_buffer(
+            vk::Device device,
+            vk::CommandPool command_pool,
+            vk::Queue graphics_queue,
+            VmaAllocator allocator,
+            const std::vector<uint32_t> &index_data);
+
+        UniformBuffer create_uniform_buffer();
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
             VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
@@ -277,7 +312,8 @@ namespace mve {
             vk::RenderPass render_pass,
             const VertexLayout &layout);
 
-        static vk::PipelineLayout create_vk_pipeline_layout(vk::Device device);
+        static vk::PipelineLayout create_vk_pipeline_layout(
+            vk::Device device, vk::DescriptorSetLayout descriptor_set_layout);
 
         static vk::RenderPass create_vk_render_pass(vk::Device device, vk::Format swapchain_format);
 
@@ -297,7 +333,7 @@ namespace mve {
             size_t size,
             VkBufferUsageFlags usage,
             VmaMemoryUsage memory_usage,
-            VmaAllocationCreateFlags flags);
+            VmaAllocationCreateFlags flags = 0);
 
         static void copy_buffer(
             vk::Device device,
@@ -314,5 +350,12 @@ namespace mve {
 
         static std::vector<FrameInFlight> create_frames_in_flight(
             vk::Device device, vk::CommandPool command_pool, int frame_count);
+
+        static vk::DescriptorSetLayout create_vk_descriptor_set_layout(vk::Device device);
+
+        static vk::DescriptorPool create_vk_descriptor_pool(vk::Device, int frames_in_flight);
+
+        static std::vector<vk::DescriptorSet> create_vk_descriptor_sets(
+            vk::Device device, vk::DescriptorSetLayout layout, vk::DescriptorPool pool, int count);
     };
 }

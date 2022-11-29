@@ -89,6 +89,8 @@ namespace app {
 
             renderer.bind(vertex_data_handle_indexed);
 
+            renderer.update_uniforms();
+
             renderer.draw(index_buffer_handle);
 
             //

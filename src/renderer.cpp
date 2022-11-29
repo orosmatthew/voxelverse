@@ -6,6 +6,8 @@
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
+#define GLM_FORCE_RADIANS
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "logger.hpp"
 #include "shader.hpp"
@@ -55,7 +57,9 @@ namespace mve {
         m_vk_graphics_queue = m_vk_device.getQueue(m_vk_queue_family_indices.graphics_family.value(), 0);
         m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0);
 
-        m_vk_pipeline_layout = create_vk_pipeline_layout(m_vk_device);
+        m_vk_descriptor_set_layout = create_vk_descriptor_set_layout(m_vk_device);
+
+        m_vk_pipeline_layout = create_vk_pipeline_layout(m_vk_device, m_vk_descriptor_set_layout);
 
         m_vk_render_pass = create_vk_render_pass(m_vk_device, m_vk_swapchain_image_format.format);
 
@@ -76,8 +80,14 @@ namespace mve {
 
         m_frames_in_flight = create_frames_in_flight(m_vk_device, m_vk_command_pool, c_frames_in_flight);
 
+        init_uniform_buffers();
+
+        m_vk_descriptor_pool = create_vk_descriptor_pool(m_vk_device, c_frames_in_flight);
+
+        init_descriptor_sets();
+
         m_current_draw_state.is_drawing = false;
-        m_current_draw_state.frame = 0;
+        m_current_draw_state.frame_index = 0;
         m_current_draw_state.image_index = 0;
         m_current_draw_state.command_buffer = VK_NULL_HANDLE;
     }
@@ -495,7 +505,7 @@ namespace mve {
                   .setPolygonMode(vk::PolygonMode::eFill)
                   .setLineWidth(1.0f)
                   .setCullMode(vk::CullModeFlagBits::eBack)
-                  .setFrontFace(vk::FrontFace::eClockwise)
+                  .setFrontFace(vk::FrontFace::eCounterClockwise)
                   .setDepthBiasEnable(false)
                   .setDepthBiasConstantFactor(0.0f)
                   .setDepthBiasClamp(0.0f)
@@ -561,12 +571,13 @@ namespace mve {
         return graphics_pipeline;
     }
 
-    vk::PipelineLayout Renderer::create_vk_pipeline_layout(vk::Device device)
+    vk::PipelineLayout Renderer::create_vk_pipeline_layout(
+        vk::Device device, vk::DescriptorSetLayout descriptor_set_layout)
     {
         auto pipeline_layout_info
             = vk::PipelineLayoutCreateInfo()
-                  .setSetLayoutCount(0)
-                  .setPSetLayouts(nullptr)
+                  .setSetLayoutCount(1)
+                  .setPSetLayouts(&descriptor_set_layout)
                   .setPushConstantRangeCount(0)
                   .setPPushConstantRanges(nullptr);
 
@@ -672,6 +683,15 @@ namespace mve {
         m_vk_device.waitIdle();
 
         cleanup_vk_swapchain();
+
+        m_vk_device.destroy(m_vk_descriptor_pool);
+
+        for (FrameInFlight &frame : m_frames_in_flight) {
+            vmaDestroyBuffer(
+                m_vma_allocator, frame.uniform_buffer.buffer.vk_handle, frame.uniform_buffer.buffer.vma_allocation);
+        }
+
+        m_vk_device.destroy(m_vk_descriptor_set_layout);
 
         for (auto &buffer : m_vertex_buffers) {
             vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
@@ -812,45 +832,46 @@ namespace mve {
         }
     }
 
-    Renderer::VertexBuffer Renderer::create_vertex_buffer(const VertexData &vertex_data)
+    Renderer::VertexBuffer Renderer::create_vertex_buffer(
+        vk::Device device,
+        vk::CommandPool command_pool,
+        vk::Queue graphics_queue,
+        VmaAllocator allocator,
+        const VertexData &vertex_data)
     {
         size_t buffer_size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
 
         Buffer staging_buffer = create_buffer(
-            m_vma_allocator,
+            allocator,
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
         void *data;
-        vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+        vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
         memcpy(data, vertex_data.get_data_ptr(), buffer_size);
-        vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+        vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
 
         Buffer vertex_buffer = create_buffer(
-            m_vma_allocator,
+            allocator,
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
         copy_buffer(
-            m_vk_device,
-            m_vk_command_pool,
-            m_vk_graphics_queue,
-            staging_buffer.vk_handle,
-            vertex_buffer.vk_handle,
-            buffer_size);
+            device, command_pool, graphics_queue, staging_buffer.vk_handle, vertex_buffer.vk_handle, buffer_size);
 
-        vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        vmaDestroyBuffer(allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
 
         return { vertex_buffer, vertex_data.get_vertex_count() };
     }
 
     Renderer::VertexBufferHandle Renderer::upload(const VertexData &vertex_data)
     {
-        VertexBuffer vertex_buffer = create_vertex_buffer(vertex_data);
+        VertexBuffer vertex_buffer
+            = create_vertex_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, vertex_data);
         m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
         m_resource_handle_count++;
 
@@ -919,6 +940,7 @@ namespace mve {
             frame.render_finished_semaphore = device.createSemaphore(semaphore_info);
             frame.in_flight_fence = device.createFence(fence_info);
             frame.command_buffer = command_buffers.at(i);
+            frame.uniform_buffer = {};
             frames_in_flight.push_back(frame);
         }
 
@@ -987,45 +1009,46 @@ namespace mve {
         device.freeCommandBuffers(command_pool, 1, &command_buffer);
     }
 
-    Renderer::IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t> &index_data)
+    Renderer::IndexBuffer Renderer::create_index_buffer(
+        vk::Device device,
+        vk::CommandPool command_pool,
+        vk::Queue graphics_queue,
+        VmaAllocator allocator,
+        const std::vector<uint32_t> &index_data)
     {
         size_t buffer_size = sizeof(uint32_t) * index_data.size();
 
         Buffer staging_buffer = create_buffer(
-            m_vma_allocator,
+            allocator,
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
         void *data;
-        vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+        vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
         memcpy(data, index_data.data(), buffer_size);
-        vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+        vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
 
         Buffer vertex_buffer = create_buffer(
-            m_vma_allocator,
+            allocator,
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
         copy_buffer(
-            m_vk_device,
-            m_vk_command_pool,
-            m_vk_graphics_queue,
-            staging_buffer.vk_handle,
-            vertex_buffer.vk_handle,
-            buffer_size);
+            device, command_pool, graphics_queue, staging_buffer.vk_handle, vertex_buffer.vk_handle, buffer_size);
 
-        vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        vmaDestroyBuffer(allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
 
         return { vertex_buffer, index_data.size() };
     }
 
     Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t> &index_data)
     {
-        IndexBuffer index_buffer = create_index_buffer(index_data);
+        IndexBuffer index_buffer
+            = create_index_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, index_data);
         m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
         m_resource_handle_count++;
 
@@ -1049,7 +1072,7 @@ namespace mve {
             recreate_swapchain(window);
         }
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame];
+        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame_index];
 
         vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
         if (fence_wait_result != vk::Result::eSuccess) {
@@ -1101,11 +1124,13 @@ namespace mve {
         }
         m_current_draw_state.image_index = acquire_result.value;
 
+        update_uniform_buffer();
+
         m_vk_device.resetFences({ frame.in_flight_fence });
 
         frame.command_buffer.reset();
 
-        m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame].command_buffer;
+        m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame_index].command_buffer;
 
         auto buffer_begin_info = vk::CommandBufferBeginInfo();
         m_current_draw_state.command_buffer.begin(buffer_begin_info);
@@ -1146,7 +1171,7 @@ namespace mve {
 
         m_current_draw_state.command_buffer.end();
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame];
+        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame_index];
 
         vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -1179,7 +1204,7 @@ namespace mve {
             throw std::runtime_error("Failed to present frame");
         }
 
-        m_current_draw_state.frame = (m_current_draw_state.frame + 1) % c_frames_in_flight;
+        m_current_draw_state.frame_index = (m_current_draw_state.frame_index + 1) % c_frames_in_flight;
 
         m_current_draw_state.is_drawing = false;
     }
@@ -1201,6 +1226,131 @@ namespace mve {
         IndexBuffer &index_buffer = m_index_buffers.at(handle);
         m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
         m_current_draw_state.command_buffer.drawIndexed(index_buffer.index_count, 1, 0, 0, 0);
+    }
+
+    vk::DescriptorSetLayout Renderer::create_vk_descriptor_set_layout(vk::Device device)
+    {
+        auto ubo_layout_binding
+            = vk::DescriptorSetLayoutBinding()
+                  .setBinding(0)
+                  .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                  .setDescriptorCount(1)
+                  .setStageFlags(vk::ShaderStageFlagBits::eAll)
+                  .setPImmutableSamplers(nullptr);
+
+        auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindingCount(1).setPBindings(&ubo_layout_binding);
+
+        return device.createDescriptorSetLayout(layout_info);
+    }
+
+    Renderer::UniformBuffer Renderer::create_uniform_buffer()
+    {
+        vk::DeviceSize buffer_size = sizeof(UniformBufferObject);
+
+        Buffer buffer = create_buffer(
+            m_vma_allocator, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        return { buffer };
+    }
+
+    void Renderer::init_uniform_buffers()
+    {
+        for (FrameInFlight &frame : m_frames_in_flight) {
+            frame.uniform_buffer = create_uniform_buffer();
+        }
+    }
+
+    void Renderer::update_uniform_buffer()
+    {
+        static auto start_time = std::chrono::high_resolution_clock::now();
+
+        auto current_time = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+
+        UniformBufferObject ubo {};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(
+            glm::radians(45.0f), m_vk_swapchain_extent.width / (float)m_vk_swapchain_extent.height, 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1;
+
+        VmaAllocation &allocation
+            = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffer.buffer.vma_allocation;
+
+        void *ptr;
+        vmaMapMemory(m_vma_allocator, allocation, &ptr);
+
+        memcpy(ptr, &ubo, sizeof(ubo));
+
+        vmaUnmapMemory(m_vma_allocator, allocation);
+    }
+
+    vk::DescriptorPool Renderer::create_vk_descriptor_pool(vk::Device device, int frames_in_flight)
+    {
+        auto pool_size = vk::DescriptorPoolSize()
+                             .setType(vk::DescriptorType::eUniformBuffer)
+                             .setDescriptorCount(static_cast<uint32_t>(frames_in_flight));
+
+        auto pool_info = vk::DescriptorPoolCreateInfo()
+                             .setPoolSizeCount(1)
+                             .setPPoolSizes(&pool_size)
+                             .setMaxSets(static_cast<uint32_t>(frames_in_flight));
+
+        return device.createDescriptorPool(pool_info);
+    }
+
+    std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
+        vk::Device device, vk::DescriptorSetLayout layout, vk::DescriptorPool pool, int count)
+    {
+        auto layouts = std::vector<vk::DescriptorSetLayout>(count, layout);
+
+        auto alloc_info = vk::DescriptorSetAllocateInfo()
+                              .setDescriptorPool(pool)
+                              .setDescriptorSetCount(static_cast<uint32_t>(count))
+                              .setPSetLayouts(layouts.data());
+
+        std::vector<vk::DescriptorSet> descriptor_sets = device.allocateDescriptorSets(alloc_info);
+
+        return descriptor_sets;
+    }
+
+    void Renderer::init_descriptor_sets()
+    {
+        std::vector<vk::DescriptorSet> descriptor_sets = create_vk_descriptor_sets(
+            m_vk_device, m_vk_descriptor_set_layout, m_vk_descriptor_pool, c_frames_in_flight);
+        for (int i = 0; i < c_frames_in_flight; i++) {
+            m_frames_in_flight[i].descriptor_set = descriptor_sets.at(i);
+
+            auto buffer_info = vk::DescriptorBufferInfo()
+                                   .setBuffer(m_frames_in_flight[i].uniform_buffer.buffer.vk_handle)
+                                   .setOffset(0)
+                                   .setRange(sizeof(UniformBufferObject));
+
+            auto descriptor_write
+                = vk::WriteDescriptorSet()
+                      .setDstSet(m_frames_in_flight[i].descriptor_set)
+                      .setDstBinding(0)
+                      .setDstArrayElement(0)
+                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                      .setDescriptorCount(1)
+                      .setPBufferInfo(&buffer_info);
+
+            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+        }
+    }
+
+    void Renderer::update_uniforms()
+    {
+        update_uniform_buffer();
+
+        m_current_draw_state.command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            m_vk_pipeline_layout,
+            0,
+            1,
+            &(m_frames_in_flight[m_current_draw_state.frame_index].descriptor_set),
+            0,
+            nullptr);
     }
 
 }
