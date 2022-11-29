@@ -687,6 +687,7 @@ namespace mve {
         m_vk_device.destroy(m_vk_descriptor_pool);
 
         for (FrameInFlight &frame : m_frames_in_flight) {
+            vmaUnmapMemory(m_vma_allocator, frame.uniform_buffer.buffer.vma_allocation);
             vmaDestroyBuffer(
                 m_vma_allocator, frame.uniform_buffer.buffer.vk_handle, frame.uniform_buffer.buffer.vma_allocation);
         }
@@ -1250,7 +1251,10 @@ namespace mve {
         Buffer buffer = create_buffer(
             m_vma_allocator, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-        return { buffer };
+        void *ptr;
+        vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
+
+        return { buffer, ptr };
     }
 
     void Renderer::init_uniform_buffers()
@@ -1271,18 +1275,12 @@ namespace mve {
         ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.proj = glm::perspective(
-            glm::radians(45.0f), m_vk_swapchain_extent.width / (float)m_vk_swapchain_extent.height, 0.1f, 10.0f);
+            glm::radians(45.0f), (float)m_vk_swapchain_extent.width / (float)m_vk_swapchain_extent.height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
 
-        VmaAllocation &allocation
-            = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffer.buffer.vma_allocation;
+        UniformBuffer &buffer = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffer;
 
-        void *ptr;
-        vmaMapMemory(m_vma_allocator, allocation, &ptr);
-
-        memcpy(ptr, &ubo, sizeof(ubo));
-
-        vmaUnmapMemory(m_vma_allocator, allocation);
+        memcpy(buffer.mapped_ptr, &ubo, sizeof(ubo));
     }
 
     vk::DescriptorPool Renderer::create_vk_descriptor_pool(vk::Device device, int frames_in_flight)

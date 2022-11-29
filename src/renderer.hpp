@@ -170,6 +170,7 @@ namespace mve {
 
         struct UniformBuffer {
             Buffer buffer;
+            void* mapped_ptr;
         };
 
         struct FrameInFlight {
