@@ -1351,4 +1351,14 @@ namespace mve {
             nullptr);
     }
 
+    bool Renderer::is_valid(Renderer::VertexBufferHandle handle)
+    {
+        return m_vertex_buffers.contains(handle) && !m_vertex_buffer_deletion_queue.contains(handle);
+    }
+
+    bool Renderer::is_valid(Renderer::IndexBufferHandle handle)
+    {
+        return m_index_buffers.contains(handle) && !m_index_buffer_deletion_queue.contains(handle);
+    }
+
 }

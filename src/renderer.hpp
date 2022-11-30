@@ -123,6 +123,20 @@ namespace mve {
         IndexBufferHandle upload(const std::vector<uint32_t> &index_data);
 
         /**
+         * @brief Determines if vertex buffer handle is valid
+         * @param handle - Vertex buffer handle
+         * @return - Returns true if valid
+         */
+        bool is_valid(VertexBufferHandle handle);
+
+        /**
+         * @brief Determines if index buffer handle is valid
+         * @param handle - Index buffer handle
+         * @return - Returns true if valid
+         */
+        bool is_valid(IndexBufferHandle handle);
+
+        /**
          * @brief Destroy GPU vertex buffer
          * @param handle - Vertex buffer handle
          */

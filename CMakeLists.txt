@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(vulkan_testing)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 function(add_shader THING SHADER)
     find_program(GLSLC glslc)
