@@ -40,7 +40,7 @@ TEST_CASE("Test VertexData", "[VertexData]")
 
     REQUIRE(vertex_data.get_vertex_count() == 1);
 
-    vertex_data.push(3.0f);
+    vertex_data.push_back(3.0f);
     REQUIRE(vertex_data.is_complete() == false);
 
     REQUIRE(vertex_data.get_data_count() == 5);
