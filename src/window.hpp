@@ -317,7 +317,7 @@ namespace mve {
         glm::vec2 get_cursor_pos(bool clamped_to_window = true);
 
     private:
-        typedef std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow *)>> UniqueGlfwWindow;
+        using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow *)>>;
 
         UniqueGlfwWindow m_glfw_window;
         bool m_was_resized;
