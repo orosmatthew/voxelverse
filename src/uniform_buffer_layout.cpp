@@ -18,8 +18,6 @@ namespace mve {
         variable.type = type;
         variable.location = calculate_location(variable);
 
-        LOG->info("Location: {}", variable.location.value_of());
-
         m_variables.insert({ variable_name, std::move(variable) });
     }
 
