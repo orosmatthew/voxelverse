@@ -13,6 +13,7 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
+#include "uniform_buffer_layout.hpp"
 #include "vertex_data.hpp"
 
 #ifndef NDEBUG
@@ -29,13 +30,6 @@ namespace mve {
      */
     class Renderer {
     public:
-        // TODO: Remove
-        struct UniformBufferObject {
-            glm::mat4 model;
-            glm::mat4 view;
-            glm::mat4 proj;
-        };
-
         /**
          * @brief Handle for GPU resources
          */
@@ -54,6 +48,12 @@ namespace mve {
             = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
 
         /**
+         * @brief Handle for uniform buffer
+         */
+        using UniformBufferHandle
+            = strong::type<ResourceHandle, struct _uniform_buffer_handle, strong::regular, strong::hashable>;
+
+        /**
          * @brief Construct Vulkan renderer
          * @param window - Window
          * @param app_name - Name of application
@@ -66,14 +66,14 @@ namespace mve {
          * @param frames_in_flight - Number of frames in flight
          */
         Renderer(
-            const Window &window,
-            const std::string &app_name,
+            const Window& window,
+            const std::string& app_name,
             int app_version_major,
             int app_version_minor,
             int app_version_patch,
-            const Shader &vertex_shader,
-            const Shader &fragment_shader,
-            const VertexLayout &layout,
+            const Shader& vertex_shader,
+            const Shader& fragment_shader,
+            const VertexLayout& layout,
             int frames_in_flight = 2);
 
         ~Renderer();
@@ -82,7 +82,7 @@ namespace mve {
          * @brief Begin recording commands
          * @param window - Window
          */
-        void begin(const Window &window);
+        void begin(const Window& window);
 
         /**
          * @brief Bind and draw vertex buffer
@@ -106,21 +106,28 @@ namespace mve {
          * @brief End recording commands
          * @param window - Window
          */
-        void end(const Window &window);
+        void end(const Window& window);
 
         /**
          * @brief Upload vertex data to GPU vertex buffer
          * @param vertex_data - Vertex data to upload
          * @return - Returns handle GPU vertex buffer
          */
-        VertexBufferHandle upload(const VertexData &vertex_data);
+        VertexBufferHandle upload(const VertexData& vertex_data);
 
         /**
          * @brief Upload index data to GPU index buffer
          * @param index_data - Index data to upload
          * @return - Returns handle to GPU index buffer
          */
-        IndexBufferHandle upload(const std::vector<uint32_t> &index_data);
+        IndexBufferHandle upload(const std::vector<uint32_t>& index_data);
+
+        /**
+         * @brief Create a uniform buffer from a given layout
+         * @param struct_layout - Uniform struct layout
+         * @return - Returns handle to uniform buffer
+         */
+        UniformBufferHandle create_uniform_buffer(const UniformStructLayout& struct_layout);
 
         /**
          * @brief Determines if vertex buffer handle is valid
@@ -148,7 +155,13 @@ namespace mve {
          */
         void queue_destroy(IndexBufferHandle handle);
 
-        void update_uniforms();
+        void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value);
+
+        void bind(UniformBufferHandle handle);
+
+        [[nodiscard]] glm::ivec2 get_extent() const;
+
+        void wait_ready();
 
     private:
         struct QueueFamilyIndices {
@@ -184,7 +197,7 @@ namespace mve {
 
         struct UniformBuffer {
             Buffer buffer;
-            void* mapped_ptr;
+            std::byte* mapped_ptr;
         };
 
         struct FrameInFlight {
@@ -192,8 +205,8 @@ namespace mve {
             vk::Semaphore image_available_semaphore;
             vk::Semaphore render_finished_semaphore;
             vk::Fence in_flight_fence;
-            UniformBuffer uniform_buffer;
-            vk::DescriptorSet descriptor_set;
+            std::unordered_map<UniformBufferHandle, UniformBuffer> uniform_buffers {};
+            std::unordered_map<UniformBufferHandle, vk::DescriptorSet> descriptor_sets {};
         };
 
         struct CurrentDrawState {
@@ -240,48 +253,40 @@ namespace mve {
 
         void cleanup_vk_debug_messenger();
 
-        void recreate_swapchain(const Window &window);
-
-        void init_uniform_buffers();
-
-        void update_uniform_buffer();
-
-        void init_descriptor_sets();
+        void recreate_swapchain(const Window& window);
 
         static VertexBuffer create_vertex_buffer(
             vk::Device device,
             vk::CommandPool command_pool,
             vk::Queue graphics_queue,
             VmaAllocator allocator,
-            const VertexData &vertex_data);
+            const VertexData& vertex_data);
 
         static IndexBuffer create_index_buffer(
             vk::Device device,
             vk::CommandPool command_pool,
             vk::Queue graphics_queue,
             VmaAllocator allocator,
-            const std::vector<uint32_t> &index_data);
-
-        UniformBuffer create_uniform_buffer();
+            const std::vector<uint32_t>& index_data);
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
             VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
             VkDebugUtilsMessageTypeFlagsEXT msg_type,
-            const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-            void *user_data);
+            const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
+            void* user_data);
 
         static bool has_validation_layer_support();
 
         static vk::Instance create_vk_instance(
-            const std::string &app_name, int app_version_major, int app_version_minor, int app_version_patch);
+            const std::string& app_name, int app_version_major, int app_version_minor, int app_version_patch);
 
         static vk::DebugUtilsMessengerEXT create_vk_debug_messenger(vk::Instance instance);
 
-        static std::vector<const char *> get_vk_validation_layer_exts();
+        static std::vector<const char*> get_vk_validation_layer_exts();
 
-        static std::vector<const char *> get_vk_device_required_exts();
+        static std::vector<const char*> get_vk_device_required_exts();
 
-        static std::vector<const char *> get_vk_instance_required_exts();
+        static std::vector<const char*> get_vk_instance_required_exts();
 
         static vk::PhysicalDevice pick_vk_physical_device(vk::Instance instance, vk::SurfaceKHR surface);
 
@@ -293,18 +298,18 @@ namespace mve {
         static QueueFamilyIndices get_vk_queue_family_indices(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
-        static vk::SurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow *window);
+        static vk::SurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow* window);
 
         static SwapchainSupportDetails get_vk_swapchain_support_details(
             vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
         static vk::SurfaceFormatKHR choose_vk_swapchain_surface_format(
-            const std::vector<vk::SurfaceFormatKHR> &available_formats);
+            const std::vector<vk::SurfaceFormatKHR>& available_formats);
 
         static vk::PresentModeKHR choose_vk_swapchain_present_mode(
-            const std::vector<vk::PresentModeKHR> &available_present_modes);
+            const std::vector<vk::PresentModeKHR>& available_present_modes);
 
-        static vk::Extent2D get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR &capabilities, GLFWwindow *window);
+        static vk::Extent2D get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 
         static vk::SwapchainKHR create_vk_swapchain(
             vk::PhysicalDevice physical_device,
@@ -317,15 +322,15 @@ namespace mve {
         static std::vector<vk::Image> get_vk_swapchain_images(vk::Device device, vk::SwapchainKHR swapchain);
 
         static std::vector<vk::ImageView> create_vk_swapchain_image_views(
-            vk::Device device, const std::vector<vk::Image> &swapchain_images, vk::Format image_format);
+            vk::Device device, const std::vector<vk::Image>& swapchain_images, vk::Format image_format);
 
         static vk::Pipeline create_vk_graphics_pipeline(
             vk::Device device,
-            const Shader &vertex_shader,
-            const Shader &fragment_shader,
+            const Shader& vertex_shader,
+            const Shader& fragment_shader,
             vk::PipelineLayout pipeline_layout,
             vk::RenderPass render_pass,
-            const VertexLayout &layout);
+            const VertexLayout& layout);
 
         static vk::PipelineLayout create_vk_pipeline_layout(
             vk::Device device, vk::DescriptorSetLayout descriptor_set_layout);
@@ -334,7 +339,7 @@ namespace mve {
 
         static std::vector<vk::Framebuffer> create_vk_framebuffers(
             vk::Device device,
-            const std::vector<vk::ImageView> &swapchain_image_views,
+            const std::vector<vk::ImageView>& swapchain_image_views,
             vk::RenderPass render_pass,
             vk::Extent2D swapchain_extent);
 
@@ -358,10 +363,10 @@ namespace mve {
             vk::Buffer dst_buffer,
             vk::DeviceSize size);
 
-        static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout &layout);
+        static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout& layout);
 
         static std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_descriptions(
-            const VertexLayout &layout);
+            const VertexLayout& layout);
 
         static std::vector<FrameInFlight> create_frames_in_flight(
             vk::Device device, vk::CommandPool command_pool, int frame_count);

@@ -255,13 +255,13 @@ namespace mve {
          * @param title - Title of window
          * @param size - Initial size of window
          */
-        Window(const std::string &title, glm::ivec2 size);
+        Window(const std::string& title, glm::ivec2 size);
 
         /**
          * @brief Get GLFW window handle
          * @return - Returns GLFW window pointer
          */
-        [[nodiscard]] GLFWwindow *get_glfw_handle() const;
+        [[nodiscard]] GLFWwindow* get_glfw_handle() const;
 
         /**
          * @brief Get if window was resized since last update
@@ -285,7 +285,7 @@ namespace mve {
          * @brief Set callback function when window is resized
          * @param resize_callback - Resize callback. Takes ivec2 new size as parameter
          */
-        void set_resize_callback(const std::function<void(glm::ivec2)> &resize_callback);
+        void set_resize_callback(const std::function<void(glm::ivec2)>& resize_callback);
 
         /**
          * @brief Remove window resize callback if set
@@ -317,12 +317,12 @@ namespace mve {
         glm::vec2 get_cursor_pos(bool clamped_to_window = true);
 
     private:
-        using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow *)>>;
+        using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>;
 
         UniqueGlfwWindow m_glfw_window;
         bool m_was_resized;
         std::optional<std::function<void(glm::ivec2)>> m_resize_callback;
 
-        static void glfw_framebuffer_resize_callback(GLFWwindow *window, int width, int height);
+        static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
     };
 }

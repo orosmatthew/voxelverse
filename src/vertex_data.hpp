@@ -26,7 +26,7 @@ namespace mve {
      * @param vertex_layout - Vertex layout to calculate bytes
      * @return - Number of bytes for each vertex in the layout
      */
-    [[nodiscard]] int get_vertex_layout_bytes(const VertexLayout &vertex_layout);
+    [[nodiscard]] int get_vertex_layout_bytes(const VertexLayout& vertex_layout);
 
     /**
      * Class for holding vertex data
@@ -73,7 +73,7 @@ namespace mve {
          * Get a pointer to an array of floats of vertex data
          * @return Pointer of array of floats
          */
-        [[nodiscard]] const float *get_data_ptr() const;
+        [[nodiscard]] const float* get_data_ptr() const;
 
         /**
          * Get number of values in vertex data

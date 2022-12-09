@@ -6,7 +6,7 @@
 
 namespace mve {
 
-    Shader::Shader(const std::filesystem::path &file_path, ShaderType shader_type)
+    Shader::Shader(const std::filesystem::path& file_path, ShaderType shader_type)
     {
         LOG->debug("Loading shader: " + file_path.string());
 

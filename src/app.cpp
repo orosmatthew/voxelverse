@@ -2,9 +2,13 @@
 
 #include <chrono>
 
+#define GLM_FORCE_RADIANS
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "logger.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
+#include "uniform_buffer_layout.hpp"
 #include "window.hpp"
 
 namespace app {
@@ -71,8 +75,22 @@ namespace app {
 
         bool is_triangle_removed = false;
 
-        std::chrono::steady_clock::time_point begin_time = std::chrono::steady_clock::now();
+        mve::UniformStructLayout uniform_struct("UniformBufferObject");
+        uniform_struct.push_back("model", mve::UniformType::e_mat4);
+        uniform_struct.push_back("view", mve::UniformType::e_mat4);
+        uniform_struct.push_back("proj", mve::UniformType::e_mat4);
+
+        mve::UniformLocation model_location = uniform_struct.get_location("model");
+        mve::UniformLocation view_location = uniform_struct.get_location("view");
+        mve::UniformLocation proj_location = uniform_struct.get_location("proj");
+
+        mve::Renderer::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct);
+
+        std::chrono::high_resolution_clock ::time_point begin_time = std::chrono::high_resolution_clock::now();
         int frame_count = 0;
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         while (!window.should_close()) {
             window.update();
 
@@ -85,28 +103,35 @@ namespace app {
                 is_triangle_removed = true;
             }
 
+            auto current_time = std::chrono::high_resolution_clock::now();
+            float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+
+            glm::mat4 model
+                = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f) * 1000, glm::vec3(0.0f, 0.0f, 1.0f));
+            glm::mat4 view
+                = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            glm::mat4 proj = glm::perspective(
+                glm::radians(45.0f), (float)renderer.get_extent().x / (float)renderer.get_extent().y, 0.1f, 10.0f);
+            proj[1][1] *= -1;
+
             renderer.begin(window);
+
+            renderer.update_uniform(uniform_handle, model_location, model);
+            renderer.update_uniform(uniform_handle, view_location, view);
+            renderer.update_uniform(uniform_handle, proj_location, proj);
+
+            renderer.bind(uniform_handle);
 
             renderer.bind(vertex_data_handle_indexed);
 
-            renderer.update_uniforms();
-
             renderer.draw(index_buffer_handle);
-
-            //
-            //            renderer.draw(vertex_data_handle1);
-            //            renderer.draw(vertex_data_handle2);
-            //
-            //            if (!is_triangle_removed) {
-            //                renderer.draw(vertex_data_handle3);
-            //            }
 
             renderer.end(window);
 
-            std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+            std::chrono::high_resolution_clock ::time_point end_time = std::chrono::high_resolution_clock ::now();
 
             if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - begin_time).count() >= 1000000) {
-                begin_time = std::chrono::steady_clock::now();
+                begin_time = std::chrono::high_resolution_clock ::now();
                 LOG->info("Framerate: {}", frame_count);
                 frame_count = 0;
             }

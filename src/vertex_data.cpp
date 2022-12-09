@@ -4,7 +4,7 @@
 
 namespace mve {
 
-    int get_vertex_layout_bytes(const VertexLayout &vertex_layout)
+    int get_vertex_layout_bytes(const VertexLayout& vertex_layout)
     {
         int byte_count = 0;
         for (VertexAttributeType type : vertex_layout) {
@@ -78,7 +78,7 @@ namespace mve {
         return m_layout[m_data_count % m_layout.size()];
     }
 
-    const float *VertexData::get_data_ptr() const
+    const float* VertexData::get_data_ptr() const
     {
         return m_data.data();
     }

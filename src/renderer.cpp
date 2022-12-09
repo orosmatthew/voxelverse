@@ -15,16 +15,17 @@
 
 namespace mve {
     Renderer::Renderer(
-        const Window &window,
-        const std::string &app_name,
+        const Window& window,
+        const std::string& app_name,
         int app_version_major,
         int app_version_minor,
         int app_version_patch,
-        const Shader &vertex_shader,
-        const Shader &fragment_shader,
-        const VertexLayout &layout,
+        const Shader& vertex_shader,
+        const Shader& fragment_shader,
+        const VertexLayout& layout,
         int frames_in_flight)
         : c_frames_in_flight(frames_in_flight)
+        , m_resource_handle_count(0)
     {
         m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -80,11 +81,7 @@ namespace mve {
 
         m_frames_in_flight = create_frames_in_flight(m_vk_device, m_vk_command_pool, c_frames_in_flight);
 
-        init_uniform_buffers();
-
         m_vk_descriptor_pool = create_vk_descriptor_pool(m_vk_device, c_frames_in_flight);
-
-        init_descriptor_sets();
 
         m_current_draw_state.is_drawing = false;
         m_current_draw_state.frame_index = 0;
@@ -96,9 +93,9 @@ namespace mve {
     {
         std::vector<vk::LayerProperties> available_layers = vk::enumerateInstanceLayerProperties();
 
-        const std::vector<const char *> validation_layers = get_vk_validation_layer_exts();
+        const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
 
-        for (const std::string &validation_layer : validation_layers) {
+        for (const std::string& validation_layer : validation_layers) {
             bool layer_found = false;
             for (vk::LayerProperties available_layer : available_layers) {
                 if (validation_layer == available_layer.layerName) {
@@ -114,7 +111,7 @@ namespace mve {
     }
 
     vk::Instance Renderer::create_vk_instance(
-        const std::string &app_name, int app_version_major, int app_version_minor, int app_version_patch)
+        const std::string& app_name, int app_version_major, int app_version_minor, int app_version_patch)
     {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
         if (!has_validation_layer_support()) {
@@ -130,11 +127,11 @@ namespace mve {
                   .setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
                   .setApiVersion(VK_API_VERSION_1_0);
 
-        std::vector<const char *> exts = get_vk_instance_required_exts();
+        std::vector<const char*> exts = get_vk_instance_required_exts();
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
 
-        const std::vector<const char *> validation_layers = get_vk_validation_layer_exts();
+        const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
 
         auto instance_create_info
             = vk::InstanceCreateInfo()
@@ -155,9 +152,9 @@ namespace mve {
         return vk::createInstance(instance_create_info);
     }
 
-    std::vector<const char *> Renderer::get_vk_validation_layer_exts()
+    std::vector<const char*> Renderer::get_vk_validation_layer_exts()
     {
-        return std::vector<const char *> { "VK_LAYER_KHRONOS_validation" };
+        return std::vector<const char*> { "VK_LAYER_KHRONOS_validation" };
     }
 
     vk::PhysicalDevice Renderer::pick_vk_physical_device(vk::Instance instance, vk::SurfaceKHR surface)
@@ -188,11 +185,11 @@ namespace mve {
 
         std::vector<vk::ExtensionProperties> available_exts = physical_device.enumerateDeviceExtensionProperties();
 
-        std::vector<const char *> required_exts = get_vk_device_required_exts();
+        std::vector<const char*> required_exts = get_vk_device_required_exts();
 
-        for (const std::string &required_ext : required_exts) {
+        for (const std::string& required_ext : required_exts) {
             bool is_available = false;
-            for (const vk::ExtensionProperties &ext_props : available_exts) {
+            for (const vk::ExtensionProperties& ext_props : available_exts) {
                 if (required_ext == ext_props.extensionName) {
                     is_available = true;
                     break;
@@ -217,7 +214,7 @@ namespace mve {
 
         std::vector<vk::QueueFamilyProperties> queue_families = physical_device.getQueueFamilyProperties();
         int i = 0;
-        for (const vk::QueueFamilyProperties &queue_family : queue_families) {
+        for (const vk::QueueFamilyProperties& queue_family : queue_families) {
             if (queue_family.queueFlags & vk::QueueFlagBits::eGraphics) {
                 indices.graphics_family = i;
 
@@ -257,10 +254,10 @@ namespace mve {
 
         vk::PhysicalDeviceFeatures device_features;
 
-        std::vector<const char *> required_exts = get_vk_device_required_exts();
+        std::vector<const char*> required_exts = get_vk_device_required_exts();
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
-        const std::vector<const char *> validation_layers = get_vk_validation_layer_exts();
+        const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
 
         auto device_create_info
             = vk::DeviceCreateInfo()
@@ -284,7 +281,7 @@ namespace mve {
 
         return physical_device.createDevice(device_create_info);
     }
-    vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow *window)
+    vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* window)
     {
         VkSurfaceKHR surface;
         VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
@@ -294,9 +291,9 @@ namespace mve {
         return { surface };
     }
 
-    std::vector<const char *> Renderer::get_vk_device_required_exts()
+    std::vector<const char*> Renderer::get_vk_device_required_exts()
     {
-        return std::vector<const char *> { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+        return std::vector<const char*> { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     }
 
     Renderer::SwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
@@ -311,9 +308,9 @@ namespace mve {
         return details;
     }
     vk::SurfaceFormatKHR Renderer::choose_vk_swapchain_surface_format(
-        const std::vector<vk::SurfaceFormatKHR> &available_formats)
+        const std::vector<vk::SurfaceFormatKHR>& available_formats)
     {
-        for (const vk::SurfaceFormatKHR &available_format : available_formats) {
+        for (const vk::SurfaceFormatKHR& available_format : available_formats) {
             if (available_format.format == vk::Format::eB8G8R8A8Srgb
                 && available_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
                 return available_format;
@@ -322,16 +319,16 @@ namespace mve {
         return available_formats[0];
     }
     vk::PresentModeKHR Renderer::choose_vk_swapchain_present_mode(
-        const std::vector<vk::PresentModeKHR> &available_present_modes)
+        const std::vector<vk::PresentModeKHR>& available_present_modes)
     {
-        for (const vk::PresentModeKHR &available_present_mode : available_present_modes) {
+        for (const vk::PresentModeKHR& available_present_mode : available_present_modes) {
             if (available_present_mode == vk::PresentModeKHR::eMailbox) {
                 return available_present_mode;
             }
         }
         return vk::PresentModeKHR::eFifo;
     }
-    vk::Extent2D Renderer::get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR &capabilities, GLFWwindow *window)
+    vk::Extent2D Renderer::get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
             return capabilities.currentExtent;
@@ -408,7 +405,7 @@ namespace mve {
     }
 
     std::vector<vk::ImageView> Renderer::create_vk_swapchain_image_views(
-        vk::Device device, const std::vector<vk::Image> &swapchain_images, vk::Format image_format)
+        vk::Device device, const std::vector<vk::Image>& swapchain_images, vk::Format image_format)
     {
         std::vector<vk::ImageView> image_views;
 
@@ -438,17 +435,17 @@ namespace mve {
 
     vk::Pipeline Renderer::create_vk_graphics_pipeline(
         vk::Device device,
-        const Shader &vertex_shader,
-        const Shader &fragment_shader,
+        const Shader& vertex_shader,
+        const Shader& fragment_shader,
         vk::PipelineLayout pipeline_layout,
         vk::RenderPass render_pass,
-        const VertexLayout &layout)
+        const VertexLayout& layout)
     {
         std::vector<char> vertex_spv_code = vertex_shader.get_spv_code();
         auto vertex_shader_create_info
             = vk::ShaderModuleCreateInfo()
                   .setCodeSize(vertex_spv_code.size())
-                  .setPCode(reinterpret_cast<const uint32_t *>(vertex_spv_code.data()));
+                  .setPCode(reinterpret_cast<const uint32_t*>(vertex_spv_code.data()));
 
         vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
@@ -456,7 +453,7 @@ namespace mve {
         auto fragment_shader_create_info
             = vk::ShaderModuleCreateInfo()
                   .setCodeSize(fragment_spv_code.size())
-                  .setPCode(reinterpret_cast<const uint32_t *>(fragment_spv_code.data()));
+                  .setPCode(reinterpret_cast<const uint32_t*>(fragment_spv_code.data()));
 
         vk::ShaderModule fragment_shader_module = device.createShaderModule(fragment_shader_create_info);
 
@@ -628,13 +625,13 @@ namespace mve {
 
     std::vector<vk::Framebuffer> Renderer::create_vk_framebuffers(
         vk::Device device,
-        const std::vector<vk::ImageView> &swapchain_image_views,
+        const std::vector<vk::ImageView>& swapchain_image_views,
         vk::RenderPass render_pass,
         vk::Extent2D swapchain_extent)
     {
         std::vector<vk::Framebuffer> framebuffers;
 
-        for (const vk::ImageView &swapchain_image_view : swapchain_image_views) {
+        for (const vk::ImageView& swapchain_image_view : swapchain_image_views) {
             vk::ImageView attachments[] = { swapchain_image_view };
 
             auto framebuffer_info
@@ -686,19 +683,20 @@ namespace mve {
 
         m_vk_device.destroy(m_vk_descriptor_pool);
 
-        for (FrameInFlight &frame : m_frames_in_flight) {
-            vmaUnmapMemory(m_vma_allocator, frame.uniform_buffer.buffer.vma_allocation);
-            vmaDestroyBuffer(
-                m_vma_allocator, frame.uniform_buffer.buffer.vk_handle, frame.uniform_buffer.buffer.vma_allocation);
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            for (auto& pair : frame.uniform_buffers) {
+                vmaUnmapMemory(m_vma_allocator, pair.second.buffer.vma_allocation);
+                vmaDestroyBuffer(m_vma_allocator, pair.second.buffer.vk_handle, pair.second.buffer.vma_allocation);
+            }
         }
 
         m_vk_device.destroy(m_vk_descriptor_set_layout);
 
-        for (auto &buffer : m_vertex_buffers) {
+        for (auto& buffer : m_vertex_buffers) {
             vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
         }
 
-        for (auto &buffer : m_index_buffers) {
+        for (auto& buffer : m_index_buffers) {
             vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
         }
 
@@ -708,7 +706,7 @@ namespace mve {
         m_vk_device.destroy(m_vk_pipeline_layout);
         m_vk_device.destroy(m_vk_render_pass);
 
-        for (FrameInFlight &frame : m_frames_in_flight) {
+        for (FrameInFlight& frame : m_frames_in_flight) {
             m_vk_device.destroy(frame.render_finished_semaphore);
             m_vk_device.destroy(frame.image_available_semaphore);
             m_vk_device.destroy(frame.in_flight_fence);
@@ -722,7 +720,7 @@ namespace mve {
         m_vk_instance.destroy();
     }
 
-    void Renderer::recreate_swapchain(const Window &window)
+    void Renderer::recreate_swapchain(const Window& window)
     {
         glm::ivec2 window_size = window.get_size();
 
@@ -769,13 +767,13 @@ namespace mve {
         m_vk_device.destroy(m_vk_swapchain);
     }
 
-    std::vector<const char *> Renderer::get_vk_instance_required_exts()
+    std::vector<const char*> Renderer::get_vk_instance_required_exts()
     {
         uint32_t glfw_ext_count = 0;
-        const char **glfw_exts;
+        const char** glfw_exts;
         glfw_exts = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
 
-        std::vector<const char *> exts(glfw_exts, glfw_exts + glfw_ext_count);
+        std::vector<const char*> exts(glfw_exts, glfw_exts + glfw_ext_count);
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
         exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -813,8 +811,8 @@ namespace mve {
     VkBool32 Renderer::vk_debug_callback(
         VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
         VkDebugUtilsMessageTypeFlagsEXT msg_type,
-        const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-        void *user_data_ptr)
+        const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
+        void* user_data_ptr)
     {
         if (msg_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
             LOG->warn("[Vulkan Debug] " + std::string(callback_data->pMessage));
@@ -838,7 +836,7 @@ namespace mve {
         vk::CommandPool command_pool,
         vk::Queue graphics_queue,
         VmaAllocator allocator,
-        const VertexData &vertex_data)
+        const VertexData& vertex_data)
     {
         size_t buffer_size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
 
@@ -849,7 +847,7 @@ namespace mve {
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
-        void *data;
+        void* data;
         vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
         memcpy(data, vertex_data.get_data_ptr(), buffer_size);
         vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
@@ -869,7 +867,7 @@ namespace mve {
         return { vertex_buffer, vertex_data.get_vertex_count() };
     }
 
-    Renderer::VertexBufferHandle Renderer::upload(const VertexData &vertex_data)
+    Renderer::VertexBufferHandle Renderer::upload(const VertexData& vertex_data)
     {
         VertexBuffer vertex_buffer
             = create_vertex_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, vertex_data);
@@ -879,7 +877,7 @@ namespace mve {
         return VertexBufferHandle(m_resource_handle_count - 1);
     }
 
-    vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout &layout)
+    vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout& layout)
     {
         auto binding_description
             = vk::VertexInputBindingDescription()
@@ -890,7 +888,7 @@ namespace mve {
     }
 
     std::vector<vk::VertexInputAttributeDescription> Renderer::create_vk_attribute_descriptions(
-        const VertexLayout &layout)
+        const VertexLayout& layout)
     {
         auto attribute_descriptions = std::vector<vk::VertexInputAttributeDescription>();
         attribute_descriptions.reserve(layout.size());
@@ -941,7 +939,7 @@ namespace mve {
             frame.render_finished_semaphore = device.createSemaphore(semaphore_info);
             frame.in_flight_fence = device.createFence(fence_info);
             frame.command_buffer = command_buffers.at(i);
-            frame.uniform_buffer = {};
+            frame.uniform_buffers = {};
             frames_in_flight.push_back(frame);
         }
 
@@ -1015,7 +1013,7 @@ namespace mve {
         vk::CommandPool command_pool,
         vk::Queue graphics_queue,
         VmaAllocator allocator,
-        const std::vector<uint32_t> &index_data)
+        const std::vector<uint32_t>& index_data)
     {
         size_t buffer_size = sizeof(uint32_t) * index_data.size();
 
@@ -1026,7 +1024,7 @@ namespace mve {
             VMA_MEMORY_USAGE_AUTO,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
-        void *data;
+        void* data;
         vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
         memcpy(data, index_data.data(), buffer_size);
         vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
@@ -1046,7 +1044,7 @@ namespace mve {
         return { vertex_buffer, index_data.size() };
     }
 
-    Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t> &index_data)
+    Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t>& index_data)
     {
         IndexBuffer index_buffer
             = create_index_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, index_data);
@@ -1061,7 +1059,7 @@ namespace mve {
         m_index_buffer_deletion_queue[handle] = 0;
     }
 
-    void Renderer::begin(const Window &window)
+    void Renderer::begin(const Window& window)
     {
         if (m_current_draw_state.is_drawing) {
             throw std::runtime_error("[Renderer] Already drawing.");
@@ -1073,15 +1071,12 @@ namespace mve {
             recreate_swapchain(window);
         }
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame_index];
+        FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
 
-        vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
-        if (fence_wait_result != vk::Result::eSuccess) {
-            throw std::runtime_error("Failed waiting for frame (fences)");
-        }
+        wait_ready();
 
         auto destroyed = std::vector<VertexBufferHandle>();
-        for (auto &handle_pair : m_vertex_buffer_deletion_queue) {
+        for (auto& handle_pair : m_vertex_buffer_deletion_queue) {
             if (handle_pair.second < c_frames_in_flight) {
                 handle_pair.second++;
                 break;
@@ -1100,7 +1095,7 @@ namespace mve {
         }
 
         auto index_destroyed = std::vector<IndexBufferHandle>();
-        for (auto &handle_pair : m_index_buffer_deletion_queue) {
+        for (auto& handle_pair : m_index_buffer_deletion_queue) {
             if (handle_pair.second < c_frames_in_flight) {
                 handle_pair.second++;
                 break;
@@ -1124,8 +1119,6 @@ namespace mve {
             throw std::runtime_error("Failed to acquire swapchain image");
         }
         m_current_draw_state.image_index = acquire_result.value;
-
-        update_uniform_buffer();
 
         m_vk_device.resetFences({ frame.in_flight_fence });
 
@@ -1166,13 +1159,13 @@ namespace mve {
         m_current_draw_state.command_buffer.setScissor(0, { scissor });
     }
 
-    void Renderer::end(const Window &window)
+    void Renderer::end(const Window& window)
     {
         m_current_draw_state.command_buffer.endRenderPass();
 
         m_current_draw_state.command_buffer.end();
 
-        FrameInFlight &frame = m_frames_in_flight[m_current_draw_state.frame_index];
+        FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
 
         vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -1212,7 +1205,7 @@ namespace mve {
 
     void Renderer::draw(VertexBufferHandle handle)
     {
-        VertexBuffer &vertex_buffer = m_vertex_buffers.at(handle);
+        VertexBuffer& vertex_buffer = m_vertex_buffers.at(handle);
         m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
         m_current_draw_state.command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
     }
@@ -1224,7 +1217,7 @@ namespace mve {
 
     void Renderer::draw(Renderer::IndexBufferHandle handle)
     {
-        IndexBuffer &index_buffer = m_index_buffers.at(handle);
+        IndexBuffer& index_buffer = m_index_buffers.at(handle);
         m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
         m_current_draw_state.command_buffer.drawIndexed(index_buffer.index_count, 1, 0, 0, 0);
     }
@@ -1242,45 +1235,6 @@ namespace mve {
         auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindingCount(1).setPBindings(&ubo_layout_binding);
 
         return device.createDescriptorSetLayout(layout_info);
-    }
-
-    Renderer::UniformBuffer Renderer::create_uniform_buffer()
-    {
-        vk::DeviceSize buffer_size = sizeof(UniformBufferObject);
-
-        Buffer buffer = create_buffer(
-            m_vma_allocator, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-        void *ptr;
-        vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
-
-        return { buffer, ptr };
-    }
-
-    void Renderer::init_uniform_buffers()
-    {
-        for (FrameInFlight &frame : m_frames_in_flight) {
-            frame.uniform_buffer = create_uniform_buffer();
-        }
-    }
-
-    void Renderer::update_uniform_buffer()
-    {
-        static auto start_time = std::chrono::high_resolution_clock::now();
-
-        auto current_time = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
-
-        UniformBufferObject ubo {};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(
-            glm::radians(45.0f), (float)m_vk_swapchain_extent.width / (float)m_vk_swapchain_extent.height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1;
-
-        UniformBuffer &buffer = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffer;
-
-        memcpy(buffer.mapped_ptr, &ubo, sizeof(ubo));
     }
 
     vk::DescriptorPool Renderer::create_vk_descriptor_pool(vk::Device device, int frames_in_flight)
@@ -1312,45 +1266,6 @@ namespace mve {
         return descriptor_sets;
     }
 
-    void Renderer::init_descriptor_sets()
-    {
-        std::vector<vk::DescriptorSet> descriptor_sets = create_vk_descriptor_sets(
-            m_vk_device, m_vk_descriptor_set_layout, m_vk_descriptor_pool, c_frames_in_flight);
-        for (int i = 0; i < c_frames_in_flight; i++) {
-            m_frames_in_flight[i].descriptor_set = descriptor_sets.at(i);
-
-            auto buffer_info = vk::DescriptorBufferInfo()
-                                   .setBuffer(m_frames_in_flight[i].uniform_buffer.buffer.vk_handle)
-                                   .setOffset(0)
-                                   .setRange(sizeof(UniformBufferObject));
-
-            auto descriptor_write
-                = vk::WriteDescriptorSet()
-                      .setDstSet(m_frames_in_flight[i].descriptor_set)
-                      .setDstBinding(0)
-                      .setDstArrayElement(0)
-                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                      .setDescriptorCount(1)
-                      .setPBufferInfo(&buffer_info);
-
-            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
-        }
-    }
-
-    void Renderer::update_uniforms()
-    {
-        update_uniform_buffer();
-
-        m_current_draw_state.command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            m_vk_pipeline_layout,
-            0,
-            1,
-            &(m_frames_in_flight[m_current_draw_state.frame_index].descriptor_set),
-            0,
-            nullptr);
-    }
-
     bool Renderer::is_valid(Renderer::VertexBufferHandle handle)
     {
         return m_vertex_buffers.contains(handle) && !m_vertex_buffer_deletion_queue.contains(handle);
@@ -1361,4 +1276,79 @@ namespace mve {
         return m_index_buffers.contains(handle) && !m_index_buffer_deletion_queue.contains(handle);
     }
 
+    Renderer::UniformBufferHandle Renderer::create_uniform_buffer(const UniformStructLayout& struct_layout)
+    {
+        auto handle = UniformBufferHandle(m_resource_handle_count);
+        m_resource_handle_count++;
+
+        for (FrameInFlight& frame : m_frames_in_flight) {
+
+            vk::DeviceSize buffer_size = struct_layout.size_bytes();
+
+            Buffer buffer = create_buffer(
+                m_vma_allocator, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+            void* ptr;
+            vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
+
+            frame.uniform_buffers[handle] = UniformBuffer { buffer, static_cast<std::byte*>(ptr) };
+        }
+
+        std::vector<vk::DescriptorSet> descriptor_sets = create_vk_descriptor_sets(
+            m_vk_device, m_vk_descriptor_set_layout, m_vk_descriptor_pool, c_frames_in_flight);
+        for (int i = 0; i < c_frames_in_flight; i++) {
+            m_frames_in_flight[i].descriptor_sets[handle] = descriptor_sets.at(i);
+
+            auto buffer_info = vk::DescriptorBufferInfo()
+                                   .setBuffer(m_frames_in_flight[i].uniform_buffers[handle].buffer.vk_handle)
+                                   .setOffset(0)
+                                   .setRange(struct_layout.size_bytes());
+
+            auto descriptor_write
+                = vk::WriteDescriptorSet()
+                      .setDstSet(m_frames_in_flight[i].descriptor_sets[handle])
+                      .setDstBinding(0)
+                      .setDstArrayElement(0)
+                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                      .setDescriptorCount(1)
+                      .setPBufferInfo(&buffer_info);
+
+            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+        }
+        return handle;
+    }
+
+    void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat4 value)
+    {
+        UniformBuffer& buffer = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffers[handle];
+
+        memcpy(&(buffer.mapped_ptr[location.value_of()]), &value, sizeof(glm::mat4));
+    }
+
+    void Renderer::bind(Renderer::UniformBufferHandle handle)
+    {
+        m_current_draw_state.command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            m_vk_pipeline_layout,
+            0,
+            1,
+            &(m_frames_in_flight[m_current_draw_state.frame_index].descriptor_sets[handle]),
+            0,
+            nullptr);
+    }
+
+    glm::ivec2 Renderer::get_extent() const
+    {
+        return { m_vk_swapchain_extent.width, m_vk_swapchain_extent.height };
+    }
+
+    void Renderer::wait_ready()
+    {
+        FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
+
+        vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
+        if (fence_wait_result != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed waiting for frame (fences)");
+        }
+    }
 }

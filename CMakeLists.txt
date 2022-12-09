@@ -44,7 +44,8 @@ set(SOURCE_FILES
         src/renderer.cpp
         src/window.cpp
         src/vertex_data.cpp
-        src/shader.cpp)
+        src/shader.cpp
+        src/uniform_buffer_layout.cpp)
 
 set(LIBS
         Vulkan::Vulkan

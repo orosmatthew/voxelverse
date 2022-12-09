@@ -9,6 +9,6 @@ BreakBeforeBraces: Stroustrup
 ColumnLimit: 120
 PenaltyReturnTypeOnItsOwnLine: 200
 PenaltyIndentedWhitespace: 1
-PointerAlignment: Right
+PointerAlignment: Left
 AllowShortFunctionsOnASingleLine: None
 ...

@@ -20,7 +20,7 @@ namespace mve {
          * @param file_path - file path of shader file
          * @param shader_type - type of shader
          */
-        Shader(const std::filesystem::path &file_path, ShaderType shader_type);
+        Shader(const std::filesystem::path& file_path, ShaderType shader_type);
 
         /**
          * @brief Obtain SPIR-V code from shader

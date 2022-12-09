@@ -20,7 +20,7 @@ int main()
     try {
         app::run();
     }
-    catch (const std::exception &e) {
+    catch (const std::exception& e) {
         LOG->error(e.what());
         return EXIT_FAILURE;
     }
