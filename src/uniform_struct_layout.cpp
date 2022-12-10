@@ -1,4 +1,4 @@
-#include "uniform_buffer_layout.hpp"
+#include "uniform_struct_layout.hpp"
 
 #include <glm/glm.hpp>
 
@@ -78,6 +78,8 @@ namespace mve {
                 return location;
             }
         }
+
+        // TODO: calculate array and struct locations
 
         return UniformLocation(0);
     }

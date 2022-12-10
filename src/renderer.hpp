@@ -13,7 +13,7 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
-#include "uniform_buffer_layout.hpp"
+#include "uniform_struct_layout.hpp"
 #include "vertex_data.hpp"
 
 #ifndef NDEBUG

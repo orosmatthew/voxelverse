@@ -45,7 +45,7 @@ set(SOURCE_FILES
         src/window.cpp
         src/vertex_data.cpp
         src/shader.cpp
-        src/uniform_buffer_layout.cpp)
+        src/uniform_struct_layout.cpp)
 
 set(LIBS
         Vulkan::Vulkan
@@ -77,7 +77,7 @@ set(TEST_LIB_SOURCE_FILES
 
 set(TEST_SOURCE_FILES
         tests/vertex_data.cpp
-        tests/uniform_buffer_layout.cpp)
+        tests/uniform_struct_layout.cpp)
 
 set(TEST_LIB_INCLUDES
         lib/catch2-3.1.1/include)

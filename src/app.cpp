@@ -8,7 +8,7 @@
 #include "logger.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
-#include "uniform_buffer_layout.hpp"
+#include "uniform_struct_layout.hpp"
 #include "window.hpp"
 
 namespace app {

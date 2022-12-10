@@ -1,6 +1,6 @@
 #include <catch_amalgamated.hpp>
 
-#include "../src/uniform_buffer_layout.hpp"
+#include "../src/uniform_struct_layout.hpp"
 
 TEST_CASE("Test UniformStructLayout", "[UniformStructLayout]")
 {
