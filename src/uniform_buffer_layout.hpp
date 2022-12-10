@@ -31,6 +31,8 @@ namespace mve {
 
         [[nodiscard]] size_t size_bytes() const;
 
+        [[nodiscard]] std::string name() const;
+
     private:
         struct Variable {
             UniformType type;
