@@ -80,13 +80,13 @@ namespace app {
         uniform_struct.push_back("view", mve::UniformType::e_mat4);
         uniform_struct.push_back("proj", mve::UniformType::e_mat4);
 
-        mve::UniformLocation model_location = uniform_struct.get_location("model");
-        mve::UniformLocation view_location = uniform_struct.get_location("view");
-        mve::UniformLocation proj_location = uniform_struct.get_location("proj");
+        mve::UniformLocation model_location = uniform_struct.location_of("model");
+        mve::UniformLocation view_location = uniform_struct.location_of("view");
+        mve::UniformLocation proj_location = uniform_struct.location_of("proj");
 
         mve::Renderer::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct);
 
-        std::chrono::high_resolution_clock ::time_point begin_time = std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
         int frame_count = 0;
 
         auto start_time = std::chrono::high_resolution_clock::now();

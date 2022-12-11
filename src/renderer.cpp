@@ -3,6 +3,7 @@
 #include <fstream>
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>

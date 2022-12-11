@@ -27,7 +27,7 @@ namespace mve {
 
         void push_back(const std::string& name, UniformType type);
 
-        [[nodiscard]] UniformLocation get_location(const std::string& name) const;
+        [[nodiscard]] UniformLocation location_of(const std::string& name) const;
 
         [[nodiscard]] size_t size_bytes() const;
 
@@ -45,12 +45,11 @@ namespace mve {
             std::unique_ptr<UniformStructLayout> struct_data = nullptr;
         };
 
-        UniformLocation calculate_location(const Variable& variable);
-
         const std::string m_name;
         std::unordered_map<std::string, Variable> m_variables;
-        size_t m_location_offset;
         size_t m_size_bytes;
+
+        static size_t base_alignment_of(size_t offset, UniformType type);
     };
 
 }
