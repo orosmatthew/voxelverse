@@ -1,6 +1,7 @@
 #include "uniform_struct_layout.hpp"
 
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
+#include <glm/mat2x2.hpp>
 
 namespace mve {
 UniformStructLayout::UniformStructLayout(const std::string& name) noexcept
@@ -32,7 +33,12 @@ void UniformStructLayout::push_back(const std::string& variable_name, UniformTyp
 
 UniformLocation UniformStructLayout::location_of(const std::string& name) const
 {
-    return m_variables.at(name).location;
+    try {
+        return m_variables.at(name).location;
+    }
+    catch (std::out_of_range& e) {
+        throw std::runtime_error("[UniformLayout] Invalid variable name: " + name);
+    }
 }
 
 size_t UniformStructLayout::size_bytes() const noexcept
@@ -85,12 +91,19 @@ size_t UniformStructLayout::size_of(UniformType type)
         return sizeof(glm::mat3);
     case UniformType::e_mat4:
         return sizeof(glm::mat4);
+    default:
+        return 0;
     }
 }
 
 UniformType UniformStructLayout::type_of(const std::string& name) const
 {
-    return m_variables.at(name).type;
+    try {
+        return m_variables.at(name).type;
+    }
+    catch (std::out_of_range& e) {
+        throw std::runtime_error("[UniformStructLayout] Invalid variable name: " + name);
+    }
 }
 
 }

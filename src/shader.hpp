@@ -19,6 +19,7 @@ public:
      * @brief Construct Shader from file
      * @param file_path - file path of shader file
      * @param shader_type - type of shader
+     * @throws std::runtime_error - When file path is invalid
      */
     Shader(const std::filesystem::path& file_path, ShaderType shader_type);
 
@@ -26,10 +27,10 @@ public:
      * @brief Obtain SPIR-V code from shader
      * @return - returns byte (char) array of SPIR-V code
      */
-    [[nodiscard]] std::vector<char> get_spv_code() const;
+    [[nodiscard]] std::vector<std::byte> spv_code() const noexcept;
 
 private:
-    std::vector<char> m_spv_code;
+    std::vector<std::byte> m_spv_code;
 };
 
 }

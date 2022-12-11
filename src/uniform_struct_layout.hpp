@@ -50,7 +50,7 @@ public:
     /**
      * @brief Get the location of a uniform struct variable
      * @param name - name of the variable
-     * @throws std::out_of_range - When name is not valid
+     * @throws std::runtime_error - When name is not valid
      * @return - Returns the uniform location of the struct variable
      */
     [[nodiscard]] UniformLocation location_of(const std::string& name) const;
@@ -58,7 +58,7 @@ public:
     /**
      * @brief Get the type of a uniform struct variable
      * @param name - name of the variable
-     * @throws std::out_of_range - When name is not valid
+     * @throws std::runtime_error - When name is not valid
      * @return - Returns the uniform type
      */
     [[nodiscard]] UniformType type_of(const std::string& name) const;

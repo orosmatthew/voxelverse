@@ -2,12 +2,14 @@
 
 #include <vector>
 
-#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 namespace mve {
 
 /**
- * Types for vertex attributes
+ * @brief Types for vertex attributes
  */
 enum class VertexAttributeType {
     e_float,
@@ -17,87 +19,92 @@ enum class VertexAttributeType {
 };
 
 /**
- * List of vertex attribute types to specify the layout for vertex data
+ * @brief List of vertex attribute types to specify the layout for vertex data
  */
 using VertexLayout = std::vector<VertexAttributeType>;
 
 /**
- * Calculate number of bytes for each vertex given a layout
+ * @brief Calculate number of bytes for each vertex given a layout
  * @param vertex_layout - Vertex layout to calculate bytes
  * @return - Number of bytes for each vertex in the layout
  */
 [[nodiscard]] int get_vertex_layout_bytes(const VertexLayout& vertex_layout);
 
 /**
- * Class for holding vertex data
+ * @brief Class for holding vertex data
  */
 class VertexData {
 public:
     /**
-     * Construct VertexData
+     * @brief Construct VertexData
      * @param layout - layout for vertex data
+     * @throws std::runtime_error - When layout is empty
      */
     explicit VertexData(VertexLayout layout);
 
     /**
-     * Add float to data
+     * @brief Add float to data
+     * @throws std::runtime_error - When invalid type is added
      * @param value - float value
      */
     void push_back(float value);
 
     /**
-     * Add vec2 to data
+     * @brief Add vec2 to data
+     * @throws std::runtime_error - When invalid type is added
      * @param value - vec2 value
      */
     void push_back(glm::vec2 value);
 
     /**
-     * Add vec3 to data
+     * @brief Add vec3 to data
+     * @throws std::runtime_error - When invalid type is added
      * @param value - vec3 value
      */
     void push_back(glm::vec3 value);
 
     /**
-     * Add vec4 to data
+     * @brief Add vec4 to data
+     * @throws std::runtime_error - When invalid type is added
      * @param value - vec4 value
      */
     void push_back(glm::vec4 value);
 
     /**
-     * Get the next attribute data type expected
+     * @brief Get the next attribute data type expected
      * @return The vertex attribute data type
      */
-    [[nodiscard]] VertexAttributeType get_next_type() const;
+    [[nodiscard]] VertexAttributeType next_type() const noexcept;
 
     /**
-     * Get a pointer to an array of floats of vertex data
+     * @brief Get a pointer to an array of floats of vertex data
      * @return Pointer of array of floats
      */
-    [[nodiscard]] const float* get_data_ptr() const;
+    [[nodiscard]] const float* data_ptr() const noexcept;
 
     /**
-     * Get number of values in vertex data
-     * @return - number of values in vertex data
+     * @brief Get number of individual values in vertex data
+     * @return - number of individual values in vertex data
      */
-    [[nodiscard]] int get_data_count() const;
+    [[nodiscard]] int data_count() const noexcept;
 
     /**
-     * Get number of complete vertices
+     * @brief Get number of complete vertices
      * @return - number of complete vertices
      */
-    [[nodiscard]] int get_vertex_count() const;
+    [[nodiscard]] int vertex_count() const noexcept;
 
     /**
-     * Determines if all vertices have all attribute values added
+     * @brief Determines if all vertices have all attribute values added
      * @return - true if all values are defined
      */
-    [[nodiscard]] bool is_complete() const;
+    [[nodiscard]] bool is_complete() const noexcept;
 
     /**
-     * Get vertex layout of data
+     * @brief Get vertex layout of data
      * @return - Vertex layout of data
      */
-    [[nodiscard]] VertexLayout get_layout() const;
+    [[nodiscard]] VertexLayout layout() const noexcept;
 
 private:
     VertexLayout m_layout;

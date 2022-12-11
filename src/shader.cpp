@@ -17,17 +17,17 @@ Shader::Shader(const std::filesystem::path& file_path, ShaderType shader_type)
     }
 
     size_t file_size = (size_t)file.tellg();
-    auto buffer = std::vector<char>(file_size);
+    auto buffer = std::vector<std::byte>(file_size);
 
     file.seekg(0);
-    file.read(buffer.data(), file_size);
+    file.read(reinterpret_cast<char*>(buffer.data()), file_size);
 
     file.close();
 
     m_spv_code = buffer;
 };
 
-std::vector<char> Shader::get_spv_code() const
+std::vector<std::byte> Shader::spv_code() const noexcept
 {
     return m_spv_code;
 }

@@ -2,12 +2,10 @@
 
 #include <fstream>
 #include <set>
-#include <unordered_map>
 #include <vector>
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
-#define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "logger.hpp"
@@ -441,7 +439,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     vk::RenderPass render_pass,
     const VertexLayout& layout)
 {
-    std::vector<char> vertex_spv_code = vertex_shader.get_spv_code();
+    std::vector<std::byte> vertex_spv_code = vertex_shader.spv_code();
     auto vertex_shader_create_info
         = vk::ShaderModuleCreateInfo()
               .setCodeSize(vertex_spv_code.size())
@@ -449,7 +447,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 
     vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
-    std::vector<char> fragment_spv_code = fragment_shader.get_spv_code();
+    std::vector<std::byte> fragment_spv_code = fragment_shader.spv_code();
     auto fragment_shader_create_info
         = vk::ShaderModuleCreateInfo()
               .setCodeSize(fragment_spv_code.size())
@@ -834,7 +832,7 @@ Renderer::VertexBuffer Renderer::create_vertex_buffer(
     VmaAllocator allocator,
     const VertexData& vertex_data)
 {
-    size_t buffer_size = get_vertex_layout_bytes(vertex_data.get_layout()) * vertex_data.get_vertex_count();
+    size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
 
     Buffer staging_buffer = create_buffer(
         allocator,
@@ -845,7 +843,7 @@ Renderer::VertexBuffer Renderer::create_vertex_buffer(
 
     void* data;
     vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, vertex_data.get_data_ptr(), buffer_size);
+    memcpy(data, vertex_data.data_ptr(), buffer_size);
     vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
 
     Buffer vertex_buffer = create_buffer(
@@ -859,7 +857,7 @@ Renderer::VertexBuffer Renderer::create_vertex_buffer(
 
     vmaDestroyBuffer(allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
 
-    return { vertex_buffer, vertex_data.get_vertex_count() };
+    return { vertex_buffer, vertex_data.vertex_count() };
 }
 
 Renderer::VertexBufferHandle Renderer::upload(const VertexData& vertex_data)

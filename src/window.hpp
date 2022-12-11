@@ -6,7 +6,7 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
 
 namespace mve {
 

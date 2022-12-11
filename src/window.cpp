@@ -1,6 +1,6 @@
 #include "window.hpp"
 
-#include "logger.hpp"
+#include <glm/common.hpp>
 
 namespace mve {
 
