@@ -4,7 +4,7 @@ AlignAfterOpenBracket: AlwaysBreak
 BinPackParameters: false
 BinPackArguments: false
 AllowAllParametersOfDeclarationOnNextLine: true
-NamespaceIndentation: All
+NamespaceIndentation: None
 BreakBeforeBraces: Stroustrup
 ColumnLimit: 120
 PenaltyReturnTypeOnItsOwnLine: 200
