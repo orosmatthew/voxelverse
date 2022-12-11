@@ -18,32 +18,7 @@ namespace mve {
             size_t base = base_alignment_of(m_size_bytes, variable.type);
             variable.location = UniformLocation(base);
             m_size_bytes += (base - m_size_bytes);
-
-            switch (variable.type) {
-            case UniformType::e_float:
-                m_size_bytes += sizeof(float);
-                break;
-            case UniformType::e_vec2:
-                m_size_bytes += sizeof(glm::vec2);
-                break;
-            case UniformType::e_vec3:
-                m_size_bytes += sizeof(glm::vec3);
-                break;
-            case UniformType::e_vec4:
-                m_size_bytes += sizeof(glm::vec4);
-                break;
-            case UniformType::e_mat2:
-                m_size_bytes += sizeof(glm::mat2);
-                break;
-            case UniformType::e_mat3:
-                m_size_bytes += sizeof(glm::mat3);
-                break;
-            case UniformType::e_mat4:
-                m_size_bytes += sizeof(glm::mat4);
-                break;
-            }
-        }
-        else if (variable.is_array && !variable.is_struct) {
+            m_size_bytes += size_of(variable.type);
         }
 
         // TODO: calculate array and struct locations
@@ -86,6 +61,26 @@ namespace mve {
             return glm::ceil(offset / static_cast<float>(sizeof(glm::mat4::col_type))) * sizeof(glm::mat4::col_type);
         default:
             throw std::runtime_error("[UniformStructLayout] Unknown type");
+        }
+    }
+
+    size_t UniformStructLayout::size_of(UniformType type)
+    {
+        switch (type) {
+        case UniformType::e_float:
+            return sizeof(float);
+        case UniformType::e_vec2:
+            return sizeof(glm::vec2);
+        case UniformType::e_vec3:
+            return sizeof(glm::vec3);
+        case UniformType::e_vec4:
+            return sizeof(glm::vec4);
+        case UniformType::e_mat2:
+            return sizeof(glm::mat2);
+        case UniformType::e_mat3:
+            return sizeof(glm::mat3);
+        case UniformType::e_mat4:
+            return sizeof(glm::mat4);
         }
     }
 }
