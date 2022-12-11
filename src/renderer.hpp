@@ -155,6 +155,18 @@ public:
      */
     void queue_destroy(IndexBufferHandle handle);
 
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, float value);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value);
+
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value);
 
     void bind(UniformBufferHandle handle);
@@ -254,6 +266,8 @@ private:
     void cleanup_vk_debug_messenger();
 
     void recreate_swapchain(const Window& window);
+
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,

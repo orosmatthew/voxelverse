@@ -4,9 +4,9 @@
 #include <set>
 #include <vector>
 
+#include <glm/gtc/matrix_transform.hpp>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "logger.hpp"
 #include "shader.hpp"
@@ -1311,9 +1311,7 @@ Renderer::UniformBufferHandle Renderer::create_uniform_buffer(const UniformStruc
 
 void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat4 value)
 {
-    UniformBuffer& buffer = m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffers[handle];
-
-    memcpy(&(buffer.mapped_ptr[location.value_of()]), &value, sizeof(glm::mat4));
+    update_uniform(handle, location, &value, sizeof(glm::mat4));
 }
 
 void Renderer::bind(Renderer::UniformBufferHandle handle)
@@ -1342,4 +1340,47 @@ void Renderer::wait_ready()
         throw std::runtime_error("Failed waiting for frame (fences)");
     }
 }
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, float value)
+{
+    update_uniform(handle, location, &value, sizeof(float));
+}
+
+void Renderer::update_uniform(
+    Renderer::UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size)
+{
+    try {
+        UniformBuffer& buffer = m_frames_in_flight.at(m_current_draw_state.frame_index).uniform_buffers.at(handle);
+        memcpy(&(buffer.mapped_ptr[location.value_of()]), data_ptr, size);
+    }
+    catch (std::exception& e) {
+        throw std::runtime_error("[Renderer] Invalid uniform update");
+    }
+}
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec2 value)
+{
+    update_uniform(handle, location, &value, sizeof(glm::vec2));
+}
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec3 value)
+{
+    update_uniform(handle, location, &value, sizeof(glm::vec3));
+}
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec4 value)
+{
+    update_uniform(handle, location, &value, sizeof(glm::vec4));
+}
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat2 value)
+{
+    update_uniform(handle, location, &value, sizeof(glm::mat2));
+}
+
+void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat3 value)
+{
+    update_uniform(handle, location, &value, sizeof(glm::mat3));
+}
+
 }

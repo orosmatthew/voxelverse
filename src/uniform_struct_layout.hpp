@@ -93,7 +93,7 @@ private:
 
     static size_t base_alignment_of(size_t offset, UniformType type);
 
-    inline static size_t size_of(UniformType type);
+    static size_t size_of(UniformType type);
 };
 
 }
