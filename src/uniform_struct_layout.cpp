@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 namespace mve {
-UniformStructLayout::UniformStructLayout(const std::string& name)
+UniformStructLayout::UniformStructLayout(const std::string& name) noexcept
     : m_name(name)
     , m_size_bytes(0)
 {
@@ -11,6 +11,10 @@ UniformStructLayout::UniformStructLayout(const std::string& name)
 
 void UniformStructLayout::push_back(const std::string& variable_name, UniformType type)
 {
+    if (m_variables.contains(variable_name)) {
+        throw std::runtime_error("[UniformStructLayout] Variable name already exists.");
+    }
+
     Variable variable {};
     variable.type = type;
 
@@ -31,12 +35,12 @@ UniformLocation UniformStructLayout::location_of(const std::string& name) const
     return m_variables.at(name).location;
 }
 
-size_t UniformStructLayout::size_bytes() const
+size_t UniformStructLayout::size_bytes() const noexcept
 {
     return m_size_bytes;
 }
 
-std::string UniformStructLayout::name() const
+std::string UniformStructLayout::name() const noexcept
 {
     return m_name;
 }
@@ -60,7 +64,7 @@ size_t UniformStructLayout::base_alignment_of(size_t offset, UniformType type)
     case UniformType::e_mat4:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::mat4::col_type))) * sizeof(glm::mat4::col_type);
     default:
-        throw std::runtime_error("[UniformStructLayout] Unknown type");
+        throw std::runtime_error("[UniformStructLayout] Unknown type.");
     }
 }
 
@@ -83,4 +87,10 @@ size_t UniformStructLayout::size_of(UniformType type)
         return sizeof(glm::mat4);
     }
 }
+
+UniformType UniformStructLayout::type_of(const std::string& name) const
+{
+    return m_variables.at(name).type;
+}
+
 }
