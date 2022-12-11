@@ -4,7 +4,7 @@ project(vulkan_testing)
 
 set(CMAKE_CXX_STANDARD 20)
 
-function(add_shader THING SHADER)
+function(add_shader TARGET SHADER)
     find_program(GLSLANGVALIDATOR glslangvalidator)
 
     set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
@@ -23,7 +23,7 @@ function(add_shader THING SHADER)
 
     # Make sure our build depends on this output.
     set_source_files_properties(${current-output-path} PROPERTIES GENERATED TRUE)
-    target_sources(${THING} PRIVATE ${current-output-path})
+    target_sources(${TARGET} PRIVATE ${current-output-path})
 endfunction()
 
 find_package(Vulkan REQUIRED)
