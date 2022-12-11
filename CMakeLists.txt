@@ -5,18 +5,18 @@ project(vulkan_testing)
 set(CMAKE_CXX_STANDARD 20)
 
 function(add_shader THING SHADER)
-    find_program(GLSLC glslc)
+    find_program(GLSLANGVALIDATOR glslangvalidator)
 
     set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
     set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
 
-    # Add a custom command to compile GLSL to SPIR-V.
+    # Add a custom command to compile GLSL to SPIR-V using glslangvalidator.
     get_filename_component(current-output-dir ${current-output-path} DIRECTORY)
     file(MAKE_DIRECTORY ${current-output-dir})
 
     add_custom_command(
             OUTPUT ${current-output-path}
-            COMMAND ${GLSLC} -o ${current-output-path} ${current-shader-path}
+            COMMAND ${GLSLANGVALIDATOR} -V -o ${current-output-path} ${current-shader-path}
             DEPENDS ${current-shader-path}
             IMPLICIT_DEPENDS CXX ${current-shader-path}
             VERBATIM)
