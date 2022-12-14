@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext.hpp>
 
 #include "logger.hpp"
 #include "renderer.hpp"

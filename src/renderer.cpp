@@ -110,7 +110,7 @@ vk::Instance Renderer::create_vk_instance(
               .setApplicationVersion(VK_MAKE_VERSION(app_version_major, app_version_minor, app_version_patch))
               .setPEngineName("Mini Vulkan Engine")
               .setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
-              .setApiVersion(VK_API_VERSION_1_0);
+              .setApiVersion(VK_API_VERSION_1_1);
 
     std::vector<const char*> exts = get_vk_instance_required_exts();
 
@@ -773,8 +773,6 @@ std::vector<const char*> Renderer::get_vk_instance_required_exts()
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
     exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
-
-    exts.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
     return exts;
 }
