@@ -13,6 +13,7 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
+#include "descriptor_set_layout.hpp"
 #include "uniform_struct_layout.hpp"
 #include "vertex_data.hpp"
 
@@ -54,6 +55,24 @@ public:
         = strong::type<ResourceHandle, struct _uniform_buffer_handle, strong::regular, strong::hashable>;
 
     /**
+     * @brief Handle for a descriptor set layout
+     */
+    using DescriptorSetLayoutHandle
+        = strong::type<ResourceHandle, struct _descriptor_set_layout_handle, strong::regular, strong::hashable>;
+
+    /**
+     * @brief Handle for a descriptor set
+     */
+    using DescriptorSetHandle
+        = strong::type<ResourceHandle, struct _descriptor_set_handle, strong::regular, strong::hashable>;
+
+    using GraphicsPipelineHandle
+        = strong::type<ResourceHandle, struct _graphics_pipeline_handle, strong::regular, strong::hashable>;
+
+    using GraphicsPipelineLayoutHandle
+        = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
+
+    /**
      * @brief Construct Vulkan renderer
      * @param window - Window
      * @param app_name - Name of application
@@ -70,11 +89,7 @@ public:
         const std::string& app_name,
         int app_version_major,
         int app_version_minor,
-        int app_version_patch,
-        const Shader& vertex_shader,
-        const Shader& fragment_shader,
-        const VertexLayout& layout,
-        int frames_in_flight = 2);
+        int app_version_patch);
 
     ~Renderer();
 
@@ -95,6 +110,8 @@ public:
      * @param handle - Vertex buffer handle
      */
     void bind(VertexBufferHandle handle);
+
+    void bind(GraphicsPipelineHandle handle);
 
     /**
      * @brief Bind and draw index buffer
@@ -123,11 +140,29 @@ public:
     IndexBufferHandle upload(const std::vector<uint32_t>& index_data);
 
     /**
+     * @brief Upload descriptor set layout to GPU
+     * @param layout - Layout to upload
+     * @return - Returns handle to GPU descriptor set layout
+     */
+    DescriptorSetLayoutHandle upload(const mve::DescriptorSetLayout& layout);
+
+    /**
      * @brief Create a uniform buffer from a given layout
      * @param struct_layout - Uniform struct layout
      * @return - Returns handle to uniform buffer
      */
-    UniformBufferHandle create_uniform_buffer(const UniformStructLayout& struct_layout);
+    UniformBufferHandle create_uniform_buffer(
+        const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set);
+
+    DescriptorSetHandle create_descriptor_set(DescriptorSetLayoutHandle layout);
+
+    GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
+
+    GraphicsPipelineHandle create_graphics_pipeline(
+        GraphicsPipelineLayoutHandle layout,
+        const Shader& vertex_shader,
+        const Shader& fragment_shader,
+        const VertexLayout& vertex_layout);
 
     /**
      * @brief Determines if vertex buffer handle is valid
@@ -169,9 +204,9 @@ public:
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value);
 
-    void bind(UniformBufferHandle handle);
+    void bind(Renderer::DescriptorSetHandle handle, Renderer::GraphicsPipelineLayoutHandle pipeline_layout);
 
-    [[nodiscard]] glm::ivec2 get_extent() const;
+    [[nodiscard]] glm::ivec2 extent() const;
 
     void wait_ready();
 
@@ -218,7 +253,6 @@ private:
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
         std::unordered_map<UniformBufferHandle, UniformBuffer> uniform_buffers {};
-        std::unordered_map<UniformBufferHandle, vk::DescriptorSet> descriptor_sets {};
     };
 
     struct CurrentDrawState {
@@ -226,6 +260,29 @@ private:
         uint32_t image_index;
         vk::CommandBuffer command_buffer;
         uint32_t frame_index;
+    };
+
+    class DescriptorSetAllocator {
+    public:
+        DescriptorSetAllocator();
+
+        void cleanup(vk::Device device);
+
+        vk::DescriptorSet create(vk::Device device, vk::DescriptorSetLayout layout);
+
+    private:
+        std::vector<std::pair<vk::DescriptorType, float>> m_sizes;
+        uint32_t m_max_sets_per_pool;
+
+        std::vector<vk::DescriptorPool> m_descriptor_pools {};
+        std::vector<std::pair<vk::DescriptorSet, vk::DescriptorPool>> m_descriptor_sets {};
+        size_t m_current_pool_index;
+
+        static std::optional<vk::DescriptorSet> try_create(
+            vk::DescriptorPool pool, vk::Device device, vk::DescriptorSetLayout layout);
+
+        vk::DescriptorPool create_pool(
+            vk::Device device, vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags());
     };
 
     const int c_frames_in_flight;
@@ -241,17 +298,14 @@ private:
     vk::SwapchainKHR m_vk_swapchain;
     std::vector<vk::Image> m_vk_swapchain_images;
     std::vector<vk::ImageView> m_vk_swapchain_image_views;
-    vk::PipelineLayout m_vk_pipeline_layout;
     vk::RenderPass m_vk_render_pass;
-    vk::Pipeline m_vk_graphics_pipeline;
     std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
     vk::CommandPool m_vk_command_pool;
     QueueFamilyIndices m_vk_queue_family_indices;
-    vk::DescriptorSetLayout m_vk_descriptor_set_layout;
-    vk::DescriptorPool m_vk_descriptor_pool;
     VmaAllocator m_vma_allocator;
     uint32_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
+    DescriptorSetAllocator m_descriptor_set_allocator {};
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -260,6 +314,15 @@ private:
 
     std::unordered_map<IndexBufferHandle, IndexBuffer> m_index_buffers;
     std::unordered_map<IndexBufferHandle, int> m_index_buffer_deletion_queue;
+
+    std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
+    std::unordered_map<DescriptorSetLayoutHandle, int> m_descriptor_set_layout_deletion_queue;
+
+    std::unordered_map<DescriptorSetHandle, vk::DescriptorSet> m_descriptor_sets {};
+
+    std::unordered_map<GraphicsPipelineHandle, vk::Pipeline> m_graphics_pipelines {};
+
+    std::unordered_map<GraphicsPipelineLayoutHandle, vk::PipelineLayout> m_graphics_pipeline_layouts {};
 
     void cleanup_vk_swapchain();
 
@@ -343,10 +406,9 @@ private:
         const Shader& fragment_shader,
         vk::PipelineLayout pipeline_layout,
         vk::RenderPass render_pass,
-        const VertexLayout& layout);
+        const VertexLayout& vertex_layout);
 
-    static vk::PipelineLayout create_vk_pipeline_layout(
-        vk::Device device, vk::DescriptorSetLayout descriptor_set_layout);
+    vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
 
     static vk::RenderPass create_vk_render_pass(vk::Device device, vk::Format swapchain_format);
 
