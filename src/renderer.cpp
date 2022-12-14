@@ -860,7 +860,7 @@ Renderer::VertexBuffer Renderer::create_vertex_buffer(
     return { vertex_buffer, vertex_data.vertex_count() };
 }
 
-Renderer::VertexBufferHandle Renderer::upload(const VertexData& vertex_data)
+VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
 {
     VertexBuffer vertex_buffer
         = create_vertex_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, vertex_data);
@@ -938,7 +938,7 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
     return frames_in_flight;
 }
 
-void Renderer::queue_destroy(Renderer::VertexBufferHandle handle)
+void Renderer::queue_destroy(VertexBufferHandle handle)
 {
     m_vertex_buffer_deletion_queue[handle] = 0;
 }
@@ -1035,7 +1035,7 @@ Renderer::IndexBuffer Renderer::create_index_buffer(
     return { vertex_buffer, index_data.size() };
 }
 
-Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t>& index_data)
+IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& index_data)
 {
     IndexBuffer index_buffer
         = create_index_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, index_data);
@@ -1045,7 +1045,7 @@ Renderer::IndexBufferHandle Renderer::upload(const std::vector<uint32_t>& index_
     return IndexBufferHandle(m_resource_handle_count - 1);
 }
 
-void Renderer::queue_destroy(Renderer::IndexBufferHandle handle)
+void Renderer::queue_destroy(IndexBufferHandle handle)
 {
     m_index_buffer_deletion_queue[handle] = 0;
 }
@@ -1192,19 +1192,19 @@ void Renderer::end(const Window& window)
     m_current_draw_state.is_drawing = false;
 }
 
-void Renderer::draw(VertexBufferHandle handle)
+void Renderer::draw_vertex_buffer(VertexBufferHandle handle)
 {
     VertexBuffer& vertex_buffer = m_vertex_buffers.at(handle);
     m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
     m_current_draw_state.command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
 }
 
-void Renderer::bind(Renderer::VertexBufferHandle handle)
+void Renderer::bind_vertex_buffer(VertexBufferHandle handle)
 {
     m_current_draw_state.command_buffer.bindVertexBuffers(0, m_vertex_buffers.at(handle).buffer.vk_handle, { 0 });
 }
 
-void Renderer::draw(Renderer::IndexBufferHandle handle)
+void Renderer::draw_index_buffer(IndexBufferHandle handle)
 {
     IndexBuffer& index_buffer = m_index_buffers.at(handle);
     m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
@@ -1255,17 +1255,17 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
     return descriptor_sets;
 }
 
-bool Renderer::is_valid(Renderer::VertexBufferHandle handle)
+bool Renderer::is_valid(VertexBufferHandle handle)
 {
     return m_vertex_buffers.contains(handle) && !m_vertex_buffer_deletion_queue.contains(handle);
 }
 
-bool Renderer::is_valid(Renderer::IndexBufferHandle handle)
+bool Renderer::is_valid(IndexBufferHandle handle)
 {
     return m_index_buffers.contains(handle) && !m_index_buffer_deletion_queue.contains(handle);
 }
 
-Renderer::UniformBufferHandle Renderer::create_uniform_buffer(
+UniformBufferHandle Renderer::create_uniform_buffer(
     const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set)
 {
     auto handle = UniformBufferHandle(m_resource_handle_count);
@@ -1304,12 +1304,12 @@ Renderer::UniformBufferHandle Renderer::create_uniform_buffer(
     return handle;
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat4 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::mat4));
 }
 
-void Renderer::bind(Renderer::DescriptorSetHandle handle, Renderer::GraphicsPipelineLayoutHandle pipeline_layout)
+void Renderer::bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout)
 {
     m_current_draw_state.command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
@@ -1336,13 +1336,12 @@ void Renderer::wait_ready()
     }
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, float value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, float value)
 {
     update_uniform(handle, location, &value, sizeof(float));
 }
 
-void Renderer::update_uniform(
-    Renderer::UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size)
 {
     try {
         UniformBuffer& buffer = m_frames_in_flight.at(m_current_draw_state.frame_index).uniform_buffers.at(handle);
@@ -1353,34 +1352,34 @@ void Renderer::update_uniform(
     }
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec2 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::vec2));
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec3 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::vec3));
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::vec4 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::vec4));
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat2 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::mat2));
 }
 
-void Renderer::update_uniform(Renderer::UniformBufferHandle handle, UniformLocation location, glm::mat3 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value)
 {
     update_uniform(handle, location, &value, sizeof(glm::mat3));
 }
 
-Renderer::DescriptorSetLayoutHandle Renderer::upload(const DescriptorSetLayout& layout)
+DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vector<DescriptorType>& layout)
 {
-    if (layout.size() == 0) {
+    if (layout.empty()) {
         throw std::runtime_error("[Renderer] Descriptor set layout is empty");
     }
 
@@ -1392,7 +1391,7 @@ Renderer::DescriptorSetLayoutHandle Renderer::upload(const DescriptorSetLayout& 
                            .setStageFlags(vk::ShaderStageFlagBits::eAll)
                            .setPImmutableSamplers(nullptr);
 
-        switch (layout.type_at(i)) {
+        switch (layout.at(i)) {
         case e_uniform_buffer:
             binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
             break;
@@ -1411,7 +1410,7 @@ Renderer::DescriptorSetLayoutHandle Renderer::upload(const DescriptorSetLayout& 
     return handle;
 }
 
-Renderer::DescriptorSetHandle Renderer::create_descriptor_set(Renderer::DescriptorSetLayoutHandle layout)
+DescriptorSetHandle Renderer::create_descriptor_set(DescriptorSetLayoutHandle layout)
 {
     vk::DescriptorSet descriptor_set
         = m_descriptor_set_allocator.create(m_vk_device, m_descriptor_set_layouts.at(layout));
@@ -1424,7 +1423,7 @@ Renderer::DescriptorSetHandle Renderer::create_descriptor_set(Renderer::Descript
     return handle;
 }
 
-Renderer::GraphicsPipelineHandle Renderer::create_graphics_pipeline(
+GraphicsPipelineHandle Renderer::create_graphics_pipeline(
     GraphicsPipelineLayoutHandle layout,
     const Shader& vertex_shader,
     const Shader& fragment_shader,
@@ -1445,7 +1444,7 @@ Renderer::GraphicsPipelineHandle Renderer::create_graphics_pipeline(
     return handle;
 }
 
-Renderer::GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
+GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
     const std::vector<DescriptorSetLayoutHandle>& layouts)
 {
     vk::PipelineLayout vk_layout = create_vk_pipeline_layout(layouts);
@@ -1457,7 +1456,7 @@ Renderer::GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout
     return handle;
 }
 
-void Renderer::bind(Renderer::GraphicsPipelineHandle handle)
+void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
 {
     m_current_draw_state.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle));
 }

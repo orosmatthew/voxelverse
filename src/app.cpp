@@ -4,7 +4,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "descriptor_set_layout.hpp"
 #include "logger.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
@@ -40,22 +39,19 @@ void run()
 
     const std::vector<uint32_t> plane_indices = { 0, 1, 2, 2, 3, 0 };
 
-    mve::Renderer::VertexBufferHandle vertex_data_handle_indexed = renderer.upload(plane);
-    mve::Renderer::IndexBufferHandle index_buffer_handle = renderer.upload(plane_indices);
+    mve::VertexBufferHandle vertex_buffer = renderer.create_vertex_buffer(plane);
+    mve::IndexBufferHandle index_buffer = renderer.create_index_buffer(plane_indices);
 
-    mve::DescriptorSetLayout descriptor_set_layout;
-    descriptor_set_layout.push_back(mve::DescriptorType::e_uniform_buffer);
+    mve::DescriptorSetLayoutHandle descriptor_set_layout_handle
+        = renderer.create_descriptor_set_layout({ mve::DescriptorType::e_uniform_buffer });
 
-    mve::Renderer::DescriptorSetLayoutHandle descriptor_set_layout_handle = renderer.upload(descriptor_set_layout);
-
-    mve::Renderer::GraphicsPipelineLayoutHandle graphics_pipeline_layout
+    mve::GraphicsPipelineLayoutHandle graphics_pipeline_layout
         = renderer.create_graphics_pipeline_layout({ descriptor_set_layout_handle });
 
-    mve::Renderer::GraphicsPipelineHandle graphics_pipeline
+    mve::GraphicsPipelineHandle graphics_pipeline
         = renderer.create_graphics_pipeline(graphics_pipeline_layout, vertex_shader, fragment_shader, vertex_layout);
 
-    mve::Renderer::DescriptorSetHandle descriptor_set_handle
-        = renderer.create_descriptor_set(descriptor_set_layout_handle);
+    mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(descriptor_set_layout_handle);
 
     mve::UniformStructLayout uniform_struct("UniformBufferObject");
     uniform_struct.push_back("model", mve::UniformType::e_mat4);
@@ -66,8 +62,7 @@ void run()
     mve::UniformLocation view_location = uniform_struct.location_of("view");
     mve::UniformLocation proj_location = uniform_struct.location_of("proj");
 
-    mve::Renderer::UniformBufferHandle uniform_handle
-        = renderer.create_uniform_buffer(uniform_struct, descriptor_set_handle);
+    mve::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct, descriptor_set_handle);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -97,13 +92,13 @@ void run()
         renderer.update_uniform(uniform_handle, view_location, view);
         renderer.update_uniform(uniform_handle, proj_location, proj);
 
-        renderer.bind(graphics_pipeline);
+        renderer.bind_graphics_pipeline(graphics_pipeline);
 
-        renderer.bind(descriptor_set_handle, graphics_pipeline_layout);
+        renderer.bind_descriptor_set(descriptor_set_handle, graphics_pipeline_layout);
 
-        renderer.bind(vertex_data_handle_indexed);
+        renderer.bind_vertex_buffer(vertex_buffer);
 
-        renderer.draw(index_buffer_handle);
+        renderer.draw_index_buffer(index_buffer);
 
         renderer.end(window);
 

@@ -13,7 +13,6 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
-#include "descriptor_set_layout.hpp"
 #include "uniform_struct_layout.hpp"
 #include "vertex_data.hpp"
 
@@ -27,51 +26,56 @@ class Shader;
 class Window;
 
 /**
+ * @brief Types of bindings for descriptor set
+ */
+enum DescriptorType {
+    e_uniform_buffer,
+};
+
+/**
+ * @brief Handle for GPU resources
+ */
+using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
+
+/**
+ * @brief Handle for GPU vertex buffer
+ */
+using VertexBufferHandle = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
+
+/**
+ * @brief Handle for GPU index buffer
+ */
+using IndexBufferHandle = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
+
+/**
+ * @brief Handle for uniform buffer
+ */
+using UniformBufferHandle
+    = strong::type<ResourceHandle, struct _uniform_buffer_handle, strong::regular, strong::hashable>;
+
+/**
+ * @brief Handle for a descriptor set layout
+ */
+using DescriptorSetLayoutHandle
+    = strong::type<ResourceHandle, struct _descriptor_set_layout_handle, strong::regular, strong::hashable>;
+
+/**
+ * @brief Handle for a descriptor set
+ */
+using DescriptorSetHandle
+    = strong::type<ResourceHandle, struct _descriptor_set_handle, strong::regular, strong::hashable>;
+
+using GraphicsPipelineHandle
+    = strong::type<ResourceHandle, struct _graphics_pipeline_handle, strong::regular, strong::hashable>;
+
+using GraphicsPipelineLayoutHandle
+    = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
+
+/**
  * @brief Vulkan renderer class
  */
 class Renderer {
 public:
-    /**
-     * @brief Handle for GPU resources
-     */
-    using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
-
-    /**
-     * @brief Handle for GPU vertex buffer
-     */
-    using VertexBufferHandle
-        = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
-
-    /**
-     * @brief Handle for GPU index buffer
-     */
-    using IndexBufferHandle
-        = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
-
-    /**
-     * @brief Handle for uniform buffer
-     */
-    using UniformBufferHandle
-        = strong::type<ResourceHandle, struct _uniform_buffer_handle, strong::regular, strong::hashable>;
-
-    /**
-     * @brief Handle for a descriptor set layout
-     */
-    using DescriptorSetLayoutHandle
-        = strong::type<ResourceHandle, struct _descriptor_set_layout_handle, strong::regular, strong::hashable>;
-
-    /**
-     * @brief Handle for a descriptor set
-     */
-    using DescriptorSetHandle
-        = strong::type<ResourceHandle, struct _descriptor_set_handle, strong::regular, strong::hashable>;
-
-    using GraphicsPipelineHandle
-        = strong::type<ResourceHandle, struct _graphics_pipeline_handle, strong::regular, strong::hashable>;
-
-    using GraphicsPipelineLayoutHandle
-        = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
-
     /**
      * @brief Construct Vulkan renderer
      * @param window - Window
@@ -103,21 +107,21 @@ public:
      * @brief Bind and draw vertex buffer
      * @param handle - Vertex buffer handle
      */
-    void draw(VertexBufferHandle handle);
+    void draw_vertex_buffer(VertexBufferHandle handle);
 
     /**
      * @brief Bind vertex buffer
      * @param handle - Vertex buffer handle
      */
-    void bind(VertexBufferHandle handle);
+    void bind_vertex_buffer(VertexBufferHandle handle);
 
-    void bind(GraphicsPipelineHandle handle);
+    void bind_graphics_pipeline(GraphicsPipelineHandle handle);
 
     /**
      * @brief Bind and draw index buffer
      * @param handle - Index buffer handle
      */
-    void draw(IndexBufferHandle handle);
+    void draw_index_buffer(IndexBufferHandle handle);
 
     /**
      * @brief End recording commands
@@ -127,24 +131,24 @@ public:
 
     /**
      * @brief Upload vertex data to GPU vertex buffer
-     * @param vertex_data - Vertex data to upload
+     * @param vertex_data - Vertex data
      * @return - Returns handle GPU vertex buffer
      */
-    VertexBufferHandle upload(const VertexData& vertex_data);
+    VertexBufferHandle create_vertex_buffer(const VertexData& vertex_data);
 
     /**
      * @brief Upload index data to GPU index buffer
-     * @param index_data - Index data to upload
+     * @param index_data - Index data
      * @return - Returns handle to GPU index buffer
      */
-    IndexBufferHandle upload(const std::vector<uint32_t>& index_data);
+    IndexBufferHandle create_index_buffer(const std::vector<uint32_t>& index_data);
 
     /**
      * @brief Upload descriptor set layout to GPU
-     * @param layout - Layout to upload
+     * @param layout - Layout to create
      * @return - Returns handle to GPU descriptor set layout
      */
-    DescriptorSetLayoutHandle upload(const mve::DescriptorSetLayout& layout);
+    DescriptorSetLayoutHandle create_descriptor_set_layout(const std::vector<DescriptorType>& layout);
 
     /**
      * @brief Create a uniform buffer from a given layout
@@ -204,7 +208,7 @@ public:
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value);
 
-    void bind(Renderer::DescriptorSetHandle handle, Renderer::GraphicsPipelineLayoutHandle pipeline_layout);
+    void bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout);
 
     [[nodiscard]] glm::ivec2 extent() const;
 
