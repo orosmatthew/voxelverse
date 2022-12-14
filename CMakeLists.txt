@@ -73,14 +73,14 @@ add_shader(vulkan_testing simple.frag)
 add_shader(vulkan_testing simple.vert)
 
 set(TEST_LIB_SOURCE_FILES
-        lib/catch2-3.1.1/src/catch_amalgamated.cpp)
+        lib/catch2-3.2.1/src/catch_amalgamated.cpp)
 
 set(TEST_SOURCE_FILES
         tests/vertex_data.cpp
         tests/uniform_struct_layout.cpp)
 
 set(TEST_LIB_INCLUDES
-        lib/catch2-3.1.1/include)
+        lib/catch2-3.2.1/include)
 
 add_executable(tests)
 
