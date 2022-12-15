@@ -25,12 +25,12 @@ public:
 
     /**
      * @brief Obtain SPIR-V code from shader
-     * @return - returns byte (char) array of SPIR-V code
+     * @return - returns byte (uint32_t) array of SPIR-V code
      */
-    [[nodiscard]] std::vector<std::byte> spv_code() const noexcept;
+    [[nodiscard]] std::vector<uint32_t> spv_code() const noexcept;
 
 private:
-    std::vector<std::byte> m_spv_code;
+    std::vector<uint32_t> m_spv_code;
 };
 
 }

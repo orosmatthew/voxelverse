@@ -426,19 +426,19 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     vk::RenderPass render_pass,
     const VertexLayout& vertex_layout)
 {
-    std::vector<std::byte> vertex_spv_code = vertex_shader.spv_code();
+    std::vector<uint32_t> vertex_spv_code = vertex_shader.spv_code();
     auto vertex_shader_create_info
         = vk::ShaderModuleCreateInfo()
-              .setCodeSize(vertex_spv_code.size())
-              .setPCode(reinterpret_cast<const uint32_t*>(vertex_spv_code.data()));
+              .setCodeSize(vertex_spv_code.size() * 4)
+              .setPCode(vertex_spv_code.data());
 
     vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
-    std::vector<std::byte> fragment_spv_code = fragment_shader.spv_code();
+    std::vector<uint32_t> fragment_spv_code = fragment_shader.spv_code();
     auto fragment_shader_create_info
         = vk::ShaderModuleCreateInfo()
-              .setCodeSize(fragment_spv_code.size())
-              .setPCode(reinterpret_cast<const uint32_t*>(fragment_spv_code.data()));
+              .setCodeSize(fragment_spv_code.size() * 4)
+              .setPCode(fragment_spv_code.data());
 
     vk::ShaderModule fragment_shader_module = device.createShaderModule(fragment_shader_create_info);
 
