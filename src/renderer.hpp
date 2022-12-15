@@ -1,7 +1,9 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <optional>
+#include <queue>
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -99,9 +101,8 @@ public:
 
     /**
      * @brief Begin recording commands
-     * @param window - Window
      */
-    void begin(const Window& window);
+    void begin();
 
     /**
      * @brief Bind and draw vertex buffer
@@ -128,6 +129,8 @@ public:
      * @param window - Window
      */
     void end(const Window& window);
+
+    void resize(const Window& window);
 
     /**
      * @brief Upload vertex data to GPU vertex buffer
@@ -156,7 +159,7 @@ public:
      * @return - Returns handle to uniform buffer
      */
     UniformBufferHandle create_uniform_buffer(
-        const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set);
+        const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set, uint32_t binding);
 
     DescriptorSetHandle create_descriptor_set(DescriptorSetLayoutHandle layout);
 
@@ -194,19 +197,19 @@ public:
      */
     void queue_destroy(IndexBufferHandle handle);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, float value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value, bool persist = true);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value);
+    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist = true);
 
     void bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout);
 
@@ -257,6 +260,8 @@ private:
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
         std::unordered_map<UniformBufferHandle, UniformBuffer> uniform_buffers {};
+        std::unordered_map<DescriptorSetHandle, vk::DescriptorSet> descriptor_sets {};
+        std::queue<uint32_t> funcs;
     };
 
     struct CurrentDrawState {
@@ -264,6 +269,11 @@ private:
         uint32_t image_index;
         vk::CommandBuffer command_buffer;
         uint32_t frame_index;
+    };
+
+    struct DeferredFunc {
+        std::function<void(uint32_t)> func;
+        int call_count;
     };
 
     class DescriptorSetAllocator {
@@ -322,11 +332,12 @@ private:
     std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
     std::unordered_map<DescriptorSetLayoutHandle, int> m_descriptor_set_layout_deletion_queue;
 
-    std::unordered_map<DescriptorSetHandle, vk::DescriptorSet> m_descriptor_sets {};
-
     std::unordered_map<GraphicsPipelineHandle, vk::Pipeline> m_graphics_pipelines {};
 
     std::unordered_map<GraphicsPipelineLayoutHandle, vk::PipelineLayout> m_graphics_pipeline_layouts {};
+
+    uint32_t m_func_count;
+    std::map<uint32_t, DeferredFunc> m_funcs;
 
     void cleanup_vk_swapchain();
 
@@ -334,7 +345,12 @@ private:
 
     void recreate_swapchain(const Window& window);
 
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size);
+    void update_uniform(
+        UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+
+    void push_to_all_frames(std::function<void(uint32_t)> func);
+
+    void push_to_next_frame(std::function<void(uint32_t)> func);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,

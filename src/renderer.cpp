@@ -21,6 +21,7 @@ Renderer::Renderer(
     int app_version_patch)
     : c_frames_in_flight(2)
     , m_resource_handle_count(0)
+    , m_func_count(0)
 {
     m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -428,17 +429,13 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 {
     std::vector<uint32_t> vertex_spv_code = vertex_shader.spv_code();
     auto vertex_shader_create_info
-        = vk::ShaderModuleCreateInfo()
-              .setCodeSize(vertex_spv_code.size() * 4)
-              .setPCode(vertex_spv_code.data());
+        = vk::ShaderModuleCreateInfo().setCodeSize(vertex_spv_code.size() * 4).setPCode(vertex_spv_code.data());
 
     vk::ShaderModule vertex_shader_module = device.createShaderModule(vertex_shader_create_info);
 
     std::vector<uint32_t> fragment_spv_code = fragment_shader.spv_code();
     auto fragment_shader_create_info
-        = vk::ShaderModuleCreateInfo()
-              .setCodeSize(fragment_spv_code.size() * 4)
-              .setPCode(fragment_spv_code.data());
+        = vk::ShaderModuleCreateInfo().setCodeSize(fragment_spv_code.size() * 4).setPCode(fragment_spv_code.data());
 
     vk::ShaderModule fragment_shader_module = device.createShaderModule(fragment_shader_create_info);
 
@@ -1048,17 +1045,13 @@ void Renderer::queue_destroy(IndexBufferHandle handle)
     m_index_buffer_deletion_queue[handle] = 0;
 }
 
-void Renderer::begin(const Window& window)
+void Renderer::begin()
 {
     if (m_current_draw_state.is_drawing) {
         throw std::runtime_error("[Renderer] Already drawing.");
     }
 
     m_current_draw_state.is_drawing = true;
-
-    if (window.was_resized()) {
-        recreate_swapchain(window);
-    }
 
     FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
 
@@ -1112,6 +1105,16 @@ void Renderer::begin(const Window& window)
     m_vk_device.resetFences({ frame.in_flight_fence });
 
     frame.command_buffer.reset();
+
+    while (!frame.funcs.empty()) {
+        auto& def = m_funcs.at(frame.funcs.front());
+        std::invoke(def.func, m_current_draw_state.frame_index);
+        def.call_count--;
+        if (def.call_count <= 0) {
+            m_funcs.erase(frame.funcs.front());
+        }
+        frame.funcs.pop();
+    }
 
     m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame_index].command_buffer;
 
@@ -1264,7 +1267,7 @@ bool Renderer::is_valid(IndexBufferHandle handle)
 }
 
 UniformBufferHandle Renderer::create_uniform_buffer(
-    const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set)
+    const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set, uint32_t binding)
 {
     auto handle = UniformBufferHandle(m_resource_handle_count);
     m_resource_handle_count++;
@@ -1282,29 +1285,41 @@ UniformBufferHandle Renderer::create_uniform_buffer(
         frame.uniform_buffers[handle] = UniformBuffer { buffer, static_cast<std::byte*>(ptr) };
     }
 
-    for (int i = 0; i < c_frames_in_flight; i++) {
-        auto buffer_info = vk::DescriptorBufferInfo()
-                               .setBuffer(m_frames_in_flight[i].uniform_buffers[handle].buffer.vk_handle)
-                               .setOffset(0)
-                               .setRange(struct_layout.size_bytes());
+    size_t layout_bytes = struct_layout.size_bytes();
+
+    push_to_all_frames([this, handle, layout_bytes, descriptor_set, binding](uint32_t frame_index) {
+        auto buffer_info
+            = vk::DescriptorBufferInfo()
+                  .setBuffer(this->m_frames_in_flight.at(frame_index).uniform_buffers.at(handle).buffer.vk_handle)
+                  .setOffset(0)
+                  .setRange(layout_bytes);
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(m_descriptor_sets.at(descriptor_set))
-                  .setDstBinding(0)
+                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstBinding(binding)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
                   .setDescriptorCount(1)
                   .setPBufferInfo(&buffer_info);
 
-        m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
-    }
+        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+    });
+
     return handle;
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(glm::mat4));
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat4), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
 }
 
 void Renderer::bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout)
@@ -1314,7 +1329,7 @@ void Renderer::bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineL
         m_graphics_pipeline_layouts.at(pipeline_layout),
         0,
         1,
-        &(m_descriptor_sets.at(handle)),
+        &(m_frames_in_flight.at(m_current_draw_state.frame_index).descriptor_sets.at(handle)),
         0,
         nullptr);
 }
@@ -1334,45 +1349,89 @@ void Renderer::wait_ready()
     }
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, float value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(float));
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size)
-{
-    try {
-        UniformBuffer& buffer = m_frames_in_flight.at(m_current_draw_state.frame_index).uniform_buffers.at(handle);
-        memcpy(&(buffer.mapped_ptr[location.value_of()]), data_ptr, size);
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(float), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
     }
-    catch (std::exception& e) {
-        throw std::runtime_error("[Renderer] Invalid uniform update");
+    else {
+        push_to_next_frame(func);
     }
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value)
+void Renderer::update_uniform(
+    UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
 {
-    update_uniform(handle, location, &value, sizeof(glm::vec2));
+    UniformBuffer& buffer = m_frames_in_flight.at(frame_index).uniform_buffers.at(handle);
+    memcpy(&(buffer.mapped_ptr[location.value_of()]), data_ptr, size);
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(glm::vec3));
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(glm::vec4));
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(glm::mat2));
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
 }
 
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value)
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value, bool persist)
 {
-    update_uniform(handle, location, &value, sizeof(glm::mat3));
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
+}
+
+void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value, bool persist)
+{
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
+    };
+    if (persist) {
+        push_to_all_frames(func);
+    }
+    else {
+        push_to_next_frame(func);
+    }
 }
 
 DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vector<DescriptorType>& layout)
@@ -1410,13 +1469,21 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vect
 
 DescriptorSetHandle Renderer::create_descriptor_set(DescriptorSetLayoutHandle layout)
 {
-    vk::DescriptorSet descriptor_set
-        = m_descriptor_set_allocator.create(m_vk_device, m_descriptor_set_layouts.at(layout));
+    std::vector<vk::DescriptorSet> descriptor_sets;
+    descriptor_sets.reserve(c_frames_in_flight);
+
+    for (int i = 0; i < c_frames_in_flight; i++) {
+        descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, m_descriptor_set_layouts.at(layout)));
+    }
 
     auto handle = DescriptorSetHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
-    m_descriptor_sets.insert({ handle, descriptor_set });
+    int i = 0;
+    for (FrameInFlight& frame : m_frames_in_flight) {
+        frame.descriptor_sets.insert({ handle, descriptor_sets.at(i) });
+        i++;
+    }
 
     return handle;
 }
@@ -1457,6 +1524,29 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
 void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
 {
     m_current_draw_state.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle));
+}
+
+void Renderer::push_to_all_frames(std::function<void(uint32_t)> func)
+{
+    uint32_t id = m_func_count;
+    m_func_count++;
+    m_funcs.insert({ id, { std::move(func), c_frames_in_flight } });
+    for (FrameInFlight& frame : m_frames_in_flight) {
+        frame.funcs.push(id);
+    }
+}
+
+void Renderer::push_to_next_frame(std::function<void(uint32_t)> func)
+{
+    uint32_t id = m_func_count;
+    m_func_count++;
+    m_funcs.insert({ id, { std::move(func), 1 } });
+    m_frames_in_flight.at(m_current_draw_state.frame_index).funcs.push(id);
+}
+
+void Renderer::resize(const Window& window)
+{
+    recreate_swapchain(window);
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

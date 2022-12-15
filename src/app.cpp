@@ -27,19 +27,19 @@ void run()
     vertex_layout.push_back(mve::VertexAttributeType::e_vec2); // 2D position
     vertex_layout.push_back(mve::VertexAttributeType::e_vec3); // Color
 
-    mve::VertexData plane(vertex_layout);
-    plane.push_back({ -0.5f, -0.5f });
-    plane.push_back({ 1.0f, 0.0f, 0.0f });
-    plane.push_back({ 0.5f, -0.5f });
-    plane.push_back({ 0.0f, 1.0f, 0.0f });
-    plane.push_back({ 0.5f, 0.5f });
-    plane.push_back({ 0.0f, 0.0f, 1.0f });
-    plane.push_back({ -0.5f, 0.5f });
-    plane.push_back({ 1.0f, 1.0f, 1.0f });
+    mve::VertexData place_data(vertex_layout);
+    place_data.push_back({ -0.5f, -0.5f });
+    place_data.push_back({ 1.0f, 0.0f, 0.0f });
+    place_data.push_back({ 0.5f, -0.5f });
+    place_data.push_back({ 0.0f, 1.0f, 0.0f });
+    place_data.push_back({ 0.5f, 0.5f });
+    place_data.push_back({ 0.0f, 0.0f, 1.0f });
+    place_data.push_back({ -0.5f, 0.5f });
+    place_data.push_back({ 1.0f, 1.0f, 1.0f });
 
     const std::vector<uint32_t> plane_indices = { 0, 1, 2, 2, 3, 0 };
 
-    mve::VertexBufferHandle vertex_buffer = renderer.create_vertex_buffer(plane);
+    mve::VertexBufferHandle vertex_buffer = renderer.create_vertex_buffer(place_data);
     mve::IndexBufferHandle index_buffer = renderer.create_index_buffer(plane_indices);
 
     mve::DescriptorSetLayoutHandle descriptor_set_layout_handle
@@ -62,12 +62,28 @@ void run()
     mve::UniformLocation view_location = uniform_struct.location_of("view");
     mve::UniformLocation proj_location = uniform_struct.location_of("proj");
 
-    mve::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct, descriptor_set_handle);
+    mve::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct, descriptor_set_handle, 0);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
 
     auto start_time = std::chrono::high_resolution_clock::now();
+
+    glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    renderer.update_uniform(uniform_handle, view_location, view);
+
+    auto resize_func = [&](glm::ivec2 new_size) {
+        renderer.resize(window);
+        glm::mat4 proj = glm::perspective(
+            glm::radians(45.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.1f, 10.0f);
+        proj[1][1] *= -1;
+        renderer.update_uniform(uniform_handle, proj_location, proj);
+    };
+
+    window.set_resize_callback(resize_func);
+
+    std::invoke(resize_func, window.get_size());
 
     while (!window.should_close()) {
         window.update();
@@ -80,17 +96,10 @@ void run()
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
         glm::mat4 model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::mat4 view
-            = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::mat4 proj = glm::perspective(
-            glm::radians(45.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.1f, 10.0f);
-        proj[1][1] *= -1;
 
-        renderer.begin(window);
+        renderer.update_uniform(uniform_handle, model_location, model, false);
 
-        renderer.update_uniform(uniform_handle, model_location, model);
-        renderer.update_uniform(uniform_handle, view_location, view);
-        renderer.update_uniform(uniform_handle, proj_location, proj);
+        renderer.begin();
 
         renderer.bind_graphics_pipeline(graphics_pipeline);
 
