@@ -21,7 +21,7 @@ Renderer::Renderer(
     int app_version_patch)
     : c_frames_in_flight(2)
     , m_resource_handle_count(0)
-    , m_func_count(0)
+    , m_deferred_function_id_count(0)
 {
     m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
@@ -935,7 +935,13 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
 
 void Renderer::queue_destroy(VertexBufferHandle handle)
 {
-    m_vertex_buffer_deletion_queue[handle] = 0;
+    push_wait_for_frames([this, handle](uint32_t) {
+        vmaDestroyBuffer(
+            m_vma_allocator,
+            m_vertex_buffers.at(handle).buffer.vk_handle,
+            m_vertex_buffers.at(handle).buffer.vma_allocation);
+        m_vertex_buffers.erase(handle);
+    });
 }
 
 Renderer::Buffer Renderer::create_buffer(
@@ -1042,7 +1048,13 @@ IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& ind
 
 void Renderer::queue_destroy(IndexBufferHandle handle)
 {
-    m_index_buffer_deletion_queue[handle] = 0;
+    push_wait_for_frames([this, handle](uint32_t) {
+        vmaDestroyBuffer(
+            m_vma_allocator,
+            m_index_buffers.at(handle).buffer.vk_handle,
+            m_index_buffers.at(handle).buffer.vma_allocation);
+        m_index_buffers.erase(handle);
+    });
 }
 
 void Renderer::begin()
@@ -1057,44 +1069,6 @@ void Renderer::begin()
 
     wait_ready();
 
-    auto destroyed = std::vector<VertexBufferHandle>();
-    for (auto& handle_pair : m_vertex_buffer_deletion_queue) {
-        if (handle_pair.second < c_frames_in_flight) {
-            handle_pair.second++;
-            break;
-        }
-        else {
-            vmaDestroyBuffer(
-                m_vma_allocator,
-                m_vertex_buffers.at(handle_pair.first).buffer.vk_handle,
-                m_vertex_buffers.at(handle_pair.first).buffer.vma_allocation);
-            m_vertex_buffers.erase(handle_pair.first);
-            destroyed.push_back(handle_pair.first);
-        }
-    }
-    for (VertexBufferHandle v : destroyed) {
-        m_vertex_buffer_deletion_queue.erase(v);
-    }
-
-    auto index_destroyed = std::vector<IndexBufferHandle>();
-    for (auto& handle_pair : m_index_buffer_deletion_queue) {
-        if (handle_pair.second < c_frames_in_flight) {
-            handle_pair.second++;
-            break;
-        }
-        else {
-            vmaDestroyBuffer(
-                m_vma_allocator,
-                m_index_buffers.at(handle_pair.first).buffer.vk_handle,
-                m_index_buffers.at(handle_pair.first).buffer.vma_allocation);
-            m_index_buffers.erase(handle_pair.first);
-            index_destroyed.push_back(handle_pair.first);
-        }
-    }
-    for (IndexBufferHandle v : index_destroyed) {
-        m_index_buffer_deletion_queue.erase(v);
-    }
-
     vk::ResultValue<uint32_t> acquire_result
         = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
     if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
@@ -1107,14 +1081,30 @@ void Renderer::begin()
     frame.command_buffer.reset();
 
     while (!frame.funcs.empty()) {
-        auto& def = m_funcs.at(frame.funcs.front());
-        std::invoke(def.func, m_current_draw_state.frame_index);
-        def.call_count--;
-        if (def.call_count <= 0) {
-            m_funcs.erase(frame.funcs.front());
+        auto& def = m_deferred_functions.at(frame.funcs.front());
+        std::invoke(def.function, m_current_draw_state.frame_index);
+        def.counter--;
+        if (def.counter <= 0) {
+            m_deferred_functions.erase(frame.funcs.front());
         }
         frame.funcs.pop();
     }
+
+    std::queue<uint32_t> continue_defer;
+    while (!m_wait_frames_deferred_functions.empty()) {
+        uint32_t id = m_wait_frames_deferred_functions.front();
+        m_wait_frames_deferred_functions.pop();
+        auto& def = m_deferred_functions.at(id);
+        def.counter--;
+        if (def.counter <= 0) {
+            std::invoke(def.function, m_current_draw_state.frame_index);
+            m_deferred_functions.erase(id);
+        }
+        else {
+            continue_defer.push(id);
+        }
+    }
+    m_wait_frames_deferred_functions = std::move(continue_defer);
 
     m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame_index].command_buffer;
 
@@ -1258,12 +1248,12 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
 
 bool Renderer::is_valid(VertexBufferHandle handle)
 {
-    return m_vertex_buffers.contains(handle) && !m_vertex_buffer_deletion_queue.contains(handle);
+    return m_vertex_buffers.contains(handle);
 }
 
 bool Renderer::is_valid(IndexBufferHandle handle)
 {
-    return m_index_buffers.contains(handle) && !m_index_buffer_deletion_queue.contains(handle);
+    return m_index_buffers.contains(handle);
 }
 
 UniformBufferHandle Renderer::create_uniform_buffer(
@@ -1528,9 +1518,9 @@ void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
 
 void Renderer::push_to_all_frames(std::function<void(uint32_t)> func)
 {
-    uint32_t id = m_func_count;
-    m_func_count++;
-    m_funcs.insert({ id, { std::move(func), c_frames_in_flight } });
+    uint32_t id = m_deferred_function_id_count;
+    m_deferred_function_id_count++;
+    m_deferred_functions.insert({ id, { std::move(func), c_frames_in_flight } });
     for (FrameInFlight& frame : m_frames_in_flight) {
         frame.funcs.push(id);
     }
@@ -1538,15 +1528,23 @@ void Renderer::push_to_all_frames(std::function<void(uint32_t)> func)
 
 void Renderer::push_to_next_frame(std::function<void(uint32_t)> func)
 {
-    uint32_t id = m_func_count;
-    m_func_count++;
-    m_funcs.insert({ id, { std::move(func), 1 } });
+    uint32_t id = m_deferred_function_id_count;
+    m_deferred_function_id_count++;
+    m_deferred_functions.insert({ id, { std::move(func), 1 } });
     m_frames_in_flight.at(m_current_draw_state.frame_index).funcs.push(id);
 }
 
 void Renderer::resize(const Window& window)
 {
     recreate_swapchain(window);
+}
+
+void Renderer::push_wait_for_frames(std::function<void(uint32_t)> func)
+{
+    uint32_t id = m_deferred_function_id_count;
+    m_deferred_function_id_count++;
+    m_deferred_functions.insert({ id, { std::move(func), c_frames_in_flight } });
+    m_wait_frames_deferred_functions.push(id);
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

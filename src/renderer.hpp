@@ -271,9 +271,9 @@ private:
         uint32_t frame_index;
     };
 
-    struct DeferredFunc {
-        std::function<void(uint32_t)> func;
-        int call_count;
+    struct DeferredFunction {
+        std::function<void(uint32_t)> function;
+        int counter;
     };
 
     class DescriptorSetAllocator {
@@ -324,20 +324,18 @@ private:
     std::vector<FrameInFlight> m_frames_in_flight;
 
     std::unordered_map<VertexBufferHandle, VertexBuffer> m_vertex_buffers;
-    std::unordered_map<VertexBufferHandle, int> m_vertex_buffer_deletion_queue;
 
     std::unordered_map<IndexBufferHandle, IndexBuffer> m_index_buffers;
-    std::unordered_map<IndexBufferHandle, int> m_index_buffer_deletion_queue;
 
     std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
-    std::unordered_map<DescriptorSetLayoutHandle, int> m_descriptor_set_layout_deletion_queue;
 
     std::unordered_map<GraphicsPipelineHandle, vk::Pipeline> m_graphics_pipelines {};
 
     std::unordered_map<GraphicsPipelineLayoutHandle, vk::PipelineLayout> m_graphics_pipeline_layouts {};
 
-    uint32_t m_func_count;
-    std::map<uint32_t, DeferredFunc> m_funcs;
+    uint32_t m_deferred_function_id_count;
+    std::map<uint32_t, DeferredFunction> m_deferred_functions;
+    std::queue<uint32_t> m_wait_frames_deferred_functions {};
 
     void cleanup_vk_swapchain();
 
@@ -351,6 +349,8 @@ private:
     void push_to_all_frames(std::function<void(uint32_t)> func);
 
     void push_to_next_frame(std::function<void(uint32_t)> func);
+
+    void push_wait_for_frames(std::function<void(uint32_t)> func);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,
