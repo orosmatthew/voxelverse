@@ -203,15 +203,16 @@ Renderer::QueueFamilyIndices Renderer::get_vk_queue_family_indices(
     for (const vk::QueueFamilyProperties& queue_family : queue_families) {
         if (queue_family.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphics_family = i;
-
-            if (physical_device.getSurfaceSupportKHR(i, surface)) {
-                indices.present_family = i;
-            }
-
-            if (indices.is_complete()) {
-                break;
-            }
         }
+
+        if (physical_device.getSurfaceSupportKHR(i, surface)) {
+            indices.present_family = i;
+        }
+
+        if (indices.is_complete()) {
+            break;
+        }
+
         i++;
     }
     return indices;
