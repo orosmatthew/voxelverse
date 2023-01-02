@@ -189,7 +189,6 @@ bool Window::is_hidden() const
 
 void Window::glfw_iconify_callback(GLFWwindow* window, int iconified)
 {
-    LOG->info("Here!: {}", iconified);
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     if (iconified) {
         instance->m_minimized = true;
