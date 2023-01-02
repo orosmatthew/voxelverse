@@ -18,6 +18,8 @@ void run()
 
     mve::Window window("Mini Vulkan Engine", glm::ivec2(800, 600));
 
+    window.set_min_size({ 800, 600 });
+
     mve::Renderer renderer(window, "Vulkan Testing", 0, 0, 1);
 
     mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex);
