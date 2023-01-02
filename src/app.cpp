@@ -97,7 +97,12 @@ void run()
         }
 
         if (window.is_key_pressed(mve::InputKey::f)) {
-            window.toggle_fullscreen();
+            if (!window.is_fullscreen()) {
+                window.fullscreen_to_native();
+            }
+            else {
+                window.windowed();
+            }
         }
 
         auto current_time = std::chrono::high_resolution_clock::now();

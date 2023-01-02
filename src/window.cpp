@@ -20,9 +20,10 @@ Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
     , m_cursor_in_window(true)
     , m_event_waiting(false)
 {
+    m_windowed_size = m_size;
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    //        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, m_resizable);
 
     auto window_deleter = [](GLFWwindow* window) {
         glfwDestroyWindow(window);
@@ -113,25 +114,6 @@ glm::vec2 Window::get_cursor_pos(bool clamped_to_window)
     return { mouse_pos };
 }
 
-void Window::toggle_fullscreen()
-{
-    if (!m_fullscreen) {
-        m_windowed_size = m_size;
-        glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
-
-        Monitor monitor = current_monitor();
-
-        m_fullscreen = true;
-        glm::ivec2 size = monitor.size();
-        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
-    }
-    else {
-        m_fullscreen = false;
-        glfwSetWindowMonitor(
-            m_glfw_window.get(), nullptr, m_pos.x, m_pos.y, m_windowed_size.x, m_windowed_size.y, GLFW_DONT_CARE);
-    }
-}
-
 Monitor Window::current_monitor() const
 {
     int monitor_count;
@@ -142,7 +124,7 @@ Monitor Window::current_monitor() const
         return 0;
     }
 
-    if (is_fullscreen()) {
+    if (m_fullscreen) {
         monitor = glfwGetWindowMonitor(m_glfw_window.get());
         for (int i = 0; i < monitor_count; i++) {
             if (monitors[i] == monitor) {
@@ -360,6 +342,50 @@ void Window::enable_event_waiting()
 void Window::disable_event_waiting()
 {
     m_event_waiting = false;
+}
+
+bool Window::is_resizable() const
+{
+    return m_resizable;
+}
+
+void Window::fullscreen_to_native()
+{
+    if (!m_fullscreen || m_size != current_monitor().size()) {
+        if (!m_fullscreen) {
+            m_windowed_size = m_size;
+            glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
+        }
+
+        Monitor monitor = current_monitor();
+
+        m_fullscreen = true;
+        glm::ivec2 size = monitor.size();
+        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
+    }
+}
+
+void Window::windowed()
+{
+    if (m_fullscreen) {
+        m_fullscreen = false;
+        glfwSetWindowMonitor(
+            m_glfw_window.get(), nullptr, m_pos.x, m_pos.y, m_windowed_size.x, m_windowed_size.y, GLFW_DONT_CARE);
+    }
+}
+
+void Window::fullscreen_keep_size()
+{
+    if (!m_fullscreen) {
+
+        m_windowed_size = m_size;
+        glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
+
+        Monitor monitor = current_monitor();
+
+        m_fullscreen = true;
+        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, m_size.x, m_size.y, GLFW_DONT_CARE);
+    }
 }
 
 }

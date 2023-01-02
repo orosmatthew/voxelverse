@@ -313,7 +313,11 @@ public:
 
     [[nodiscard]] bool is_key_released(InputKey key) const;
 
-    void toggle_fullscreen();
+    void fullscreen_keep_size();
+
+    void fullscreen_to_native();
+
+    void windowed();
 
     void hide();
 
@@ -365,6 +369,8 @@ public:
 
     [[nodiscard]] bool is_cursor_hidden() const;
 
+    [[nodiscard]] bool is_resizable() const;
+
     /**
      * @brief Get cursor position
      * @param clamped_to_window - If true then returns value clamped inside of window
@@ -375,7 +381,7 @@ public:
 private:
     using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>;
 
-    bool m_resizable;
+    const bool m_resizable;
     UniqueGlfwWindow m_glfw_window;
     std::optional<std::function<void(glm::ivec2)>> m_resize_callback;
     bool m_hidden;
@@ -395,7 +401,6 @@ private:
     std::set<InputKey> m_keys_pressed {};
     std::set<InputKey> m_current_keys_released {};
     std::set<InputKey> m_keys_released {};
-
 
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 
