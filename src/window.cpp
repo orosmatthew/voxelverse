@@ -37,6 +37,7 @@ Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
     glfwSetWindowFocusCallback(m_glfw_window.get(), glfw_focused_callback);
     glfwGetFramebufferSize(m_glfw_window.get(), &(m_size.x), &(m_size.y));
     glfwSetCursorEnterCallback(m_glfw_window.get(), glfw_cursor_enter_callback);
+    glfwSetKeyCallback(m_glfw_window.get(), glfw_key_callback);
 }
 
 GLFWwindow* Window::glfw_handle() const
@@ -68,6 +69,15 @@ bool Window::should_close() const
 void Window::poll_events()
 {
     glfwPollEvents();
+    m_keys_pressed.clear();
+    for (InputKey key : m_current_keys_down) {
+        if (!m_keys_down.contains(key)) {
+            m_keys_pressed.insert(key);
+        }
+    }
+    m_keys_released = m_current_keys_released;
+    m_current_keys_released.clear();
+    m_keys_down = m_current_keys_down;
 }
 
 void Window::wait_for_events() const
@@ -312,7 +322,29 @@ void Window::glfw_cursor_enter_callback(GLFWwindow* window, int entered)
 }
 bool Window::is_key_pressed(InputKey key)
 {
-    return static_cast<bool>(glfwGetKey(m_glfw_window.get(), static_cast<int>(key)));
+    return m_keys_pressed.contains(key);
+}
+
+void Window::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    if (action == GLFW_PRESS) {
+        instance->m_current_keys_down.insert(static_cast<InputKey>(key));
+    }
+    else if (action == GLFW_RELEASE) {
+        instance->m_current_keys_down.erase(static_cast<InputKey>(key));
+        instance->m_current_keys_released.insert(static_cast<InputKey>(key));
+    }
+}
+
+bool Window::is_key_down(InputKey key) const
+{
+    return m_keys_down.contains(key);
+}
+
+bool Window::is_key_released(InputKey key) const
+{
+    return m_keys_released.contains(key);
 }
 
 }

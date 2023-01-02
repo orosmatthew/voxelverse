@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 
 #include <GLFW/glfw3.h>
@@ -304,6 +305,10 @@ public:
      */
     bool is_key_pressed(InputKey key);
 
+    [[nodiscard]] bool is_key_down(InputKey key) const;
+
+    [[nodiscard]] bool is_key_released(InputKey key) const;
+
     void toggle_fullscreen();
 
     void hide();
@@ -379,6 +384,12 @@ private:
     glm::ivec2 m_size;
     bool m_fullscreen;
     glm::ivec2 m_min_size;
+    std::set<InputKey> m_current_keys_down {};
+    std::set<InputKey> m_keys_down {};
+    std::set<InputKey> m_keys_pressed {};
+    std::set<InputKey> m_current_keys_released {};
+    std::set<InputKey> m_keys_released {};
+
 
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 
@@ -387,5 +398,7 @@ private:
     static void glfw_focused_callback(GLFWwindow* window, int focused);
 
     static void glfw_cursor_enter_callback(GLFWwindow* window, int entered);
+
+    static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };
 }
