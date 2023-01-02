@@ -809,7 +809,7 @@ void Renderer::recreate_swapchain(const Window& window)
 
     while (window_size == glm::ivec2(0, 0)) {
         glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
-        window.wait_for_events();
+        //window.wait_for_events();
     }
 
     vk::Result wait_result = m_vk_device.waitIdle();

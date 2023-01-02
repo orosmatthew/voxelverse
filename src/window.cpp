@@ -18,6 +18,7 @@ Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
     , m_min_size({ 0, 0 })
     , m_cursor_hidden(false)
     , m_cursor_in_window(true)
+    , m_event_waiting(false)
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -68,7 +69,12 @@ bool Window::should_close() const
 
 void Window::poll_events()
 {
-    glfwPollEvents();
+    if (m_event_waiting) {
+        glfwWaitEvents();
+    }
+    else {
+        glfwPollEvents();
+    }
     m_keys_pressed.clear();
     for (InputKey key : m_current_keys_down) {
         if (!m_keys_down.contains(key)) {
@@ -346,6 +352,14 @@ bool Window::is_key_down(InputKey key) const
 bool Window::is_key_released(InputKey key) const
 {
     return m_keys_released.contains(key);
+}
+void Window::enable_event_waiting()
+{
+    m_event_waiting = true;
+}
+void Window::disable_event_waiting()
+{
+    m_event_waiting = false;
 }
 
 }

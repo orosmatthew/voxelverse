@@ -298,6 +298,10 @@ public:
      */
     void wait_for_events() const;
 
+    void enable_event_waiting();
+
+    void disable_event_waiting();
+
     /**
      * @brief Determine if keyboard key pressed
      * @param key - Keyboard key
@@ -380,6 +384,7 @@ private:
     bool m_focused;
     bool m_cursor_hidden;
     bool m_cursor_in_window;
+    bool m_event_waiting;
     glm::ivec2 m_pos;
     glm::ivec2 m_size;
     glm::ivec2 m_windowed_size;
