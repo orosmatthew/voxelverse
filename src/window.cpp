@@ -241,8 +241,10 @@ void Window::fullscreen_to(Monitor monitor, bool use_native)
 
 void Window::set_min_size(glm::ivec2 size)
 {
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    glfwSetWindowSizeLimits(m_glfw_window.get(), size.x, size.y, mode->width, mode->height);
+    if (size.x > m_size.x || size.y > m_size.y) {
+        resize(size);
+    }
+    glfwSetWindowSizeLimits(m_glfw_window.get(), size.x, size.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
 }
 
 void Window::resize(glm::ivec2 size)
