@@ -313,9 +313,7 @@ public:
 
     [[nodiscard]] bool is_key_released(InputKey key) const;
 
-    void fullscreen_keep_size();
-
-    void fullscreen_to_native();
+    void fullscreen(bool use_native = false);
 
     void windowed();
 
@@ -333,7 +331,7 @@ public:
 
     void move_to(glm::ivec2 pos);
 
-    void fullscreen_to(Monitor monitor);
+    void fullscreen_to(Monitor monitor, bool use_native = false);
 
     void set_min_size(glm::ivec2 size);
 

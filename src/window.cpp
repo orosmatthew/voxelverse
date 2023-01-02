@@ -120,18 +120,8 @@ Monitor Window::current_monitor() const
     GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
     GLFWmonitor* monitor;
 
-    if (monitor_count == 1) {
-        return 0;
-    }
-
     if (m_fullscreen) {
-        monitor = glfwGetWindowMonitor(m_glfw_window.get());
-        for (int i = 0; i < monitor_count; i++) {
-            if (monitors[i] == monitor) {
-                return Monitor(monitor);
-            }
-        }
-        return 0;
+        return (glfwGetWindowMonitor(m_glfw_window.get()));
     }
     else {
         glm::ivec2 pos;
@@ -150,7 +140,7 @@ Monitor Window::current_monitor() const
             }
         }
     }
-    return 0;
+    throw std::runtime_error("[Window] Failed to get current monitor.");
 }
 
 bool Window::is_fullscreen() const
@@ -237,11 +227,16 @@ void Window::move_to(glm::ivec2 pos)
     glfwSetWindowPos(m_glfw_window.get(), pos.x, pos.y);
 }
 
-void Window::fullscreen_to(Monitor monitor)
+void Window::fullscreen_to(Monitor monitor, bool use_native)
 {
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor.glfw_handle());
-    glfwSetWindowMonitor(
-        m_glfw_window.get(), monitor.glfw_handle(), 0, 0, mode->width, mode->height, mode->refreshRate);
+    glm::ivec2 size;
+    if (m_resizable && use_native) {
+        size = monitor.size();
+    }
+    else {
+        size = m_size;
+    }
+    glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
 }
 
 void Window::set_min_size(glm::ivec2 size)
@@ -257,7 +252,12 @@ void Window::resize(glm::ivec2 size)
 
 glm::ivec2 Window::position() const
 {
-    return m_pos;
+    if (!m_fullscreen) {
+        return m_pos;
+    }
+    else {
+        return { 0, 0 };
+    }
 }
 
 void Window::set_clipboard_text(const std::string& text)
@@ -349,22 +349,6 @@ bool Window::is_resizable() const
     return m_resizable;
 }
 
-void Window::fullscreen_to_native()
-{
-    if (!m_fullscreen || m_size != current_monitor().size()) {
-        if (!m_fullscreen) {
-            m_windowed_size = m_size;
-            glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
-        }
-
-        Monitor monitor = current_monitor();
-
-        m_fullscreen = true;
-        glm::ivec2 size = monitor.size();
-        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
-    }
-}
-
 void Window::windowed()
 {
     if (m_fullscreen) {
@@ -374,17 +358,26 @@ void Window::windowed()
     }
 }
 
-void Window::fullscreen_keep_size()
+void Window::fullscreen(bool use_native)
 {
+    glm::ivec2 size;
     if (!m_fullscreen) {
-
         m_windowed_size = m_size;
         glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
-
         Monitor monitor = current_monitor();
-
+        if (m_resizable && use_native) {
+            size = monitor.size();
+        }
+        else {
+            size = m_size;
+        }
+        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
         m_fullscreen = true;
-        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, m_size.x, m_size.y, GLFW_DONT_CARE);
+    }
+    else if (m_resizable && use_native && m_size != current_monitor().size()) {
+        Monitor monitor = current_monitor();
+        size = monitor.size();
+        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
     }
 }
 

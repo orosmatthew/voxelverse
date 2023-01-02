@@ -98,7 +98,7 @@ void run()
 
         if (window.is_key_pressed(mve::InputKey::f)) {
             if (!window.is_fullscreen()) {
-                window.fullscreen_to_native();
+                window.fullscreen(true);
             }
             else {
                 window.windowed();
