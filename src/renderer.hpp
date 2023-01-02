@@ -13,6 +13,7 @@
 #include <glm/mat4x4.hpp>
 #include <strong_type/strong_type.hpp>
 #include <vk_mem_alloc.h>
+#define VULKAN_HPP_NO_EXCEPTIONS
 #include <vulkan/vulkan.hpp>
 
 #include "uniform_struct_layout.hpp"
@@ -102,7 +103,7 @@ public:
     /**
      * @brief Begin recording commands
      */
-    void begin();
+    void begin(const Window& window);
 
     /**
      * @brief Bind and draw vertex buffer

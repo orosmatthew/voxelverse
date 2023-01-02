@@ -54,20 +54,20 @@ std::string UniformStructLayout::name() const noexcept
 size_t UniformStructLayout::base_alignment_of(size_t offset, UniformType type)
 {
     switch (type) {
-    case UniformType::e_float:
+    case UniformType::scalar:
         return glm::ceil(offset / static_cast<float>(sizeof(float))) * sizeof(float);
-    case UniformType::e_vec2:
+    case UniformType::vec2:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::vec2))) * sizeof(glm::vec2);
-    case UniformType::e_vec3:
+    case UniformType::vec3:
         // NOTE: this is correct, base alignment of vec3 is same as vec4
         return glm::ceil(offset / static_cast<float>(sizeof(glm::vec4))) * sizeof(glm::vec4);
-    case UniformType::e_vec4:
+    case UniformType::vec4:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::vec4))) * sizeof(glm::vec4);
-    case UniformType::e_mat2:
+    case UniformType::mat2:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::mat2::col_type))) * sizeof(glm::mat2::col_type);
-    case UniformType::e_mat3:
+    case UniformType::mat3:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::mat3::col_type))) * sizeof(glm::mat3::col_type);
-    case UniformType::e_mat4:
+    case UniformType::mat4:
         return glm::ceil(offset / static_cast<float>(sizeof(glm::mat4::col_type))) * sizeof(glm::mat4::col_type);
     default:
         throw std::runtime_error("[UniformStructLayout] Unknown type.");
@@ -77,19 +77,19 @@ size_t UniformStructLayout::base_alignment_of(size_t offset, UniformType type)
 size_t UniformStructLayout::size_of(UniformType type)
 {
     switch (type) {
-    case UniformType::e_float:
+    case UniformType::scalar:
         return sizeof(float);
-    case UniformType::e_vec2:
+    case UniformType::vec2:
         return sizeof(glm::vec2);
-    case UniformType::e_vec3:
+    case UniformType::vec3:
         return sizeof(glm::vec3);
-    case UniformType::e_vec4:
+    case UniformType::vec4:
         return sizeof(glm::vec4);
-    case UniformType::e_mat2:
+    case UniformType::mat2:
         return sizeof(glm::mat2);
-    case UniformType::e_mat3:
+    case UniformType::mat3:
         return sizeof(glm::mat3);
-    case UniformType::e_mat4:
+    case UniformType::mat4:
         return sizeof(glm::mat4);
     default:
         return 0;

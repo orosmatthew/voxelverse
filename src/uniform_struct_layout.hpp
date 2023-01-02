@@ -14,13 +14,13 @@ namespace mve {
  * @brief Primitive types for a uniform struct
  */
 enum class UniformType {
-    e_float,
-    e_vec2,
-    e_vec3,
-    e_vec4,
-    e_mat2,
-    e_mat3,
-    e_mat4,
+    scalar,
+    vec2,
+    vec3,
+    vec4,
+    mat2,
+    mat3,
+    mat4,
 };
 
 /**

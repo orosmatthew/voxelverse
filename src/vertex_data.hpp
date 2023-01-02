@@ -12,10 +12,10 @@ namespace mve {
  * @brief Types for vertex attributes
  */
 enum class VertexAttributeType {
-    e_float,
-    e_vec2,
-    e_vec3,
-    e_vec4,
+    scalar,
+    vec2,
+    vec3,
+    vec4,
 };
 
 /**

@@ -6,8 +6,8 @@
 namespace mve {
 
 enum class ShaderType {
-    e_vertex,
-    e_fragment,
+    vertex,
+    fragment,
 };
 
 /**

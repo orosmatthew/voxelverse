@@ -20,12 +20,12 @@ void run()
 
     mve::Renderer renderer(window, "Vulkan Testing", 0, 0, 1);
 
-    mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::e_vertex);
-    mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::e_fragment);
+    mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex);
+    mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment);
 
     mve::VertexLayout vertex_layout {};
-    vertex_layout.push_back(mve::VertexAttributeType::e_vec2); // 2D position
-    vertex_layout.push_back(mve::VertexAttributeType::e_vec3); // Color
+    vertex_layout.push_back(mve::VertexAttributeType::vec2); // 2D position
+    vertex_layout.push_back(mve::VertexAttributeType::vec3); // Color
 
     mve::VertexData place_data(vertex_layout);
     place_data.push_back({ -0.5f, -0.5f });
@@ -54,9 +54,9 @@ void run()
     mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(descriptor_set_layout_handle);
 
     mve::UniformStructLayout uniform_struct("UniformBufferObject");
-    uniform_struct.push_back("model", mve::UniformType::e_mat4);
-    uniform_struct.push_back("view", mve::UniformType::e_mat4);
-    uniform_struct.push_back("proj", mve::UniformType::e_mat4);
+    uniform_struct.push_back("model", mve::UniformType::mat4);
+    uniform_struct.push_back("view", mve::UniformType::mat4);
+    uniform_struct.push_back("proj", mve::UniformType::mat4);
 
     mve::UniformLocation model_location = uniform_struct.location_of("model");
     mve::UniformLocation view_location = uniform_struct.location_of("view");
@@ -83,13 +83,23 @@ void run()
 
     window.set_resize_callback(resize_func);
 
-    std::invoke(resize_func, window.get_size());
+    std::invoke(resize_func, window.size());
+
+    std::vector<mve::Monitor> monitors = mve::Monitor::list();
 
     while (!window.should_close()) {
-        window.update();
+        window.poll_events();
 
-        if (window.is_key_pressed(mve::InputKey::e_escape)) {
+        if (window.is_key_pressed(mve::InputKey::escape)) {
             break;
+        }
+
+        if (window.is_key_pressed(mve::InputKey::f)) {
+            window.toggle_fullscreen();
+        }
+
+        if (window.is_key_pressed(mve::InputKey::m)) {
+            window.fullscreen_to(monitors.at(1));
         }
 
         auto current_time = std::chrono::high_resolution_clock::now();
@@ -99,7 +109,7 @@ void run()
 
         renderer.update_uniform(uniform_handle, model_location, model, false);
 
-        renderer.begin();
+        renderer.begin(window);
 
         renderer.bind_graphics_pipeline(graphics_pipeline);
 
