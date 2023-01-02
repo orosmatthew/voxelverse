@@ -98,10 +98,6 @@ void run()
             window.toggle_fullscreen();
         }
 
-        if (window.is_key_pressed(mve::InputKey::m)) {
-            window.fullscreen_to(monitors.at(1));
-        }
-
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 

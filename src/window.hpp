@@ -382,6 +382,7 @@ private:
     bool m_cursor_in_window;
     glm::ivec2 m_pos;
     glm::ivec2 m_size;
+    glm::ivec2 m_windowed_size;
     bool m_fullscreen;
     glm::ivec2 m_min_size;
     std::set<InputKey> m_current_keys_down {};

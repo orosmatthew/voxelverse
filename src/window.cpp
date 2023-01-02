@@ -110,6 +110,7 @@ glm::vec2 Window::get_cursor_pos(bool clamped_to_window)
 void Window::toggle_fullscreen()
 {
     if (!m_fullscreen) {
+        m_windowed_size = m_size;
         glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
 
         Monitor monitor = current_monitor();
@@ -120,7 +121,8 @@ void Window::toggle_fullscreen()
     }
     else {
         m_fullscreen = false;
-        glfwSetWindowMonitor(m_glfw_window.get(), nullptr, m_pos.x, m_pos.y, m_size.x, m_size.y, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(
+            m_glfw_window.get(), nullptr, m_pos.x, m_pos.y, m_windowed_size.x, m_windowed_size.y, GLFW_DONT_CARE);
     }
 }
 
