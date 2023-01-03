@@ -33,6 +33,7 @@ class Window;
  */
 enum DescriptorType {
     e_uniform_buffer,
+    e_combined_image_sampler,
 };
 
 /**
@@ -73,6 +74,8 @@ using GraphicsPipelineHandle
 
 using GraphicsPipelineLayoutHandle
     = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
+
+using TextureHandle = strong::type<ResourceHandle, struct _texture_handle, strong::regular, strong::hashable>;
 
 /**
  * @brief Vulkan renderer class
@@ -255,6 +258,11 @@ private:
         std::byte* mapped_ptr;
     };
 
+    struct Texture {
+        vk::Image vk_image;
+        VmaAllocation vma_allocation;
+    };
+
     struct FrameInFlight {
         vk::CommandBuffer command_buffer;
         vk::Semaphore image_available_semaphore;
@@ -321,6 +329,9 @@ private:
     uint32_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
+    Texture m_texture;
+    vk::ImageView m_texture_image_view;
+    vk::Sampler m_texture_sampler;
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -344,6 +355,10 @@ private:
 
     void recreate_swapchain(const Window& window);
 
+    void create_texture();
+
+    void create_texture_image_view();
+
     void update_uniform(
         UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
@@ -352,6 +367,18 @@ private:
     void push_to_next_frame(std::function<void(uint32_t)> func);
 
     void push_wait_for_frames(std::function<void(uint32_t)> func);
+
+    static vk::CommandBuffer begin_single_submit(vk::Device device, vk::CommandPool pool);
+
+    static void end_single_submit(vk::Device device, vk::CommandPool pool, vk::CommandBuffer command_buffer, vk::Queue queue);
+
+    void transition_image_layout(vk::Image image, vk::Format format, vk::ImageLayout old_layout, vk::ImageLayout new_layout);
+
+    void copy_buffer_to_image(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+
+    void create_texture_sampler();
+
+    static vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format format);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,

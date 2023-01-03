@@ -28,24 +28,32 @@ void run()
     mve::VertexLayout vertex_layout {};
     vertex_layout.push_back(mve::VertexAttributeType::vec2); // 2D position
     vertex_layout.push_back(mve::VertexAttributeType::vec3); // Color
+    vertex_layout.push_back(mve::VertexAttributeType::vec2); // Texture coord
 
     mve::VertexData place_data(vertex_layout);
     place_data.push_back({ -0.5f, -0.5f });
     place_data.push_back({ 1.0f, 0.0f, 0.0f });
+    place_data.push_back({ 1.0f, 0.0f });
+
     place_data.push_back({ 0.5f, -0.5f });
     place_data.push_back({ 0.0f, 1.0f, 0.0f });
+    place_data.push_back({ 0.0f, 0.0f });
+
     place_data.push_back({ 0.5f, 0.5f });
     place_data.push_back({ 0.0f, 0.0f, 1.0f });
+    place_data.push_back({ 0.0f, 1.0f });
+
     place_data.push_back({ -0.5f, 0.5f });
     place_data.push_back({ 1.0f, 1.0f, 1.0f });
+    place_data.push_back({ 1.0f, 1.0f });
 
     const std::vector<uint32_t> plane_indices = { 0, 1, 2, 2, 3, 0 };
 
     mve::VertexBufferHandle vertex_buffer = renderer.create_vertex_buffer(place_data);
     mve::IndexBufferHandle index_buffer = renderer.create_index_buffer(plane_indices);
 
-    mve::DescriptorSetLayoutHandle descriptor_set_layout_handle
-        = renderer.create_descriptor_set_layout({ mve::DescriptorType::e_uniform_buffer });
+    mve::DescriptorSetLayoutHandle descriptor_set_layout_handle = renderer.create_descriptor_set_layout(
+        { mve::DescriptorType::e_uniform_buffer, mve::DescriptorType::e_combined_image_sampler });
 
     mve::GraphicsPipelineLayoutHandle graphics_pipeline_layout
         = renderer.create_graphics_pipeline_layout({ descriptor_set_layout_handle });
