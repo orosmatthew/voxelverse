@@ -165,6 +165,9 @@ public:
     UniformBufferHandle create_uniform_buffer(
         const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set, uint32_t binding);
 
+    TextureHandle create_texture(
+        const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding);
+
     DescriptorSetHandle create_descriptor_set(DescriptorSetLayoutHandle layout);
 
     GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
@@ -261,6 +264,8 @@ private:
     struct Texture {
         vk::Image vk_image;
         VmaAllocation vma_allocation;
+        vk::ImageView vk_image_view;
+        vk::Sampler vk_sampler;
     };
 
     struct FrameInFlight {
@@ -329,9 +334,6 @@ private:
     uint32_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
-    Texture m_texture;
-    vk::ImageView m_texture_image_view;
-    vk::Sampler m_texture_sampler;
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -345,6 +347,8 @@ private:
 
     std::unordered_map<GraphicsPipelineLayoutHandle, vk::PipelineLayout> m_graphics_pipeline_layouts {};
 
+    std::unordered_map<TextureHandle, Texture> m_textures {};
+
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
@@ -357,8 +361,6 @@ private:
 
     void create_texture();
 
-    void create_texture_image_view();
-
     void update_uniform(
         UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
@@ -370,13 +372,27 @@ private:
 
     static vk::CommandBuffer begin_single_submit(vk::Device device, vk::CommandPool pool);
 
-    static void end_single_submit(vk::Device device, vk::CommandPool pool, vk::CommandBuffer command_buffer, vk::Queue queue);
+    static void end_single_submit(
+        vk::Device device, vk::CommandPool pool, vk::CommandBuffer command_buffer, vk::Queue queue);
 
-    void transition_image_layout(vk::Image image, vk::Format format, vk::ImageLayout old_layout, vk::ImageLayout new_layout);
+    static void transition_image_layout(
+        vk::Device device,
+        vk::CommandPool pool,
+        vk::Queue queue,
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout);
 
-    void copy_buffer_to_image(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+    static void copy_buffer_to_image(
+        vk::Device device,
+        vk::CommandPool pool,
+        vk::Queue queue,
+        vk::Buffer buffer,
+        vk::Image image,
+        uint32_t width,
+        uint32_t height);
 
-    void create_texture_sampler();
+    static vk::Sampler create_texture_sampler(vk::PhysicalDevice physical_device, vk::Device device);
 
     static vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format format);
 

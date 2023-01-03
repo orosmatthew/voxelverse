@@ -75,10 +75,6 @@ Renderer::Renderer(
     m_current_draw_state.frame_index = 0;
     m_current_draw_state.image_index = 0;
     m_current_draw_state.command_buffer = VK_NULL_HANDLE;
-
-    create_texture();
-    create_texture_image_view();
-    create_texture_sampler();
 }
 
 bool Renderer::has_validation_layer_support()
@@ -743,9 +739,11 @@ Renderer::~Renderer()
 
     cleanup_vk_swapchain();
 
-    m_vk_device.destroy(m_texture_sampler);
-    m_vk_device.destroy(m_texture_image_view);
-    vmaDestroyImage(m_vma_allocator, m_texture.vk_image, m_texture.vma_allocation);
+    for (auto& [handle, texture] : m_textures) {
+        m_vk_device.destroy(texture.vk_sampler);
+        m_vk_device.destroy(texture.vk_image_view);
+        vmaDestroyImage(m_vma_allocator, texture.vk_image, texture.vma_allocation);
+    }
 
     m_descriptor_set_allocator.cleanup(m_vk_device);
 
@@ -1383,7 +1381,6 @@ UniformBufferHandle Renderer::create_uniform_buffer(
 
     size_t layout_bytes = struct_layout.size_bytes();
 
-    // TODO: Fix this terrible hard-coded mess!!! (image sampler)
     push_to_all_frames([this, handle, layout_bytes, descriptor_set, binding](uint32_t frame_index) {
         auto buffer_info
             = vk::DescriptorBufferInfo()
@@ -1391,14 +1388,7 @@ UniformBufferHandle Renderer::create_uniform_buffer(
                   .setOffset(0)
                   .setRange(layout_bytes);
 
-        auto image_info = vk::DescriptorImageInfo()
-                              .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                              .setImageView(this->m_texture_image_view)
-                              .setSampler(this->m_texture_sampler);
-
-        std::array<vk::WriteDescriptorSet, 2> descriptor_writes {};
-
-        descriptor_writes[0]
+        auto descriptor_write
             = vk::WriteDescriptorSet()
                   .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
                   .setDstBinding(binding)
@@ -1407,16 +1397,7 @@ UniformBufferHandle Renderer::create_uniform_buffer(
                   .setDescriptorCount(1)
                   .setPBufferInfo(&buffer_info);
 
-        descriptor_writes[1]
-            = vk::WriteDescriptorSet()
-                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
-                  .setDstBinding(1)
-                  .setDstArrayElement(0)
-                  .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                  .setDescriptorCount(1)
-                  .setPImageInfo(&image_info);
-
-        this->m_vk_device.updateDescriptorSets(descriptor_writes, {});
+        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
     });
 
     return handle;
@@ -1677,75 +1658,6 @@ void Renderer::push_wait_for_frames(std::function<void(uint32_t)> func)
     m_wait_frames_deferred_functions.push(id);
 }
 
-void Renderer::create_texture()
-{
-    int width;
-    int height;
-    int channels;
-    stbi_uc* pixels = stbi_load("../res/texture.jpg", &width, &height, &channels, STBI_rgb_alpha);
-    vk::DeviceSize size = width * height * 4;
-    if (!pixels) {
-        throw std::runtime_error("[Renderer] Failed to load texture image.");
-    }
-
-    Buffer staging_buffer = create_buffer(
-        m_vma_allocator,
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-
-    void* data;
-    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, pixels, static_cast<size_t>(size));
-    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    stbi_image_free(pixels);
-
-    vk::Image texture_image;
-    VkImageCreateInfo image_info = {};
-    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.extent.width = static_cast<uint32_t>(width);
-    image_info.extent.height = static_cast<uint32_t>(height);
-    image_info.extent.depth = 1;
-    image_info.mipLevels = 1;
-    image_info.arrayLayers = 1;
-    image_info.format = VK_FORMAT_R8G8B8A8_SRGB;
-    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
-
-    VmaAllocationCreateInfo vma_alloc_info = {};
-    vma_alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
-    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-
-    VkImage image;
-    VmaAllocation image_allocation;
-    vmaCreateImage(m_vma_allocator, &image_info, &vma_alloc_info, &image, &image_allocation, nullptr);
-
-    m_texture = { image, image_allocation };
-
-    transition_image_layout(
-        m_texture.vk_image,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eTransferDstOptimal);
-
-    copy_buffer_to_image(
-        staging_buffer.vk_handle, m_texture.vk_image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-
-    transition_image_layout(
-        m_texture.vk_image,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-}
-
 vk::CommandBuffer Renderer::begin_single_submit(vk::Device device, vk::CommandPool pool)
 {
     auto command_buffer_alloc_info
@@ -1794,9 +1706,14 @@ void Renderer::end_single_submit(
 }
 
 void Renderer::transition_image_layout(
-    vk::Image image, vk::Format format, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
+    vk::Device device,
+    vk::CommandPool pool,
+    vk::Queue queue,
+    vk::Image image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout)
 {
-    vk::CommandBuffer command_buffer = begin_single_submit(m_vk_device, m_vk_command_pool);
+    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
 
     auto barrier
         = vk::ImageMemoryBarrier()
@@ -1838,12 +1755,19 @@ void Renderer::transition_image_layout(
     command_buffer.pipelineBarrier(
         source_stage, destination_stage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    end_single_submit(m_vk_device, m_vk_command_pool, command_buffer, m_vk_graphics_queue);
+    end_single_submit(device, pool, command_buffer, queue);
 }
 
-void Renderer::copy_buffer_to_image(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height)
+void Renderer::copy_buffer_to_image(
+    vk::Device device,
+    vk::CommandPool pool,
+    vk::Queue queue,
+    vk::Buffer buffer,
+    vk::Image image,
+    uint32_t width,
+    uint32_t height)
 {
-    vk::CommandBuffer command_buffer = begin_single_submit(m_vk_device, m_vk_command_pool);
+    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
 
     auto region
         = vk::BufferImageCopy()
@@ -1860,12 +1784,7 @@ void Renderer::copy_buffer_to_image(vk::Buffer buffer, vk::Image image, uint32_t
 
     command_buffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
 
-    end_single_submit(m_vk_device, m_vk_command_pool, command_buffer, m_vk_graphics_queue);
-}
-
-void Renderer::create_texture_image_view()
-{
-    m_texture_image_view = create_image_view(m_vk_device, m_texture.vk_image, vk::Format::eR8G8B8A8Srgb);
+    end_single_submit(device, pool, command_buffer, queue);
 }
 
 vk::ImageView Renderer::create_image_view(vk::Device device, vk::Image image, vk::Format format)
@@ -1900,7 +1819,7 @@ vk::ImageView Renderer::create_image_view(vk::Device device, vk::Image image, vk
     return image_view_result.value;
 }
 
-void Renderer::create_texture_sampler()
+vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device, vk::Device device)
 {
     auto sampler_info
         = vk::SamplerCreateInfo()
@@ -1910,7 +1829,7 @@ void Renderer::create_texture_sampler()
               .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
               .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
               .setAnisotropyEnable(VK_TRUE) // Disable with VK_FALSE
-              .setMaxAnisotropy(m_vk_physical_device.getProperties().limits.maxSamplerAnisotropy) // Disable with 1.0f
+              .setMaxAnisotropy(physical_device.getProperties().limits.maxSamplerAnisotropy) // Disable with 1.0f
               .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
               .setUnnormalizedCoordinates(VK_FALSE)
               .setCompareEnable(VK_FALSE)
@@ -1920,12 +1839,122 @@ void Renderer::create_texture_sampler()
               .setMinLod(0.0f)
               .setMaxLod(0.0f);
 
-    vk::ResultValue<vk::Sampler> sampler_result = m_vk_device.createSampler(sampler_info);
+    vk::ResultValue<vk::Sampler> sampler_result = device.createSampler(sampler_info);
     if (sampler_result.result != vk::Result::eSuccess) {
         throw std::runtime_error("[Renderer] Failed to create image sampler.");
     }
-    m_texture_sampler = std::move(sampler_result.value);
+    return sampler_result.value;
 }
+
+TextureHandle Renderer::create_texture(
+    const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding)
+{
+    int width;
+    int height;
+    int channels;
+    std::string path_string = path.string();
+    stbi_uc* pixels = stbi_load(path_string.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    vk::DeviceSize size = width * height * 4;
+    if (!pixels) {
+        throw std::runtime_error("[Renderer] Failed to load texture image.");
+    }
+
+    Buffer staging_buffer = create_buffer(
+        m_vma_allocator,
+        size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+    void* data;
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+    memcpy(data, pixels, static_cast<size_t>(size));
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+
+    stbi_image_free(pixels);
+
+    vk::Image texture_image;
+    VkImageCreateInfo image_info = {};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.extent.width = static_cast<uint32_t>(width);
+    image_info.extent.height = static_cast<uint32_t>(height);
+    image_info.extent.depth = 1;
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.format = VK_FORMAT_R8G8B8A8_SRGB;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    VmaAllocationCreateInfo vma_alloc_info = {};
+    vma_alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
+    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+
+    VkImage image;
+    VmaAllocation image_allocation;
+    vmaCreateImage(m_vma_allocator, &image_info, &vma_alloc_info, &image, &image_allocation, nullptr);
+
+    transition_image_layout(
+        m_vk_device,
+        m_vk_command_pool,
+        m_vk_graphics_queue,
+        image,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal);
+
+    copy_buffer_to_image(
+        m_vk_device,
+        m_vk_command_pool,
+        m_vk_graphics_queue,
+        staging_buffer.vk_handle,
+        image,
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height));
+
+    transition_image_layout(
+        m_vk_device,
+        m_vk_command_pool,
+        m_vk_graphics_queue,
+        image,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+
+    vk::ImageView image_view = create_image_view(m_vk_device, image, vk::Format::eR8G8B8A8Srgb);
+
+    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device);
+
+    Texture texture {
+        .vk_image = image, .vma_allocation = image_allocation, .vk_image_view = image_view, .vk_sampler = sampler
+    };
+
+    push_to_all_frames([this, texture, descriptor_set](uint32_t frame_index) {
+        auto image_info = vk::DescriptorImageInfo()
+                              .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                              .setImageView(texture.vk_image_view)
+                              .setSampler(texture.vk_sampler);
+
+        auto descriptor_write
+            = vk::WriteDescriptorSet()
+                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstBinding(1)
+                  .setDstArrayElement(0)
+                  .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                  .setDescriptorCount(1)
+                  .setPImageInfo(&image_info);
+
+        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+    });
+
+    TextureHandle handle = TextureHandle(m_resource_handle_count);
+    m_resource_handle_count++;
+    m_textures.insert({ handle, texture });
+    return handle;
+};
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
     : m_sizes({ { vk::DescriptorType::eSampler, 0.5f },

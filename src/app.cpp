@@ -97,6 +97,8 @@ void run()
 
     std::vector<mve::Monitor> monitors = mve::Monitor::list();
 
+    mve::TextureHandle texture = renderer.create_texture("../res/texture.jpg", descriptor_set_handle, 1);
+
     while (!window.should_close()) {
         window.poll_events();
 
