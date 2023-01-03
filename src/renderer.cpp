@@ -1906,9 +1906,9 @@ void Renderer::create_texture_sampler()
         = vk::SamplerCreateInfo()
               .setMagFilter(vk::Filter::eLinear)
               .setMinFilter(vk::Filter::eLinear)
-              .setAddressModeU(vk::SamplerAddressMode::eRepeat)
-              .setAddressModeV(vk::SamplerAddressMode::eRepeat)
-              .setAddressModeW(vk::SamplerAddressMode::eRepeat)
+              .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
+              .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
+              .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
               .setAnisotropyEnable(VK_TRUE) // Disable with VK_FALSE
               .setMaxAnisotropy(m_vk_physical_device.getProperties().limits.maxSamplerAnisotropy) // Disable with 1.0f
               .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
