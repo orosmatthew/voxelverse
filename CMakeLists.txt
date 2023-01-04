@@ -58,7 +58,8 @@ set(LIB_INCLUDES
         lib/vma-3.0.1/include
         lib/whereami-ba364cd/include
         lib/strong_type-6/include
-        lib/stb-8b5f1f3/include)
+        lib/stb-8b5f1f3/include
+        lib/tinyobjloader-45f683c/include)
 
 add_executable(${PROJECT_NAME})
 
