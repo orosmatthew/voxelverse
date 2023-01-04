@@ -275,6 +275,7 @@ private:
         Image image;
         vk::ImageView vk_image_view;
         vk::Sampler vk_sampler;
+        uint32_t mip_levels;
     };
 
     struct FrameInFlight {
@@ -394,6 +395,7 @@ private:
         VmaAllocator allocator,
         uint32_t width,
         uint32_t height,
+        uint32_t mip_levels,
         vk::Format format,
         vk::ImageTiling tiling,
         vk::ImageUsageFlags usage);
@@ -403,6 +405,17 @@ private:
     void push_to_next_frame(std::function<void(uint32_t)> func);
 
     void push_wait_for_frames(std::function<void(uint32_t)> func);
+
+    static void generate_mipmaps(
+        vk::PhysicalDevice physical_device,
+        vk::Device device,
+        vk::CommandPool pool,
+        vk::Queue queue,
+        vk::Image image,
+        vk::Format format,
+        uint32_t width,
+        uint32_t height,
+        uint32_t mip_levels);
 
     static vk::CommandBuffer begin_single_submit(vk::Device device, vk::CommandPool pool);
 
@@ -416,7 +429,8 @@ private:
         vk::Image image,
         vk::Format format,
         vk::ImageLayout old_layout,
-        vk::ImageLayout new_layout);
+        vk::ImageLayout new_layout,
+        uint32_t mip_levels);
 
     static void copy_buffer_to_image(
         vk::Device device,
@@ -427,10 +441,11 @@ private:
         uint32_t width,
         uint32_t height);
 
-    static vk::Sampler create_texture_sampler(vk::PhysicalDevice physical_device, vk::Device device);
+    static vk::Sampler create_texture_sampler(
+        vk::PhysicalDevice physical_device, vk::Device device, uint32_t mip_levels);
 
     static vk::ImageView create_image_view(
-        vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags);
+        vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags, uint32_t mip_levels);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,
