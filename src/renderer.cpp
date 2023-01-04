@@ -998,45 +998,60 @@ void Renderer::cleanup_vk_debug_messenger()
     }
 }
 
-Renderer::VertexBuffer Renderer::create_vertex_buffer(
-    vk::Device device,
-    vk::CommandPool command_pool,
-    vk::Queue graphics_queue,
-    VmaAllocator allocator,
-    const VertexData& vertex_data)
+VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
 {
     size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
 
     Buffer staging_buffer = create_buffer(
-        allocator,
+        m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VMA_MEMORY_USAGE_AUTO,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
     void* data;
-    vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
     memcpy(data, vertex_data.data_ptr(), buffer_size);
-    vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-    Buffer vertex_buffer = create_buffer(
-        allocator,
+    Buffer buffer = create_buffer(
+        m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_AUTO,
         VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
-    copy_buffer(device, command_pool, graphics_queue, staging_buffer.vk_handle, vertex_buffer.vk_handle, buffer_size);
+    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
+        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
 
-    vmaDestroyBuffer(allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        auto barrier
+            = vk::BufferMemoryBarrier()
+                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
+                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setBuffer(buffer.vk_handle)
+                  .setOffset(0)
+                  .setSize(buffer_size);
 
-    return { vertex_buffer, vertex_data.vertex_count() };
-}
+        command_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eVertexInput,
+            {},
+            0,
+            nullptr,
+            1,
+            &barrier,
+            0,
+            nullptr);
 
-VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
-{
-    VertexBuffer vertex_buffer
-        = create_vertex_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, vertex_data);
+        defer_to_next_frame([this, staging_buffer](uint32_t) {
+            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        });
+    });
+
+    VertexBuffer vertex_buffer { buffer, vertex_data.vertex_count() };
+
     m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
     m_resource_handle_count++;
 
@@ -1127,7 +1142,7 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
 
 void Renderer::queue_destroy(VertexBufferHandle handle)
 {
-    push_wait_for_frames([this, handle](uint32_t) {
+    defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
             m_vertex_buffers.at(handle).buffer.vk_handle,
@@ -1160,61 +1175,67 @@ Renderer::Buffer Renderer::create_buffer(
     return { vk_buffer, allocation };
 }
 
-void Renderer::copy_buffer(
-    vk::Device device,
-    vk::CommandPool command_pool,
-    vk::Queue graphics_queue,
-    vk::Buffer src_buffer,
-    vk::Buffer dst_buffer,
-    vk::DeviceSize size)
+void Renderer::cmd_copy_buffer(
+    vk::CommandBuffer command_buffer, vk::Buffer src_buffer, vk::Buffer dst_buffer, vk::DeviceSize size)
 {
-    vk::CommandBuffer command_buffer = begin_single_submit(device, command_pool);
-
     auto copy_region = vk::BufferCopy().setSrcOffset(0).setDstOffset(0).setSize(size);
     command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
-
-    end_single_submit(device, command_pool, command_buffer, graphics_queue);
 }
 
-Renderer::IndexBuffer Renderer::create_index_buffer(
-    vk::Device device,
-    vk::CommandPool command_pool,
-    vk::Queue graphics_queue,
-    VmaAllocator allocator,
-    const std::vector<uint32_t>& index_data)
+IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& index_data)
 {
     size_t buffer_size = sizeof(uint32_t) * index_data.size();
 
     Buffer staging_buffer = create_buffer(
-        allocator,
+        m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VMA_MEMORY_USAGE_AUTO,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
     void* data;
-    vmaMapMemory(allocator, staging_buffer.vma_allocation, &data);
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
     memcpy(data, index_data.data(), buffer_size);
-    vmaUnmapMemory(allocator, staging_buffer.vma_allocation);
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-    Buffer vertex_buffer = create_buffer(
-        allocator,
+    Buffer buffer = create_buffer(
+        m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_AUTO,
         VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
-    copy_buffer(device, command_pool, graphics_queue, staging_buffer.vk_handle, vertex_buffer.vk_handle, buffer_size);
+    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
+        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
 
-    vmaDestroyBuffer(allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        auto barrier
+            = vk::BufferMemoryBarrier()
+                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
+                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setBuffer(buffer.vk_handle)
+                  .setOffset(0)
+                  .setSize(buffer_size);
 
-    return { vertex_buffer, index_data.size() };
-}
+        command_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eVertexInput,
+            {},
+            0,
+            nullptr,
+            1,
+            &barrier,
+            0,
+            nullptr);
 
-IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& index_data)
-{
-    IndexBuffer index_buffer
-        = create_index_buffer(m_vk_device, m_vk_command_pool, m_vk_graphics_queue, m_vma_allocator, index_data);
+        defer_to_next_frame([this, staging_buffer](uint32_t) {
+            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        });
+    });
+
+    IndexBuffer index_buffer { buffer, index_data.size() };
+
     m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
     m_resource_handle_count++;
 
@@ -1223,7 +1244,7 @@ IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& ind
 
 void Renderer::queue_destroy(IndexBufferHandle handle)
 {
-    push_wait_for_frames([this, handle](uint32_t) {
+    defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
             m_index_buffers.at(handle).buffer.vk_handle,
@@ -1307,6 +1328,11 @@ void Renderer::begin(const Window& window)
               .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
               .setClearValueCount(static_cast<uint32_t>(clear_values.size()))
               .setPClearValues(clear_values.data());
+
+    while (!m_command_buffer_deferred_functions.empty()) {
+        std::invoke(m_command_buffer_deferred_functions.front(), m_current_draw_state.command_buffer);
+        m_command_buffer_deferred_functions.pop();
+    }
 
     m_current_draw_state.command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
@@ -1480,7 +1506,7 @@ UniformBufferHandle Renderer::create_uniform_buffer(
 
     size_t layout_bytes = struct_layout.size_bytes();
 
-    push_to_all_frames([this, handle, layout_bytes, descriptor_set, binding](uint32_t frame_index) {
+    defer_to_all_frames([this, handle, layout_bytes, descriptor_set, binding](uint32_t frame_index) {
         auto buffer_info
             = vk::DescriptorBufferInfo()
                   .setBuffer(this->m_frames_in_flight.at(frame_index).uniform_buffers.at(handle).buffer.vk_handle)
@@ -1508,10 +1534,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat4), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1548,10 +1574,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(float), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1568,10 +1594,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1581,10 +1607,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1594,10 +1620,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1607,10 +1633,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1620,10 +1646,10 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
         this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
     };
     if (persist) {
-        push_to_all_frames(func);
+        defer_to_all_frames(func);
     }
     else {
-        push_to_next_frame(func);
+        defer_to_next_frame(func);
     }
 }
 
@@ -1727,7 +1753,7 @@ void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
     m_current_draw_state.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle));
 }
 
-void Renderer::push_to_all_frames(std::function<void(uint32_t)> func)
+void Renderer::defer_to_all_frames(std::function<void(uint32_t)> func)
 {
     uint32_t id = m_deferred_function_id_count;
     m_deferred_function_id_count++;
@@ -1737,7 +1763,7 @@ void Renderer::push_to_all_frames(std::function<void(uint32_t)> func)
     }
 }
 
-void Renderer::push_to_next_frame(std::function<void(uint32_t)> func)
+void Renderer::defer_to_next_frame(std::function<void(uint32_t)> func)
 {
     uint32_t id = m_deferred_function_id_count;
     m_deferred_function_id_count++;
@@ -1750,7 +1776,7 @@ void Renderer::resize(const Window& window)
     recreate_swapchain(window);
 }
 
-void Renderer::push_wait_for_frames(std::function<void(uint32_t)> func)
+void Renderer::defer_after_all_frames(std::function<void(uint32_t)> func)
 {
     uint32_t id = m_deferred_function_id_count;
     m_deferred_function_id_count++;
@@ -1805,18 +1831,14 @@ void Renderer::end_single_submit(
     device.freeCommandBuffers(pool, 1, &command_buffer);
 }
 
-void Renderer::transition_image_layout(
-    vk::Device device,
-    vk::CommandPool pool,
-    vk::Queue queue,
+void Renderer::cmd_transition_image_layout(
+    vk::CommandBuffer command_buffer,
     vk::Image image,
     vk::Format format,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,
     uint32_t mip_levels)
 {
-    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
-
     auto barrier
         = vk::ImageMemoryBarrier()
               .setOldLayout(old_layout)
@@ -1872,21 +1894,11 @@ void Renderer::transition_image_layout(
 
     command_buffer.pipelineBarrier(
         source_stage, destination_stage, vk::DependencyFlagBits::eByRegion, 0, nullptr, 0, nullptr, 1, &barrier);
-
-    end_single_submit(device, pool, command_buffer, queue);
 }
 
-void Renderer::copy_buffer_to_image(
-    vk::Device device,
-    vk::CommandPool pool,
-    vk::Queue queue,
-    vk::Buffer buffer,
-    vk::Image image,
-    uint32_t width,
-    uint32_t height)
+void Renderer::cmd_copy_buffer_to_image(
+    vk::CommandBuffer command_buffer, vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height)
 {
-    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
-
     auto region
         = vk::BufferImageCopy()
               .setBufferOffset(0)
@@ -1901,8 +1913,6 @@ void Renderer::copy_buffer_to_image(
               .setImageExtent(vk::Extent3D(width, height, 1));
 
     command_buffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
-
-    end_single_submit(device, pool, command_buffer, queue);
 }
 
 vk::ImageView Renderer::create_image_view(
@@ -2004,47 +2014,36 @@ TextureHandle Renderer::create_texture(
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
 
-    transition_image_layout(
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        image.vk_handle,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eTransferDstOptimal,
-        mip_levels);
+    defer_to_command_buffer_front(
+        [this, image, mip_levels, staging_buffer, width, height](vk::CommandBuffer command_buffer) {
+            cmd_transition_image_layout(
+                command_buffer,
+                image.vk_handle,
+                vk::Format::eR8G8B8A8Srgb,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eTransferDstOptimal,
+                mip_levels);
 
-    copy_buffer_to_image(
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        staging_buffer.vk_handle,
-        image.vk_handle,
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height));
+            cmd_copy_buffer_to_image(
+                command_buffer,
+                staging_buffer.vk_handle,
+                image.vk_handle,
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height));
 
-    //    transition_image_layout(
-    //        m_vk_device,
-    //        m_vk_command_pool,
-    //        m_vk_graphics_queue,
-    //        image.vk_handle,
-    //        vk::Format::eR8G8B8A8Srgb,
-    //        vk::ImageLayout::eTransferDstOptimal,
-    //        vk::ImageLayout::eShaderReadOnlyOptimal,
-    //        mip_levels);
+            cmd_generate_mipmaps(
+                m_vk_physical_device,
+                command_buffer,
+                image.vk_handle,
+                vk::Format::eR8G8B8A8Srgb,
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height),
+                mip_levels);
 
-    generate_mipmaps(
-        m_vk_physical_device,
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        image.vk_handle,
-        vk::Format::eR8G8B8A8Srgb,
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height),
-        mip_levels);
-
-    vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            defer_to_next_frame([this, staging_buffer](uint32_t) {
+                vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            });
+        });
 
     vk::ImageView image_view = create_image_view(
         m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mip_levels);
@@ -2053,7 +2052,7 @@ TextureHandle Renderer::create_texture(
 
     Texture texture { .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels };
 
-    push_to_all_frames([this, texture, descriptor_set](uint32_t frame_index) {
+    defer_to_all_frames([this, texture, descriptor_set](uint32_t frame_index) {
         auto image_info = vk::DescriptorImageInfo()
                               .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
                               .setImageView(texture.vk_image_view)
@@ -2101,15 +2100,17 @@ Renderer::DepthImage Renderer::create_depth_image(
     vk::ImageView depth_image_view
         = create_image_view(device, depth_image.vk_handle, depth_format, vk::ImageAspectFlagBits::eDepth, 1);
 
-    transition_image_layout(
-        device,
-        pool,
-        queue,
+    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
+
+    cmd_transition_image_layout(
+        command_buffer,
         depth_image.vk_handle,
         depth_format,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthStencilAttachmentOptimal,
         1);
+
+    end_single_submit(device, pool, command_buffer, queue);
 
     return { depth_image, depth_image_view };
 }
@@ -2180,11 +2181,9 @@ Renderer::Image Renderer::create_image(
     return { image, image_allocation };
 }
 
-void Renderer::generate_mipmaps(
+void Renderer::cmd_generate_mipmaps(
     vk::PhysicalDevice physical_device,
-    vk::Device device,
-    vk::CommandPool pool,
-    vk::Queue queue,
+    vk::CommandBuffer command_buffer,
     vk::Image image,
     vk::Format format,
     uint32_t width,
@@ -2196,8 +2195,6 @@ void Renderer::generate_mipmaps(
     if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
         throw std::runtime_error("[Renderer] Image format does not support linear blitting for mip-mapping.");
     }
-
-    vk::CommandBuffer command_buffer = begin_single_submit(device, pool);
 
     auto subresource_range
         = vk::ImageSubresourceRange()
@@ -2309,8 +2306,6 @@ void Renderer::generate_mipmaps(
         nullptr,
         1,
         &barrier);
-
-    end_single_submit(device, pool, command_buffer, queue);
 }
 
 vk::SampleCountFlagBits Renderer::get_max_sample_count(vk::PhysicalDevice physical_device)
@@ -2362,6 +2357,11 @@ Renderer::RenderImage Renderer::create_color_image(
         = create_image_view(device, color_image.vk_handle, swapchain_format, vk::ImageAspectFlagBits::eColor, 1);
 
     return { color_image, image_view };
+}
+
+void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func)
+{
+    m_command_buffer_deferred_functions.push(func);
 };
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

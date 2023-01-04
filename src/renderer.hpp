@@ -370,6 +370,7 @@ private:
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
+    std::queue<std::function<void(vk::CommandBuffer)>> m_command_buffer_deferred_functions {};
 
     void cleanup_vk_swapchain();
 
@@ -411,11 +412,13 @@ private:
         vk::ImageTiling tiling,
         vk::ImageUsageFlags usage);
 
-    void push_to_all_frames(std::function<void(uint32_t)> func);
+    void defer_to_all_frames(std::function<void(uint32_t)> func);
 
-    void push_to_next_frame(std::function<void(uint32_t)> func);
+    void defer_to_next_frame(std::function<void(uint32_t)> func);
 
-    void push_wait_for_frames(std::function<void(uint32_t)> func);
+    void defer_after_all_frames(std::function<void(uint32_t)> func);
+
+    void defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func);
 
     static RenderImage create_color_image(
         vk::Device device,
@@ -424,11 +427,9 @@ private:
         vk::Format swapchain_format,
         vk::SampleCountFlagBits samples);
 
-    static void generate_mipmaps(
+    static void cmd_generate_mipmaps(
         vk::PhysicalDevice physical_device,
-        vk::Device device,
-        vk::CommandPool pool,
-        vk::Queue queue,
+        vk::CommandBuffer command_buffer,
         vk::Image image,
         vk::Format format,
         uint32_t width,
@@ -440,44 +441,22 @@ private:
     static void end_single_submit(
         vk::Device device, vk::CommandPool pool, vk::CommandBuffer command_buffer, vk::Queue queue);
 
-    static void transition_image_layout(
-        vk::Device device,
-        vk::CommandPool pool,
-        vk::Queue queue,
+    static void cmd_transition_image_layout(
+        vk::CommandBuffer command_buffer,
         vk::Image image,
         vk::Format format,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout,
         uint32_t mip_levels);
 
-    static void copy_buffer_to_image(
-        vk::Device device,
-        vk::CommandPool pool,
-        vk::Queue queue,
-        vk::Buffer buffer,
-        vk::Image image,
-        uint32_t width,
-        uint32_t height);
+    static void cmd_copy_buffer_to_image(
+        vk::CommandBuffer command_buffer, vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
 
     static vk::Sampler create_texture_sampler(
         vk::PhysicalDevice physical_device, vk::Device device, uint32_t mip_levels);
 
     static vk::ImageView create_image_view(
         vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags, uint32_t mip_levels);
-
-    static VertexBuffer create_vertex_buffer(
-        vk::Device device,
-        vk::CommandPool command_pool,
-        vk::Queue graphics_queue,
-        VmaAllocator allocator,
-        const VertexData& vertex_data);
-
-    static IndexBuffer create_index_buffer(
-        vk::Device device,
-        vk::CommandPool command_pool,
-        vk::Queue graphics_queue,
-        VmaAllocator allocator,
-        const std::vector<uint32_t>& index_data);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
         VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
@@ -567,13 +546,8 @@ private:
         VmaMemoryUsage memory_usage,
         VmaAllocationCreateFlags flags = 0);
 
-    static void copy_buffer(
-        vk::Device device,
-        vk::CommandPool command_pool,
-        vk::Queue graphics_queue,
-        vk::Buffer src_buffer,
-        vk::Buffer dst_buffer,
-        vk::DeviceSize size);
+    static void cmd_copy_buffer(
+        vk::CommandBuffer command_buffer, vk::Buffer src_buffer, vk::Buffer dst_buffer, vk::DeviceSize size);
 
     static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout& layout);
 
