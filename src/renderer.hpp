@@ -266,6 +266,11 @@ private:
         VmaAllocation vma_allocation;
     };
 
+    struct RenderImage {
+        Image image;
+        vk::ImageView vk_image_view;
+    };
+
     struct DepthImage {
         Image image;
         vk::ImageView vk_image_view;
@@ -345,6 +350,8 @@ private:
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
     DepthImage m_depth_image;
+    vk::SampleCountFlagBits m_msaa_samples;
+    RenderImage m_color_image;
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -370,13 +377,16 @@ private:
 
     void recreate_swapchain(const Window& window);
 
+    static vk::SampleCountFlagBits get_max_sample_count(vk::PhysicalDevice physical_device);
+
     static DepthImage create_depth_image(
         vk::PhysicalDevice physical_device,
         vk::Device device,
         vk::CommandPool pool,
         vk::Queue queue,
         VmaAllocator allocator,
-        vk::Extent2D extent);
+        vk::Extent2D extent,
+        vk::SampleCountFlagBits samples);
 
     static vk::Format find_supported_format(
         vk::PhysicalDevice physical_device,
@@ -396,6 +406,7 @@ private:
         uint32_t width,
         uint32_t height,
         uint32_t mip_levels,
+        vk::SampleCountFlagBits samples,
         vk::Format format,
         vk::ImageTiling tiling,
         vk::ImageUsageFlags usage);
@@ -405,6 +416,13 @@ private:
     void push_to_next_frame(std::function<void(uint32_t)> func);
 
     void push_wait_for_frames(std::function<void(uint32_t)> func);
+
+    static RenderImage create_color_image(
+        vk::Device device,
+        VmaAllocator allocator,
+        vk::Extent2D swapchain_extent,
+        vk::Format swapchain_format,
+        vk::SampleCountFlagBits samples);
 
     static void generate_mipmaps(
         vk::PhysicalDevice physical_device,
@@ -521,18 +539,20 @@ private:
         const Shader& fragment_shader,
         vk::PipelineLayout pipeline_layout,
         vk::RenderPass render_pass,
-        const VertexLayout& vertex_layout);
+        const VertexLayout& vertex_layout,
+        vk::SampleCountFlagBits samples);
 
     vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
 
     static vk::RenderPass create_vk_render_pass(
-        vk::Device device, vk::Format swapchain_format, vk::Format depth_format);
+        vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples);
 
     static std::vector<vk::Framebuffer> create_vk_framebuffers(
         vk::Device device,
         const std::vector<vk::ImageView>& swapchain_image_views,
         vk::RenderPass render_pass,
         vk::Extent2D swapchain_extent,
+        vk::ImageView color_image_view,
         vk::ImageView depth_image_view);
 
     static vk::CommandPool create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices);
