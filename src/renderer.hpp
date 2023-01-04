@@ -261,9 +261,18 @@ private:
         std::byte* mapped_ptr;
     };
 
-    struct Texture {
-        vk::Image vk_image;
+    struct Image {
+        vk::Image vk_handle;
         VmaAllocation vma_allocation;
+    };
+
+    struct DepthImage {
+        Image image;
+        vk::ImageView vk_image_view;
+    };
+
+    struct Texture {
+        Image image;
         vk::ImageView vk_image_view;
         vk::Sampler vk_sampler;
     };
@@ -334,6 +343,7 @@ private:
     uint32_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
+    DepthImage m_depth_image;
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -359,10 +369,34 @@ private:
 
     void recreate_swapchain(const Window& window);
 
-    void create_texture();
+    static DepthImage create_depth_image(
+        vk::PhysicalDevice physical_device,
+        vk::Device device,
+        vk::CommandPool pool,
+        vk::Queue queue,
+        VmaAllocator allocator,
+        vk::Extent2D extent);
+
+    static vk::Format find_supported_format(
+        vk::PhysicalDevice physical_device,
+        const std::vector<vk::Format>& formats,
+        vk::ImageTiling tiling,
+        vk::FormatFeatureFlags features);
+
+    static vk::Format find_depth_format(vk::PhysicalDevice physical_device);
 
     void update_uniform(
         UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+
+    static bool has_stencil_component(vk::Format format);
+
+    static Image create_image(
+        VmaAllocator allocator,
+        uint32_t width,
+        uint32_t height,
+        vk::Format format,
+        vk::ImageTiling tiling,
+        vk::ImageUsageFlags usage);
 
     void push_to_all_frames(std::function<void(uint32_t)> func);
 
@@ -380,6 +414,7 @@ private:
         vk::CommandPool pool,
         vk::Queue queue,
         vk::Image image,
+        vk::Format format,
         vk::ImageLayout old_layout,
         vk::ImageLayout new_layout);
 
@@ -394,7 +429,8 @@ private:
 
     static vk::Sampler create_texture_sampler(vk::PhysicalDevice physical_device, vk::Device device);
 
-    static vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format format);
+    static vk::ImageView create_image_view(
+        vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags);
 
     static VertexBuffer create_vertex_buffer(
         vk::Device device,
@@ -474,13 +510,15 @@ private:
 
     vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
 
-    static vk::RenderPass create_vk_render_pass(vk::Device device, vk::Format swapchain_format);
+    static vk::RenderPass create_vk_render_pass(
+        vk::Device device, vk::Format swapchain_format, vk::Format depth_format);
 
     static std::vector<vk::Framebuffer> create_vk_framebuffers(
         vk::Device device,
         const std::vector<vk::ImageView>& swapchain_image_views,
         vk::RenderPass render_pass,
-        vk::Extent2D swapchain_extent);
+        vk::Extent2D swapchain_extent,
+        vk::ImageView depth_image_view);
 
     static vk::CommandPool create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices);
 

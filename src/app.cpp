@@ -26,28 +26,46 @@ void run()
     mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment);
 
     mve::VertexLayout vertex_layout {};
-    vertex_layout.push_back(mve::VertexAttributeType::vec2); // 2D position
+    vertex_layout.push_back(mve::VertexAttributeType::vec3); // 3D position
     vertex_layout.push_back(mve::VertexAttributeType::vec3); // Color
     vertex_layout.push_back(mve::VertexAttributeType::vec2); // Texture coord
 
     mve::VertexData place_data(vertex_layout);
-    place_data.push_back({ -0.5f, -0.5f });
+    // First
+    place_data.push_back({ -0.5f, -0.5f, 0.0f });
     place_data.push_back({ 1.0f, 0.0f, 0.0f });
     place_data.push_back({ 1.0f, 0.0f });
 
-    place_data.push_back({ 0.5f, -0.5f });
+    place_data.push_back({ 0.5f, -0.5f , 0.0f});
     place_data.push_back({ 0.0f, 1.0f, 0.0f });
     place_data.push_back({ 0.0f, 0.0f });
 
-    place_data.push_back({ 0.5f, 0.5f });
+    place_data.push_back({ 0.5f, 0.5f, 0.0f });
     place_data.push_back({ 0.0f, 0.0f, 1.0f });
     place_data.push_back({ 0.0f, 1.0f });
 
-    place_data.push_back({ -0.5f, 0.5f });
+    place_data.push_back({ -0.5f, 0.5f, 0.0f });
     place_data.push_back({ 1.0f, 1.0f, 1.0f });
     place_data.push_back({ 1.0f, 1.0f });
 
-    const std::vector<uint32_t> plane_indices = { 0, 1, 2, 2, 3, 0 };
+    // Second
+    place_data.push_back({ -0.5f, -0.5f, -0.5f });
+    place_data.push_back({ 1.0f, 0.0f, 0.0f });
+    place_data.push_back({ 0.0f, 0.0f });
+
+    place_data.push_back({ 0.5f, -0.5f , -0.5f});
+    place_data.push_back({ 0.0f, 1.0f, 0.0f });
+    place_data.push_back({ 1.0f, 0.0f });
+
+    place_data.push_back({ 0.5f, 0.5f, -0.5f });
+    place_data.push_back({ 0.0f, 0.0f, 1.0f });
+    place_data.push_back({ 1.0f, 1.0f });
+
+    place_data.push_back({ -0.5f, 0.5f, -0.5f });
+    place_data.push_back({ 1.0f, 1.0f, 1.0f });
+    place_data.push_back({ 0.0f, 1.0f });
+
+    const std::vector<uint32_t> plane_indices = { 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4 };
 
     mve::VertexBufferHandle vertex_buffer = renderer.create_vertex_buffer(place_data);
     mve::IndexBufferHandle index_buffer = renderer.create_index_buffer(plane_indices);
