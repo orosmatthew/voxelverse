@@ -101,7 +101,7 @@ bool Renderer::has_validation_layer_support()
 {
     vk::ResultValue<std::vector<vk::LayerProperties>> available_layers_result = vk::enumerateInstanceLayerProperties();
     if (available_layers_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get validation layer properties.");
+        throw std::runtime_error("[Renderer] Failed to get validation layer properties");
     }
 
     std::vector<vk::LayerProperties> available_layers = std::move(available_layers_result.value);
@@ -188,17 +188,17 @@ vk::PhysicalDevice Renderer::pick_vk_physical_device(vk::Instance instance, vk::
     }
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
-        LOG->debug("Vulkan Device Found: {0}", physical_device.getProperties().deviceName);
+        LOG->info("[Renderer] GPU Found: {0}", physical_device.getProperties().deviceName);
     }
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
         if (is_vk_physical_device_suitable(physical_device, surface)) {
-            LOG->info("Using Vulkan Device: {0}", physical_device.getProperties().deviceName);
+            LOG->info("[Renderer] Using GPU: {0}", physical_device.getProperties().deviceName);
             return physical_device;
         }
     }
 
-    throw std::runtime_error("Failed to find a suitable Vulkan device");
+    throw std::runtime_error("[Renderer] Failed to find a suitable Vulkan device");
 }
 
 bool Renderer::is_vk_physical_device_suitable(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface)
@@ -208,7 +208,7 @@ bool Renderer::is_vk_physical_device_suitable(vk::PhysicalDevice physical_device
     vk::ResultValue<std::vector<vk::ExtensionProperties>> available_exts_result
         = physical_device.enumerateDeviceExtensionProperties();
     if (available_exts_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get device extension properties.");
+        throw std::runtime_error("[Renderer] Failed to get device extension properties");
     }
 
     std::vector<vk::ExtensionProperties> available_exts = std::move(available_exts_result.value);
@@ -251,7 +251,7 @@ Renderer::QueueFamilyIndices Renderer::get_vk_queue_family_indices(
 
         vk::ResultValue<unsigned int> surface_support_result = physical_device.getSurfaceSupportKHR(i, surface);
         if (surface_support_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to get GPU surface support.");
+            throw std::runtime_error("[Renderer] Failed to get GPU surface support");
         }
 
         if (surface_support_result.value) {
@@ -319,7 +319,7 @@ vk::Device Renderer::create_vk_logical_device(
 
     vk::ResultValue<vk::Device> device_result = physical_device.createDevice(device_create_info);
     if (device_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create device.");
+        throw std::runtime_error("[Renderer] Failed to create device");
     }
     return device_result.value;
 }
@@ -346,20 +346,20 @@ Renderer::SwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
     vk::ResultValue<vk::SurfaceCapabilitiesKHR> capabilities_result
         = physical_device.getSurfaceCapabilitiesKHR(surface);
     if (capabilities_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get surface capabilities.");
+        throw std::runtime_error("[Renderer] Failed to get surface capabilities");
     }
     details.capabilities = std::move(capabilities_result.value);
 
     vk::ResultValue<std::vector<vk::SurfaceFormatKHR>> formats_result = physical_device.getSurfaceFormatsKHR(surface);
     if (formats_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get surface formats.");
+        throw std::runtime_error("[Renderer] Failed to get surface formats");
     }
     details.formats = std::move(formats_result.value);
 
     vk::ResultValue<std::vector<vk::PresentModeKHR>> present_modes_result
         = physical_device.getSurfacePresentModesKHR(surface);
     if (present_modes_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get surface present modes.");
+        throw std::runtime_error("[Renderer] Failed to get surface present modes");
     }
     details.present_modes = std::move(present_modes_result.value);
 
@@ -457,7 +457,7 @@ vk::SwapchainKHR Renderer::create_vk_swapchain(
 
     vk::ResultValue<vk::SwapchainKHR> swapchain_result = device.createSwapchainKHR(swapchain_create_info);
     if (swapchain_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create swapchain.");
+        throw std::runtime_error("[Renderer] Failed to create swapchain");
     }
     return swapchain_result.value;
 }
@@ -466,7 +466,7 @@ std::vector<vk::Image> Renderer::get_vk_swapchain_images(vk::Device device, vk::
 {
     vk::ResultValue<std::vector<vk::Image>> images_result = device.getSwapchainImagesKHR(swapchain);
     if (images_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to get swapchain images.");
+        throw std::runtime_error("[Renderer] Failed to get swapchain images");
     }
     return images_result.value;
 }
@@ -500,7 +500,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     vk::ResultValue<vk::ShaderModule> vertex_shader_module_result
         = device.createShaderModule(vertex_shader_create_info);
     if (vertex_shader_module_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create vertex shader module.");
+        throw std::runtime_error("[Renderer] Failed to create vertex shader module");
     }
     vk::ShaderModule vertex_shader_module = std::move(vertex_shader_module_result.value);
 
@@ -511,7 +511,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     vk::ResultValue<vk::ShaderModule> fragment_shader_module_result
         = device.createShaderModule(fragment_shader_create_info);
     if (fragment_shader_module_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create fragment shader module.");
+        throw std::runtime_error("[Renderer] Failed to create fragment shader module");
     }
     vk::ShaderModule fragment_shader_module = std::move(fragment_shader_module_result.value);
 
@@ -649,7 +649,7 @@ vk::PipelineLayout Renderer::create_vk_pipeline_layout(const std::vector<Descrip
 
     vk::ResultValue<vk::PipelineLayout> pipeline_layout_result = m_vk_device.createPipelineLayout(pipeline_layout_info);
     if (pipeline_layout_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create pipline layout.");
+        throw std::runtime_error("[Renderer] Failed to create pipline layout");
     }
     return pipeline_layout_result.value;
 }
@@ -733,7 +733,7 @@ vk::RenderPass Renderer::create_vk_render_pass(
 
     vk::ResultValue<vk::RenderPass> render_pass_result = device.createRenderPass(render_pass_info);
     if (render_pass_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create render pass.");
+        throw std::runtime_error("[Renderer] Failed to create render pass");
     }
     return render_pass_result.value;
 }
@@ -763,7 +763,7 @@ std::vector<vk::Framebuffer> Renderer::create_vk_framebuffers(
 
         vk::ResultValue<vk::Framebuffer> framebuffer_result = device.createFramebuffer(framebuffer_info);
         if (framebuffer_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to create framebuffer.");
+            throw std::runtime_error("[Renderer] Failed to create framebuffer");
         }
         framebuffers.push_back(std::move(framebuffer_result.value));
     }
@@ -780,7 +780,7 @@ vk::CommandPool Renderer::create_vk_command_pool(vk::Device device, QueueFamilyI
 
     vk::ResultValue<vk::CommandPool> command_pool_result = device.createCommandPool(command_pool_info);
     if (command_pool_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create command buffer.");
+        throw std::runtime_error("[Renderer] Failed to create command buffer");
     }
     return command_pool_result.value;
 }
@@ -797,7 +797,7 @@ std::vector<vk::CommandBuffer> Renderer::create_vk_command_buffers(
     vk::ResultValue<std::vector<vk::CommandBuffer>> command_buffers_result
         = device.allocateCommandBuffers(buffer_alloc_info);
     if (command_buffers_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to allocate command buffers.");
+        throw std::runtime_error("[Renderer] Failed to allocate command buffers");
     }
     return command_buffers_result.value;
 }
@@ -876,7 +876,7 @@ void Renderer::recreate_swapchain(const Window& window)
 
     vk::Result wait_result = m_vk_device.waitIdle();
     if (wait_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation.");
+        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation");
     }
 
     cleanup_vk_swapchain();
@@ -1055,6 +1055,8 @@ VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
     m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
     m_resource_handle_count++;
 
+    LOG->info("[Renderer] Vertex buffer created with ID: {}", m_resource_handle_count - 1);
+
     return VertexBufferHandle(m_resource_handle_count - 1);
 }
 
@@ -1117,19 +1119,19 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
         FrameInFlight frame;
         vk::ResultValue<vk::Semaphore> image_available_semaphore_result = device.createSemaphore(semaphore_info);
         if (image_available_semaphore_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to create image available semaphore.");
+            throw std::runtime_error("[Renderer] Failed to create image available semaphore");
         }
         frame.image_available_semaphore = std::move(image_available_semaphore_result.value);
 
         vk::ResultValue<vk::Semaphore> render_finished_semaphore_result = device.createSemaphore(semaphore_info);
         if (render_finished_semaphore_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to create render finished semaphore.");
+            throw std::runtime_error("[Renderer] Failed to create render finished semaphore");
         }
         frame.render_finished_semaphore = std::move(render_finished_semaphore_result.value);
 
         vk::ResultValue<vk::Fence> in_flight_fence_result = device.createFence(fence_info);
         if (in_flight_fence_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to create in flight fence.");
+            throw std::runtime_error("[Renderer] Failed to create in flight fence");
         }
         frame.in_flight_fence = std::move(in_flight_fence_result.value);
         frame.command_buffer = command_buffers.at(i);
@@ -1239,6 +1241,8 @@ IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& ind
     m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
     m_resource_handle_count++;
 
+    LOG->info("[Renderer] Index buffer created with ID: {}", m_resource_handle_count - 1);
+
     return IndexBufferHandle(m_resource_handle_count - 1);
 }
 
@@ -1256,7 +1260,7 @@ void Renderer::queue_destroy(IndexBufferHandle handle)
 void Renderer::begin(const Window& window)
 {
     if (m_current_draw_state.is_drawing) {
-        throw std::runtime_error("[Renderer] Already drawing.");
+        throw std::runtime_error("[Renderer] Already drawing");
     }
 
     m_current_draw_state.is_drawing = true;
@@ -1312,7 +1316,7 @@ void Renderer::begin(const Window& window)
     auto buffer_begin_info = vk::CommandBufferBeginInfo();
     vk::Result begin_result = m_current_draw_state.command_buffer.begin(buffer_begin_info);
     if (begin_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to begin command buffer recording.");
+        throw std::runtime_error("[Renderer] Failed to begin command buffer recording");
     }
 
     auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
@@ -1358,7 +1362,7 @@ void Renderer::end(const Window& window)
 
     vk::Result end_result = m_current_draw_state.command_buffer.end();
     if (end_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to end command buffer recording.");
+        throw std::runtime_error("[Renderer] Failed to end command buffer recording");
     }
 
     FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
@@ -1377,7 +1381,7 @@ void Renderer::end(const Window& window)
 
     vk::Result graphics_submit_result = m_vk_graphics_queue.submit({ submit_info }, frame.in_flight_fence);
     if (graphics_submit_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to submit to graphics queue.");
+        throw std::runtime_error("[Renderer] Failed to submit to graphics queue");
     }
 
     vk::SwapchainKHR swapchains[] = { m_vk_swapchain };
@@ -1453,7 +1457,7 @@ vk::DescriptorPool Renderer::create_vk_descriptor_pool(vk::Device device, int fr
 
     vk::ResultValue<vk::DescriptorPool> descriptor_pool_result = device.createDescriptorPool(pool_info);
     if (descriptor_pool_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create descriptor pool.");
+        throw std::runtime_error("[Renderer] Failed to create descriptor pool");
     }
     return descriptor_pool_result.value;
 }
@@ -1470,7 +1474,7 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
 
     vk::ResultValue<std::vector<vk::DescriptorSet>> descriptor_sets_result = device.allocateDescriptorSets(alloc_info);
     if (descriptor_sets_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to allocate descriptor sets.");
+        throw std::runtime_error("[Renderer] Failed to allocate descriptor sets");
     }
     return descriptor_sets_result.value;
 }
@@ -1524,6 +1528,8 @@ UniformBufferHandle Renderer::create_uniform_buffer(
 
         this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
     });
+
+    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle.value_of().value_of());
 
     return handle;
 }
@@ -1682,13 +1688,15 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vect
     vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
         = m_vk_device.createDescriptorSetLayout(layout_info);
     if (descriptor_set_layout_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create descriptor set layout.");
+        throw std::runtime_error("[Renderer] Failed to create descriptor set layout");
     }
     vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
 
     auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
     m_descriptor_set_layouts.insert({ handle, vk_layout });
     m_resource_handle_count++;
+
+    LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
 
     return handle;
 }
@@ -1710,6 +1718,8 @@ DescriptorSetHandle Renderer::create_descriptor_set(DescriptorSetLayoutHandle la
         frame.descriptor_sets.insert({ handle, descriptor_sets.at(i) });
         i++;
     }
+
+    LOG->info("[Renderer] Descriptor set created with ID: {}", handle.value_of().value_of());
 
     return handle;
 }
@@ -1733,6 +1743,8 @@ GraphicsPipelineHandle Renderer::create_graphics_pipeline(
     m_resource_handle_count++;
     m_graphics_pipelines.insert({ handle, vk_pipeline });
 
+    LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle.value_of().value_of());
+
     return handle;
 }
 
@@ -1744,6 +1756,8 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
     auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
     m_resource_handle_count++;
     m_graphics_pipeline_layouts.insert({ handle, vk_layout });
+
+    LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle.value_of().value_of());
 
     return handle;
 }
@@ -1795,7 +1809,7 @@ vk::CommandBuffer Renderer::begin_single_submit(vk::Device device, vk::CommandPo
     vk::ResultValue<std::vector<vk::CommandBuffer>> command_buffer_result
         = device.allocateCommandBuffers(command_buffer_alloc_info);
     if (command_buffer_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to allocate texture command buffer.");
+        throw std::runtime_error("[Renderer] Failed to allocate texture command buffer");
     }
     vk::CommandBuffer command_buffer = std::move(command_buffer_result.value.at(0));
 
@@ -1803,7 +1817,7 @@ vk::CommandBuffer Renderer::begin_single_submit(vk::Device device, vk::CommandPo
 
     vk::Result begin_result = command_buffer.begin(begin_info);
     if (begin_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to begin single submit buffer.");
+        throw std::runtime_error("[Renderer] Failed to begin single submit buffer");
     }
 
     return command_buffer;
@@ -1814,18 +1828,18 @@ void Renderer::end_single_submit(
 {
     vk::Result end_result = command_buffer.end();
     if (end_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to end single submit buffer.");
+        throw std::runtime_error("[Renderer] Failed to end single submit buffer");
     }
 
     auto submit_info = vk::SubmitInfo().setCommandBufferCount(1).setPCommandBuffers(&command_buffer);
 
     vk::Result submit_result = queue.submit(1, &submit_info, VK_NULL_HANDLE);
     if (submit_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to submit single submit buffer.");
+        throw std::runtime_error("[Renderer] Failed to submit single submit buffer");
     }
     vk::Result wait_result = queue.waitIdle();
     if (wait_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to wait for queue for single submit.");
+        throw std::runtime_error("[Renderer] Failed to wait for queue for single submit");
     }
 
     device.freeCommandBuffers(pool, 1, &command_buffer);
@@ -1889,7 +1903,7 @@ void Renderer::cmd_transition_image_layout(
         destination_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
     }
     else {
-        throw std::runtime_error("[Renderer] Unsupported layout transition.");
+        throw std::runtime_error("[Renderer] Unsupported layout transition");
     }
 
     command_buffer.pipelineBarrier(
@@ -1943,7 +1957,7 @@ vk::ImageView Renderer::create_image_view(
 
     vk::ResultValue<vk::ImageView> image_view_result = device.createImageView(view_info);
     if (image_view_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create image view.");
+        throw std::runtime_error("[Renderer] Failed to create image view");
     }
     return image_view_result.value;
 }
@@ -1970,7 +1984,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
 
     vk::ResultValue<vk::Sampler> sampler_result = device.createSampler(sampler_info);
     if (sampler_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create image sampler.");
+        throw std::runtime_error("[Renderer] Failed to create image sampler");
     }
     return sampler_result.value;
 }
@@ -1985,7 +1999,7 @@ TextureHandle Renderer::create_texture(
     stbi_uc* pixels = stbi_load(path_string.c_str(), &width, &height, &channels, STBI_rgb_alpha);
     vk::DeviceSize size = width * height * 4;
     if (!pixels) {
-        throw std::runtime_error("[Renderer] Failed to load texture image.");
+        throw std::runtime_error("[Renderer] Failed to load texture image");
     }
 
     uint32_t mip_levels = static_cast<uint32_t>(glm::floor(glm::log2(static_cast<float>(glm::max(width, height))))) + 1;
@@ -2073,6 +2087,9 @@ TextureHandle Renderer::create_texture(
     TextureHandle handle = TextureHandle(m_resource_handle_count);
     m_resource_handle_count++;
     m_textures.insert({ handle, texture });
+
+    LOG->info("[Renderer] Texture created with ID: {}", handle.value_of().value_of());
+
     return handle;
 }
 
@@ -2130,7 +2147,7 @@ vk::Format Renderer::find_supported_format(
             return format;
         }
     }
-    throw std::runtime_error("[Renderer] Failed to find supported format.");
+    throw std::runtime_error("[Renderer] Failed to find supported format");
 }
 
 vk::Format Renderer::find_depth_format(vk::PhysicalDevice physical_device)
@@ -2193,7 +2210,7 @@ void Renderer::cmd_generate_mipmaps(
     // Check image format supports linear blitting
     vk::FormatProperties properties = physical_device.getFormatProperties(format);
     if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
-        throw std::runtime_error("[Renderer] Image format does not support linear blitting for mip-mapping.");
+        throw std::runtime_error("[Renderer] Image format does not support linear blitting for mip-mapping");
     }
 
     auto subresource_range
@@ -2397,7 +2414,7 @@ vk::DescriptorPool Renderer::DescriptorSetAllocator::create_pool(vk::Device devi
 
     vk::ResultValue<vk::DescriptorPool> descriptor_pool_result = device.createDescriptorPool(pool_info);
     if (descriptor_pool_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create descriptor pool.");
+        throw std::runtime_error("[Renderer] Failed to create descriptor pool");
     }
     return descriptor_pool_result.value;
 }
@@ -2466,7 +2483,7 @@ std::optional<vk::DescriptorSet> Renderer::DescriptorSetAllocator::try_create(
         return descriptor_sets_result.value.at(0);
     }
     else {
-        throw std::runtime_error("[Renderer] Failed to allocate descriptor sets.");
+        throw std::runtime_error("[Renderer] Failed to allocate descriptor sets");
     }
 }
 }
