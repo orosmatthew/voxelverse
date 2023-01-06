@@ -46,7 +46,6 @@ set(SOURCE_FILES
         src/window.cpp
         src/vertex_data.cpp
         src/shader.cpp
-        src/uniform_struct_layout.cpp
         src/monitor.cpp
         src/util.cpp)
 
@@ -82,8 +81,7 @@ set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)
 
 set(TEST_SOURCE_FILES
-        tests/vertex_data.cpp
-        tests/uniform_struct_layout.cpp)
+        tests/vertex_data.cpp)
 
 set(TEST_LIB_INCLUDES
         lib/catch2-3.2.1/include)

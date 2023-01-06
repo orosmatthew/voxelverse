@@ -7,6 +7,7 @@
 #include <set>
 #include <unordered_map>
 #include <vector>
+#include <map>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -17,7 +18,6 @@
 #include <vulkan/vulkan.hpp>
 
 #include "shader.hpp"
-#include "uniform_struct_layout.hpp"
 #include "vertex_data.hpp"
 
 #ifndef NDEBUG
