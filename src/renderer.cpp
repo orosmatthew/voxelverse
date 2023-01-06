@@ -1488,45 +1488,27 @@ bool Renderer::is_valid(IndexBufferHandle handle)
     return m_index_buffers.contains(handle);
 }
 
-UniformBufferHandle Renderer::create_uniform_buffer(
-    const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set, uint32_t binding)
+UniformBufferHandle Renderer::create_uniform_buffer(const ShaderDescriptorBinding& binding)
 {
     auto handle = UniformBufferHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
+    if (binding.type() != ShaderDescriptorType::uniform_buffer) {
+        throw std::runtime_error("[Renderer] Failed to create uniform buffer as binding is not of type uniform buffer");
+    }
+
+    uint32_t struct_size = binding.block().size();
+
     for (FrameInFlight& frame : m_frames_in_flight) {
 
-        vk::DeviceSize buffer_size = struct_layout.size_bytes();
-
         Buffer buffer = create_buffer(
-            m_vma_allocator, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+            m_vma_allocator, struct_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
         void* ptr;
         vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
 
-        frame.uniform_buffers[handle] = UniformBuffer { buffer, static_cast<std::byte*>(ptr) };
+        frame.uniform_buffers[handle] = UniformBuffer { buffer, struct_size, static_cast<std::byte*>(ptr) };
     }
-
-    size_t layout_bytes = struct_layout.size_bytes();
-
-    defer_to_all_frames([this, handle, layout_bytes, descriptor_set, binding](uint32_t frame_index) {
-        auto buffer_info
-            = vk::DescriptorBufferInfo()
-                  .setBuffer(this->m_frames_in_flight.at(frame_index).uniform_buffers.at(handle).buffer.vk_handle)
-                  .setOffset(0)
-                  .setRange(layout_bytes);
-
-        auto descriptor_write
-            = vk::WriteDescriptorSet()
-                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
-                  .setDstBinding(binding)
-                  .setDstArrayElement(0)
-                  .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                  .setDescriptorCount(1)
-                  .setPBufferInfo(&buffer_info);
-
-        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
-    });
 
     LOG->info("[Renderer] Uniform buffer created with ID: {}", handle.value_of().value_of());
 
@@ -2540,6 +2522,32 @@ Renderer::RenderImage Renderer::create_color_image(
 void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func)
 {
     m_command_buffer_deferred_functions.push(func);
+}
+
+void Renderer::write_descriptor_binding_uniform(
+    DescriptorSetHandle descriptor_set,
+    const ShaderDescriptorBinding& binding,
+    UniformBufferHandle uniform_buffer)
+{
+    uint32_t binding_num = binding.binding();
+    defer_to_all_frames([this, uniform_buffer, descriptor_set, binding_num](uint32_t frame_index) {
+        auto buffer_info
+            = vk::DescriptorBufferInfo()
+                  .setBuffer(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer).buffer.vk_handle)
+                  .setOffset(0)
+                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer).size);
+
+        auto descriptor_write
+            = vk::WriteDescriptorSet()
+                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstBinding(binding_num)
+                  .setDstArrayElement(0)
+                  .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                  .setDescriptorCount(1)
+                  .setPBufferInfo(&buffer_info);
+
+        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+    });
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

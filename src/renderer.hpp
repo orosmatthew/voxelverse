@@ -168,8 +168,10 @@ public:
      * @param struct_layout - Uniform struct layout
      * @return - Returns handle to uniform buffer
      */
-    UniformBufferHandle create_uniform_buffer(
-        const UniformStructLayout& struct_layout, DescriptorSetHandle descriptor_set, uint32_t binding);
+    UniformBufferHandle create_uniform_buffer(const ShaderDescriptorBinding& binding);
+
+    void write_descriptor_binding_uniform(
+        DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
 
     TextureHandle create_texture(
         const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding);
@@ -260,6 +262,7 @@ private:
 
     struct UniformBuffer {
         Buffer buffer;
+        uint32_t size;
         std::byte* mapped_ptr;
     };
 

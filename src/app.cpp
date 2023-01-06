@@ -7,7 +7,6 @@
 #include "logger.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
-#include "uniform_struct_layout.hpp"
 #include "util.hpp"
 #include "window.hpp"
 
@@ -36,16 +35,11 @@ void run()
 
     mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(graphics_pipeline, 0);
 
-    mve::UniformStructLayout uniform_struct("UniformBufferObject");
-    uniform_struct.push_back("model", mve::UniformType::mat4);
-    uniform_struct.push_back("view", mve::UniformType::mat4);
-    uniform_struct.push_back("proj", mve::UniformType::mat4);
+    mve::UniformBufferHandle uniform_handle
+        = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 
-    mve::UniformLocation model_location = uniform_struct.location_of("model");
-    mve::UniformLocation view_location = uniform_struct.location_of("view");
-    mve::UniformLocation proj_location = uniform_struct.location_of("proj");
-
-    mve::UniformBufferHandle uniform_handle = renderer.create_uniform_buffer(uniform_struct, descriptor_set_handle, 0);
+    renderer.write_descriptor_binding_uniform(
+        descriptor_set_handle, vertex_shader.descriptor_set(0).binding(0), uniform_handle);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -53,6 +47,10 @@ void run()
     auto start_time = std::chrono::high_resolution_clock::now();
 
     glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    mve::UniformLocation view_location = vertex_shader.descriptor_set(0).binding(0).member("view").location();
+    mve::UniformLocation model_location = vertex_shader.descriptor_set(0).binding(0).member("model").location();
+    mve::UniformLocation proj_location = vertex_shader.descriptor_set(0).binding(0).member("proj").location();
 
     renderer.update_uniform(uniform_handle, view_location, view);
 
