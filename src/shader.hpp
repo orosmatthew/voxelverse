@@ -70,7 +70,7 @@ private:
 
 class ShaderDescriptorSet {
 public:
-    ShaderDescriptorSet(uint32_t set, std::vector<ShaderDescriptorBinding> bindings);
+    ShaderDescriptorSet(uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings);
 
     [[nodiscard]] uint32_t set() const;
 
@@ -78,11 +78,11 @@ public:
 
     [[nodiscard]] const ShaderDescriptorBinding& binding(uint32_t binding) const;
 
-    [[nodiscard]] const std::vector<ShaderDescriptorBinding>& bindings() const;
+    [[nodiscard]] const std::unordered_map<uint32_t, ShaderDescriptorBinding>& bindings() const;
 
 private:
     const uint32_t m_set;
-    const std::vector<ShaderDescriptorBinding> m_bindings;
+    const std::unordered_map<uint32_t, ShaderDescriptorBinding> m_bindings;
 };
 
 /**

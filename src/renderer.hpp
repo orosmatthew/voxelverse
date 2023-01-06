@@ -2,12 +2,12 @@
 
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <optional>
 #include <queue>
 #include <set>
 #include <unordered_map>
 #include <vector>
-#include <map>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -173,8 +173,10 @@ public:
     void write_descriptor_binding_uniform(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
 
-    TextureHandle create_texture(
-        const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding);
+    void write_descriptor_binding_texture(
+        DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
+
+    TextureHandle create_texture(const std::filesystem::path& path);
 
     GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(
         const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);

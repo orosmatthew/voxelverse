@@ -66,7 +66,10 @@ void run()
 
     std::invoke(resize_func, window.size());
 
-    mve::TextureHandle texture = renderer.create_texture("../res/viking_room.png", descriptor_set_handle, 1);
+    mve::TextureHandle texture = renderer.create_texture("../res/viking_room.png");
+
+    renderer.write_descriptor_binding_texture(
+        descriptor_set_handle, fragment_shader.descriptor_set(0).binding(1), texture);
 
     glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 

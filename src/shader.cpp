@@ -98,7 +98,7 @@ void Shader::create_reflection_data()
 
     std::unordered_map<uint32_t, ShaderDescriptorSet> sets;
     for (SpvReflectDescriptorSet* set : descriptor_sets) {
-        std::vector<ShaderDescriptorBinding> bindings;
+        std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings;
         for (uint32_t b = 0; b < set->binding_count; b++) {
             SpvReflectDescriptorBinding* reflect_binding = set->bindings[b];
             ShaderDescriptorType type = convert_descriptor_type(reflect_binding->descriptor_type);
@@ -106,11 +106,11 @@ void Shader::create_reflection_data()
             if (reflect_binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
                 std::optional<ShaderBindingBlock> block = create_binding_block(reflect_binding->block);
                 ShaderDescriptorBinding binding(reflect_binding->name, reflect_binding->binding, type, block);
-                bindings.push_back(std::move(binding));
+                bindings.insert({reflect_binding->binding, std::move(binding)});
             }
             else {
                 ShaderDescriptorBinding binding(reflect_binding->name, reflect_binding->binding, type, {});
-                bindings.push_back(std::move(binding));
+                bindings.insert({reflect_binding->binding, std::move(binding)});
             }
         }
         ShaderDescriptorSet descriptor_set(set->set, std::move(bindings));
@@ -138,7 +138,7 @@ const ShaderDescriptorSet& Shader::descriptor_set(uint32_t set) const
     return m_reflection_data.sets.at(set);
 }
 
-ShaderDescriptorSet::ShaderDescriptorSet(uint32_t set, std::vector<ShaderDescriptorBinding> bindings)
+ShaderDescriptorSet::ShaderDescriptorSet(uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings)
     : m_set(set)
     , m_bindings(std::move(bindings))
 {
@@ -153,7 +153,7 @@ const ShaderDescriptorBinding& ShaderDescriptorSet::binding(uint32_t binding) co
     return m_bindings.at(binding);
 }
 
-const std::vector<ShaderDescriptorBinding>& ShaderDescriptorSet::bindings() const
+const std::unordered_map<uint32_t, ShaderDescriptorBinding>& ShaderDescriptorSet::bindings() const
 {
     return m_bindings;
 }

@@ -1748,7 +1748,7 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
     std::vector<vk::DescriptorSetLayoutBinding> bindings;
     if (vertex_shader.has_descriptor_set(set)) {
         const ShaderDescriptorSet& vertex_set = vertex_shader.descriptor_set(set);
-        for (const ShaderDescriptorBinding& shader_binding : vertex_set.bindings()) {
+        for (const auto& [binding_num, shader_binding] : vertex_set.bindings()) {
             auto binding = vk::DescriptorSetLayoutBinding()
                                .setBinding(shader_binding.binding())
                                .setDescriptorCount(1)
@@ -1769,7 +1769,7 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
     }
     if (fragment_shader.has_descriptor_set(set)) {
         const ShaderDescriptorSet& fragment_set = fragment_shader.descriptor_set(set);
-        for (const ShaderDescriptorBinding& fragment_binding : fragment_set.bindings()) {
+        for (const auto& [binding_num, fragment_binding] : fragment_set.bindings()) {
             auto binding = vk::DescriptorSetLayoutBinding()
                                .setBinding(fragment_binding.binding())
                                .setDescriptorCount(1)
@@ -2132,8 +2132,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
     return sampler_result.value;
 }
 
-TextureHandle Renderer::create_texture(
-    const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding)
+TextureHandle Renderer::create_texture(const std::filesystem::path& path)
 {
     int width;
     int height;
@@ -2208,24 +2207,6 @@ TextureHandle Renderer::create_texture(
     vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
 
     Texture texture { .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels };
-
-    defer_to_all_frames([this, texture, descriptor_set](uint32_t frame_index) {
-        auto image_info = vk::DescriptorImageInfo()
-                              .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                              .setImageView(texture.vk_image_view)
-                              .setSampler(texture.vk_sampler);
-
-        auto descriptor_write
-            = vk::WriteDescriptorSet()
-                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
-                  .setDstBinding(1)
-                  .setDstArrayElement(0)
-                  .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                  .setDescriptorCount(1)
-                  .setPImageInfo(&image_info);
-
-        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
-    });
 
     TextureHandle handle = TextureHandle(m_resource_handle_count);
     m_resource_handle_count++;
@@ -2524,10 +2505,31 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
     m_command_buffer_deferred_functions.push(func);
 }
 
+void Renderer::write_descriptor_binding_texture(
+    DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture)
+{
+    uint32_t binding_num = binding.binding();
+    defer_to_all_frames([this, texture, descriptor_set, binding_num](uint32_t frame_index) {
+        auto image_info = vk::DescriptorImageInfo()
+                              .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                              .setImageView(m_textures.at(texture).vk_image_view)
+                              .setSampler(m_textures.at(texture).vk_sampler);
+
+        auto descriptor_write
+            = vk::WriteDescriptorSet()
+                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstBinding(binding_num)
+                  .setDstArrayElement(0)
+                  .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                  .setDescriptorCount(1)
+                  .setPImageInfo(&image_info);
+
+        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
+    });
+}
+
 void Renderer::write_descriptor_binding_uniform(
-    DescriptorSetHandle descriptor_set,
-    const ShaderDescriptorBinding& binding,
-    UniformBufferHandle uniform_buffer)
+    DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer)
 {
     uint32_t binding_num = binding.binding();
     defer_to_all_frames([this, uniform_buffer, descriptor_set, binding_num](uint32_t frame_index) {
