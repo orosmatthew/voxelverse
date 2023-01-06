@@ -8,6 +8,8 @@
 
 #include <strong_type/strong_type.hpp>
 
+#include "shader.hpp"
+
 namespace mve {
 
 /**
@@ -26,7 +28,6 @@ enum class UniformType {
 /**
  * @brief The location of the uniform in a uniform struct (like a pointer)
  */
-using UniformLocation = strong::type<size_t, struct _uniform_location, strong::regular, strong::hashable>;
 
 /**
  * @brief Class to represent a uniform struct layout

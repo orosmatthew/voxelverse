@@ -16,6 +16,7 @@
 #define VULKAN_HPP_NO_EXCEPTIONS
 #include <vulkan/vulkan.hpp>
 
+#include "shader.hpp"
 #include "uniform_struct_layout.hpp"
 #include "vertex_data.hpp"
 
@@ -25,8 +26,8 @@
 
 namespace mve {
 
-class Shader;
 class Window;
+class ShaderDescriptorSet;
 
 /**
  * @brief Types of bindings for descriptor set
@@ -157,6 +158,11 @@ public:
      */
     DescriptorSetLayoutHandle create_descriptor_set_layout(const std::vector<DescriptorType>& layout);
 
+    DescriptorSetLayoutHandle create_descriptor_set_layout(
+        uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader);
+
+    DescriptorSetHandle create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set);
+
     /**
      * @brief Create a uniform buffer from a given layout
      * @param struct_layout - Uniform struct layout
@@ -168,15 +174,11 @@ public:
     TextureHandle create_texture(
         const std::filesystem::path& path, DescriptorSetHandle descriptor_set, uint32_t binding);
 
-    DescriptorSetHandle create_descriptor_set(DescriptorSetLayoutHandle layout);
-
-    GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts);
+    GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(
+        const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
 
     GraphicsPipelineHandle create_graphics_pipeline(
-        GraphicsPipelineLayoutHandle layout,
-        const Shader& vertex_shader,
-        const Shader& fragment_shader,
-        const VertexLayout& vertex_layout);
+        const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
 
     /**
      * @brief Determines if vertex buffer handle is valid
@@ -218,7 +220,7 @@ public:
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist = true);
 
-    void bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout);
+    void bind_descriptor_set(DescriptorSetHandle handle);
 
     [[nodiscard]] glm::ivec2 extent() const;
 
@@ -297,12 +299,23 @@ private:
         bool is_drawing;
         uint32_t image_index;
         vk::CommandBuffer command_buffer;
+        GraphicsPipelineHandle current_pipeline;
         uint32_t frame_index;
     };
 
     struct DeferredFunction {
         std::function<void(uint32_t)> function;
         int counter;
+    };
+
+    struct GraphicsPipelineLayout {
+        vk::PipelineLayout vk_handle;
+        std::unordered_map<uint32_t, DescriptorSetLayoutHandle> descriptor_set_layouts;
+    };
+
+    struct GraphicsPipeline {
+        GraphicsPipelineLayoutHandle layout;
+        vk::Pipeline pipeline;
     };
 
     class DescriptorSetAllocator {
@@ -361,9 +374,9 @@ private:
 
     std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 
-    std::unordered_map<GraphicsPipelineHandle, vk::Pipeline> m_graphics_pipelines {};
+    std::unordered_map<GraphicsPipelineHandle, GraphicsPipeline> m_graphics_pipelines {};
 
-    std::unordered_map<GraphicsPipelineLayoutHandle, vk::PipelineLayout> m_graphics_pipeline_layouts {};
+    std::unordered_map<GraphicsPipelineLayoutHandle, GraphicsPipelineLayout> m_graphics_pipeline_layouts {};
 
     std::unordered_map<TextureHandle, Texture> m_textures {};
 

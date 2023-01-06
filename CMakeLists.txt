@@ -36,7 +36,8 @@ add_subdirectory(lib/glfw-3.3.8)
 add_subdirectory(lib/glm-0.9.9.8)
 
 set(LIB_SOURCE_FILES
-        lib/whereami-ba364cd/src/whereami.c)
+        lib/whereami-ba364cd/src/whereami.c
+        lib/spirv-reflect-1.3.236/src/spirv_reflect.cpp)
 
 set(SOURCE_FILES
         src/app.cpp
@@ -60,7 +61,8 @@ set(LIB_INCLUDES
         lib/whereami-ba364cd/include
         lib/strong_type-6/include
         lib/stb-8b5f1f3/include
-        lib/tinyobjloader-45f683c/include)
+        lib/tinyobjloader-45f683c/include
+        lib/spirv-reflect-1.3.236/include)
 
 add_executable(${PROJECT_NAME})
 

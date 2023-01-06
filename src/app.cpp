@@ -26,21 +26,15 @@ void run()
     mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex);
     mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment);
 
-    mve::DescriptorSetLayoutHandle descriptor_set_layout_handle = renderer.create_descriptor_set_layout(
-        { mve::DescriptorType::e_uniform_buffer, mve::DescriptorType::e_combined_image_sampler });
-
-    mve::GraphicsPipelineLayoutHandle graphics_pipeline_layout
-        = renderer.create_graphics_pipeline_layout({ descriptor_set_layout_handle });
-
     mve::ModelData model_data = mve::load_model("../res/viking_room.obj");
 
     mve::VertexBufferHandle model_vertex_buffer = renderer.create_vertex_buffer(model_data.vertex_data);
     mve::IndexBufferHandle model_index_buffer = renderer.create_index_buffer(model_data.indices);
 
-    mve::GraphicsPipelineHandle graphics_pipeline = renderer.create_graphics_pipeline(
-        graphics_pipeline_layout, vertex_shader, fragment_shader, model_data.vertex_layout);
+    mve::GraphicsPipelineHandle graphics_pipeline
+        = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
 
-    mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(descriptor_set_layout_handle);
+    mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(graphics_pipeline, 0);
 
     mve::UniformStructLayout uniform_struct("UniformBufferObject");
     uniform_struct.push_back("model", mve::UniformType::mat4);
@@ -76,6 +70,8 @@ void run()
 
     mve::TextureHandle texture = renderer.create_texture("../res/viking_room.png", descriptor_set_handle, 1);
 
+    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
     while (!window.should_close()) {
         window.poll_events();
 
@@ -95,7 +91,12 @@ void run()
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
-        glm::mat4 model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        if (window.is_key_down(mve::InputKey::left)) {
+            model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        }
+        if (window.is_key_down(mve::InputKey::right)) {
+            model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        }
 
         renderer.update_uniform(uniform_handle, model_location, model, false);
 
@@ -103,7 +104,7 @@ void run()
 
         renderer.bind_graphics_pipeline(graphics_pipeline);
 
-        renderer.bind_descriptor_set(descriptor_set_handle, graphics_pipeline_layout);
+        renderer.bind_descriptor_set(descriptor_set_handle);
 
         renderer.bind_vertex_buffer(model_vertex_buffer);
 

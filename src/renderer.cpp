@@ -13,7 +13,6 @@
 #include <stb_image.h>
 
 #include "logger.hpp"
-#include "shader.hpp"
 #include "window.hpp"
 
 namespace mve {
@@ -841,11 +840,11 @@ Renderer::~Renderer()
     vmaDestroyAllocator(m_vma_allocator);
 
     for (auto& [handle, pipeline] : m_graphics_pipelines) {
-        m_vk_device.destroy(pipeline);
+        m_vk_device.destroy(pipeline.pipeline);
     }
 
     for (auto& [handle, layout] : m_graphics_pipeline_layouts) {
-        m_vk_device.destroy(layout);
+        m_vk_device.destroy(layout.vk_handle);
     }
 
     m_vk_device.destroy(m_vk_render_pass);
@@ -1547,11 +1546,11 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
     }
 }
 
-void Renderer::bind_descriptor_set(DescriptorSetHandle handle, GraphicsPipelineLayoutHandle pipeline_layout)
+void Renderer::bind_descriptor_set(DescriptorSetHandle handle)
 {
     m_current_draw_state.command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
-        m_graphics_pipeline_layouts.at(pipeline_layout),
+        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
         0,
         1,
         &(m_frames_in_flight.at(m_current_draw_state.frame_index).descriptor_sets.at(handle)),
@@ -1701,13 +1700,141 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vect
     return handle;
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set(DescriptorSetLayoutHandle layout)
+// DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
+//     const ShaderDescriptorSet& vertex_set, const ShaderDescriptorSet& fragment_set)
+//{
+//     std::vector<vk::DescriptorSetLayoutBinding> bindings;
+//     for (const ShaderDescriptorBinding& shader_binding : vertex_set.bindings()) {
+//         auto binding = vk::DescriptorSetLayoutBinding()
+//                            .setBinding(shader_binding.binding())
+//                            .setDescriptorCount(1)
+//                            .setPImmutableSamplers(nullptr);
+//
+//         switch (shader_binding.type()) {
+//         case ShaderDescriptorType::uniform_buffer:
+//             binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+//             binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+//             break;
+//         case ShaderDescriptorType::combined_image_sampler:
+//             binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+//             binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+//             break;
+//         }
+//         bindings.push_back(binding);
+//     }
+//
+//     for (const ShaderDescriptorBinding& fragment_binding : fragment_set.bindings()) {
+//         auto binding = vk::DescriptorSetLayoutBinding()
+//                            .setBinding(fragment_binding.binding())
+//                            .setDescriptorCount(1)
+//                            .setPImmutableSamplers(nullptr);
+//
+//         switch (fragment_binding.type()) {
+//         case ShaderDescriptorType::uniform_buffer:
+//             binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+//             binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+//             break;
+//         case ShaderDescriptorType::combined_image_sampler:
+//             binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+//             binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+//             break;
+//         }
+//         bindings.push_back(binding);
+//     }
+//
+//     auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindings(bindings);
+//
+//     vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
+//         = m_vk_device.createDescriptorSetLayout(layout_info);
+//     if (descriptor_set_layout_result.result != vk::Result::eSuccess) {
+//         throw std::runtime_error("[Renderer] Failed to create descriptor set layout");
+//     }
+//     vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
+//
+//     auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
+//     m_descriptor_set_layouts.insert({ handle, vk_layout });
+//     m_resource_handle_count++;
+//
+//     LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
+//
+//     return handle;
+// }
+
+DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
+    uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader)
+{
+    std::vector<vk::DescriptorSetLayoutBinding> bindings;
+    if (vertex_shader.has_descriptor_set(set)) {
+        const ShaderDescriptorSet& vertex_set = vertex_shader.descriptor_set(set);
+        for (const ShaderDescriptorBinding& shader_binding : vertex_set.bindings()) {
+            auto binding = vk::DescriptorSetLayoutBinding()
+                               .setBinding(shader_binding.binding())
+                               .setDescriptorCount(1)
+                               .setPImmutableSamplers(nullptr);
+
+            switch (shader_binding.type()) {
+            case ShaderDescriptorType::uniform_buffer:
+                binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+                binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+                break;
+            case ShaderDescriptorType::combined_image_sampler:
+                binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+                binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+                break;
+            }
+            bindings.push_back(binding);
+        }
+    }
+    if (fragment_shader.has_descriptor_set(set)) {
+        const ShaderDescriptorSet& fragment_set = fragment_shader.descriptor_set(set);
+        for (const ShaderDescriptorBinding& fragment_binding : fragment_set.bindings()) {
+            auto binding = vk::DescriptorSetLayoutBinding()
+                               .setBinding(fragment_binding.binding())
+                               .setDescriptorCount(1)
+                               .setPImmutableSamplers(nullptr);
+
+            switch (fragment_binding.type()) {
+            case ShaderDescriptorType::uniform_buffer:
+                binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+                binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+                break;
+            case ShaderDescriptorType::combined_image_sampler:
+                binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+                binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
+                break;
+            }
+            bindings.push_back(binding);
+        }
+    }
+
+    auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindings(bindings);
+
+    vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
+        = m_vk_device.createDescriptorSetLayout(layout_info);
+    if (descriptor_set_layout_result.result != vk::Result::eSuccess) {
+        throw std::runtime_error("[Renderer] Failed to create descriptor set layout");
+    }
+    vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
+
+    auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
+    m_descriptor_set_layouts.insert({ handle, vk_layout });
+    m_resource_handle_count++;
+
+    LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
+
+    return handle;
+}
+
+DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set)
 {
     std::vector<vk::DescriptorSet> descriptor_sets;
     descriptor_sets.reserve(c_frames_in_flight);
 
+    vk::DescriptorSetLayout layout = m_descriptor_set_layouts.at(
+        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(pipeline).layout).descriptor_set_layouts.at(set));
+
     for (int i = 0; i < c_frames_in_flight; i++) {
-        descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, m_descriptor_set_layouts.at(layout)));
+        descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, layout));
     }
 
     auto handle = DescriptorSetHandle(m_resource_handle_count);
@@ -1725,37 +1852,69 @@ DescriptorSetHandle Renderer::create_descriptor_set(DescriptorSetLayoutHandle la
 }
 
 GraphicsPipelineHandle Renderer::create_graphics_pipeline(
-    GraphicsPipelineLayoutHandle layout,
-    const Shader& vertex_shader,
-    const Shader& fragment_shader,
-    const VertexLayout& vertex_layout)
+    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
 {
+    GraphicsPipelineLayoutHandle layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
+
     vk::Pipeline vk_pipeline = create_vk_graphics_pipeline(
         m_vk_device,
         vertex_shader,
         fragment_shader,
-        m_graphics_pipeline_layouts.at(layout),
+        m_graphics_pipeline_layouts.at(layout).vk_handle,
         m_vk_render_pass,
         vertex_layout,
         m_msaa_samples);
 
     auto handle = GraphicsPipelineHandle(m_resource_handle_count);
     m_resource_handle_count++;
-    m_graphics_pipelines.insert({ handle, vk_pipeline });
+
+    GraphicsPipeline pipeline { .layout = layout, .pipeline = vk_pipeline };
+
+    m_graphics_pipelines.insert({ handle, pipeline });
 
     LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle.value_of().value_of());
 
     return handle;
 }
 
+// GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
+//     const std::vector<DescriptorSetLayoutHandle>& layouts)
+//{
+//     vk::PipelineLayout vk_layout = create_vk_pipeline_layout(layouts);
+//
+//     auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
+//     m_resource_handle_count++;
+//     m_graphics_pipeline_layouts.insert({ handle, vk_layout });
+//
+//     LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle.value_of().value_of());
+//
+//     return handle;
+// }
+
 GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
-    const std::vector<DescriptorSetLayoutHandle>& layouts)
+    const Shader& vertex_shader, const Shader& fragment_shader)
 {
+    std::vector<DescriptorSetLayoutHandle> layouts;
+    std::unordered_map<uint32_t, DescriptorSetLayoutHandle> descriptor_set_layouts;
+
+    for (uint32_t i = 0; i <= 3; i++) {
+        if (vertex_shader.has_descriptor_set(i) || fragment_shader.has_descriptor_set(i)) {
+            DescriptorSetLayoutHandle descriptor_set_layout
+                = create_descriptor_set_layout(i, vertex_shader, fragment_shader);
+            layouts.push_back(descriptor_set_layout);
+            descriptor_set_layouts.insert({ i, descriptor_set_layout });
+        }
+    }
+
     vk::PipelineLayout vk_layout = create_vk_pipeline_layout(layouts);
 
     auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
     m_resource_handle_count++;
-    m_graphics_pipeline_layouts.insert({ handle, vk_layout });
+
+    GraphicsPipelineLayout layout { .vk_handle = vk_layout,
+                                    .descriptor_set_layouts = std::move(descriptor_set_layouts) };
+
+    m_graphics_pipeline_layouts.insert({ handle, layout });
 
     LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle.value_of().value_of());
 
@@ -1764,7 +1923,9 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
 
 void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
 {
-    m_current_draw_state.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle));
+    m_current_draw_state.command_buffer.bindPipeline(
+        vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle).pipeline);
+    m_current_draw_state.current_pipeline = handle;
 }
 
 void Renderer::defer_to_all_frames(std::function<void(uint32_t)> func)
@@ -2379,7 +2540,7 @@ Renderer::RenderImage Renderer::create_color_image(
 void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func)
 {
     m_command_buffer_deferred_functions.push(func);
-};
+}
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
     : m_sizes({ { vk::DescriptorType::eSampler, 0.5f },
