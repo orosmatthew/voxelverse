@@ -9,6 +9,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "vertex_buffer.hpp"
+#include "index_buffer.hpp"
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/mat4x4.hpp>
@@ -41,16 +44,6 @@ enum DescriptorType {
  * @brief Handle for GPU resources
  */
 using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
-
-/**
- * @brief Handle for GPU vertex buffer
- */
-using VertexBufferHandle = strong::type<ResourceHandle, struct _vertex_data_handle, strong::regular, strong::hashable>;
-
-/**
- * @brief Handle for GPU index buffer
- */
-using IndexBufferHandle = strong::type<ResourceHandle, struct _index_buffer_handle, strong::regular, strong::hashable>;
 
 /**
  * @brief Handle for uniform buffer
@@ -121,6 +114,8 @@ public:
      */
     void bind_vertex_buffer(VertexBufferHandle handle);
 
+    void bind_vertex_buffer(const VertexBuffer& vertex_buffer);
+
     void bind_graphics_pipeline(GraphicsPipelineHandle handle);
 
     /**
@@ -128,6 +123,8 @@ public:
      * @param handle - Index buffer handle
      */
     void draw_index_buffer(IndexBufferHandle handle);
+
+    void draw_index_buffer(const IndexBuffer& index_buffer);
 
     /**
      * @brief End recording commands
@@ -142,14 +139,18 @@ public:
      * @param vertex_data - Vertex data
      * @return - Returns handle GPU vertex buffer
      */
-    VertexBufferHandle create_vertex_buffer(const VertexData& vertex_data);
+    VertexBufferHandle create_vertex_buffer_handle(const VertexData& vertex_data);
+
+    VertexBuffer create_vertex_buffer(const VertexData& vertex_data);
 
     /**
      * @brief Upload index data to GPU index buffer
      * @param index_data - Index data
      * @return - Returns handle to GPU index buffer
      */
-    IndexBufferHandle create_index_buffer(const std::vector<uint32_t>& index_data);
+    IndexBufferHandle create_index_buffer_handle(const std::vector<uint32_t>& index_data);
+
+    IndexBuffer create_index_buffer(const std::vector<uint32_t>& indices);
 
     /**
      * @brief Upload descriptor set layout to GPU
@@ -252,12 +253,12 @@ private:
         VmaAllocation vma_allocation;
     };
 
-    struct VertexBuffer {
+    struct VertexBufferImpl {
         Buffer buffer;
         int vertex_count;
     };
 
-    struct IndexBuffer {
+    struct IndexBufferImpl {
         Buffer buffer;
         size_t index_count;
     };
@@ -373,9 +374,9 @@ private:
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
-    std::unordered_map<VertexBufferHandle, VertexBuffer> m_vertex_buffers;
+    std::unordered_map<VertexBufferHandle, VertexBufferImpl> m_vertex_buffers;
 
-    std::unordered_map<IndexBufferHandle, IndexBuffer> m_index_buffers;
+    std::unordered_map<IndexBufferHandle, IndexBufferImpl> m_index_buffers;
 
     std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 

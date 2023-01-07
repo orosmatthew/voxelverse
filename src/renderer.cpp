@@ -997,7 +997,7 @@ void Renderer::cleanup_vk_debug_messenger()
     }
 }
 
-VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
+VertexBufferHandle Renderer::create_vertex_buffer_handle(const VertexData& vertex_data)
 {
     size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
 
@@ -1049,7 +1049,7 @@ VertexBufferHandle Renderer::create_vertex_buffer(const VertexData& vertex_data)
         });
     });
 
-    VertexBuffer vertex_buffer { buffer, vertex_data.vertex_count() };
+    VertexBufferImpl vertex_buffer { buffer, vertex_data.vertex_count() };
 
     m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
     m_resource_handle_count++;
@@ -1183,7 +1183,7 @@ void Renderer::cmd_copy_buffer(
     command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
 }
 
-IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& index_data)
+IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_t>& index_data)
 {
     size_t buffer_size = sizeof(uint32_t) * index_data.size();
 
@@ -1235,7 +1235,7 @@ IndexBufferHandle Renderer::create_index_buffer(const std::vector<uint32_t>& ind
         });
     });
 
-    IndexBuffer index_buffer { buffer, index_data.size() };
+    IndexBufferImpl index_buffer { buffer, index_data.size() };
 
     m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
     m_resource_handle_count++;
@@ -1406,7 +1406,7 @@ void Renderer::end(const Window& window)
 
 void Renderer::draw_vertex_buffer(VertexBufferHandle handle)
 {
-    VertexBuffer& vertex_buffer = m_vertex_buffers.at(handle);
+    VertexBufferImpl& vertex_buffer = m_vertex_buffers.at(handle);
     m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
     m_current_draw_state.command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
 }
@@ -1418,7 +1418,7 @@ void Renderer::bind_vertex_buffer(VertexBufferHandle handle)
 
 void Renderer::draw_index_buffer(IndexBufferHandle handle)
 {
-    IndexBuffer& index_buffer = m_index_buffers.at(handle);
+    IndexBufferImpl& index_buffer = m_index_buffers.at(handle);
     m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
     m_current_draw_state.command_buffer.drawIndexed(index_buffer.index_count, 1, 0, 0, 0);
 }
@@ -2550,6 +2550,36 @@ void Renderer::write_descriptor_binding_uniform(
 
         this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
     });
+}
+
+VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
+{
+    return VertexBuffer(*this, vertex_data);
+}
+
+void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
+{
+    if (vertex_buffer.is_valid()) {
+        bind_vertex_buffer(vertex_buffer.handle());
+    }
+    else {
+        throw std::runtime_error("[Renderer] Attempted to bind invalid vertex buffer");
+    }
+}
+
+IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
+{
+    return IndexBuffer(*this, indices);
+}
+
+void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
+{
+    if (index_buffer.is_valid()) {
+        draw_index_buffer(index_buffer.handle());
+    }
+    else {
+        throw std::runtime_error("[Renderer] Attempted to draw invalid index buffer");
+    }
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
