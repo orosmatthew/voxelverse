@@ -32,17 +32,11 @@ bool DescriptorSetHandle::operator<(const DescriptorSetHandle& other) const
     return m_value < other.m_value;
 }
 
-DescriptorSet::DescriptorSet(Renderer& renderer, GraphicsPipeline& pipeline, uint32_t set)
+DescriptorSet::DescriptorSet(
+    Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
     : m_valid(true)
     , m_renderer(&renderer)
-    , m_handle(renderer.create_descriptor_set_handle(pipeline, set))
-{
-}
-
-DescriptorSet::DescriptorSet(Renderer& renderer, GraphicsPipelineHandle pipeline, uint32_t set)
-    : m_valid(true)
-    , m_renderer(&renderer)
-    , m_handle(renderer.create_descriptor_set_handle(pipeline, set))
+    , m_handle(renderer.create_descriptor_set_handle(graphics_pipeline.handle(), descriptor_set))
 {
 }
 
@@ -94,7 +88,7 @@ bool DescriptorSet::is_valid() const
 }
 void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle)
 {
-    m_renderer->write_descriptor_binding_uniform(m_handle, binding, handle);
+    m_renderer->write_descriptor_binding(m_handle, binding, handle);
 }
 void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer)
 {
@@ -102,7 +96,7 @@ void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, Unifor
 }
 void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, TextureHandle handle)
 {
-    m_renderer->write_descriptor_binding_texture(m_handle, binding, handle);
+    m_renderer->write_descriptor_binding(m_handle, binding, handle);
 }
 void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, Texture& texture)
 {

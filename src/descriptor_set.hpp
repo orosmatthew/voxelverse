@@ -32,11 +32,11 @@ class UniformBufferHandle;
 class UniformBuffer;
 class TextureHandle;
 class Texture;
+class ShaderDescriptorSet;
 
 class DescriptorSet {
 public:
-    DescriptorSet(Renderer& renderer, GraphicsPipeline& pipeline, uint32_t set);
-    DescriptorSet(Renderer& renderer, GraphicsPipelineHandle pipeline, uint32_t set);
+    DescriptorSet(Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
     DescriptorSet(const DescriptorSet&) = delete;
 

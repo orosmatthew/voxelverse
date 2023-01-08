@@ -33,7 +33,7 @@ void run()
     mve::GraphicsPipeline graphics_pipeline
         = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
 
-    mve::DescriptorSet descriptor_set = graphics_pipeline.create_descriptor_set(0);
+    mve::DescriptorSet descriptor_set = graphics_pipeline.create_descriptor_set(vertex_shader.descriptor_set(0));
 
     mve::UniformBuffer uniform_buffer = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 

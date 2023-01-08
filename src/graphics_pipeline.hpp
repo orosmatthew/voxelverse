@@ -30,6 +30,7 @@ class Renderer;
 class Shader;
 class DescriptorSetHandle;
 class DescriptorSet;
+class ShaderDescriptorSet;
 
 class GraphicsPipeline {
 public:
@@ -57,9 +58,7 @@ public:
 
     [[nodiscard]] bool is_valid() const;
 
-    DescriptorSetHandle create_descriptor_set_handle(uint32_t set);
-
-    DescriptorSet create_descriptor_set(uint32_t set);
+    DescriptorSet create_descriptor_set(const ShaderDescriptorSet& descriptor_set);
 
 private:
     bool m_valid = false;

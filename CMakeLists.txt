@@ -64,7 +64,6 @@ set(LIB_INCLUDES
         lib/spdlog-1.11.0/include
         lib/vma-3.0.1/include
         lib/whereami-ba364cd/include
-        lib/strong_type-6/include
         lib/stb-8b5f1f3/include
         lib/tinyobjloader-45f683c/include
         lib/spirv-reflect-1.3.236/include)

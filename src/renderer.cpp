@@ -634,10 +634,10 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     return graphics_pipeline;
 }
 
-vk::PipelineLayout Renderer::create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandle>& layouts)
+vk::PipelineLayout Renderer::create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandleImpl>& layouts)
 {
     std::vector<vk::DescriptorSetLayout> vk_layouts;
-    for (DescriptorSetLayoutHandle handle : layouts) {
+    for (DescriptorSetLayoutHandleImpl handle : layouts) {
         vk_layouts.push_back(m_descriptor_set_layouts.at(handle));
     }
 
@@ -1184,9 +1184,9 @@ void Renderer::cmd_copy_buffer(
     command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
 }
 
-IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_t>& index_data)
+IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_t>& indices)
 {
-    size_t buffer_size = sizeof(uint32_t) * index_data.size();
+    size_t buffer_size = sizeof(uint32_t) * indices.size();
 
     Buffer staging_buffer = create_buffer(
         m_vma_allocator,
@@ -1197,7 +1197,7 @@ IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_
 
     void* data;
     vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, index_data.data(), buffer_size);
+    memcpy(data, indices.data(), buffer_size);
     vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
     Buffer buffer = create_buffer(
@@ -1236,7 +1236,7 @@ IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_
         });
     });
 
-    IndexBufferImpl index_buffer { buffer, index_data.size() };
+    IndexBufferImpl index_buffer { buffer, indices.size() };
 
     m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
     m_resource_handle_count++;
@@ -1479,26 +1479,16 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
     return descriptor_sets_result.value;
 }
 
-bool Renderer::is_valid(VertexBufferHandle handle)
-{
-    return m_vertex_buffers.contains(handle);
-}
-
-bool Renderer::is_valid(IndexBufferHandle handle)
-{
-    return m_index_buffers.contains(handle);
-}
-
-UniformBufferHandle Renderer::create_uniform_buffer_handle(const ShaderDescriptorBinding& binding)
+UniformBufferHandle Renderer::create_uniform_buffer_handle(const ShaderDescriptorBinding& descriptor_binding)
 {
     auto handle = UniformBufferHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
-    if (binding.type() != ShaderDescriptorType::uniform_buffer) {
+    if (descriptor_binding.type() != ShaderDescriptorType::uniform_buffer) {
         throw std::runtime_error("[Renderer] Failed to create uniform buffer as binding is not of type uniform buffer");
     }
 
-    uint32_t struct_size = binding.block().size();
+    uint32_t struct_size = descriptor_binding.block().size();
 
     for (FrameInFlight& frame : m_frames_in_flight) {
 
@@ -1641,109 +1631,7 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
     }
 }
 
-DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(const std::vector<DescriptorType>& layout)
-{
-    if (layout.empty()) {
-        throw std::runtime_error("[Renderer] Descriptor set layout is empty");
-    }
-
-    std::vector<vk::DescriptorSetLayoutBinding> bindings;
-    for (uint32_t i = 0; i < layout.size(); i++) {
-        auto binding
-            = vk::DescriptorSetLayoutBinding().setBinding(i).setDescriptorCount(1).setPImmutableSamplers(nullptr);
-
-        switch (layout.at(i)) {
-        case e_uniform_buffer:
-            binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-            binding.setStageFlags(vk::ShaderStageFlagBits::eAll);
-            break;
-        case e_combined_image_sampler:
-            binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-            binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
-            break;
-        }
-        bindings.push_back(binding);
-    }
-
-    auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindings(bindings);
-
-    vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
-        = m_vk_device.createDescriptorSetLayout(layout_info);
-    if (descriptor_set_layout_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to create descriptor set layout");
-    }
-    vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
-
-    auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
-    m_descriptor_set_layouts.insert({ handle, vk_layout });
-    m_resource_handle_count++;
-
-    LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
-
-    return handle;
-}
-
-// DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
-//     const ShaderDescriptorSet& vertex_set, const ShaderDescriptorSet& fragment_set)
-//{
-//     std::vector<vk::DescriptorSetLayoutBinding> bindings;
-//     for (const ShaderDescriptorBinding& shader_binding : vertex_set.bindings()) {
-//         auto binding = vk::DescriptorSetLayoutBinding()
-//                            .setBinding(shader_binding.binding())
-//                            .setDescriptorCount(1)
-//                            .setPImmutableSamplers(nullptr);
-//
-//         switch (shader_binding.type()) {
-//         case ShaderDescriptorType::uniform_buffer:
-//             binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-//             binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
-//             break;
-//         case ShaderDescriptorType::combined_image_sampler:
-//             binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-//             binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
-//             break;
-//         }
-//         bindings.push_back(binding);
-//     }
-//
-//     for (const ShaderDescriptorBinding& fragment_binding : fragment_set.bindings()) {
-//         auto binding = vk::DescriptorSetLayoutBinding()
-//                            .setBinding(fragment_binding.binding())
-//                            .setDescriptorCount(1)
-//                            .setPImmutableSamplers(nullptr);
-//
-//         switch (fragment_binding.type()) {
-//         case ShaderDescriptorType::uniform_buffer:
-//             binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-//             binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
-//             break;
-//         case ShaderDescriptorType::combined_image_sampler:
-//             binding.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-//             binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
-//             break;
-//         }
-//         bindings.push_back(binding);
-//     }
-//
-//     auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindings(bindings);
-//
-//     vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
-//         = m_vk_device.createDescriptorSetLayout(layout_info);
-//     if (descriptor_set_layout_result.result != vk::Result::eSuccess) {
-//         throw std::runtime_error("[Renderer] Failed to create descriptor set layout");
-//     }
-//     vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
-//
-//     auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
-//     m_descriptor_set_layouts.insert({ handle, vk_layout });
-//     m_resource_handle_count++;
-//
-//     LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
-//
-//     return handle;
-// }
-
-DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
+Renderer::DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
     uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader)
 {
     std::vector<vk::DescriptorSetLayoutBinding> bindings;
@@ -1799,45 +1687,47 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
     }
     vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
 
-    auto handle = DescriptorSetLayoutHandle(m_resource_handle_count);
+    auto handle = DescriptorSetLayoutHandleImpl(m_resource_handle_count);
     m_descriptor_set_layouts.insert({ handle, vk_layout });
     m_resource_handle_count++;
 
-    LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Descriptor set layout created with ID: {}", handle);
 
     return handle;
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set_handle(GraphicsPipelineHandle pipeline, uint32_t set)
+DescriptorSetHandle Renderer::create_descriptor_set_handle(
+    GraphicsPipelineHandle handle, const ShaderDescriptorSet& descriptor_set)
 {
     std::vector<DescriptorSetImpl> descriptor_sets;
     descriptor_sets.reserve(c_frames_in_flight);
 
-    vk::DescriptorSetLayout layout = m_descriptor_set_layouts.at(
-        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(pipeline).layout).descriptor_set_layouts.at(set));
+    vk::DescriptorSetLayout layout
+        = m_descriptor_set_layouts.at(m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout)
+                                          .descriptor_set_layouts.at(descriptor_set.set()));
 
     for (int i = 0; i < c_frames_in_flight; i++) {
         descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, layout));
     }
 
-    auto handle = DescriptorSetHandle(m_resource_handle_count);
+    auto descriptor_set_handle = DescriptorSetHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
     int i = 0;
     for (FrameInFlight& frame : m_frames_in_flight) {
-        frame.descriptor_sets.insert({ handle, descriptor_sets.at(i) });
+        frame.descriptor_sets.insert({ descriptor_set_handle, descriptor_sets.at(i) });
         i++;
     }
 
-    LOG->info("[Renderer] Descriptor set created with ID: {}", handle.value());
+    LOG->info("[Renderer] Descriptor set created with ID: {}", descriptor_set_handle.value());
 
-    return handle;
+    return descriptor_set_handle;
 }
 
 GraphicsPipelineHandle Renderer::create_graphics_pipeline_handle(
     const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
 {
-    GraphicsPipelineLayoutHandle layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
+    GraphicsPipelineLayoutHandleImpl layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
 
     vk::Pipeline vk_pipeline = create_vk_graphics_pipeline(
         m_vk_device,
@@ -1860,29 +1750,15 @@ GraphicsPipelineHandle Renderer::create_graphics_pipeline_handle(
     return handle;
 }
 
-// GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
-//     const std::vector<DescriptorSetLayoutHandle>& layouts)
-//{
-//     vk::PipelineLayout vk_layout = create_vk_pipeline_layout(layouts);
-//
-//     auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
-//     m_resource_handle_count++;
-//     m_graphics_pipeline_layouts.insert({ handle, vk_layout });
-//
-//     LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle.value_of().value_of());
-//
-//     return handle;
-// }
-
-GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
+Renderer::GraphicsPipelineLayoutHandleImpl Renderer::create_graphics_pipeline_layout(
     const Shader& vertex_shader, const Shader& fragment_shader)
 {
-    std::vector<DescriptorSetLayoutHandle> layouts;
-    std::unordered_map<uint32_t, DescriptorSetLayoutHandle> descriptor_set_layouts;
+    std::vector<DescriptorSetLayoutHandleImpl> layouts;
+    std::unordered_map<uint32_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
 
     for (uint32_t i = 0; i <= 3; i++) {
         if (vertex_shader.has_descriptor_set(i) || fragment_shader.has_descriptor_set(i)) {
-            DescriptorSetLayoutHandle descriptor_set_layout
+            DescriptorSetLayoutHandleImpl descriptor_set_layout
                 = create_descriptor_set_layout(i, vertex_shader, fragment_shader);
             layouts.push_back(descriptor_set_layout);
             descriptor_set_layouts.insert({ i, descriptor_set_layout });
@@ -1891,7 +1767,7 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
 
     vk::PipelineLayout vk_layout = create_vk_pipeline_layout(layouts);
 
-    auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
+    auto handle = GraphicsPipelineLayoutHandleImpl(m_resource_handle_count);
     m_resource_handle_count++;
 
     GraphicsPipelineLayoutImpl layout { .vk_handle = vk_layout,
@@ -1899,7 +1775,7 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
 
     m_graphics_pipeline_layouts.insert({ handle, layout });
 
-    LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle);
 
     return handle;
 }
@@ -2508,19 +2384,22 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
     m_command_buffer_deferred_functions.push(func);
 }
 
-void Renderer::write_descriptor_binding_texture(
-    DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture)
+void Renderer::write_descriptor_binding(
+    DescriptorSetHandle descriptor_set_handle,
+    const ShaderDescriptorBinding& descriptor_binding,
+    TextureHandle texture_handle)
 {
-    uint32_t binding_num = binding.binding();
-    defer_to_all_frames([this, texture, descriptor_set, binding_num](uint32_t frame_index) {
+    uint32_t binding_num = descriptor_binding.binding();
+    defer_to_all_frames([this, texture_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto image_info = vk::DescriptorImageInfo()
                               .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                              .setImageView(m_textures.at(texture).vk_image_view)
-                              .setSampler(m_textures.at(texture).vk_sampler);
+                              .setImageView(m_textures.at(texture_handle).vk_image_view)
+                              .setSampler(m_textures.at(texture_handle).vk_sampler);
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set).vk_handle)
+                  .setDstSet(
+                      this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle).vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
@@ -2531,26 +2410,29 @@ void Renderer::write_descriptor_binding_texture(
     });
 }
 
-void Renderer::write_descriptor_binding_texture(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture)
+void Renderer::write_descriptor_binding(
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
 {
-    write_descriptor_binding_texture(descriptor_set.handle(), binding, texture);
+    write_descriptor_binding(descriptor_set.handle(), descriptor_binding, texture.handle());
 }
 
-void Renderer::write_descriptor_binding_uniform(
-    DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer)
+void Renderer::write_descriptor_binding(
+    DescriptorSetHandle descriptor_set_handle,
+    const ShaderDescriptorBinding& descriptor_binding,
+    UniformBufferHandle uniform_buffer_handle)
 {
-    uint32_t binding_num = binding.binding();
-    defer_to_all_frames([this, uniform_buffer, descriptor_set, binding_num](uint32_t frame_index) {
+    uint32_t binding_num = descriptor_binding.binding();
+    defer_to_all_frames([this, uniform_buffer_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto buffer_info
             = vk::DescriptorBufferInfo()
-                  .setBuffer(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer).buffer.vk_handle)
+                  .setBuffer(
+                      m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle).buffer.vk_handle)
                   .setOffset(0)
-                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer).size);
+                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle).size);
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set).vk_handle)
+                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle).vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
@@ -2566,7 +2448,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
     return VertexBuffer(*this, vertex_data);
 }
 
-void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
+void Renderer::bind_vertex_buffer(VertexBuffer& vertex_buffer)
 {
     if (vertex_buffer.is_valid()) {
         bind_vertex_buffer(vertex_buffer.handle());
@@ -2594,13 +2476,13 @@ void Renderer::queue_destroy(GraphicsPipelineHandle handle)
 {
     defer_after_all_frames([this, handle](uint32_t) {
         // Descriptor set layouts
-        std::vector<DescriptorSetLayoutHandle> deleted_descriptor_set_layout_handles;
+        std::vector<DescriptorSetLayoutHandleImpl> deleted_descriptor_set_layout_handles;
         for (auto& [set, set_layout] :
              m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).descriptor_set_layouts) {
             m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout));
             deleted_descriptor_set_layout_handles.push_back(set_layout);
         }
-        for (DescriptorSetLayoutHandle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
+        for (DescriptorSetLayoutHandleImpl descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
             m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
         }
 
@@ -2633,9 +2515,10 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
     return GraphicsPipeline(*this, vertex_shader, fragment_shader, vertex_layout);
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set_handle(GraphicsPipeline& pipeline, uint32_t set)
+DescriptorSet Renderer::create_descriptor_set(
+    GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
 {
-    return create_descriptor_set_handle(pipeline.handle(), set);
+    return DescriptorSet(*this, graphics_pipeline, descriptor_set);
 }
 
 void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
@@ -2659,28 +2542,19 @@ void Renderer::queue_destroy(DescriptorSetHandle handle)
     });
 }
 
-DescriptorSet Renderer::create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set)
+void Renderer::write_descriptor_binding(
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
 {
-    return DescriptorSet(*this, pipeline, set);
-}
-
-DescriptorSet Renderer::create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set)
-{
-    return DescriptorSet(*this, pipeline.handle(), set);
-}
-void Renderer::write_descriptor_binding_uniform(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer)
-{
-    write_descriptor_binding_uniform(descriptor_set.handle(), binding, uniform_buffer.handle());
+    write_descriptor_binding(descriptor_set.handle(), descriptor_binding, uniform_buffer.handle());
 }
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
 {
     bind_descriptor_set(descriptor_set.handle());
 }
-UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& binding)
+UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& descriptor_binding)
 {
-    return UniformBuffer(*this, binding);
+    return UniformBuffer(*this, descriptor_binding);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
 {
@@ -2724,10 +2598,10 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
 {
     return Texture(*this, path);
 }
-void Renderer::write_descriptor_binding_texture(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, Texture& texture)
+
+void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
 {
-    write_descriptor_binding_texture(descriptor_set.handle(), binding, texture.handle());
+    draw_vertex_buffer(vertex_buffer.handle());
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
