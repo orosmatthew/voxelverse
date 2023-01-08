@@ -19,6 +19,10 @@ Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
     , m_cursor_hidden(false)
     , m_cursor_in_window(true)
     , m_event_waiting(false)
+    , m_mouse_delta(0.0f)
+    , m_mouse_pos_prev(0.0f)
+    , m_current_mouse_pos(0.0f)
+    , m_mouse_pos(0.0f)
 {
     m_windowed_size = m_size;
     glfwInit();
@@ -39,6 +43,8 @@ Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
     glfwSetWindowFocusCallback(m_glfw_window.get(), glfw_focused_callback);
     glfwGetFramebufferSize(m_glfw_window.get(), &(m_size.x), &(m_size.y));
     glfwSetCursorEnterCallback(m_glfw_window.get(), glfw_cursor_enter_callback);
+    glfwSetMouseButtonCallback(m_glfw_window.get(), glfw_mouse_button_callback);
+    glfwSetCursorPosCallback(m_glfw_window.get(), glfw_cursor_pos_callback);
     glfwSetKeyCallback(m_glfw_window.get(), glfw_key_callback);
 }
 
@@ -76,6 +82,11 @@ void Window::poll_events()
     else {
         glfwPollEvents();
     }
+
+    m_mouse_pos = m_current_mouse_pos;
+    m_mouse_delta = m_mouse_pos - m_mouse_pos_prev;
+    m_mouse_pos_prev = m_mouse_pos;
+
     m_keys_pressed.clear();
     for (InputKey key : m_current_keys_down) {
         if (!m_keys_down.contains(key)) {
@@ -85,6 +96,16 @@ void Window::poll_events()
     m_keys_released = m_current_keys_released;
     m_current_keys_released.clear();
     m_keys_down = m_current_keys_down;
+
+    m_mouse_buttons_pressed.clear();
+    for (InputMouseButton button : m_current_mouse_buttons_down) {
+        if (!m_mouse_buttons_down.contains(button)) {
+            m_mouse_buttons_pressed.insert(button);
+        }
+    }
+    m_mouse_buttons_released = m_current_mouse_buttons_released;
+    m_current_mouse_buttons_released.clear();
+    m_mouse_buttons_down = m_current_mouse_buttons_down;
 }
 
 void Window::wait_for_events() const
@@ -383,4 +404,41 @@ void Window::fullscreen(bool use_native)
     }
 }
 
+void Window::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    if (action == GLFW_PRESS) {
+        instance->m_current_mouse_buttons_down.insert(static_cast<InputMouseButton>(button));
+    }
+    else if (action == GLFW_RELEASE) {
+        instance->m_current_mouse_buttons_down.erase(static_cast<InputMouseButton>(button));
+        instance->m_current_mouse_buttons_released.insert(static_cast<InputMouseButton>(button));
+    }
+}
+
+void Window::glfw_cursor_pos_callback(GLFWwindow* window, double pos_x, double pos_y)
+{
+    auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    instance->m_current_mouse_pos = glm::vec2(static_cast<float>(pos_x), static_cast<float>(pos_y));
+}
+bool Window::is_mouse_button_down(InputMouseButton button) const
+{
+    return m_mouse_buttons_down.contains(button);
+}
+bool Window::is_mouse_button_pressed(InputMouseButton button) const
+{
+    return m_mouse_buttons_pressed.contains(button);
+}
+bool Window::is_mouse_button_released(InputMouseButton button) const
+{
+    return m_mouse_buttons_released.contains(button);
+}
+glm::vec2 Window::mouse_pos() const
+{
+    return m_mouse_pos;
+}
+glm::vec2 Window::mouse_delta() const
+{
+    return m_mouse_delta;
+}
 }

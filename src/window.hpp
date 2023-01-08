@@ -313,6 +313,16 @@ public:
 
     [[nodiscard]] bool is_key_released(InputKey key) const;
 
+    [[nodiscard]] bool is_mouse_button_down(InputMouseButton button) const;
+
+    [[nodiscard]] bool is_mouse_button_pressed(InputMouseButton button) const;
+
+    [[nodiscard]] bool is_mouse_button_released(InputMouseButton button) const;
+
+    [[nodiscard]] glm::vec2 mouse_pos() const;
+
+    [[nodiscard]] glm::vec2 mouse_delta() const;
+
     void fullscreen(bool use_native = false);
 
     void windowed();
@@ -400,6 +410,17 @@ private:
     std::set<InputKey> m_current_keys_released {};
     std::set<InputKey> m_keys_released {};
 
+    std::set<InputMouseButton> m_current_mouse_buttons_down {};
+    std::set<InputMouseButton> m_mouse_buttons_down {};
+    std::set<InputMouseButton> m_current_mouse_buttons_released {};
+    std::set<InputMouseButton> m_mouse_buttons_pressed {};
+    std::set<InputMouseButton> m_mouse_buttons_released {};
+
+    glm::vec2 m_current_mouse_pos;
+    glm::vec2 m_mouse_pos_prev;
+    glm::vec2 m_mouse_delta;
+    glm::vec2 m_mouse_pos;
+
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 
     static void glfw_iconify_callback(GLFWwindow* window, int iconified);
@@ -407,6 +428,10 @@ private:
     static void glfw_focused_callback(GLFWwindow* window, int focused);
 
     static void glfw_cursor_enter_callback(GLFWwindow* window, int entered);
+
+    static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+
+    static void glfw_cursor_pos_callback(GLFWwindow* window, double pos_x, double pos_y);
 
     static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };

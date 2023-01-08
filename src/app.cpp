@@ -8,7 +8,13 @@
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "util.hpp"
+#include "util/fixed_loop.hpp"
 #include "window.hpp"
+
+static glm::vec3 lerp(const glm::vec3& a, const glm::vec3& b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
 
 namespace app {
 
@@ -19,6 +25,8 @@ void run()
     mve::Window window("Mini Vulkan Engine", glm::ivec2(800, 600));
 
     window.set_min_size({ 800, 600 });
+
+    window.disable_cursor();
 
     mve::Renderer renderer(window, "Vulkan Testing", 0, 0, 1);
 
@@ -42,20 +50,14 @@ void run()
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
 
-    auto start_time = std::chrono::high_resolution_clock::now();
-
-    glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
     mve::UniformLocation view_location = vertex_shader.descriptor_set(0).binding(0).member("view").location();
     mve::UniformLocation model_location = vertex_shader.descriptor_set(0).binding(0).member("model").location();
     mve::UniformLocation proj_location = vertex_shader.descriptor_set(0).binding(0).member("proj").location();
 
-    uniform_buffer.update(view_location, view);
-
     auto resize_func = [&](glm::ivec2 new_size) {
         renderer.resize(window);
         glm::mat4 proj = glm::perspective(
-            glm::radians(45.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.1f, 10.0f);
+            glm::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 10.0f);
         proj[1][1] *= -1;
         uniform_buffer.update(proj_location, proj);
     };
@@ -70,9 +72,88 @@ void run()
 
     glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
+    const float camera_acceleration = 0.0045f;
+    const float camera_speed = 0.05f;
+    const float camera_friction = 0.1f;
+    glm::vec3 camera_pos = glm::vec3(0.0f, 3.0f, 0.0f);
+    glm::vec3 camera_pos_prev = camera_pos;
+    glm::vec3 camera_front = glm::vec3(0.0f, -1.0f, 0.0f);
+    glm::vec3 camera_direction;
+    glm::vec3 camera_up = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 camera_velocity = glm::vec3(0.0f);
+    glm::mat4 view;
+    float camera_yaw = 0.0f;
+    float camera_pitch = 0.0f;
+    view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
+
+    uniform_buffer.update(view_location, view);
+
+    util::FixedLoop fixed_loop(60.0f);
+
+    bool cursor_captured = true;
+
     while (!window.should_close()) {
         window.poll_events();
 
+        fixed_loop.update(20, [&]() {
+            glm::vec3 dir(0.0f);
+            if (window.is_key_down(mve::InputKey::w)) {
+                dir.x += glm::cos(glm::radians(camera_yaw));
+                dir.y += glm::sin(glm::radians(camera_yaw));
+            }
+            if (window.is_key_down(mve::InputKey::s)) {
+                dir.x -= glm::cos(glm::radians(camera_yaw));
+                dir.y -= glm::sin(glm::radians(camera_yaw));
+            }
+            if (window.is_key_down(mve::InputKey::a)) {
+                dir.x += glm::cos(glm::radians(camera_yaw + 90.0f));
+                dir.y += glm::sin(glm::radians(camera_yaw + 90.0f));
+            }
+            if (window.is_key_down(mve::InputKey::d)) {
+                dir.x -= glm::cos(glm::radians(camera_yaw + 90.0f));
+                dir.y -= glm::sin(glm::radians(camera_yaw + 90.0f));
+            }
+            if (window.is_key_down(mve::InputKey::space)) {
+                dir.z += 1;
+            }
+            if (window.is_key_down(mve::InputKey::left_shift)) {
+                dir.z -= 1;
+            }
+            camera_velocity -= (camera_velocity * camera_friction);
+            camera_pos_prev = camera_pos;
+            if (dir != glm::vec3(0.0f)) {
+                camera_velocity += glm::normalize(dir) * camera_acceleration;
+            }
+            if (glm::length(camera_velocity) > camera_speed) {
+                camera_velocity = glm::normalize(camera_velocity) * camera_speed;
+            }
+            camera_pos += camera_velocity;
+
+            if (window.is_key_down(mve::InputKey::left)) {
+                model = glm::rotate(model, glm::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+            }
+            if (window.is_key_down(mve::InputKey::right)) {
+                model = glm::rotate(model, glm::radians(-0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+            }
+        });
+
+        if (cursor_captured) {
+            glm::vec2 mouse_delta = window.mouse_delta();
+            camera_yaw -= mouse_delta.x * 0.1f;
+            camera_pitch -= mouse_delta.y * 0.1f;
+        }
+
+        camera_pitch = glm::clamp(camera_pitch, -89.0f, 89.0f);
+        glm::vec3 direction;
+        direction.x = glm::cos(glm::radians(camera_yaw)) * glm::cos(glm::radians(camera_pitch));
+        direction.y = glm::sin(glm::radians(camera_yaw)) * glm::cos(glm::radians(camera_pitch));
+        direction.z = glm::sin(glm::radians(camera_pitch));
+        camera_front = glm::normalize(direction);
+
+        glm::vec3 pos = lerp(camera_pos_prev, camera_pos, fixed_loop.blend());
+        view = glm::lookAt(pos, pos + camera_front, camera_up);
+
+        uniform_buffer.update(view_location, view);
         if (window.is_key_pressed(mve::InputKey::escape)) {
             break;
         }
@@ -86,14 +167,15 @@ void run()
             }
         }
 
-        auto current_time = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
-
-        if (window.is_key_down(mve::InputKey::left)) {
-            model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
-        }
-        if (window.is_key_down(mve::InputKey::right)) {
-            model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        if (window.is_key_pressed(mve::InputKey::c)) {
+            if (cursor_captured) {
+                window.enable_cursor();
+                cursor_captured = false;
+            }
+            else {
+                window.disable_cursor();
+                cursor_captured = true;
+            }
         }
 
         uniform_buffer.update(model_location, model, false);

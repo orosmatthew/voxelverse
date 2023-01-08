@@ -53,7 +53,8 @@ set(SOURCE_FILES
         src/graphics_pipeline.cpp
         src/descriptor_set.cpp
         src/uniform_buffer.cpp
-        src/texture.cpp)
+        src/texture.cpp
+        src/util/fixed_loop.cpp)
 
 set(LIBS
         Vulkan::Vulkan
