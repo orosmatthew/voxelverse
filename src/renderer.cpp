@@ -128,7 +128,7 @@ vk::Instance Renderer::create_vk_instance(
 {
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
     if (!has_validation_layer_support()) {
-        throw std::runtime_error("Validation layers requested but not available");
+        throw std::runtime_error("[Renderer] Validation layers requested but not available");
     }
 #endif
 
@@ -184,7 +184,7 @@ vk::PhysicalDevice Renderer::pick_vk_physical_device(vk::Instance instance, vk::
     std::vector<vk::PhysicalDevice> physical_devices = std::move(physical_devices_result.value);
 
     if (physical_devices.empty()) {
-        throw std::runtime_error("Failed to find Vulkan device");
+        throw std::runtime_error("[Renderer] Failed to find Vulkan device");
     }
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
@@ -328,7 +328,7 @@ vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* wi
     VkSurfaceKHR surface;
     VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     if (result != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create window surface");
+        throw std::runtime_error("[Renderer] Failed to create window surface");
     }
     return { surface };
 }
@@ -624,7 +624,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 
     vk::ResultValue<vk::Pipeline> pipeline_result = device.createGraphicsPipeline(nullptr, graphics_pipeline_info);
     if (pipeline_result.result != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed to create graphics pipeline");
+        throw std::runtime_error("[Renderer] Failed to create graphics pipeline");
     }
     vk::Pipeline graphics_pipeline = pipeline_result.value;
 
@@ -971,7 +971,7 @@ vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance inst
         return { debug_messenger };
     }
     else {
-        throw std::runtime_error("Failed to create Vulkan debug messenger");
+        throw std::runtime_error("[Renderer] Failed to create Vulkan debug messenger");
     }
 }
 
@@ -996,68 +996,6 @@ void Renderer::cleanup_vk_debug_messenger()
     if (func != nullptr) {
         func(m_vk_instance, m_vk_debug_utils_messenger, nullptr);
     }
-}
-
-VertexBufferHandle Renderer::create_vertex_buffer_handle(const VertexData& vertex_data)
-{
-    size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
-
-    Buffer staging_buffer = create_buffer(
-        m_vma_allocator,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-
-    void* data;
-    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, vertex_data.data_ptr(), buffer_size);
-    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    Buffer buffer = create_buffer(
-        m_vma_allocator,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
-
-    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
-        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
-
-        auto barrier
-            = vk::BufferMemoryBarrier()
-                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
-                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setBuffer(buffer.vk_handle)
-                  .setOffset(0)
-                  .setSize(buffer_size);
-
-        command_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            {},
-            0,
-            nullptr,
-            1,
-            &barrier,
-            0,
-            nullptr);
-
-        defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-        });
-    });
-
-    VertexBufferImpl vertex_buffer { buffer, vertex_data.vertex_count() };
-
-    m_vertex_buffers[VertexBufferHandle(m_resource_handle_count)] = vertex_buffer;
-    m_resource_handle_count++;
-
-    LOG->info("[Renderer] Vertex buffer created with ID: {}", m_resource_handle_count - 1);
-
-    return VertexBufferHandle(m_resource_handle_count - 1);
 }
 
 vk::VertexInputBindingDescription Renderer::create_vk_binding_description(const VertexLayout& layout)
@@ -1142,8 +1080,14 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
     return frames_in_flight;
 }
 
-void Renderer::queue_destroy(VertexBufferHandle handle)
+void Renderer::destroy(VertexBuffer& vertex_buffer)
 {
+    if (!vertex_buffer.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid vertex buffer");
+    }
+    LOG->info("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
+    uint64_t handle = vertex_buffer.handle();
+    vertex_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
@@ -1184,79 +1128,6 @@ void Renderer::cmd_copy_buffer(
     command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
 }
 
-IndexBufferHandle Renderer::create_index_buffer_handle(const std::vector<uint32_t>& indices)
-{
-    size_t buffer_size = sizeof(uint32_t) * indices.size();
-
-    Buffer staging_buffer = create_buffer(
-        m_vma_allocator,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-
-    void* data;
-    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, indices.data(), buffer_size);
-    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    Buffer buffer = create_buffer(
-        m_vma_allocator,
-        buffer_size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
-
-    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
-        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
-
-        auto barrier
-            = vk::BufferMemoryBarrier()
-                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
-                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setBuffer(buffer.vk_handle)
-                  .setOffset(0)
-                  .setSize(buffer_size);
-
-        command_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            {},
-            0,
-            nullptr,
-            1,
-            &barrier,
-            0,
-            nullptr);
-
-        defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-        });
-    });
-
-    IndexBufferImpl index_buffer { buffer, indices.size() };
-
-    m_index_buffers[IndexBufferHandle(m_resource_handle_count)] = index_buffer;
-    m_resource_handle_count++;
-
-    LOG->info("[Renderer] Index buffer created with ID: {}", m_resource_handle_count - 1);
-
-    return IndexBufferHandle(m_resource_handle_count - 1);
-}
-
-void Renderer::queue_destroy(IndexBufferHandle handle)
-{
-    defer_after_all_frames([this, handle](uint32_t) {
-        vmaDestroyBuffer(
-            m_vma_allocator,
-            m_index_buffers.at(handle).buffer.vk_handle,
-            m_index_buffers.at(handle).buffer.vma_allocation);
-        m_index_buffers.erase(handle);
-    });
-}
-
 void Renderer::begin(const Window& window)
 {
     if (m_current_draw_state.is_drawing) {
@@ -1272,7 +1143,7 @@ void Renderer::begin(const Window& window)
     vk::ResultValue<uint32_t> acquire_result
         = m_vk_device.acquireNextImageKHR(m_vk_swapchain, UINT64_MAX, frame.image_available_semaphore, nullptr);
     if (acquire_result.result != vk::Result::eSuccess && acquire_result.result != vk::Result::eSuboptimalKHR) {
-        throw std::runtime_error("Failed to acquire swapchain image");
+        throw std::runtime_error("[Renderer] Failed to acquire swapchain image");
     }
     else if (acquire_result.result == vk::Result::eSuboptimalKHR) {
         recreate_swapchain(window);
@@ -1405,25 +1276,6 @@ void Renderer::end(const Window& window)
     m_current_draw_state.is_drawing = false;
 }
 
-void Renderer::draw_vertex_buffer(VertexBufferHandle handle)
-{
-    VertexBufferImpl& vertex_buffer = m_vertex_buffers.at(handle);
-    m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer.buffer.vk_handle, { 0 });
-    m_current_draw_state.command_buffer.draw(vertex_buffer.vertex_count, 1, 0, 0);
-}
-
-void Renderer::bind_vertex_buffer(VertexBufferHandle handle)
-{
-    m_current_draw_state.command_buffer.bindVertexBuffers(0, m_vertex_buffers.at(handle).buffer.vk_handle, { 0 });
-}
-
-void Renderer::draw_index_buffer(IndexBufferHandle handle)
-{
-    IndexBufferImpl& index_buffer = m_index_buffers.at(handle);
-    m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer.buffer.vk_handle, 0, vk::IndexType::eUint32);
-    m_current_draw_state.command_buffer.drawIndexed(index_buffer.index_count, 1, 0, 0, 0);
-}
-
 vk::DescriptorSetLayout Renderer::create_vk_descriptor_set_layout(vk::Device device)
 {
     auto ubo_layout_binding
@@ -1479,58 +1331,6 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
     return descriptor_sets_result.value;
 }
 
-UniformBufferHandle Renderer::create_uniform_buffer_handle(const ShaderDescriptorBinding& descriptor_binding)
-{
-    auto handle = UniformBufferHandle(m_resource_handle_count);
-    m_resource_handle_count++;
-
-    if (descriptor_binding.type() != ShaderDescriptorType::uniform_buffer) {
-        throw std::runtime_error("[Renderer] Failed to create uniform buffer as binding is not of type uniform buffer");
-    }
-
-    uint32_t struct_size = descriptor_binding.block().size();
-
-    for (FrameInFlight& frame : m_frames_in_flight) {
-
-        Buffer buffer = create_buffer(
-            m_vma_allocator, struct_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-        void* ptr;
-        vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
-
-        frame.uniform_buffers[handle] = UniformBufferImpl { buffer, struct_size, static_cast<std::byte*>(ptr) };
-    }
-
-    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle.value());
-
-    return handle;
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat4), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-
-void Renderer::bind_descriptor_set(DescriptorSetHandle handle)
-{
-    m_current_draw_state.command_buffer.bindDescriptorSets(
-        vk::PipelineBindPoint::eGraphics,
-        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
-        0,
-        1,
-        &(m_frames_in_flight.at(m_current_draw_state.frame_index).descriptor_sets.at(handle).vk_handle),
-        0,
-        nullptr);
-}
-
 glm::ivec2 Renderer::extent() const
 {
     return { m_vk_swapchain_extent.width, m_vk_swapchain_extent.height };
@@ -1542,93 +1342,15 @@ void Renderer::wait_ready()
 
     vk::Result fence_wait_result = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX);
     if (fence_wait_result != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed waiting for frame (fences)");
-    }
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(float), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
+        throw std::runtime_error("[Renderer] Failed waiting for frame (fences)");
     }
 }
 
 void Renderer::update_uniform(
-    UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
+    uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
 {
     UniformBufferImpl& buffer = m_frames_in_flight.at(frame_index).uniform_buffers.at(handle);
     memcpy(&(buffer.mapped_ptr[location.value()]), data_ptr, size);
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-
-void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value, bool persist)
-{
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(decltype(value)), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
 }
 
 Renderer::DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
@@ -1696,60 +1418,6 @@ Renderer::DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
     return handle;
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set_handle(
-    GraphicsPipelineHandle handle, const ShaderDescriptorSet& descriptor_set)
-{
-    std::vector<DescriptorSetImpl> descriptor_sets;
-    descriptor_sets.reserve(c_frames_in_flight);
-
-    vk::DescriptorSetLayout layout
-        = m_descriptor_set_layouts.at(m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout)
-                                          .descriptor_set_layouts.at(descriptor_set.set()));
-
-    for (int i = 0; i < c_frames_in_flight; i++) {
-        descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, layout));
-    }
-
-    auto descriptor_set_handle = DescriptorSetHandle(m_resource_handle_count);
-    m_resource_handle_count++;
-
-    int i = 0;
-    for (FrameInFlight& frame : m_frames_in_flight) {
-        frame.descriptor_sets.insert({ descriptor_set_handle, descriptor_sets.at(i) });
-        i++;
-    }
-
-    LOG->info("[Renderer] Descriptor set created with ID: {}", descriptor_set_handle.value());
-
-    return descriptor_set_handle;
-}
-
-GraphicsPipelineHandle Renderer::create_graphics_pipeline_handle(
-    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
-{
-    GraphicsPipelineLayoutHandleImpl layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
-
-    vk::Pipeline vk_pipeline = create_vk_graphics_pipeline(
-        m_vk_device,
-        vertex_shader,
-        fragment_shader,
-        m_graphics_pipeline_layouts.at(layout).vk_handle,
-        m_vk_render_pass,
-        vertex_layout,
-        m_msaa_samples);
-
-    auto handle = GraphicsPipelineHandle(m_resource_handle_count);
-    m_resource_handle_count++;
-
-    GraphicsPipelineImpl pipeline { .layout = layout, .pipeline = vk_pipeline };
-
-    m_graphics_pipelines.insert({ handle, pipeline });
-
-    LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle.value());
-
-    return handle;
-}
-
 Renderer::GraphicsPipelineLayoutHandleImpl Renderer::create_graphics_pipeline_layout(
     const Shader& vertex_shader, const Shader& fragment_shader)
 {
@@ -1778,13 +1446,6 @@ Renderer::GraphicsPipelineLayoutHandleImpl Renderer::create_graphics_pipeline_la
     LOG->info("[Renderer] Graphics pipeline layout created with ID: {}", handle);
 
     return handle;
-}
-
-void Renderer::bind_graphics_pipeline(GraphicsPipelineHandle handle)
-{
-    m_current_draw_state.command_buffer.bindPipeline(
-        vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(handle).pipeline);
-    m_current_draw_state.current_pipeline = handle;
 }
 
 void Renderer::defer_to_all_frames(std::function<void(uint32_t)> func)
@@ -2007,93 +1668,6 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
         throw std::runtime_error("[Renderer] Failed to create image sampler");
     }
     return sampler_result.value;
-}
-
-TextureHandle Renderer::create_texture_handle(const std::filesystem::path& path)
-{
-    int width;
-    int height;
-    int channels;
-    std::string path_string = path.string();
-    stbi_uc* pixels = stbi_load(path_string.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-    vk::DeviceSize size = width * height * 4;
-    if (!pixels) {
-        throw std::runtime_error("[Renderer] Failed to load texture image");
-    }
-
-    uint32_t mip_levels = static_cast<uint32_t>(glm::floor(glm::log2(static_cast<float>(glm::max(width, height))))) + 1;
-
-    Buffer staging_buffer = create_buffer(
-        m_vma_allocator,
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-
-    void* data;
-    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, pixels, static_cast<size_t>(size));
-    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    stbi_image_free(pixels);
-
-    Image image = create_image(
-        m_vma_allocator,
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height),
-        mip_levels,
-        vk::SampleCountFlagBits::e1,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
-
-    defer_to_command_buffer_front(
-        [this, image, mip_levels, staging_buffer, width, height](vk::CommandBuffer command_buffer) {
-            cmd_transition_image_layout(
-                command_buffer,
-                image.vk_handle,
-                vk::Format::eR8G8B8A8Srgb,
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal,
-                mip_levels);
-
-            cmd_copy_buffer_to_image(
-                command_buffer,
-                staging_buffer.vk_handle,
-                image.vk_handle,
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height));
-
-            cmd_generate_mipmaps(
-                m_vk_physical_device,
-                command_buffer,
-                image.vk_handle,
-                vk::Format::eR8G8B8A8Srgb,
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height),
-                mip_levels);
-
-            defer_to_next_frame([this, staging_buffer](uint32_t) {
-                vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-            });
-        });
-
-    vk::ImageView image_view = create_image_view(
-        m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mip_levels);
-
-    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
-
-    TextureImpl texture {
-        .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels
-    };
-
-    TextureHandle handle = TextureHandle(m_resource_handle_count);
-    m_resource_handle_count++;
-    m_textures.insert({ handle, texture });
-
-    LOG->info("[Renderer] Texture created with ID: {}", handle.value());
-
-    return handle;
 }
 
 Renderer::DepthImage Renderer::create_depth_image(
@@ -2385,11 +1959,11 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
 }
 
 void Renderer::write_descriptor_binding(
-    DescriptorSetHandle descriptor_set_handle,
-    const ShaderDescriptorBinding& descriptor_binding,
-    TextureHandle texture_handle)
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
 {
     uint32_t binding_num = descriptor_binding.binding();
+    uint64_t texture_handle = texture.handle();
+    uint64_t descriptor_set_handle = descriptor_set.handle();
     defer_to_all_frames([this, texture_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto image_info = vk::DescriptorImageInfo()
                               .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
@@ -2410,18 +1984,210 @@ void Renderer::write_descriptor_binding(
     });
 }
 
-void Renderer::write_descriptor_binding(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
+VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
 {
-    write_descriptor_binding(descriptor_set.handle(), descriptor_binding, texture.handle());
+    size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
+
+    Buffer staging_buffer = create_buffer(
+        m_vma_allocator,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+    void* data;
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+    memcpy(data, vertex_data.data_ptr(), buffer_size);
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+
+    Buffer buffer = create_buffer(
+        m_vma_allocator,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+
+    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
+        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
+
+        auto barrier
+            = vk::BufferMemoryBarrier()
+                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
+                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setBuffer(buffer.vk_handle)
+                  .setOffset(0)
+                  .setSize(buffer_size);
+
+        command_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eVertexInput,
+            {},
+            0,
+            nullptr,
+            1,
+            &barrier,
+            0,
+            nullptr);
+
+        defer_to_next_frame([this, staging_buffer](uint32_t) {
+            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        });
+    });
+
+    VertexBufferImpl vertex_buffer { buffer, vertex_data.vertex_count() };
+
+    m_vertex_buffers[m_resource_handle_count] = vertex_buffer;
+    m_resource_handle_count++;
+
+    LOG->info("[Renderer] Vertex buffer created with ID: {}", m_resource_handle_count - 1);
+
+    return VertexBuffer(*this, m_resource_handle_count - 1);
+}
+
+void Renderer::bind_vertex_buffer(VertexBuffer& vertex_buffer)
+{
+    m_current_draw_state.command_buffer.bindVertexBuffers(
+        0, m_vertex_buffers.at(vertex_buffer.handle()).buffer.vk_handle, { 0 });
+}
+
+IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
+{
+    size_t buffer_size = sizeof(uint32_t) * indices.size();
+
+    Buffer staging_buffer = create_buffer(
+        m_vma_allocator,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+    void* data;
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+    memcpy(data, indices.data(), buffer_size);
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+
+    Buffer buffer = create_buffer(
+        m_vma_allocator,
+        buffer_size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+
+    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
+        cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
+
+        auto barrier
+            = vk::BufferMemoryBarrier()
+                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
+                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                  .setBuffer(buffer.vk_handle)
+                  .setOffset(0)
+                  .setSize(buffer_size);
+
+        command_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eVertexInput,
+            {},
+            0,
+            nullptr,
+            1,
+            &barrier,
+            0,
+            nullptr);
+
+        defer_to_next_frame([this, staging_buffer](uint32_t) {
+            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+        });
+    });
+
+    IndexBufferImpl index_buffer { buffer, indices.size() };
+
+    m_index_buffers[m_resource_handle_count] = index_buffer;
+    m_resource_handle_count++;
+
+    LOG->info("[Renderer] Index buffer created with ID: {}", m_resource_handle_count - 1);
+
+    return IndexBuffer(*this, m_resource_handle_count - 1);
+}
+
+void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
+{
+    IndexBufferImpl& index_buffer_impl = m_index_buffers.at(index_buffer.handle());
+    m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer_impl.buffer.vk_handle, 0, vk::IndexType::eUint32);
+    m_current_draw_state.command_buffer.drawIndexed(index_buffer_impl.index_count, 1, 0, 0, 0);
+}
+
+GraphicsPipeline Renderer::create_graphics_pipeline(
+    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
+{
+    GraphicsPipelineLayoutHandleImpl layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
+
+    vk::Pipeline vk_pipeline = create_vk_graphics_pipeline(
+        m_vk_device,
+        vertex_shader,
+        fragment_shader,
+        m_graphics_pipeline_layouts.at(layout).vk_handle,
+        m_vk_render_pass,
+        vertex_layout,
+        m_msaa_samples);
+
+    auto handle = m_resource_handle_count;
+    m_resource_handle_count++;
+
+    GraphicsPipelineImpl pipeline { .layout = layout, .pipeline = vk_pipeline };
+
+    m_graphics_pipelines.insert({ handle, pipeline });
+
+    LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle);
+
+    return GraphicsPipeline(*this, handle);
+}
+
+DescriptorSet Renderer::create_descriptor_set(
+    GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
+{
+    std::vector<DescriptorSetImpl> descriptor_sets;
+    descriptor_sets.reserve(c_frames_in_flight);
+
+    vk::DescriptorSetLayout layout = m_descriptor_set_layouts.at(
+        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(graphics_pipeline.handle()).layout)
+            .descriptor_set_layouts.at(descriptor_set.set()));
+
+    for (int i = 0; i < c_frames_in_flight; i++) {
+        descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, layout));
+    }
+
+    auto descriptor_set_handle = m_resource_handle_count;
+    m_resource_handle_count++;
+
+    int i = 0;
+    for (FrameInFlight& frame : m_frames_in_flight) {
+        frame.descriptor_sets.insert({ descriptor_set_handle, descriptor_sets.at(i) });
+        i++;
+    }
+
+    LOG->info("[Renderer] Descriptor set created with ID: {}", descriptor_set_handle);
+
+    return DescriptorSet(*this, descriptor_set_handle);
+}
+
+void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
+{
+    m_current_draw_state.command_buffer.bindPipeline(
+        vk::PipelineBindPoint::eGraphics, m_graphics_pipelines.at(graphics_pipeline.handle()).pipeline);
+    m_current_draw_state.current_pipeline = graphics_pipeline.handle();
 }
 
 void Renderer::write_descriptor_binding(
-    DescriptorSetHandle descriptor_set_handle,
-    const ShaderDescriptorBinding& descriptor_binding,
-    UniformBufferHandle uniform_buffer_handle)
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
 {
     uint32_t binding_num = descriptor_binding.binding();
+    uint64_t uniform_buffer_handle = uniform_buffer.handle();
+    uint64_t descriptor_set_handle = descriptor_set.handle();
     defer_to_all_frames([this, uniform_buffer_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto buffer_info
             = vk::DescriptorBufferInfo()
@@ -2443,37 +2209,280 @@ void Renderer::write_descriptor_binding(
     });
 }
 
-VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
+void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
 {
-    return VertexBuffer(*this, vertex_data);
+    m_current_draw_state.command_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
+        0,
+        1,
+        &(m_frames_in_flight.at(m_current_draw_state.frame_index)
+              .descriptor_sets.at(descriptor_set.handle())
+              .vk_handle),
+        0,
+        nullptr);
 }
 
-void Renderer::bind_vertex_buffer(VertexBuffer& vertex_buffer)
+UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& descriptor_binding)
 {
-    if (vertex_buffer.is_valid()) {
-        bind_vertex_buffer(vertex_buffer.handle());
+    if (descriptor_binding.type() != ShaderDescriptorType::uniform_buffer) {
+        throw std::runtime_error("[Renderer] Failed to create uniform buffer as binding is not of type uniform buffer");
+    }
+
+    uint32_t struct_size = descriptor_binding.block().size();
+
+    auto handle = m_resource_handle_count;
+    m_resource_handle_count++;
+
+    for (FrameInFlight& frame : m_frames_in_flight) {
+
+        Buffer buffer = create_buffer(
+            m_vma_allocator, struct_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        void* ptr;
+        vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
+
+        frame.uniform_buffers[handle] = UniformBufferImpl { buffer, struct_size, static_cast<std::byte*>(ptr) };
+    }
+
+    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle);
+
+    return UniformBuffer(*this, handle);
+}
+
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
+{
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(float), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
     }
     else {
-        throw std::runtime_error("[Renderer] Attempted to bind invalid vertex buffer");
+        defer_to_next_frame(func);
     }
 }
-
-IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist)
 {
-    return IndexBuffer(*this, indices);
-}
-
-void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
-{
-    if (index_buffer.is_valid()) {
-        draw_index_buffer(index_buffer.handle());
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec2), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
     }
     else {
-        throw std::runtime_error("[Renderer] Attempted to draw invalid index buffer");
+        defer_to_next_frame(func);
     }
 }
-void Renderer::queue_destroy(GraphicsPipelineHandle handle)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist)
 {
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec3), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
+    }
+    else {
+        defer_to_next_frame(func);
+    }
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist)
+{
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec4), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
+    }
+    else {
+        defer_to_next_frame(func);
+    }
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
+{
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat2), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
+    }
+    else {
+        defer_to_next_frame(func);
+    }
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist)
+{
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat3), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
+    }
+    else {
+        defer_to_next_frame(func);
+    }
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist)
+{
+    uint64_t handle = uniform_buffer.handle();
+    auto func = [this, handle, location, value](uint32_t frame_index) {
+        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat4), frame_index);
+    };
+    if (persist) {
+        defer_to_all_frames(func);
+    }
+    else {
+        defer_to_next_frame(func);
+    }
+}
+
+void Renderer::destroy(Texture& texture)
+{
+    if (!texture.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid texture");
+    }
+    LOG->info("[Renderer] Destroyed texture with ID: {}", texture.handle());
+    uint64_t handle = texture.handle();
+    texture.invalidate();
+    defer_after_all_frames([this, handle](uint32_t) {
+        TextureImpl& texture = m_textures.at(handle);
+        m_vk_device.destroy(texture.vk_sampler);
+        m_vk_device.destroy(texture.vk_image_view);
+        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
+        m_textures.erase(handle);
+    });
+}
+
+Texture Renderer::create_texture(const std::filesystem::path& path)
+{
+    int width;
+    int height;
+    int channels;
+    std::string path_string = path.string();
+    stbi_uc* pixels = stbi_load(path_string.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+    vk::DeviceSize size = width * height * 4;
+    if (!pixels) {
+        throw std::runtime_error("[Renderer] Failed to load texture image");
+    }
+
+    uint32_t mip_levels = static_cast<uint32_t>(glm::floor(glm::log2(static_cast<float>(glm::max(width, height))))) + 1;
+
+    Buffer staging_buffer = create_buffer(
+        m_vma_allocator,
+        size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_AUTO,
+        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+    void* data;
+    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
+    memcpy(data, pixels, static_cast<size_t>(size));
+    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
+
+    stbi_image_free(pixels);
+
+    Image image = create_image(
+        m_vma_allocator,
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height),
+        mip_levels,
+        vk::SampleCountFlagBits::e1,
+        vk::Format::eR8G8B8A8Srgb,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
+
+    defer_to_command_buffer_front(
+        [this, image, mip_levels, staging_buffer, width, height](vk::CommandBuffer command_buffer) {
+            cmd_transition_image_layout(
+                command_buffer,
+                image.vk_handle,
+                vk::Format::eR8G8B8A8Srgb,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eTransferDstOptimal,
+                mip_levels);
+
+            cmd_copy_buffer_to_image(
+                command_buffer,
+                staging_buffer.vk_handle,
+                image.vk_handle,
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height));
+
+            cmd_generate_mipmaps(
+                m_vk_physical_device,
+                command_buffer,
+                image.vk_handle,
+                vk::Format::eR8G8B8A8Srgb,
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height),
+                mip_levels);
+
+            defer_to_next_frame([this, staging_buffer](uint32_t) {
+                vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            });
+        });
+
+    vk::ImageView image_view = create_image_view(
+        m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mip_levels);
+
+    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
+
+    TextureImpl texture {
+        .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels
+    };
+
+    auto handle = m_resource_handle_count;
+    m_resource_handle_count++;
+    m_textures.insert({ handle, texture });
+
+    LOG->info("[Renderer] Texture created with ID: {}", handle);
+
+    return Texture(*this, handle);
+}
+
+void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
+{
+    VertexBufferImpl& vertex_buffer_impl = m_vertex_buffers.at(vertex_buffer.handle());
+    m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer_impl.buffer.vk_handle, { 0 });
+    m_current_draw_state.command_buffer.draw(vertex_buffer_impl.vertex_count, 1, 0, 0);
+}
+
+void Renderer::destroy(DescriptorSet& descriptor_set)
+{
+    if (!descriptor_set.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid descriptor set");
+    }
+    LOG->info("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
+    uint64_t handle = descriptor_set.handle();
+    descriptor_set.invalidate();
+    defer_after_all_frames([this, handle](uint32_t) {
+        std::vector<DescriptorSetImpl> sets_to_delete;
+        for (const FrameInFlight& frame : m_frames_in_flight) {
+            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
+        }
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            frame.descriptor_sets.erase(handle);
+        }
+        for (DescriptorSetImpl set : sets_to_delete) {
+            m_descriptor_set_allocator.free(m_vk_device, set);
+        }
+    });
+}
+
+void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
+{
+    if (!graphics_pipeline.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid graphics pipeline");
+    }
+    LOG->info("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
+    uint64_t handle = graphics_pipeline.handle();
+    graphics_pipeline.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         // Descriptor set layouts
         std::vector<DescriptorSetLayoutHandleImpl> deleted_descriptor_set_layout_handles;
@@ -2496,8 +2505,14 @@ void Renderer::queue_destroy(GraphicsPipelineHandle handle)
     });
 }
 
-void Renderer::queue_destroy(UniformBufferHandle handle)
+void Renderer::destroy(UniformBuffer& uniform_buffer)
 {
+    if (!uniform_buffer.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid uniform buffer");
+    }
+    LOG->info("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
+    uniform_buffer.invalidate();
+    uint64_t handle = uniform_buffer.handle();
     defer_after_all_frames([this, handle](uint32_t) {
         for (const FrameInFlight& frame : m_frames_in_flight) {
             UniformBufferImpl uniform_buffer = frame.uniform_buffers.at(handle);
@@ -2509,99 +2524,22 @@ void Renderer::queue_destroy(UniformBufferHandle handle)
         }
     });
 }
-GraphicsPipeline Renderer::create_graphics_pipeline(
-    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
-{
-    return GraphicsPipeline(*this, vertex_shader, fragment_shader, vertex_layout);
-}
 
-DescriptorSet Renderer::create_descriptor_set(
-    GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
+void Renderer::destroy(IndexBuffer& index_buffer)
 {
-    return DescriptorSet(*this, graphics_pipeline, descriptor_set);
-}
-
-void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
-{
-    bind_graphics_pipeline(graphics_pipeline.handle());
-}
-
-void Renderer::queue_destroy(DescriptorSetHandle handle)
-{
+    if (!index_buffer.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid index buffer");
+    }
+    LOG->info("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
+    uint64_t handle = index_buffer.handle();
+    index_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
-        std::vector<DescriptorSetImpl> sets_to_delete;
-        for (const FrameInFlight& frame : m_frames_in_flight) {
-            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
-        }
-        for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.descriptor_sets.erase(handle);
-        }
-        for (DescriptorSetImpl set : sets_to_delete) {
-            m_descriptor_set_allocator.free(m_vk_device, set);
-        }
+        vmaDestroyBuffer(
+            m_vma_allocator,
+            m_index_buffers.at(handle).buffer.vk_handle,
+            m_index_buffers.at(handle).buffer.vma_allocation);
+        m_index_buffers.erase(handle);
     });
-}
-
-void Renderer::write_descriptor_binding(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
-{
-    write_descriptor_binding(descriptor_set.handle(), descriptor_binding, uniform_buffer.handle());
-}
-
-void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
-{
-    bind_descriptor_set(descriptor_set.handle());
-}
-UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& descriptor_binding)
-{
-    return UniformBuffer(*this, descriptor_binding);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist)
-{
-    update_uniform(uniform_buffer.handle(), location, value, persist);
-}
-void Renderer::queue_destroy(TextureHandle handle)
-{
-    defer_after_all_frames([this, handle](uint32_t) {
-        TextureImpl& texture = m_textures.at(handle);
-        m_vk_device.destroy(texture.vk_sampler);
-        m_vk_device.destroy(texture.vk_image_view);
-        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
-        m_textures.erase(handle);
-    });
-}
-Texture Renderer::create_texture(const std::filesystem::path& path)
-{
-    return Texture(*this, path);
-}
-
-void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
-{
-    draw_vertex_buffer(vertex_buffer.handle());
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

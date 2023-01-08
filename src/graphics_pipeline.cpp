@@ -4,47 +4,16 @@
 
 namespace mve {
 
-GraphicsPipelineHandle::GraphicsPipelineHandle(uint64_t value)
-    : m_value(value)
-    , m_initialized(true)
-{
-}
-uint64_t GraphicsPipelineHandle::value() const
-{
-    return m_value;
-}
-bool GraphicsPipelineHandle::operator==(const GraphicsPipelineHandle& other) const
-{
-    return m_value == other.m_value;
-}
-bool GraphicsPipelineHandle::operator<(const GraphicsPipelineHandle& other) const
-{
-    return m_value < other.m_value;
-}
-
-GraphicsPipelineHandle::GraphicsPipelineHandle()
-    : m_initialized(false)
-{
-}
-
-void GraphicsPipelineHandle::set(uint64_t value)
-{
-    m_value = value;
-    m_initialized = true;
-}
-
 GraphicsPipeline::GraphicsPipeline(
     Renderer& renderer, const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
-    : m_valid(true)
-    , m_renderer(&renderer)
-    , m_handle(renderer.create_graphics_pipeline_handle(vertex_shader, fragment_shader, vertex_layout))
 {
+    *this = std::move(renderer.create_graphics_pipeline(vertex_shader, fragment_shader, vertex_layout));
 }
 
 GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other)
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 
     m_valid = other.m_valid;
@@ -73,10 +42,10 @@ GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other)
 GraphicsPipeline::~GraphicsPipeline()
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 }
-GraphicsPipelineHandle GraphicsPipeline::handle() const
+uint64_t GraphicsPipeline::handle() const
 {
     return m_handle;
 }
@@ -89,8 +58,12 @@ DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet&
 {
     return m_renderer->create_descriptor_set(*this, descriptor_set);
 }
+void GraphicsPipeline::invalidate()
+{
+    m_valid = false;
+}
 
-GraphicsPipeline::GraphicsPipeline(Renderer& renderer, GraphicsPipelineHandle handle)
+GraphicsPipeline::GraphicsPipeline(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

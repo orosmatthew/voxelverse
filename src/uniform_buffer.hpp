@@ -10,34 +10,15 @@
 
 namespace mve {
 
-class UniformBufferHandle {
-public:
-    UniformBufferHandle();
-
-    UniformBufferHandle(uint64_t value);
-
-    void set(uint64_t value);
-
-    [[nodiscard]] uint64_t value() const;
-
-    [[nodiscard]] bool operator==(const UniformBufferHandle& other) const;
-
-    [[nodiscard]] bool operator<(const UniformBufferHandle& other) const;
-
-private:
-    bool m_initialized = false;
-    uint64_t m_value;
-};
-
 class Renderer;
 class ShaderDescriptorBinding;
 class UniformLocation;
 
 class UniformBuffer {
 public:
-    UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& binding);
+    UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding);
 
-    UniformBuffer(Renderer& renderer, UniformBufferHandle handle);
+    UniformBuffer(Renderer& renderer, uint64_t handle);
 
     UniformBuffer(const UniformBuffer&) = delete;
 
@@ -53,9 +34,11 @@ public:
 
     [[nodiscard]] bool operator<(const UniformBuffer& other) const;
 
-    [[nodiscard]] UniformBufferHandle handle() const;
+    [[nodiscard]] uint64_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
+
+    void invalidate();
 
     void update(UniformLocation location, float value, bool persist = true);
 
@@ -74,25 +57,17 @@ public:
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    UniformBufferHandle m_handle;
+    uint64_t m_handle;
 };
 
 }
 
 namespace std {
 template <>
-struct hash<mve::UniformBufferHandle> {
-    std::size_t operator()(const mve::UniformBufferHandle& handle) const
-    {
-        return hash<uint64_t>()(handle.value());
-    }
-};
-
-template <>
 struct hash<mve::UniformBuffer> {
     std::size_t operator()(const mve::UniformBuffer& uniform_buffer) const
     {
-        return hash<mve::UniformBufferHandle>()(uniform_buffer.handle());
+        return hash<uint64_t>()(uniform_buffer.handle());
     }
 };
 }

@@ -4,38 +4,9 @@
 
 namespace mve {
 
-UniformBufferHandle::UniformBufferHandle()
-    : m_initialized(false)
+UniformBuffer::UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding)
 {
-}
-UniformBufferHandle::UniformBufferHandle(uint64_t value)
-    : m_initialized(true)
-    , m_value(value)
-{
-}
-void UniformBufferHandle::set(uint64_t value)
-{
-    m_initialized = true;
-    m_value = value;
-}
-uint64_t UniformBufferHandle::value() const
-{
-    return m_value;
-}
-bool UniformBufferHandle::operator==(const UniformBufferHandle& other) const
-{
-    return m_value == other.m_value;
-}
-bool UniformBufferHandle::operator<(const UniformBufferHandle& other) const
-{
-    return m_value < other.m_value;
-}
-
-UniformBuffer::UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& binding)
-    : m_valid(true)
-    , m_renderer(&renderer)
-    , m_handle(renderer.create_uniform_buffer_handle(binding))
-{
+    *this = renderer.create_uniform_buffer(descriptor_binding);
 }
 
 UniformBuffer::UniformBuffer(UniformBuffer&& other)
@@ -48,13 +19,13 @@ UniformBuffer::UniformBuffer(UniformBuffer&& other)
 
 UniformBuffer::~UniformBuffer()
 {
-    m_renderer->queue_destroy(m_handle);
+    m_renderer->destroy(*this);
 }
 
 UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other)
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 
     m_valid = other.m_valid;
@@ -73,7 +44,7 @@ bool UniformBuffer::operator<(const UniformBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
-UniformBufferHandle UniformBuffer::handle() const
+uint64_t UniformBuffer::handle() const
 {
     return m_handle;
 }
@@ -109,8 +80,12 @@ void UniformBuffer::update(UniformLocation location, float value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+void UniformBuffer::invalidate()
+{
+    m_valid = false;
+}
 
-UniformBuffer::UniformBuffer(Renderer& renderer, UniformBufferHandle handle)
+UniformBuffer::UniformBuffer(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

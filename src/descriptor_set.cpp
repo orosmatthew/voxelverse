@@ -4,40 +4,10 @@
 
 namespace mve {
 
-DescriptorSetHandle::DescriptorSetHandle()
-    : m_initialized(false)
-{
-}
-DescriptorSetHandle::DescriptorSetHandle(uint64_t value)
-    : m_initialized(true)
-    , m_value(value)
-{
-}
-
-void DescriptorSetHandle::set(uint64_t value)
-{
-    m_initialized = true;
-    m_value = value;
-}
-uint64_t DescriptorSetHandle::value() const
-{
-    return m_value;
-}
-bool DescriptorSetHandle::operator==(const DescriptorSetHandle& other) const
-{
-    return m_value == other.m_value && m_initialized == other.m_initialized;
-}
-bool DescriptorSetHandle::operator<(const DescriptorSetHandle& other) const
-{
-    return m_value < other.m_value;
-}
-
 DescriptorSet::DescriptorSet(
     Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
-    : m_valid(true)
-    , m_renderer(&renderer)
-    , m_handle(renderer.create_descriptor_set_handle(graphics_pipeline.handle(), descriptor_set))
 {
+    *this = std::move(renderer.create_descriptor_set(graphics_pipeline, descriptor_set));
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet&& other)
@@ -51,14 +21,14 @@ DescriptorSet::DescriptorSet(DescriptorSet&& other)
 DescriptorSet::~DescriptorSet()
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 }
 
 DescriptorSet& DescriptorSet::operator=(DescriptorSet&& other)
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 
     m_valid = other.m_valid;
@@ -78,7 +48,7 @@ bool DescriptorSet::operator<(const DescriptorSet& other) const
 {
     return m_handle < other.m_handle;
 }
-DescriptorSetHandle DescriptorSet::handle() const
+uint64_t DescriptorSet::handle() const
 {
     return m_handle;
 }
@@ -95,11 +65,15 @@ void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_bind
     m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }
 
-DescriptorSet::DescriptorSet(Renderer& renderer, DescriptorSetHandle handle)
+DescriptorSet::DescriptorSet(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
 {
+}
+void DescriptorSet::invalidate()
+{
+    m_valid = false;
 }
 
 }

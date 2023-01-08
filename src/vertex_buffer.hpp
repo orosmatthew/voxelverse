@@ -5,33 +5,14 @@
 
 namespace mve {
 
-class VertexBufferHandle {
-public:
-    VertexBufferHandle();
-
-    VertexBufferHandle(uint64_t value);
-
-    void set(uint64_t value);
-
-    [[nodiscard]] uint64_t value() const;
-
-    [[nodiscard]] bool operator==(const VertexBufferHandle& other) const;
-
-    [[nodiscard]] bool operator<(const VertexBufferHandle& other) const;
-
-private:
-    bool m_initialized = false;
-    uint64_t m_value;
-};
-
 class Renderer;
 class VertexData;
 
 class VertexBuffer {
 public:
-    VertexBuffer(Renderer& renderer, const VertexData& data);
+    VertexBuffer(Renderer& renderer, const VertexData& vertex_data);
 
-    VertexBuffer(Renderer& renderer, VertexBufferHandle handle);
+    VertexBuffer(Renderer& renderer, uint64_t handle);
 
     VertexBuffer(const VertexBuffer&) = delete;
 
@@ -47,32 +28,27 @@ public:
 
     [[nodiscard]] bool operator<(const VertexBuffer& other) const;
 
-    [[nodiscard]] VertexBufferHandle handle() const;
+    [[nodiscard]] uint64_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
+
+    void invalidate();
 
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    VertexBufferHandle m_handle;
+    uint64_t m_handle;
 };
 
 }
 
 namespace std {
-template <>
-struct hash<mve::VertexBufferHandle> {
-    std::size_t operator()(const mve::VertexBufferHandle& handle) const
-    {
-        return hash<uint64_t>()(handle.value());
-    }
-};
 
 template <>
 struct hash<mve::VertexBuffer> {
     std::size_t operator()(const mve::VertexBuffer& vertex_buffer) const
     {
-        return hash<mve::VertexBufferHandle>()(vertex_buffer.handle());
+        return hash<uint64_t>()(vertex_buffer.handle());
     }
 };
 }

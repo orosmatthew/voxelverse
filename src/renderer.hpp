@@ -65,21 +65,9 @@ public:
 
     /**
      * @brief Bind and draw vertex buffer
-     * @param handle - Vertex buffer handle
-     */
-    void draw_vertex_buffer(VertexBufferHandle handle);
-
-    /**
-     * @brief Bind and draw vertex buffer
      * @param vertex_buffer
      */
     void draw_vertex_buffer(VertexBuffer& vertex_buffer);
-
-    /**
-     * @brief Bind vertex buffer
-     * @param handle - Vertex buffer handle
-     */
-    void bind_vertex_buffer(VertexBufferHandle handle);
 
     /**
      * @brief Bind vertex buffer
@@ -89,21 +77,9 @@ public:
 
     /**
      * @brief Bind graphics pipeline
-     * @param handle - Graphics pipeline handle
-     */
-    void bind_graphics_pipeline(GraphicsPipelineHandle handle);
-
-    /**
-     * @brief Bind graphics pipeline
      * @param graphics_pipeline
      */
     void bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline);
-
-    /**
-     * @brief Bind and draw index buffer
-     * @param handle - Index buffer handle
-     */
-    void draw_index_buffer(IndexBufferHandle handle);
 
     /**
      * @brief Bind and draw index buffer
@@ -126,23 +102,9 @@ public:
     /**
      * @brief Upload vertex data to GPU vertex buffer
      * @param vertex_data
-     * @return Returns vertex buffer handle
-     */
-    VertexBufferHandle create_vertex_buffer_handle(const VertexData& vertex_data);
-
-    /**
-     * @brief Upload vertex data to GPU vertex buffer
-     * @param vertex_data
      * @return Returns vertex buffer object
      */
     VertexBuffer create_vertex_buffer(const VertexData& vertex_data);
-
-    /**
-     * @brief Upload index data to GPU index buffer
-     * @param indices
-     * @return Returns index buffer handle
-     */
-    IndexBufferHandle create_index_buffer_handle(const std::vector<uint32_t>& indices);
 
     /**
      * @brief Upload index data to GPU index buffer
@@ -153,15 +115,6 @@ public:
 
     /**
      * @brief Create descriptor set from shaders used in graphics pipeline
-     * @param handle - Graphics pipeline handle
-     * @param descriptor_set
-     * @return Returns descriptor set handle
-     */
-    DescriptorSetHandle create_descriptor_set_handle(
-        GraphicsPipelineHandle handle, const ShaderDescriptorSet& descriptor_set);
-
-    /**
-     * @brief Create descriptor set from shaders used in graphics pipeline
      * @param graphics_pipeline
      * @param descriptor_set
      * @return Returns descriptor set object
@@ -169,29 +122,11 @@ public:
     DescriptorSet create_descriptor_set(GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
     /**
-     * @brief Create a uniform buffer from a from a shader binding
-     * @param descriptor_binding
-     * @return Returns a uniform buffer handle
-     */
-    UniformBufferHandle create_uniform_buffer_handle(const ShaderDescriptorBinding& descriptor_binding);
-
-    /**
      * @brief Create a uniform buffer from a shader binding
      * @param descriptor_binding
      * @return Returns a uniform buffer object
      */
     UniformBuffer create_uniform_buffer(const ShaderDescriptorBinding& descriptor_binding);
-
-    /**
-     * @brief Write a uniform buffer to a descriptor set binding
-     * @param descriptor_set_handle
-     * @param descriptor_binding
-     * @param uniform_buffer_handle
-     */
-    void write_descriptor_binding(
-        DescriptorSetHandle descriptor_set_handle,
-        const ShaderDescriptorBinding& descriptor_binding,
-        UniformBufferHandle uniform_buffer_handle);
 
     /**
      * @brief Write a uniform buffer to a descriptor set binding
@@ -206,30 +141,12 @@ public:
 
     /**
      * @brief Write a texture to a descriptor set binding
-     * @param descriptor_set_handle
-     * @param descriptor_binding
-     * @param texture_handle
-     */
-    void write_descriptor_binding(
-        DescriptorSetHandle descriptor_set_handle,
-        const ShaderDescriptorBinding& descriptor_binding,
-        TextureHandle texture_handle);
-
-    /**
-     * @brief Write a texture to a descriptor set binding
      * @param descriptor_set
      * @param descriptor_binding
      * @param texture
      */
     void write_descriptor_binding(
         DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture);
-
-    /**
-     * @brief Create texture from image file-path
-     * @param path - File-path to image
-     * @return Returns a texture handle
-     */
-    TextureHandle create_texture_handle(const std::filesystem::path& path);
 
     /**
      * @brief Create texture from image file-path
@@ -243,65 +160,46 @@ public:
      * @param vertex_shader
      * @param fragment_shader
      * @param vertex_layout
-     * @return Returns graphics pipeline handle
-     */
-    GraphicsPipelineHandle create_graphics_pipeline_handle(
-        const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
-
-    /**
-     * @brief Create graphics pipeline from shaders and vertex layout
-     * @param vertex_shader
-     * @param fragment_shader
-     * @param vertex_layout
      * @return Returns graphics pipeline object
      */
     GraphicsPipeline create_graphics_pipeline(
         const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
 
     /**
-     * @brief Destroy vertex buffer
-     * @param handle - Vertex buffer handle
+     * @brief Destroy vertex buffer manually
+     * @param vertex_buffer
      */
-    void queue_destroy(VertexBufferHandle handle);
+    void destroy(VertexBuffer& vertex_buffer);
 
     /**
-     * @brief Destroy index buffer
-     * @param handle - Index buffer handle
+     * @brief Destroy index buffer manually
+     * @param index_buffer
      */
-    void queue_destroy(IndexBufferHandle handle);
+    void destroy(IndexBuffer& index_buffer);
 
     /**
-     * @brief Destroy graphics pipeline
-     * @param handle - Graphics pipeline handle
+     * @brief Destroy graphics pipeline manually
+     * @param graphics_pipeline
      */
-    void queue_destroy(GraphicsPipelineHandle handle);
+    void destroy(GraphicsPipeline& graphics_pipeline);
 
     /**
-     * @brief Destroy descriptor set
-     * @param handle - Descriptor set handle
+     * @brief Destroy descriptor set manually
+     * @param descriptor_set
      */
-    void queue_destroy(DescriptorSetHandle handle);
+    void destroy(DescriptorSet& descriptor_set);
 
     /**
-     * @brief Destroy uniform buffer
-     * @param handle - Uniform buffer handle
+     * @brief Destroy uniform buffer manually
+     * @param uniform_buffer
      */
-    void queue_destroy(UniformBufferHandle handle);
+    void destroy(UniformBuffer& uniform_buffer);
 
     /**
-     * @brief Destroy texture
-     * @param handle - Texture handle
+     * @brief Destroy texture manually
+     * @param texture
      */
-    void queue_destroy(TextureHandle handle);
-
-    /**
-     * @brief Update uniform buffer float
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
+    void destroy(Texture& texture);
 
     /**
      * @brief Update uniform buffer float
@@ -314,30 +212,12 @@ public:
 
     /**
      * @brief Update uniform buffer vec2
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer vec2
      * @param uniform_buffer
      * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer vec3
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer vec3
@@ -350,30 +230,12 @@ public:
 
     /**
      * @brief Update uniform buffer vec4
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer vec4
      * @param uniform_buffer
      * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer mat2
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer mat2
@@ -386,15 +248,6 @@ public:
 
     /**
      * @brief Update uniform buffer mat3
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer mat3
      * @param uniform_buffer
      * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
      * @param value - value to set
@@ -404,27 +257,12 @@ public:
 
     /**
      * @brief Update uniform buffer mat4
-     * @param handle - Uniform buffer handle
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist = true);
-
-    /**
-     * @brief Update uniform buffer mat4
      * @param uniform_buffer
      * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist = true);
-
-    /**
-     * @brief Bind descriptor set
-     * @param handle - Descriptor set handle
-     */
-    void bind_descriptor_set(DescriptorSetHandle handle);
 
     /**
      * @brief Bind descriptor set
@@ -512,8 +350,8 @@ private:
         vk::Semaphore image_available_semaphore;
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
-        std::unordered_map<UniformBufferHandle, UniformBufferImpl> uniform_buffers {};
-        std::unordered_map<DescriptorSetHandle, DescriptorSetImpl> descriptor_sets {};
+        std::unordered_map<uint64_t, UniformBufferImpl> uniform_buffers {};
+        std::unordered_map<uint64_t, DescriptorSetImpl> descriptor_sets {};
         std::queue<uint32_t> funcs;
     };
 
@@ -521,7 +359,7 @@ private:
         bool is_drawing;
         uint32_t image_index;
         vk::CommandBuffer command_buffer;
-        GraphicsPipelineHandle current_pipeline;
+        uint64_t current_pipeline;
         uint32_t frame_index;
     };
 
@@ -593,17 +431,17 @@ private:
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
-    std::unordered_map<VertexBufferHandle, VertexBufferImpl> m_vertex_buffers;
+    std::unordered_map<uint64_t, VertexBufferImpl> m_vertex_buffers;
 
-    std::unordered_map<IndexBufferHandle, IndexBufferImpl> m_index_buffers;
+    std::unordered_map<uint64_t, IndexBufferImpl> m_index_buffers;
 
     std::unordered_map<DescriptorSetLayoutHandleImpl, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 
-    std::unordered_map<GraphicsPipelineHandle, GraphicsPipelineImpl> m_graphics_pipelines {};
+    std::unordered_map<uint64_t, GraphicsPipelineImpl> m_graphics_pipelines {};
 
     std::unordered_map<GraphicsPipelineLayoutHandleImpl, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts {};
 
-    std::unordered_map<TextureHandle, TextureImpl> m_textures {};
+    std::unordered_map<uint64_t, TextureImpl> m_textures {};
 
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, DeferredFunction> m_deferred_functions;
@@ -644,7 +482,7 @@ private:
     static vk::Format find_depth_format(vk::PhysicalDevice physical_device);
 
     void update_uniform(
-        UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+        uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
     static bool has_stencil_component(vk::Format format);
 

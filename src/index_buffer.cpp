@@ -5,10 +5,8 @@
 namespace mve {
 
 IndexBuffer::IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices)
-    : m_valid(true)
-    , m_renderer(&renderer)
-    , m_handle(renderer.create_index_buffer_handle(indices))
 {
+    *this = std::move(renderer.create_index_buffer(indices));
 }
 
 IndexBuffer::IndexBuffer(IndexBuffer&& other)
@@ -21,10 +19,10 @@ IndexBuffer::IndexBuffer(IndexBuffer&& other)
 
 IndexBuffer::~IndexBuffer()
 {
-    m_renderer->queue_destroy(m_handle);
+    m_renderer->destroy(*this);
 }
 
-IndexBufferHandle IndexBuffer::handle() const
+uint64_t IndexBuffer::handle() const
 {
     return m_handle;
 }
@@ -37,7 +35,7 @@ bool IndexBuffer::is_valid() const
 IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other)
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 
     m_valid = other.m_valid;
@@ -57,37 +55,14 @@ bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
-IndexBuffer::IndexBuffer(Renderer& renderer, IndexBufferHandle handle)
+IndexBuffer::IndexBuffer(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
 {
 }
-
-IndexBufferHandle::IndexBufferHandle(uint64_t value)
-    : m_initialized(true)
-    , m_value(value)
+void IndexBuffer::invalidate()
 {
-}
-uint64_t IndexBufferHandle::value() const
-{
-    return m_value;
-}
-bool IndexBufferHandle::operator==(const IndexBufferHandle& other) const
-{
-    return m_value == other.m_value;
-}
-bool IndexBufferHandle::operator<(const IndexBufferHandle& other) const
-{
-    return m_value < other.m_value;
-}
-IndexBufferHandle::IndexBufferHandle()
-    : m_initialized(false)
-{
-}
-void IndexBufferHandle::set(uint64_t value)
-{
-    m_initialized = true;
-    m_value = value;
+    m_valid = false;
 }
 }

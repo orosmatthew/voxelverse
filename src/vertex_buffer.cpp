@@ -5,11 +5,9 @@
 
 namespace mve {
 
-VertexBuffer::VertexBuffer(Renderer& renderer, const VertexData& data)
-    : m_renderer(&renderer)
-    , m_valid(true)
-    , m_handle(renderer.create_vertex_buffer_handle(data))
+VertexBuffer::VertexBuffer(Renderer& renderer, const VertexData& vertex_data)
 {
+    *this = std::move(renderer.create_vertex_buffer(vertex_data));
 }
 
 VertexBuffer::VertexBuffer(VertexBuffer&& other)
@@ -23,10 +21,10 @@ VertexBuffer::VertexBuffer(VertexBuffer&& other)
 VertexBuffer::~VertexBuffer()
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 }
-VertexBufferHandle VertexBuffer::handle() const
+uint64_t VertexBuffer::handle() const
 {
     return m_handle;
 }
@@ -38,7 +36,7 @@ bool VertexBuffer::is_valid() const
 VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other)
 {
     if (m_valid) {
-        m_renderer->queue_destroy(m_handle);
+        m_renderer->destroy(*this);
     }
 
     m_valid = other.m_valid;
@@ -58,39 +56,14 @@ bool VertexBuffer::operator<(const VertexBuffer& other) const
     return m_handle < other.m_handle;
 }
 
-VertexBuffer::VertexBuffer(Renderer& renderer, VertexBufferHandle handle)
+VertexBuffer::VertexBuffer(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
 {
 }
-
-VertexBufferHandle::VertexBufferHandle(uint64_t value)
-    : m_initialized(true)
-    , m_value(value)
+void VertexBuffer::invalidate()
 {
+    m_valid = false;
 }
-uint64_t VertexBufferHandle::value() const
-{
-    return m_value;
-}
-bool VertexBufferHandle::operator==(const VertexBufferHandle& other) const
-{
-    return m_value == other.m_value;
-}
-bool VertexBufferHandle::operator<(const VertexBufferHandle& other) const
-{
-    return m_value < other.m_value;
-}
-
-VertexBufferHandle::VertexBufferHandle()
-    : m_initialized(false)
-{
-}
-void VertexBufferHandle::set(uint64_t value)
-{
-    m_initialized = true;
-    m_value = value;
-}
-
 }

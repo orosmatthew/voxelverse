@@ -6,32 +6,13 @@
 
 namespace mve {
 
-class TextureHandle {
-public:
-    TextureHandle();
-
-    TextureHandle(uint64_t value);
-
-    void set(uint64_t value);
-
-    [[nodiscard]] uint64_t value() const;
-
-    [[nodiscard]] bool operator==(const TextureHandle& other) const;
-
-    [[nodiscard]] bool operator<(const TextureHandle& other) const;
-
-private:
-    bool m_initialized = false;
-    uint64_t m_value;
-};
-
 class Renderer;
 
 class Texture {
 public:
     Texture(Renderer& renderer, const std::filesystem::path& path);
 
-    Texture(Renderer& renderer, TextureHandle handle);
+    Texture(Renderer& renderer, uint64_t handle);
 
     Texture(const Texture&) = delete;
 
@@ -47,24 +28,26 @@ public:
 
     [[nodiscard]] bool operator<(const Texture& other) const;
 
-    [[nodiscard]] TextureHandle handle() const;
+    [[nodiscard]] uint64_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
+
+    void invalidate();
 
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    TextureHandle m_handle;
+    uint64_t m_handle;
 };
 
 }
 
 namespace std {
 template <>
-struct hash<mve::TextureHandle> {
-    std::size_t operator()(const mve::TextureHandle& handle) const
+struct hash<mve::Texture> {
+    std::size_t operator()(const mve::Texture& texture) const
     {
-        return hash<uint64_t>()(handle.value());
+        return hash<uint64_t>()(texture.handle());
     }
 };
 
