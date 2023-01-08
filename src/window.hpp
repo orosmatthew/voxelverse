@@ -16,7 +16,7 @@ namespace mve {
 /**
  * @brief Keyboard input key
  */
-enum class InputKey {
+enum class Key {
     unknown = GLFW_KEY_UNKNOWN,
     space = GLFW_KEY_SPACE,
     apostrophe = GLFW_KEY_APOSTROPHE,
@@ -144,7 +144,7 @@ enum class InputKey {
 /**
  * @brief Mouse button input
  */
-enum class InputMouseButton {
+enum class MouseButton {
     one = GLFW_MOUSE_BUTTON_1,
     two = GLFW_MOUSE_BUTTON_2,
     three = GLFW_MOUSE_BUTTON_3,
@@ -162,7 +162,7 @@ enum class InputMouseButton {
 /**
  * @brief Gamepad axis input
  */
-enum class InputGamepadAxis {
+enum class GamepadAxis {
     left_x = GLFW_GAMEPAD_AXIS_LEFT_X,
     left_y = GLFW_GAMEPAD_AXIS_LEFT_Y,
     right_x = GLFW_GAMEPAD_AXIS_RIGHT_X,
@@ -175,7 +175,7 @@ enum class InputGamepadAxis {
 /**
  * @brief Gamepad button input
  */
-enum class InputGamepadButton {
+enum class GamepadButton {
     a = GLFW_GAMEPAD_BUTTON_A,
     b = GLFW_GAMEPAD_BUTTON_B,
     x = GLFW_GAMEPAD_BUTTON_X,
@@ -201,7 +201,7 @@ enum class InputGamepadButton {
 /**
  * @brief Joystick hat input
  */
-enum class InputJoystickHat {
+enum class JoystickHat {
     centered = GLFW_HAT_CENTERED,
     up = GLFW_HAT_UP,
     right = GLFW_HAT_RIGHT,
@@ -216,7 +216,7 @@ enum class InputJoystickHat {
 /**
  * @brief Joystick input
  */
-enum class InputJoystick {
+enum class Joystick {
     one = GLFW_JOYSTICK_1,
     two = GLFW_JOYSTICK_2,
     three = GLFW_JOYSTICK_3,
@@ -238,7 +238,7 @@ enum class InputJoystick {
 /**
  * @brief Keyboard input modifiers
  */
-enum InputKeyModifierBits {
+enum KeyModifierBits {
     shift = GLFW_MOD_SHIFT,
     control = GLFW_MOD_CONTROL,
     alt = GLFW_MOD_ALT,
@@ -307,17 +307,17 @@ public:
      * @param key - Keyboard key
      * @return - Returns true if pressed
      */
-    bool is_key_pressed(InputKey key);
+    bool is_key_pressed(Key key);
 
-    [[nodiscard]] bool is_key_down(InputKey key) const;
+    [[nodiscard]] bool is_key_down(Key key) const;
 
-    [[nodiscard]] bool is_key_released(InputKey key) const;
+    [[nodiscard]] bool is_key_released(Key key) const;
 
-    [[nodiscard]] bool is_mouse_button_down(InputMouseButton button) const;
+    [[nodiscard]] bool is_mouse_button_down(MouseButton button) const;
 
-    [[nodiscard]] bool is_mouse_button_pressed(InputMouseButton button) const;
+    [[nodiscard]] bool is_mouse_button_pressed(MouseButton button) const;
 
-    [[nodiscard]] bool is_mouse_button_released(InputMouseButton button) const;
+    [[nodiscard]] bool is_mouse_button_released(MouseButton button) const;
 
     [[nodiscard]] glm::vec2 mouse_pos() const;
 
@@ -404,17 +404,17 @@ private:
     glm::ivec2 m_windowed_size;
     bool m_fullscreen;
     glm::ivec2 m_min_size;
-    std::set<InputKey> m_current_keys_down {};
-    std::set<InputKey> m_keys_down {};
-    std::set<InputKey> m_keys_pressed {};
-    std::set<InputKey> m_current_keys_released {};
-    std::set<InputKey> m_keys_released {};
+    std::set<Key> m_current_keys_down {};
+    std::set<Key> m_keys_down {};
+    std::set<Key> m_keys_pressed {};
+    std::set<Key> m_current_keys_released {};
+    std::set<Key> m_keys_released {};
 
-    std::set<InputMouseButton> m_current_mouse_buttons_down {};
-    std::set<InputMouseButton> m_mouse_buttons_down {};
-    std::set<InputMouseButton> m_current_mouse_buttons_released {};
-    std::set<InputMouseButton> m_mouse_buttons_pressed {};
-    std::set<InputMouseButton> m_mouse_buttons_released {};
+    std::set<MouseButton> m_current_mouse_buttons_down {};
+    std::set<MouseButton> m_mouse_buttons_down {};
+    std::set<MouseButton> m_current_mouse_buttons_released {};
+    std::set<MouseButton> m_mouse_buttons_pressed {};
+    std::set<MouseButton> m_mouse_buttons_released {};
 
     glm::vec2 m_current_mouse_pos;
     glm::vec2 m_mouse_pos_prev;

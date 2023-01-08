@@ -88,7 +88,7 @@ void Window::poll_events()
     m_mouse_pos_prev = m_mouse_pos;
 
     m_keys_pressed.clear();
-    for (InputKey key : m_current_keys_down) {
+    for (Key key : m_current_keys_down) {
         if (!m_keys_down.contains(key)) {
             m_keys_pressed.insert(key);
         }
@@ -98,7 +98,7 @@ void Window::poll_events()
     m_keys_down = m_current_keys_down;
 
     m_mouse_buttons_pressed.clear();
-    for (InputMouseButton button : m_current_mouse_buttons_down) {
+    for (MouseButton button : m_current_mouse_buttons_down) {
         if (!m_mouse_buttons_down.contains(button)) {
             m_mouse_buttons_pressed.insert(button);
         }
@@ -332,7 +332,7 @@ void Window::glfw_cursor_enter_callback(GLFWwindow* window, int entered)
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     instance->m_cursor_in_window = static_cast<bool>(entered);
 }
-bool Window::is_key_pressed(InputKey key)
+bool Window::is_key_pressed(Key key)
 {
     return m_keys_pressed.contains(key);
 }
@@ -341,20 +341,20 @@ void Window::glfw_key_callback(GLFWwindow* window, int key, int scancode, int ac
 {
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     if (action == GLFW_PRESS) {
-        instance->m_current_keys_down.insert(static_cast<InputKey>(key));
+        instance->m_current_keys_down.insert(static_cast<Key>(key));
     }
     else if (action == GLFW_RELEASE) {
-        instance->m_current_keys_down.erase(static_cast<InputKey>(key));
-        instance->m_current_keys_released.insert(static_cast<InputKey>(key));
+        instance->m_current_keys_down.erase(static_cast<Key>(key));
+        instance->m_current_keys_released.insert(static_cast<Key>(key));
     }
 }
 
-bool Window::is_key_down(InputKey key) const
+bool Window::is_key_down(Key key) const
 {
     return m_keys_down.contains(key);
 }
 
-bool Window::is_key_released(InputKey key) const
+bool Window::is_key_released(Key key) const
 {
     return m_keys_released.contains(key);
 }
@@ -408,11 +408,11 @@ void Window::glfw_mouse_button_callback(GLFWwindow* window, int button, int acti
 {
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     if (action == GLFW_PRESS) {
-        instance->m_current_mouse_buttons_down.insert(static_cast<InputMouseButton>(button));
+        instance->m_current_mouse_buttons_down.insert(static_cast<MouseButton>(button));
     }
     else if (action == GLFW_RELEASE) {
-        instance->m_current_mouse_buttons_down.erase(static_cast<InputMouseButton>(button));
-        instance->m_current_mouse_buttons_released.insert(static_cast<InputMouseButton>(button));
+        instance->m_current_mouse_buttons_down.erase(static_cast<MouseButton>(button));
+        instance->m_current_mouse_buttons_released.insert(static_cast<MouseButton>(button));
     }
 }
 
@@ -421,15 +421,15 @@ void Window::glfw_cursor_pos_callback(GLFWwindow* window, double pos_x, double p
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     instance->m_current_mouse_pos = glm::vec2(static_cast<float>(pos_x), static_cast<float>(pos_y));
 }
-bool Window::is_mouse_button_down(InputMouseButton button) const
+bool Window::is_mouse_button_down(MouseButton button) const
 {
     return m_mouse_buttons_down.contains(button);
 }
-bool Window::is_mouse_button_pressed(InputMouseButton button) const
+bool Window::is_mouse_button_pressed(MouseButton button) const
 {
     return m_mouse_buttons_pressed.contains(button);
 }
-bool Window::is_mouse_button_released(InputMouseButton button) const
+bool Window::is_mouse_button_released(MouseButton button) const
 {
     return m_mouse_buttons_released.contains(button);
 }

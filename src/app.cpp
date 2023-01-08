@@ -97,26 +97,26 @@ void run()
 
         fixed_loop.update(20, [&]() {
             glm::vec3 dir(0.0f);
-            if (window.is_key_down(mve::InputKey::w)) {
+            if (window.is_key_down(mve::Key::w)) {
                 dir.x += glm::cos(glm::radians(camera_yaw));
                 dir.y += glm::sin(glm::radians(camera_yaw));
             }
-            if (window.is_key_down(mve::InputKey::s)) {
+            if (window.is_key_down(mve::Key::s)) {
                 dir.x -= glm::cos(glm::radians(camera_yaw));
                 dir.y -= glm::sin(glm::radians(camera_yaw));
             }
-            if (window.is_key_down(mve::InputKey::a)) {
+            if (window.is_key_down(mve::Key::a)) {
                 dir.x += glm::cos(glm::radians(camera_yaw + 90.0f));
                 dir.y += glm::sin(glm::radians(camera_yaw + 90.0f));
             }
-            if (window.is_key_down(mve::InputKey::d)) {
+            if (window.is_key_down(mve::Key::d)) {
                 dir.x -= glm::cos(glm::radians(camera_yaw + 90.0f));
                 dir.y -= glm::sin(glm::radians(camera_yaw + 90.0f));
             }
-            if (window.is_key_down(mve::InputKey::space)) {
+            if (window.is_key_down(mve::Key::space)) {
                 dir.z += 1;
             }
-            if (window.is_key_down(mve::InputKey::left_shift)) {
+            if (window.is_key_down(mve::Key::left_shift)) {
                 dir.z -= 1;
             }
             camera_velocity -= (camera_velocity * camera_friction);
@@ -129,10 +129,10 @@ void run()
             }
             camera_pos += camera_velocity;
 
-            if (window.is_key_down(mve::InputKey::left)) {
+            if (window.is_key_down(mve::Key::left)) {
                 model = glm::rotate(model, glm::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
-            if (window.is_key_down(mve::InputKey::right)) {
+            if (window.is_key_down(mve::Key::right)) {
                 model = glm::rotate(model, glm::radians(-0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
         });
@@ -154,11 +154,11 @@ void run()
         view = glm::lookAt(pos, pos + camera_front, camera_up);
 
         uniform_buffer.update(view_location, view);
-        if (window.is_key_pressed(mve::InputKey::escape)) {
+        if (window.is_key_pressed(mve::Key::escape)) {
             break;
         }
 
-        if (window.is_key_pressed(mve::InputKey::f)) {
+        if (window.is_key_pressed(mve::Key::f)) {
             if (!window.is_fullscreen()) {
                 window.fullscreen(true);
             }
@@ -167,7 +167,7 @@ void run()
             }
         }
 
-        if (window.is_key_pressed(mve::InputKey::c)) {
+        if (window.is_key_pressed(mve::Key::c)) {
             if (cursor_captured) {
                 window.enable_cursor();
                 cursor_captured = false;
