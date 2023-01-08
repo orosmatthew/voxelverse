@@ -13,6 +13,7 @@
 #include <stb_image.h>
 
 #include "logger.hpp"
+#include "vertex_data.hpp"
 #include "window.hpp"
 
 namespace mve {
@@ -1833,7 +1834,7 @@ DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipelineHandle pipel
     return handle;
 }
 
-GraphicsPipelineHandle Renderer::create_graphics_pipeline(
+GraphicsPipelineHandle Renderer::create_graphics_pipeline_handle(
     const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
 {
     GraphicsPipelineLayoutHandle layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
@@ -1850,11 +1851,11 @@ GraphicsPipelineHandle Renderer::create_graphics_pipeline(
     auto handle = GraphicsPipelineHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
-    GraphicsPipeline pipeline { .layout = layout, .pipeline = vk_pipeline };
+    GraphicsPipelineImpl pipeline { .layout = layout, .pipeline = vk_pipeline };
 
     m_graphics_pipelines.insert({ handle, pipeline });
 
-    LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Graphics pipeline created with ID: {}", handle.value());
 
     return handle;
 }
@@ -1893,8 +1894,8 @@ GraphicsPipelineLayoutHandle Renderer::create_graphics_pipeline_layout(
     auto handle = GraphicsPipelineLayoutHandle(m_resource_handle_count);
     m_resource_handle_count++;
 
-    GraphicsPipelineLayout layout { .vk_handle = vk_layout,
-                                    .descriptor_set_layouts = std::move(descriptor_set_layouts) };
+    GraphicsPipelineLayoutImpl layout { .vk_handle = vk_layout,
+                                        .descriptor_set_layouts = std::move(descriptor_set_layouts) };
 
     m_graphics_pipeline_layouts.insert({ handle, layout });
 
@@ -2580,6 +2581,44 @@ void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
     else {
         throw std::runtime_error("[Renderer] Attempted to draw invalid index buffer");
     }
+}
+void Renderer::queue_destroy(GraphicsPipelineHandle handle)
+{
+    defer_after_all_frames([this, handle](uint32_t) {
+        // Descriptor set layouts
+        std::vector<DescriptorSetLayoutHandle> deleted_descriptor_set_layout_handles;
+        for (auto& [set, set_layout] :
+             m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).descriptor_set_layouts) {
+            m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout));
+            deleted_descriptor_set_layout_handles.push_back(set_layout);
+        }
+        for (DescriptorSetLayoutHandle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
+            m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
+        }
+
+        // Pipeline layout
+        m_vk_device.destroy(m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).vk_handle);
+        m_graphics_pipeline_layouts.erase(m_graphics_pipelines.at(handle).layout);
+
+        // Graphics pipeline
+        m_vk_device.destroy(m_graphics_pipelines.at(handle).pipeline);
+        m_graphics_pipelines.erase(handle);
+    });
+}
+GraphicsPipeline Renderer::create_graphics_pipeline(
+    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
+{
+    return GraphicsPipeline(*this, vertex_shader, fragment_shader, vertex_layout);
+}
+
+DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set)
+{
+    return create_descriptor_set(pipeline.handle(), set);
+}
+
+void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
+{
+    bind_graphics_pipeline(graphics_pipeline.handle());
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

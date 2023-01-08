@@ -49,7 +49,8 @@ set(SOURCE_FILES
         src/monitor.cpp
         src/util.cpp
         src/vertex_buffer.cpp
-        src/index_buffer.cpp)
+        src/index_buffer.cpp
+        src/graphics_pipeline.cpp)
 
 set(LIBS
         Vulkan::Vulkan

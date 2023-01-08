@@ -9,8 +9,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "vertex_buffer.hpp"
+#include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
+#include "vertex_buffer.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -62,9 +63,6 @@ using DescriptorSetLayoutHandle
  */
 using DescriptorSetHandle
     = strong::type<ResourceHandle, struct _descriptor_set_handle, strong::regular, strong::hashable>;
-
-using GraphicsPipelineHandle
-    = strong::type<ResourceHandle, struct _graphics_pipeline_handle, strong::regular, strong::hashable>;
 
 using GraphicsPipelineLayoutHandle
     = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
@@ -118,6 +116,8 @@ public:
 
     void bind_graphics_pipeline(GraphicsPipelineHandle handle);
 
+    void bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline);
+
     /**
      * @brief Bind and draw index buffer
      * @param handle - Index buffer handle
@@ -164,6 +164,8 @@ public:
 
     DescriptorSetHandle create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set);
 
+    DescriptorSetHandle create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set);
+
     /**
      * @brief Create a uniform buffer from a given layout
      * @param struct_layout - Uniform struct layout
@@ -182,7 +184,10 @@ public:
     GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(
         const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
 
-    GraphicsPipelineHandle create_graphics_pipeline(
+    GraphicsPipelineHandle create_graphics_pipeline_handle(
+        const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
+
+    GraphicsPipeline create_graphics_pipeline(
         const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
 
     /**
@@ -210,6 +215,8 @@ public:
      * @param handle - Index buffer handle
      */
     void queue_destroy(IndexBufferHandle handle);
+
+    void queue_destroy(GraphicsPipelineHandle handle);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
 
@@ -314,12 +321,12 @@ private:
         int counter;
     };
 
-    struct GraphicsPipelineLayout {
+    struct GraphicsPipelineLayoutImpl {
         vk::PipelineLayout vk_handle;
         std::unordered_map<uint32_t, DescriptorSetLayoutHandle> descriptor_set_layouts;
     };
 
-    struct GraphicsPipeline {
+    struct GraphicsPipelineImpl {
         GraphicsPipelineLayoutHandle layout;
         vk::Pipeline pipeline;
     };
@@ -380,9 +387,9 @@ private:
 
     std::unordered_map<DescriptorSetLayoutHandle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 
-    std::unordered_map<GraphicsPipelineHandle, GraphicsPipeline> m_graphics_pipelines {};
+    std::unordered_map<GraphicsPipelineHandle, GraphicsPipelineImpl> m_graphics_pipelines {};
 
-    std::unordered_map<GraphicsPipelineLayoutHandle, GraphicsPipelineLayout> m_graphics_pipeline_layouts {};
+    std::unordered_map<GraphicsPipelineLayoutHandle, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts {};
 
     std::unordered_map<TextureHandle, Texture> m_textures {};
 

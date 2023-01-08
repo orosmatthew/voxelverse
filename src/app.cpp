@@ -30,7 +30,7 @@ void run()
     mve::VertexBuffer model_vertex_buffer = renderer.create_vertex_buffer(model_data.vertex_data);
     mve::IndexBuffer model_index_buffer = renderer.create_index_buffer(model_data.indices);
 
-    mve::GraphicsPipelineHandle graphics_pipeline
+    mve::GraphicsPipeline graphics_pipeline
         = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
 
     mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(graphics_pipeline, 0);
