@@ -100,5 +100,13 @@ void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, Unifor
 {
     write_binding(binding, uniform_buffer.handle());
 }
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, TextureHandle handle)
+{
+    m_renderer->write_descriptor_binding_texture(m_handle, binding, handle);
+}
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, Texture& texture)
+{
+    write_binding(binding, texture.handle());
+}
 
 }

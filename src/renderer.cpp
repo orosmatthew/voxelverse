@@ -2133,7 +2133,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
     return sampler_result.value;
 }
 
-TextureHandle Renderer::create_texture(const std::filesystem::path& path)
+TextureHandle Renderer::create_texture_handle(const std::filesystem::path& path)
 {
     int width;
     int height;
@@ -2207,13 +2207,15 @@ TextureHandle Renderer::create_texture(const std::filesystem::path& path)
 
     vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
 
-    Texture texture { .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels };
+    TextureImpl texture {
+        .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels
+    };
 
     TextureHandle handle = TextureHandle(m_resource_handle_count);
     m_resource_handle_count++;
     m_textures.insert({ handle, texture });
 
-    LOG->info("[Renderer] Texture created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Texture created with ID: {}", handle.value());
 
     return handle;
 }
@@ -2707,6 +2709,25 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist)
 {
     update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::queue_destroy(TextureHandle handle)
+{
+    defer_after_all_frames([this, handle](uint32_t) {
+        TextureImpl& texture = m_textures.at(handle);
+        m_vk_device.destroy(texture.vk_sampler);
+        m_vk_device.destroy(texture.vk_image_view);
+        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
+        m_textures.erase(handle);
+    });
+}
+Texture Renderer::create_texture(const std::filesystem::path& path)
+{
+    return Texture(*this, path);
+}
+void Renderer::write_descriptor_binding_texture(
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, Texture& texture)
+{
+    write_descriptor_binding_texture(descriptor_set.handle(), binding, texture.handle());
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

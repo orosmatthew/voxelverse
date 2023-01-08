@@ -30,6 +30,8 @@ class GraphicsPipeline;
 class ShaderDescriptorBinding;
 class UniformBufferHandle;
 class UniformBuffer;
+class TextureHandle;
+class Texture;
 
 class DescriptorSet {
 public:
@@ -57,6 +59,10 @@ public:
     void write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle);
 
     void write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer);
+
+    void write_binding(const ShaderDescriptorBinding& binding, TextureHandle handle);
+
+    void write_binding(const ShaderDescriptorBinding& binding, Texture& texture);
 
 private:
     bool m_valid = false;

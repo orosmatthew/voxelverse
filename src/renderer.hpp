@@ -12,6 +12,7 @@
 #include "descriptor_set.hpp"
 #include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
+#include "texture.hpp"
 #include "uniform_buffer.hpp"
 #include "vertex_buffer.hpp"
 
@@ -56,8 +57,6 @@ using DescriptorSetLayoutHandle
 
 using GraphicsPipelineLayoutHandle
     = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
-
-using TextureHandle = strong::type<ResourceHandle, struct _texture_handle, strong::regular, strong::hashable>;
 
 /**
  * @brief Vulkan renderer class
@@ -178,11 +177,16 @@ public:
     void write_descriptor_binding_texture(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
 
+    void write_descriptor_binding_texture(
+        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, Texture& texture);
+
     // TODO: make TextureHandle to Texture class
     void write_descriptor_binding_texture(
         DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
 
-    TextureHandle create_texture(const std::filesystem::path& path);
+    TextureHandle create_texture_handle(const std::filesystem::path& path);
+
+    Texture create_texture(const std::filesystem::path& path);
 
     GraphicsPipelineLayoutHandle create_graphics_pipeline_layout(
         const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
@@ -224,6 +228,8 @@ public:
     void queue_destroy(DescriptorSetHandle handle);
 
     void queue_destroy(UniformBufferHandle handle);
+
+    void queue_destroy(TextureHandle handle);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist = true);
@@ -307,7 +313,7 @@ private:
         vk::ImageView vk_image_view;
     };
 
-    struct Texture {
+    struct TextureImpl {
         Image image;
         vk::ImageView vk_image_view;
         vk::Sampler vk_sampler;
@@ -416,7 +422,7 @@ private:
 
     std::unordered_map<GraphicsPipelineLayoutHandle, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts {};
 
-    std::unordered_map<TextureHandle, Texture> m_textures {};
+    std::unordered_map<TextureHandle, TextureImpl> m_textures {};
 
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, DeferredFunction> m_deferred_functions;

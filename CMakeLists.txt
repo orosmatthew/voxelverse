@@ -52,7 +52,8 @@ set(SOURCE_FILES
         src/index_buffer.cpp
         src/graphics_pipeline.cpp
         src/descriptor_set.cpp
-        src/uniform_buffer.cpp)
+        src/uniform_buffer.cpp
+        src/texture.cpp)
 
 set(LIBS
         Vulkan::Vulkan
