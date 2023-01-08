@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "descriptor_set.hpp"
 #include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
 #include "vertex_buffer.hpp"
@@ -57,12 +58,6 @@ using UniformBufferHandle
  */
 using DescriptorSetLayoutHandle
     = strong::type<ResourceHandle, struct _descriptor_set_layout_handle, strong::regular, strong::hashable>;
-
-/**
- * @brief Handle for a descriptor set
- */
-using DescriptorSetHandle
-    = strong::type<ResourceHandle, struct _descriptor_set_handle, strong::regular, strong::hashable>;
 
 using GraphicsPipelineLayoutHandle
     = strong::type<ResourceHandle, struct _graphics_pipeline_layout_handle, strong::regular, strong::hashable>;
@@ -162,9 +157,13 @@ public:
     DescriptorSetLayoutHandle create_descriptor_set_layout(
         uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader);
 
-    DescriptorSetHandle create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set);
+    DescriptorSetHandle create_descriptor_set_handle(GraphicsPipelineHandle pipeline, uint32_t set);
 
-    DescriptorSetHandle create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set);
+    DescriptorSetHandle create_descriptor_set_handle(GraphicsPipeline& pipeline, uint32_t set);
+
+    DescriptorSet create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set);
+
+    DescriptorSet create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set);
 
     /**
      * @brief Create a uniform buffer from a given layout
@@ -176,8 +175,16 @@ public:
     void write_descriptor_binding_uniform(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
 
+    // TODO: make UniformBufferHandle to UniformBuffer class
+    void write_descriptor_binding_uniform(
+        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
+
     void write_descriptor_binding_texture(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
+
+    // TODO: make TextureHandle to Texture class
+    void write_descriptor_binding_texture(
+        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
 
     TextureHandle create_texture(const std::filesystem::path& path);
 
@@ -218,6 +225,8 @@ public:
 
     void queue_destroy(GraphicsPipelineHandle handle);
 
+    void queue_destroy(DescriptorSetHandle handle);
+
     void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist = true);
@@ -233,6 +242,8 @@ public:
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist = true);
 
     void bind_descriptor_set(DescriptorSetHandle handle);
+
+    void bind_descriptor_set(DescriptorSet& descriptor_set);
 
     [[nodiscard]] glm::ivec2 extent() const;
 
@@ -298,13 +309,19 @@ private:
         uint32_t mip_levels;
     };
 
+    struct DescriptorSetImpl {
+        uint64_t id;
+        vk::DescriptorSet vk_handle;
+        vk::DescriptorPool vk_pool;
+    };
+
     struct FrameInFlight {
         vk::CommandBuffer command_buffer;
         vk::Semaphore image_available_semaphore;
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
         std::unordered_map<UniformBufferHandle, UniformBuffer> uniform_buffers {};
-        std::unordered_map<DescriptorSetHandle, vk::DescriptorSet> descriptor_sets {};
+        std::unordered_map<DescriptorSetHandle, DescriptorSetImpl> descriptor_sets {};
         std::queue<uint32_t> funcs;
     };
 
@@ -337,14 +354,17 @@ private:
 
         void cleanup(vk::Device device);
 
-        vk::DescriptorSet create(vk::Device device, vk::DescriptorSetLayout layout);
+        void free(vk::Device device, DescriptorSetImpl descriptor_set);
+
+        DescriptorSetImpl create(vk::Device device, vk::DescriptorSetLayout layout);
 
     private:
         std::vector<std::pair<vk::DescriptorType, float>> m_sizes;
         uint32_t m_max_sets_per_pool;
 
+        uint64_t m_id_count;
         std::vector<vk::DescriptorPool> m_descriptor_pools {};
-        std::vector<std::pair<vk::DescriptorSet, vk::DescriptorPool>> m_descriptor_sets {};
+        std::unordered_map<uint64_t, DescriptorSetImpl> m_descriptor_sets {};
         size_t m_current_pool_index;
 
         static std::optional<vk::DescriptorSet> try_create(

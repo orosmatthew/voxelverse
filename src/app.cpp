@@ -33,13 +33,13 @@ void run()
     mve::GraphicsPipeline graphics_pipeline
         = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
 
-    mve::DescriptorSetHandle descriptor_set_handle = renderer.create_descriptor_set(graphics_pipeline, 0);
+    mve::DescriptorSet descriptor_set = graphics_pipeline.create_descriptor_set(0);
 
     mve::UniformBufferHandle uniform_handle
         = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 
     renderer.write_descriptor_binding_uniform(
-        descriptor_set_handle, vertex_shader.descriptor_set(0).binding(0), uniform_handle);
+        descriptor_set, vertex_shader.descriptor_set(0).binding(0), uniform_handle);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -68,8 +68,7 @@ void run()
 
     mve::TextureHandle texture = renderer.create_texture("../res/viking_room.png");
 
-    renderer.write_descriptor_binding_texture(
-        descriptor_set_handle, fragment_shader.descriptor_set(0).binding(1), texture);
+    renderer.write_descriptor_binding_texture(descriptor_set, fragment_shader.descriptor_set(0).binding(1), texture);
 
     glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -105,7 +104,7 @@ void run()
 
         renderer.bind_graphics_pipeline(graphics_pipeline);
 
-        renderer.bind_descriptor_set(descriptor_set_handle);
+        renderer.bind_descriptor_set(descriptor_set);
 
         renderer.bind_vertex_buffer(model_vertex_buffer);
 

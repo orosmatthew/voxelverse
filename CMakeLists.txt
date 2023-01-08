@@ -50,7 +50,8 @@ set(SOURCE_FILES
         src/util.cpp
         src/vertex_buffer.cpp
         src/index_buffer.cpp
-        src/graphics_pipeline.cpp)
+        src/graphics_pipeline.cpp
+        src/descriptor_set.cpp)
 
 set(LIBS
         Vulkan::Vulkan

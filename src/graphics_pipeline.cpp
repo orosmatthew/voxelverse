@@ -84,5 +84,13 @@ bool GraphicsPipeline::is_valid() const
 {
     return m_valid;
 }
+DescriptorSetHandle GraphicsPipeline::create_descriptor_set_handle(uint32_t set)
+{
+    return m_renderer->create_descriptor_set_handle(m_handle, set);
+}
+DescriptorSet GraphicsPipeline::create_descriptor_set(uint32_t set)
+{
+    return m_renderer->create_descriptor_set(m_handle, set);
+}
 
 }

@@ -1536,7 +1536,7 @@ void Renderer::bind_descriptor_set(DescriptorSetHandle handle)
         m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
         0,
         1,
-        &(m_frames_in_flight.at(m_current_draw_state.frame_index).descriptor_sets.at(handle)),
+        &(m_frames_in_flight.at(m_current_draw_state.frame_index).descriptor_sets.at(handle).vk_handle),
         0,
         nullptr);
 }
@@ -1808,9 +1808,9 @@ DescriptorSetLayoutHandle Renderer::create_descriptor_set_layout(
     return handle;
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set)
+DescriptorSetHandle Renderer::create_descriptor_set_handle(GraphicsPipelineHandle pipeline, uint32_t set)
 {
-    std::vector<vk::DescriptorSet> descriptor_sets;
+    std::vector<DescriptorSetImpl> descriptor_sets;
     descriptor_sets.reserve(c_frames_in_flight);
 
     vk::DescriptorSetLayout layout = m_descriptor_set_layouts.at(
@@ -1829,7 +1829,7 @@ DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipelineHandle pipel
         i++;
     }
 
-    LOG->info("[Renderer] Descriptor set created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Descriptor set created with ID: {}", handle.value());
 
     return handle;
 }
@@ -2518,7 +2518,7 @@ void Renderer::write_descriptor_binding_texture(
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstSet(this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set).vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
@@ -2527,6 +2527,12 @@ void Renderer::write_descriptor_binding_texture(
 
         this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr);
     });
+}
+
+void Renderer::write_descriptor_binding_texture(
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture)
+{
+    write_descriptor_binding_texture(descriptor_set.handle(), binding, texture);
 }
 
 void Renderer::write_descriptor_binding_uniform(
@@ -2542,7 +2548,7 @@ void Renderer::write_descriptor_binding_uniform(
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set))
+                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set).vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
@@ -2611,14 +2617,50 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
     return GraphicsPipeline(*this, vertex_shader, fragment_shader, vertex_layout);
 }
 
-DescriptorSetHandle Renderer::create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set)
+DescriptorSetHandle Renderer::create_descriptor_set_handle(GraphicsPipeline& pipeline, uint32_t set)
 {
-    return create_descriptor_set(pipeline.handle(), set);
+    return create_descriptor_set_handle(pipeline.handle(), set);
 }
 
 void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
 {
     bind_graphics_pipeline(graphics_pipeline.handle());
+}
+
+void Renderer::queue_destroy(DescriptorSetHandle handle)
+{
+    defer_after_all_frames([this, handle](uint32_t) {
+        std::vector<DescriptorSetImpl> sets_to_delete;
+        for (const FrameInFlight& frame : m_frames_in_flight) {
+            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
+        }
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            frame.descriptor_sets.erase(handle);
+        }
+        for (DescriptorSetImpl set : sets_to_delete) {
+            m_descriptor_set_allocator.free(m_vk_device, set);
+        }
+    });
+}
+
+DescriptorSet Renderer::create_descriptor_set(GraphicsPipelineHandle pipeline, uint32_t set)
+{
+    return DescriptorSet(*this, pipeline, set);
+}
+
+DescriptorSet Renderer::create_descriptor_set(GraphicsPipeline& pipeline, uint32_t set)
+{
+    return DescriptorSet(*this, pipeline.handle(), set);
+}
+void Renderer::write_descriptor_binding_uniform(
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer)
+{
+    write_descriptor_binding_uniform(descriptor_set.handle(), binding, uniform_buffer);
+}
+
+void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
+{
+    bind_descriptor_set(descriptor_set.handle());
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
@@ -2635,6 +2677,7 @@ Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
                 { vk::DescriptorType::eInputAttachment, 0.5f } })
     , m_max_sets_per_pool(1000)
     , m_current_pool_index(0)
+    , m_id_count(0)
 {
 }
 
@@ -2661,15 +2704,15 @@ vk::DescriptorPool Renderer::DescriptorSetAllocator::create_pool(vk::Device devi
 
 void Renderer::DescriptorSetAllocator::cleanup(vk::Device device)
 {
-    for (auto& [descriptor_set, descriptor_pool] : m_descriptor_sets) {
-        device.freeDescriptorSets(descriptor_pool, 1, &descriptor_set);
+    for (auto& [id, descriptor_set] : m_descriptor_sets) {
+        device.freeDescriptorSets(descriptor_set.vk_pool, 1, &descriptor_set.vk_handle);
     }
     for (vk::DescriptorPool descriptor_pool : m_descriptor_pools) {
         device.destroy(descriptor_pool);
     }
 }
 
-vk::DescriptorSet Renderer::DescriptorSetAllocator::create(vk::Device device, vk::DescriptorSetLayout layout)
+Renderer::DescriptorSetImpl Renderer::DescriptorSetAllocator::create(vk::Device device, vk::DescriptorSetLayout layout)
 {
     if (m_descriptor_pools.empty()) {
         m_descriptor_pools.push_back(create_pool(device, vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet));
@@ -2701,10 +2744,14 @@ vk::DescriptorSet Renderer::DescriptorSetAllocator::create(vk::Device device, vk
             }
         }
     }
+    uint64_t id = m_id_count;
+    m_id_count++;
+    DescriptorSetImpl descriptor_set_impl {
+        .id = id, .vk_handle = descriptor_set.value(), .vk_pool = m_descriptor_pools.at(m_current_pool_index)
+    };
+    m_descriptor_sets.insert({ id, descriptor_set_impl });
 
-    m_descriptor_sets.push_back({ descriptor_set.value(), m_descriptor_pools.at(m_current_pool_index) });
-
-    return descriptor_set.value();
+    return descriptor_set_impl;
 }
 
 std::optional<vk::DescriptorSet> Renderer::DescriptorSetAllocator::try_create(
@@ -2726,4 +2773,11 @@ std::optional<vk::DescriptorSet> Renderer::DescriptorSetAllocator::try_create(
         throw std::runtime_error("[Renderer] Failed to allocate descriptor sets");
     }
 }
+
+void Renderer::DescriptorSetAllocator::free(vk::Device device, DescriptorSetImpl descriptor_set)
+{
+    device.freeDescriptorSets(descriptor_set.vk_pool, 1, &descriptor_set.vk_handle);
+    m_descriptor_sets.erase(descriptor_set.id);
+}
+
 }
