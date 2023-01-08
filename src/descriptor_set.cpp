@@ -86,21 +86,20 @@ bool DescriptorSet::is_valid() const
 {
     return m_valid;
 }
-void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle)
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
 {
-    m_renderer->write_descriptor_binding(m_handle, binding, handle);
+    m_renderer->write_descriptor_binding(*this, descriptor_binding, uniform_buffer);
 }
-void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer)
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
 {
-    write_binding(binding, uniform_buffer.handle());
+    m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }
-void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, TextureHandle handle)
+
+DescriptorSet::DescriptorSet(Renderer& renderer, DescriptorSetHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
 {
-    m_renderer->write_descriptor_binding(m_handle, binding, handle);
-}
-void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, Texture& texture)
-{
-    write_binding(binding, texture.handle());
 }
 
 }

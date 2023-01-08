@@ -40,7 +40,13 @@ public:
         const Shader& fragment_shader,
         const VertexLayout& vertex_layout);
 
+    GraphicsPipeline(Renderer& renderer, GraphicsPipelineHandle handle);
+
     GraphicsPipeline(const GraphicsPipeline&) = delete;
+
+    GraphicsPipeline(GraphicsPipeline&& other);
+
+    ~GraphicsPipeline();
 
     GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
@@ -49,10 +55,6 @@ public:
     [[nodiscard]] bool operator==(const GraphicsPipeline& other) const;
 
     [[nodiscard]] bool operator<(const GraphicsPipeline& other) const;
-
-    GraphicsPipeline(GraphicsPipeline&& other);
-
-    ~GraphicsPipeline();
 
     [[nodiscard]] GraphicsPipelineHandle handle() const;
 

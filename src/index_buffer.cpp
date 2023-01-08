@@ -57,9 +57,16 @@ bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
+IndexBuffer::IndexBuffer(Renderer& renderer, IndexBufferHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
+{
+}
 
 IndexBufferHandle::IndexBufferHandle(uint32_t value)
-    : m_value(value)
+    : m_initialized(true)
+    , m_value(value)
 {
 }
 uint32_t IndexBufferHandle::value() const
@@ -73,5 +80,14 @@ bool IndexBufferHandle::operator==(const IndexBufferHandle& other) const
 bool IndexBufferHandle::operator<(const IndexBufferHandle& other) const
 {
     return m_value < other.m_value;
+}
+IndexBufferHandle::IndexBufferHandle()
+    : m_initialized(false)
+{
+}
+void IndexBufferHandle::set(uint32_t value)
+{
+    m_initialized = true;
+    m_value = value;
 }
 }

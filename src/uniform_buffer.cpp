@@ -83,31 +83,38 @@ bool UniformBuffer::is_valid() const
 }
 void UniformBuffer::update(UniformLocation location, glm::mat4 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, glm::mat3 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, glm::mat2 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, glm::vec4 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, glm::vec3 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, glm::vec2 value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
 }
 void UniformBuffer::update(UniformLocation location, float value, bool persist)
 {
-    m_renderer->update_uniform(m_handle, location, value, persist);
+    m_renderer->update_uniform(*this, location, value, persist);
+}
+
+UniformBuffer::UniformBuffer(Renderer& renderer, UniformBufferHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
+{
 }
 
 }

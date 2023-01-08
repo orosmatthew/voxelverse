@@ -7,15 +7,20 @@ namespace mve {
 
 class VertexBufferHandle {
 public:
+    VertexBufferHandle();
+
     VertexBufferHandle(uint32_t value);
+
+    void set(uint32_t value);
 
     [[nodiscard]] uint32_t value() const;
 
-    bool operator==(const VertexBufferHandle& other) const;
+    [[nodiscard]] bool operator==(const VertexBufferHandle& other) const;
 
-    bool operator<(const VertexBufferHandle& other) const;
+    [[nodiscard]] bool operator<(const VertexBufferHandle& other) const;
 
 private:
+    bool m_initialized = false;
     uint32_t m_value;
 };
 
@@ -26,7 +31,13 @@ class VertexBuffer {
 public:
     VertexBuffer(Renderer& renderer, const VertexData& data);
 
+    VertexBuffer(Renderer& renderer, VertexBufferHandle handle);
+
     VertexBuffer(const VertexBuffer&) = delete;
+
+    VertexBuffer(VertexBuffer&& other);
+
+    ~VertexBuffer();
 
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
@@ -35,10 +46,6 @@ public:
     [[nodiscard]] bool operator==(const VertexBuffer& other) const;
 
     [[nodiscard]] bool operator<(const VertexBuffer& other) const;
-
-    VertexBuffer(VertexBuffer&& other);
-
-    ~VertexBuffer();
 
     [[nodiscard]] VertexBufferHandle handle() const;
 

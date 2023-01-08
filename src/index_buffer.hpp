@@ -7,15 +7,20 @@ namespace mve {
 
 class IndexBufferHandle {
 public:
+    IndexBufferHandle();
+
     IndexBufferHandle(uint32_t value);
+
+    void set(uint32_t value);
 
     [[nodiscard]] uint32_t value() const;
 
-    bool operator==(const IndexBufferHandle& other) const;
+    [[nodiscard]] bool operator==(const IndexBufferHandle& other) const;
 
-    bool operator<(const IndexBufferHandle& other) const;
+    [[nodiscard]] bool operator<(const IndexBufferHandle& other) const;
 
 private:
+    bool m_initialized = false;
     uint32_t m_value;
 };
 
@@ -25,7 +30,13 @@ class IndexBuffer {
 public:
     IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices);
 
+    IndexBuffer(Renderer& renderer, IndexBufferHandle handle);
+
     IndexBuffer(const IndexBuffer&) = delete;
+
+    IndexBuffer(IndexBuffer&& other);
+
+    ~IndexBuffer();
 
     IndexBuffer& operator=(const IndexBuffer&) = delete;
 
@@ -34,10 +45,6 @@ public:
     [[nodiscard]] bool operator==(const IndexBuffer& other) const;
 
     [[nodiscard]] bool operator<(const IndexBuffer& other) const;
-
-    IndexBuffer(IndexBuffer&& other);
-
-    ~IndexBuffer();
 
     [[nodiscard]] IndexBufferHandle handle() const;
 
@@ -48,7 +55,6 @@ private:
     Renderer* m_renderer;
     IndexBufferHandle m_handle;
 };
-
 }
 
 namespace std {

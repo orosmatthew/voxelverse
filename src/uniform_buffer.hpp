@@ -37,6 +37,8 @@ class UniformBuffer {
 public:
     UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& binding);
 
+    UniformBuffer(Renderer& renderer, UniformBufferHandle handle);
+
     UniformBuffer(const UniformBuffer&) = delete;
 
     UniformBuffer(UniformBuffer&& other);

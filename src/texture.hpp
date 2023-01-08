@@ -31,6 +31,8 @@ class Texture {
 public:
     Texture(Renderer& renderer, const std::filesystem::path& path);
 
+    Texture(Renderer& renderer, TextureHandle handle);
+
     Texture(const Texture&) = delete;
 
     Texture(Texture&& other);

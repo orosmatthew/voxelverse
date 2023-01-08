@@ -90,4 +90,11 @@ DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet&
     return m_renderer->create_descriptor_set(*this, descriptor_set);
 }
 
+GraphicsPipeline::GraphicsPipeline(Renderer& renderer, GraphicsPipelineHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
+{
+}
+
 }

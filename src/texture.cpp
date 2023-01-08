@@ -79,4 +79,11 @@ bool Texture::is_valid() const
 {
     return m_valid;
 }
+
+Texture::Texture(Renderer& renderer, TextureHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
+{
+}
 }

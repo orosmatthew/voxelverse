@@ -58,8 +58,16 @@ bool VertexBuffer::operator<(const VertexBuffer& other) const
     return m_handle < other.m_handle;
 }
 
+VertexBuffer::VertexBuffer(Renderer& renderer, VertexBufferHandle handle)
+    : m_valid(true)
+    , m_renderer(&renderer)
+    , m_handle(handle)
+{
+}
+
 VertexBufferHandle::VertexBufferHandle(uint32_t value)
-    : m_value(value)
+    : m_initialized(true)
+    , m_value(value)
 {
 }
 uint32_t VertexBufferHandle::value() const
@@ -73,6 +81,11 @@ bool VertexBufferHandle::operator==(const VertexBufferHandle& other) const
 bool VertexBufferHandle::operator<(const VertexBufferHandle& other) const
 {
     return m_value < other.m_value;
+}
+
+VertexBufferHandle::VertexBufferHandle()
+    : m_initialized(false)
+{
 }
 
 }

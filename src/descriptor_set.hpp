@@ -38,6 +38,8 @@ class DescriptorSet {
 public:
     DescriptorSet(Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
+    DescriptorSet(Renderer& renderer, DescriptorSetHandle handle);
+
     DescriptorSet(const DescriptorSet&) = delete;
 
     DescriptorSet(DescriptorSet&& other);
@@ -56,13 +58,9 @@ public:
 
     [[nodiscard]] bool is_valid() const;
 
-    void write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle);
+    void write_binding(const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer);
 
-    void write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer);
-
-    void write_binding(const ShaderDescriptorBinding& binding, TextureHandle handle);
-
-    void write_binding(const ShaderDescriptorBinding& binding, Texture& texture);
+    void write_binding(const ShaderDescriptorBinding& descriptor_binding, Texture& texture);
 
 private:
     bool m_valid = false;
