@@ -8,17 +8,17 @@ UniformBufferHandle::UniformBufferHandle()
     : m_initialized(false)
 {
 }
-UniformBufferHandle::UniformBufferHandle(uint32_t value)
+UniformBufferHandle::UniformBufferHandle(uint64_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
-void UniformBufferHandle::set(uint32_t value)
+void UniformBufferHandle::set(uint64_t value)
 {
     m_initialized = true;
     m_value = value;
 }
-uint32_t UniformBufferHandle::value() const
+uint64_t UniformBufferHandle::value() const
 {
     return m_value;
 }

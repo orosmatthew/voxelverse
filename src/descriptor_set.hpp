@@ -9,11 +9,11 @@ class DescriptorSetHandle {
 public:
     DescriptorSetHandle();
 
-    DescriptorSetHandle(uint32_t value);
+    DescriptorSetHandle(uint64_t value);
 
-    void set(uint32_t value);
+    void set(uint64_t value);
 
-    [[nodiscard]] uint32_t value() const;
+    [[nodiscard]] uint64_t value() const;
 
     [[nodiscard]] bool operator==(const DescriptorSetHandle& other) const;
 
@@ -21,7 +21,7 @@ public:
 
 private:
     bool m_initialized = false;
-    uint32_t m_value;
+    uint64_t m_value;
 };
 
 class Renderer;
@@ -74,7 +74,7 @@ template <>
 struct hash<mve::DescriptorSetHandle> {
     std::size_t operator()(const mve::DescriptorSetHandle& handle) const
     {
-        return hash<uint32_t>()(handle.value());
+        return hash<uint64_t>()(handle.value());
     }
 };
 

@@ -1754,7 +1754,7 @@ Renderer::GraphicsPipelineLayoutHandleImpl Renderer::create_graphics_pipeline_la
     const Shader& vertex_shader, const Shader& fragment_shader)
 {
     std::vector<DescriptorSetLayoutHandleImpl> layouts;
-    std::unordered_map<uint32_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
+    std::unordered_map<uint64_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
 
     for (uint32_t i = 0; i <= 3; i++) {
         if (vertex_shader.has_descriptor_set(i) || fragment_shader.has_descriptor_set(i)) {

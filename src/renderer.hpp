@@ -455,8 +455,8 @@ private:
         std::vector<vk::PresentModeKHR> present_modes;
     };
 
-    using DescriptorSetLayoutHandleImpl = uint32_t;
-    using GraphicsPipelineLayoutHandleImpl = uint32_t;
+    using DescriptorSetLayoutHandleImpl = uint64_t;
+    using GraphicsPipelineLayoutHandleImpl = uint64_t;
 
     struct Buffer {
         vk::Buffer vk_handle;
@@ -532,7 +532,7 @@ private:
 
     struct GraphicsPipelineLayoutImpl {
         vk::PipelineLayout vk_handle;
-        std::unordered_map<uint32_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
+        std::unordered_map<uint64_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
     };
 
     struct GraphicsPipelineImpl {
@@ -584,7 +584,7 @@ private:
     vk::CommandPool m_vk_command_pool;
     QueueFamilyIndices m_vk_queue_family_indices;
     VmaAllocator m_vma_allocator;
-    uint32_t m_resource_handle_count;
+    uint64_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
     DepthImage m_depth_image;

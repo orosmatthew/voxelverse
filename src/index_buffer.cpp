@@ -64,12 +64,12 @@ IndexBuffer::IndexBuffer(Renderer& renderer, IndexBufferHandle handle)
 {
 }
 
-IndexBufferHandle::IndexBufferHandle(uint32_t value)
+IndexBufferHandle::IndexBufferHandle(uint64_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
-uint32_t IndexBufferHandle::value() const
+uint64_t IndexBufferHandle::value() const
 {
     return m_value;
 }
@@ -85,7 +85,7 @@ IndexBufferHandle::IndexBufferHandle()
     : m_initialized(false)
 {
 }
-void IndexBufferHandle::set(uint32_t value)
+void IndexBufferHandle::set(uint64_t value)
 {
     m_initialized = true;
     m_value = value;

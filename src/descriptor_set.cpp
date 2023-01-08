@@ -8,18 +8,18 @@ DescriptorSetHandle::DescriptorSetHandle()
     : m_initialized(false)
 {
 }
-DescriptorSetHandle::DescriptorSetHandle(uint32_t value)
+DescriptorSetHandle::DescriptorSetHandle(uint64_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
 
-void DescriptorSetHandle::set(uint32_t value)
+void DescriptorSetHandle::set(uint64_t value)
 {
     m_initialized = true;
     m_value = value;
 }
-uint32_t DescriptorSetHandle::value() const
+uint64_t DescriptorSetHandle::value() const
 {
     return m_value;
 }

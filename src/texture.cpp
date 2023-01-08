@@ -8,17 +8,17 @@ TextureHandle::TextureHandle()
     : m_initialized(false)
 {
 }
-TextureHandle::TextureHandle(uint32_t value)
+TextureHandle::TextureHandle(uint64_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
-void TextureHandle::set(uint32_t value)
+void TextureHandle::set(uint64_t value)
 {
     m_initialized = true;
     m_value = value;
 }
-uint32_t TextureHandle::value() const
+uint64_t TextureHandle::value() const
 {
     return m_value;
 }

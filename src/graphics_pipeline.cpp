@@ -4,12 +4,12 @@
 
 namespace mve {
 
-GraphicsPipelineHandle::GraphicsPipelineHandle(uint32_t value)
+GraphicsPipelineHandle::GraphicsPipelineHandle(uint64_t value)
     : m_value(value)
     , m_initialized(true)
 {
 }
-uint32_t GraphicsPipelineHandle::value() const
+uint64_t GraphicsPipelineHandle::value() const
 {
     return m_value;
 }
@@ -27,7 +27,7 @@ GraphicsPipelineHandle::GraphicsPipelineHandle()
 {
 }
 
-void GraphicsPipelineHandle::set(uint32_t value)
+void GraphicsPipelineHandle::set(uint64_t value)
 {
     m_value = value;
     m_initialized = true;

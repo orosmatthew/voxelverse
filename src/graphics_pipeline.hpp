@@ -11,11 +11,11 @@ class GraphicsPipelineHandle {
 public:
     GraphicsPipelineHandle();
 
-    GraphicsPipelineHandle(uint32_t value);
+    GraphicsPipelineHandle(uint64_t value);
 
-    void set(uint32_t value);
+    void set(uint64_t value);
 
-    [[nodiscard]] uint32_t value() const;
+    [[nodiscard]] uint64_t value() const;
 
     [[nodiscard]] bool operator==(const GraphicsPipelineHandle& other) const;
 
@@ -23,7 +23,7 @@ public:
 
 private:
     bool m_initialized = false;
-    uint32_t m_value;
+    uint64_t m_value;
 };
 
 class Renderer;
@@ -75,7 +75,7 @@ template <>
 struct hash<mve::GraphicsPipelineHandle> {
     std::size_t operator()(const mve::GraphicsPipelineHandle& handle) const
     {
-        return hash<uint32_t>()(handle.value());
+        return hash<uint64_t>()(handle.value());
     }
 };
 

@@ -65,12 +65,12 @@ VertexBuffer::VertexBuffer(Renderer& renderer, VertexBufferHandle handle)
 {
 }
 
-VertexBufferHandle::VertexBufferHandle(uint32_t value)
+VertexBufferHandle::VertexBufferHandle(uint64_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
-uint32_t VertexBufferHandle::value() const
+uint64_t VertexBufferHandle::value() const
 {
     return m_value;
 }
@@ -86,6 +86,11 @@ bool VertexBufferHandle::operator<(const VertexBufferHandle& other) const
 VertexBufferHandle::VertexBufferHandle()
     : m_initialized(false)
 {
+}
+void VertexBufferHandle::set(uint64_t value)
+{
+    m_initialized = true;
+    m_value = value;
 }
 
 }
