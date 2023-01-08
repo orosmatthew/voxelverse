@@ -106,11 +106,11 @@ void Shader::create_reflection_data()
             if (reflect_binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
                 std::optional<ShaderBindingBlock> block = create_binding_block(reflect_binding->block);
                 ShaderDescriptorBinding binding(reflect_binding->name, reflect_binding->binding, type, block);
-                bindings.insert({reflect_binding->binding, std::move(binding)});
+                bindings.insert({ reflect_binding->binding, std::move(binding) });
             }
             else {
                 ShaderDescriptorBinding binding(reflect_binding->name, reflect_binding->binding, type, {});
-                bindings.insert({reflect_binding->binding, std::move(binding)});
+                bindings.insert({ reflect_binding->binding, std::move(binding) });
             }
         }
         ShaderDescriptorSet descriptor_set(set->set, std::move(bindings));
@@ -230,4 +230,30 @@ UniformLocation ShaderBindingBlock::location() const
     return UniformLocation(offset());
 }
 
+UniformLocation::UniformLocation()
+    : m_initialized(false)
+{
+}
+UniformLocation::UniformLocation(uint32_t value)
+    : m_initialized(true)
+    , m_value(value)
+{
+}
+void UniformLocation::set(uint32_t value)
+{
+    m_initialized = true;
+    m_value = value;
+}
+uint32_t UniformLocation::value() const
+{
+    return m_value;
+}
+bool UniformLocation::operator==(const UniformLocation& other) const
+{
+    return m_value == other.m_value;
+}
+bool UniformLocation::operator<(const UniformLocation& other) const
+{
+    return m_value < other.m_value;
+}
 }

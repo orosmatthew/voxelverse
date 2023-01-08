@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <strong_type/strong_type.hpp>
-
 namespace mve {
 
 enum class ShaderType {
@@ -18,7 +16,24 @@ enum class ShaderDescriptorType {
     combined_image_sampler,
 };
 
-using UniformLocation = strong::type<uint32_t, struct _uniform_location, strong::regular, strong::hashable>;
+class UniformLocation {
+public:
+    UniformLocation();
+
+    UniformLocation(uint32_t value);
+
+    void set(uint32_t value);
+
+    [[nodiscard]] uint32_t value() const;
+
+    [[nodiscard]] bool operator==(const UniformLocation& other) const;
+
+    [[nodiscard]] bool operator<(const UniformLocation& other) const;
+
+private:
+    bool m_initialized = false;
+    uint32_t m_value;
+};
 
 class ShaderBindingBlock {
 public:
@@ -121,4 +136,14 @@ private:
     ShaderReflectionData m_reflection_data;
 };
 
+}
+
+namespace std {
+template <>
+struct hash<mve::UniformLocation> {
+    std::size_t operator()(const mve::UniformLocation& location) const
+    {
+        return hash<uint32_t>()(location.value());
+    }
+};
 }

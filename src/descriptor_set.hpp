@@ -28,6 +28,8 @@ class Renderer;
 class GraphicsPipelineHandle;
 class GraphicsPipeline;
 class ShaderDescriptorBinding;
+class UniformBufferHandle;
+class UniformBuffer;
 
 class DescriptorSet {
 public:
@@ -52,8 +54,9 @@ public:
 
     [[nodiscard]] bool is_valid() const;
 
-    // TODO: also make one with UniformBuffer class
-    //    void write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
+    void write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle);
+
+    void write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer);
 
 private:
     bool m_valid = false;

@@ -12,6 +12,7 @@
 #include "descriptor_set.hpp"
 #include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
+#include "uniform_buffer.hpp"
 #include "vertex_buffer.hpp"
 
 #define GLFW_INCLUDE_VULKAN
@@ -46,12 +47,6 @@ enum DescriptorType {
  * @brief Handle for GPU resources
  */
 using ResourceHandle = strong::type<uint32_t, struct _resource_handle, strong::regular, strong::hashable>;
-
-/**
- * @brief Handle for uniform buffer
- */
-using UniformBufferHandle
-    = strong::type<ResourceHandle, struct _uniform_buffer_handle, strong::regular, strong::hashable>;
 
 /**
  * @brief Handle for a descriptor set layout
@@ -170,14 +165,15 @@ public:
      * @param struct_layout - Uniform struct layout
      * @return - Returns handle to uniform buffer
      */
-    UniformBufferHandle create_uniform_buffer(const ShaderDescriptorBinding& binding);
+    UniformBufferHandle create_uniform_buffer_handle(const ShaderDescriptorBinding& binding);
+
+    UniformBuffer create_uniform_buffer(const ShaderDescriptorBinding& binding);
 
     void write_descriptor_binding_uniform(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
 
-    // TODO: make UniformBufferHandle to UniformBuffer class
     void write_descriptor_binding_uniform(
-        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer);
+        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer);
 
     void write_descriptor_binding_texture(
         DescriptorSetHandle descriptor_set, const ShaderDescriptorBinding& binding, TextureHandle texture);
@@ -227,19 +223,28 @@ public:
 
     void queue_destroy(DescriptorSetHandle handle);
 
+    void queue_destroy(UniformBufferHandle handle);
+
     void update_uniform(UniformBufferHandle handle, UniformLocation location, float value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec3 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec4 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat2 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat3 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist = true);
 
     void update_uniform(UniformBufferHandle handle, UniformLocation location, glm::mat4 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist = true);
 
     void bind_descriptor_set(DescriptorSetHandle handle);
 
@@ -281,7 +286,7 @@ private:
         size_t index_count;
     };
 
-    struct UniformBuffer {
+    struct UniformBufferImpl {
         Buffer buffer;
         uint32_t size;
         std::byte* mapped_ptr;
@@ -320,7 +325,7 @@ private:
         vk::Semaphore image_available_semaphore;
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
-        std::unordered_map<UniformBufferHandle, UniformBuffer> uniform_buffers {};
+        std::unordered_map<UniformBufferHandle, UniformBufferImpl> uniform_buffers {};
         std::unordered_map<DescriptorSetHandle, DescriptorSetImpl> descriptor_sets {};
         std::queue<uint32_t> funcs;
     };

@@ -1489,7 +1489,7 @@ bool Renderer::is_valid(IndexBufferHandle handle)
     return m_index_buffers.contains(handle);
 }
 
-UniformBufferHandle Renderer::create_uniform_buffer(const ShaderDescriptorBinding& binding)
+UniformBufferHandle Renderer::create_uniform_buffer_handle(const ShaderDescriptorBinding& binding)
 {
     auto handle = UniformBufferHandle(m_resource_handle_count);
     m_resource_handle_count++;
@@ -1508,10 +1508,10 @@ UniformBufferHandle Renderer::create_uniform_buffer(const ShaderDescriptorBindin
         void* ptr;
         vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
 
-        frame.uniform_buffers[handle] = UniformBuffer { buffer, struct_size, static_cast<std::byte*>(ptr) };
+        frame.uniform_buffers[handle] = UniformBufferImpl { buffer, struct_size, static_cast<std::byte*>(ptr) };
     }
 
-    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle.value_of().value_of());
+    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle.value());
 
     return handle;
 }
@@ -1572,8 +1572,8 @@ void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation locati
 void Renderer::update_uniform(
     UniformBufferHandle handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
 {
-    UniformBuffer& buffer = m_frames_in_flight.at(frame_index).uniform_buffers.at(handle);
-    memcpy(&(buffer.mapped_ptr[location.value_of()]), data_ptr, size);
+    UniformBufferImpl& buffer = m_frames_in_flight.at(frame_index).uniform_buffers.at(handle);
+    memcpy(&(buffer.mapped_ptr[location.value()]), data_ptr, size);
 }
 
 void Renderer::update_uniform(UniformBufferHandle handle, UniformLocation location, glm::vec2 value, bool persist)
@@ -2611,6 +2611,20 @@ void Renderer::queue_destroy(GraphicsPipelineHandle handle)
         m_graphics_pipelines.erase(handle);
     });
 }
+
+void Renderer::queue_destroy(UniformBufferHandle handle)
+{
+    defer_after_all_frames([this, handle](uint32_t) {
+        for (const FrameInFlight& frame : m_frames_in_flight) {
+            UniformBufferImpl uniform_buffer = frame.uniform_buffers.at(handle);
+            vmaUnmapMemory(m_vma_allocator, uniform_buffer.buffer.vma_allocation);
+            vmaDestroyBuffer(m_vma_allocator, uniform_buffer.buffer.vk_handle, uniform_buffer.buffer.vma_allocation);
+        }
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            frame.uniform_buffers.erase(handle);
+        }
+    });
+}
 GraphicsPipeline Renderer::create_graphics_pipeline(
     const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
 {
@@ -2653,14 +2667,46 @@ DescriptorSet Renderer::create_descriptor_set(GraphicsPipeline& pipeline, uint32
     return DescriptorSet(*this, pipeline.handle(), set);
 }
 void Renderer::write_descriptor_binding_uniform(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer)
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer)
 {
-    write_descriptor_binding_uniform(descriptor_set.handle(), binding, uniform_buffer);
+    write_descriptor_binding_uniform(descriptor_set.handle(), binding, uniform_buffer.handle());
 }
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
 {
     bind_descriptor_set(descriptor_set.handle());
+}
+UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& binding)
+{
+    return UniformBuffer(*this, binding);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
+}
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist)
+{
+    update_uniform(uniform_buffer.handle(), location, value, persist);
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

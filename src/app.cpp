@@ -35,11 +35,9 @@ void run()
 
     mve::DescriptorSet descriptor_set = graphics_pipeline.create_descriptor_set(0);
 
-    mve::UniformBufferHandle uniform_handle
-        = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
+    mve::UniformBuffer uniform_buffer = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 
-    renderer.write_descriptor_binding_uniform(
-        descriptor_set, vertex_shader.descriptor_set(0).binding(0), uniform_handle);
+    descriptor_set.write_binding(vertex_shader.descriptor_set(0).binding(0), uniform_buffer);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -52,14 +50,14 @@ void run()
     mve::UniformLocation model_location = vertex_shader.descriptor_set(0).binding(0).member("model").location();
     mve::UniformLocation proj_location = vertex_shader.descriptor_set(0).binding(0).member("proj").location();
 
-    renderer.update_uniform(uniform_handle, view_location, view);
+    uniform_buffer.update(view_location, view);
 
     auto resize_func = [&](glm::ivec2 new_size) {
         renderer.resize(window);
         glm::mat4 proj = glm::perspective(
             glm::radians(45.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.1f, 10.0f);
         proj[1][1] *= -1;
-        renderer.update_uniform(uniform_handle, proj_location, proj);
+        uniform_buffer.update(proj_location, proj);
     };
 
     window.set_resize_callback(resize_func);
@@ -98,7 +96,7 @@ void run()
             model = glm::rotate(model, glm::radians(-0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
         }
 
-        renderer.update_uniform(uniform_handle, model_location, model, false);
+        uniform_buffer.update(model_location, model, false);
 
         renderer.begin(window);
 

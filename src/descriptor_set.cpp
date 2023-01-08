@@ -92,9 +92,13 @@ bool DescriptorSet::is_valid() const
 {
     return m_valid;
 }
-// void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle uniform_buffer)
-//{
-//     m_renderer->write_descriptor_binding_uniform(m_handle, binding, uniform_buffer);
-// }
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBufferHandle handle)
+{
+    m_renderer->write_descriptor_binding_uniform(m_handle, binding, handle);
+}
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& binding, UniformBuffer& uniform_buffer)
+{
+    write_binding(binding, uniform_buffer.handle());
+}
 
 }
