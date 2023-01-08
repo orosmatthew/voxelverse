@@ -481,8 +481,7 @@ private:
 
     static vk::Format find_depth_format(vk::PhysicalDevice physical_device);
 
-    void update_uniform(
-        uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+    void update_uniform(uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
     static bool has_stencil_component(vk::Format format);
 
