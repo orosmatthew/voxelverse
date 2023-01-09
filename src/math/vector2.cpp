@@ -1,6 +1,7 @@
 #include "vector2.hpp"
 
 #include "functions.hpp"
+#include "vector2i.hpp"
 
 namespace mve {
 
@@ -173,7 +174,7 @@ bool Vector2::operator>=(const Vector2& other) const
     }
     return true;
 }
-float Vector2::operator[](int index) const
+float& Vector2::operator[](int index)
 {
     switch (index) {
     case 0:
@@ -240,7 +241,7 @@ Vector2& Vector2::operator/=(int scalar)
     y /= scalar;
     return *this;
 }
-float Vector2::operator[](Vector2Axis axis) const
+float& Vector2::operator[](Vector2Axis axis)
 {
     switch (axis) {
     case Vector2Axis::x:
@@ -283,6 +284,11 @@ Vector2 Vector2::inverse() const
 Vector2 Vector2::clamp_length(float min, float max) const
 {
     return mve::clamp_length(*this, min, max);
+}
+Vector2::Vector2(const Vector2i& vector)
+    : x(static_cast<float>(vector.x))
+    , y(static_cast<float>(vector.y))
+{
 }
 
 Vector2 abs(const Vector2& vector)

@@ -2956,7 +2956,7 @@ GLFWAPI void glfwGetWindowSize(GLFWwindow* window, int* width, int* height);
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
  *  GLFW_INVALID_VALUE and @ref GLFW_PLATFORM_ERROR.
  *
- *  @remark If you set size limits and an aspect ratio that conflict, the
+ *  @remark If you set size limits and an aspect_ratio ratio that conflict, the
  *  results are undefined.
  *
  *  @remark @wayland The size limits will not be applied until the window is
@@ -2973,36 +2973,36 @@ GLFWAPI void glfwGetWindowSize(GLFWwindow* window, int* width, int* height);
  */
 GLFWAPI void glfwSetWindowSizeLimits(GLFWwindow* window, int minwidth, int minheight, int maxwidth, int maxheight);
 
-/*! @brief Sets the aspect ratio of the specified window.
+/*! @brief Sets the aspect_ratio ratio of the specified window.
  *
- *  This function sets the required aspect ratio of the content area of the
- *  specified window.  If the window is full screen, the aspect ratio only takes
+ *  This function sets the required aspect_ratio ratio of the content area of the
+ *  specified window.  If the window is full screen, the aspect_ratio ratio only takes
  *  effect once it is made windowed.  If the window is not resizable, this
  *  function does nothing.
  *
- *  The aspect ratio is specified as a numerator and a denominator and both
- *  values must be greater than zero.  For example, the common 16:9 aspect ratio
+ *  The aspect_ratio ratio is specified as a numerator and a denominator and both
+ *  values must be greater than zero.  For example, the common 16:9 aspect_ratio ratio
  *  is specified as 16 and 9, respectively.
  *
- *  If the numerator and denominator is set to `GLFW_DONT_CARE` then the aspect
+ *  If the numerator and denominator is set to `GLFW_DONT_CARE` then the aspect_ratio
  *  ratio limit is disabled.
  *
- *  The aspect ratio is applied immediately to a windowed mode window and may
+ *  The aspect_ratio ratio is applied immediately to a windowed mode window and may
  *  cause it to be resized.
  *
  *  @param[in] window The window to set limits for.
- *  @param[in] numer The numerator of the desired aspect ratio, or
+ *  @param[in] numer The numerator of the desired aspect_ratio ratio, or
  *  `GLFW_DONT_CARE`.
- *  @param[in] denom The denominator of the desired aspect ratio, or
+ *  @param[in] denom The denominator of the desired aspect_ratio ratio, or
  *  `GLFW_DONT_CARE`.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED, @ref
  *  GLFW_INVALID_VALUE and @ref GLFW_PLATFORM_ERROR.
  *
- *  @remark If you set size limits and an aspect ratio that conflict, the
+ *  @remark If you set size limits and an aspect_ratio ratio that conflict, the
  *  results are undefined.
  *
- *  @remark @wayland The aspect ratio will not be applied until the window is
+ *  @remark @wayland The aspect_ratio ratio will not be applied until the window is
  *  actually resized, either by the user or by the compositor.
  *
  *  @thread_safety This function must only be called from the main thread.
@@ -3452,7 +3452,7 @@ GLFWAPI GLFWmonitor* glfwGetWindowMonitor(GLFWwindow* window);
  *
  *  When a window transitions from full screen to windowed mode, this function
  *  restores any previous window settings such as whether it is decorated,
- *  floating, resizable, has size or aspect ratio limits, etc.
+ *  floating, resizable, has size or aspect_ratio ratio limits, etc.
  *
  *  @param[in] window The window whose monitor, size or video mode to set.
  *  @param[in] monitor The desired monitor, or `NULL` to set windowed mode.

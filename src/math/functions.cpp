@@ -44,7 +44,7 @@ float pow(float val, float power)
 }
 float squared(float val)
 {
-    return std::powf(val, 2.0f);
+    return val * val;
 }
 
 float floor(float val)
@@ -66,6 +66,24 @@ float cos(float val)
 float tan(float val)
 {
     return std::tanf(val);
+}
+int abs(int val)
+{
+    return std::abs(val);
+}
+int clamp(int val, int min, int max)
+{
+    if (val < min) {
+        return min;
+    }
+    if (val > max) {
+        return max;
+    }
+    return val;
+}
+int squared(int val)
+{
+    return val * val;
 }
 
 }

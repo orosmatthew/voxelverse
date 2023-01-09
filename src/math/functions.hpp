@@ -10,15 +10,21 @@ const float epsilon = 0.000001f;
 
 [[nodiscard]] float abs(float val);
 
+[[nodiscard]] int abs(int val);
+
 [[nodiscard]] float ceil(float val);
 
 [[nodiscard]] float clamp(float val, float min, float max);
+
+[[nodiscard]] int clamp(int val, int min, int max);
 
 [[nodiscard]] float sqrt(float val);
 
 [[nodiscard]] float pow(float val, float power);
 
 [[nodiscard]] float squared(float val);
+
+[[nodiscard]] int squared(int val);
 
 [[nodiscard]] float floor(float val);
 

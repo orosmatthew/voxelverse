@@ -4,12 +4,16 @@ namespace mve {
 
 enum class Vector2Axis { x, y };
 
+class Vector2i;
+
 class Vector2 {
 public:
     float x;
     float y;
 
     Vector2();
+
+    Vector2(const Vector2i& vector);
 
     explicit Vector2(float scalar);
 
@@ -105,9 +109,9 @@ public:
 
     [[nodiscard]] bool operator>=(const Vector2& other) const;
 
-    [[nodiscard]] float operator[](int index) const;
+    [[nodiscard]] float& operator[](int index);
 
-    [[nodiscard]] float operator[](Vector2Axis axis) const;
+    [[nodiscard]] float& operator[](Vector2Axis axis);
 
     [[nodiscard]] Vector2 operator+() const;
 
