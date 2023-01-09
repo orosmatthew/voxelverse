@@ -296,14 +296,15 @@ Vector2 direction_to(const Vector2& from, const Vector2& to)
 
 Vector2 normalize(const Vector2& vector)
 {
+    Vector2 result(0.0f);
     float length = vector.length();
 
     if (length > 0) {
         float inverse_length = 1.0f / length;
-        return vector * inverse_length;
+        result = vector * inverse_length;
     }
 
-    return vector;
+    return result;
 }
 
 float distance_squared_to(const Vector2& from, const Vector2& to)
