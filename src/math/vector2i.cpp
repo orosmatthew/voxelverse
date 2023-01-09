@@ -29,7 +29,7 @@ Vector2i Vector2i::abs() const
 {
     return mve::abs(*this);
 }
-float Vector2i::aspect() const
+float Vector2i::aspect_ratio() const
 {
     return mve::aspect_ratio(*this);
 }

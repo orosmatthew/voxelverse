@@ -25,7 +25,7 @@ public:
 
     [[nodiscard]] Vector2i abs() const;
 
-    [[nodiscard]] float aspect() const;
+    [[nodiscard]] float aspect_ratio() const;
 
     [[nodiscard]] Vector2i clamp(const Vector2i& min, const Vector2i& max) const;
 
