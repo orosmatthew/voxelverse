@@ -625,7 +625,7 @@ GLFWAPI void glfwSetWindowAspectRatio(GLFWwindow* handle, int numer, int denom)
         if (numer <= 0 || denom <= 0)
         {
             _glfwInputError(GLFW_INVALID_VALUE,
-                            "Invalid window aspect_ratio ratio %i:%i",
+                            "Invalid window aspect ratio %i:%i",
                             numer, denom);
             return;
         }
