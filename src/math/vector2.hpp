@@ -15,6 +15,10 @@ public:
 
     Vector2(float x, float y);
 
+    static Vector2 zero();
+
+    static Vector2 one();
+
     [[nodiscard]] Vector2 abs() const;
 
     [[nodiscard]] float aspect_ratio() const;

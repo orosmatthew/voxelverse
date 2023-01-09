@@ -260,6 +260,14 @@ Vector2::operator bool() const
 {
     return x != 0.0f || y != 0.0f;
 }
+Vector2 Vector2::zero()
+{
+    return Vector2(0.0f, 0.0f);
+}
+Vector2 Vector2::one()
+{
+    return Vector2(1.0f, 1.0f);
+}
 
 Vector2 abs(const Vector2& vector)
 {
