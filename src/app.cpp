@@ -5,6 +5,7 @@
 #include <glm/ext.hpp>
 
 #include "logger.hpp"
+#include "math/vector2.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "util.hpp"
