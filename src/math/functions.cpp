@@ -51,5 +51,21 @@ float floor(float val)
 {
     return std::floorf(val);
 }
+float linear_interpolate(float from, float to, float weight)
+{
+    return (from * (1.0f - weight)) + (to * weight);
+}
+float sin(float val)
+{
+    return std::sinf(val);
+}
+float cos(float val)
+{
+    return std::cosf(val);
+}
+float tan(float val)
+{
+    return std::tanf(val);
+}
 
 }

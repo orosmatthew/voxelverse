@@ -22,4 +22,12 @@ const float epsilon = 0.000001f;
 
 [[nodiscard]] float floor(float val);
 
+[[nodiscard]] float sin(float val);
+
+[[nodiscard]] float cos(float val);
+
+[[nodiscard]] float tan(float val);
+
+[[nodiscard]] float linear_interpolate(float from, float to, float weight);
+
 }

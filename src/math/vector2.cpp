@@ -77,10 +77,6 @@ Vector2 Vector2::operator+(const Vector2& other) const
 {
     return Vector2(x + other.x, y + other.y);
 }
-Vector2 Vector2::limit_length(float length) const
-{
-    return mve::limit_length(*this, length);
-}
 Vector2Axis Vector2::max_axis() const
 {
     return mve::max_axis(*this);
@@ -268,6 +264,26 @@ Vector2 Vector2::one()
 {
     return Vector2(1.0f, 1.0f);
 }
+Vector2 Vector2::move_toward(const Vector2& to, float amount) const
+{
+    return mve::move_toward(*this, to, amount);
+}
+float Vector2::dot(const Vector2& vector) const
+{
+    return mve::dot(*this, vector);
+}
+Vector2 Vector2::reflect(const Vector2& normal) const
+{
+    return mve::reflect(*this, normal);
+}
+Vector2 Vector2::inverse() const
+{
+    return mve::inverse(*this);
+}
+Vector2 Vector2::clamp_length(float min, float max) const
+{
+    return mve::clamp_length(*this, min, max);
+}
 
 Vector2 abs(const Vector2& vector)
 {
@@ -338,13 +354,6 @@ Vector2 linear_interpolate(const Vector2& from, const Vector2& to, float weight)
 {
     return (from * (1.0f - weight)) + (to * weight);
 }
-Vector2 limit_length(const Vector2& vector, float length)
-{
-    if (mve::length(vector) > length) {
-        return normalize(vector) * length;
-    }
-    return vector;
-}
 Vector2Axis max_axis(const Vector2& vector)
 {
     if (vector.x > vector.y) {
@@ -372,6 +381,54 @@ bool is_equal_approx(const Vector2& a, const Vector2& b)
 bool is_zero_approx(const Vector2& vector)
 {
     return is_zero_approx(vector.x) && is_zero_approx(vector.y);
+}
+Vector2 move_toward(const Vector2& from, const Vector2& to, float amount)
+{
+    if (from.distance_to(to) >= amount) {
+        return to;
+    }
+    Vector2 result = from;
+    result += from.direction_to(to) * amount;
+    return result;
+}
+float dot(const Vector2& a, const Vector2& b)
+{
+    return (a.x * b.x + a.y * b.y);
+}
+Vector2 reflect(const Vector2& vector, const Vector2& normal)
+{
+    float dot = mve::dot(vector, normal);
+
+    Vector2 result;
+    result.x = vector.x - (2.0f * normal.x) * dot;
+    result.y = vector.y - (2.0f * normal.y) * dot;
+
+    return result;
+}
+Vector2 rotate(const Vector2& vector, float angle)
+{
+    Vector2 result;
+    result.x = vector.x * cos(angle) - vector.y * sin(angle);
+    result.y = vector.x * sin(angle) + vector.y * cos(angle);
+    return result;
+}
+Vector2 inverse(const Vector2& vector)
+{
+    return Vector2(1.0f / vector.x, 1.0f / vector.y);
+}
+Vector2 clamp_length(const Vector2& vector, float min, float max)
+{
+    float length_sqr = mve::length_squared(vector);
+    if (length_sqr > 0.0f) {
+        float length = sqrt(length_sqr);
+        if (length < min) {
+            return normalize(vector) * min;
+        }
+        else if (length > max) {
+            return normalize(vector) * max;
+        }
+    }
+    return vector;
 }
 
 }

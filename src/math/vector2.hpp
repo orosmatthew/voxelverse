@@ -43,8 +43,6 @@ public:
 
     [[nodiscard]] Vector2 linear_interpolate(const Vector2& to, float weight) const;
 
-    [[nodiscard]] Vector2 limit_length(float length) const;
-
     [[nodiscard]] Vector2Axis max_axis() const;
 
     [[nodiscard]] Vector2Axis min_axis() const;
@@ -52,6 +50,16 @@ public:
     [[nodiscard]] bool is_equal_approx(const Vector2& vector) const;
 
     [[nodiscard]] bool is_zero_approx() const;
+
+    [[nodiscard]] Vector2 move_toward(const Vector2& to, float amount) const;
+
+    [[nodiscard]] float dot(const Vector2& vector) const;
+
+    [[nodiscard]] Vector2 reflect(const Vector2& normal) const;
+
+    [[nodiscard]] Vector2 inverse() const;
+
+    [[nodiscard]] Vector2 clamp_length(float min, float max) const;
 
     [[nodiscard]] bool operator!=(const Vector2& other) const;
 
@@ -132,8 +140,6 @@ public:
 
 [[nodiscard]] Vector2 linear_interpolate(const Vector2& from, const Vector2& to, float weight);
 
-[[nodiscard]] Vector2 limit_length(const Vector2& vector, float length);
-
 [[nodiscard]] Vector2Axis max_axis(const Vector2& vector);
 
 [[nodiscard]] Vector2Axis min_axis(const Vector2& vector);
@@ -141,5 +147,17 @@ public:
 [[nodiscard]] bool is_equal_approx(const Vector2& a, const Vector2& b);
 
 [[nodiscard]] bool is_zero_approx(const Vector2& vector);
+
+[[nodiscard]] Vector2 move_toward(const Vector2& from, const Vector2& to, float amount);
+
+[[nodiscard]] float dot(const Vector2& a, const Vector2& b);
+
+[[nodiscard]] Vector2 reflect(const Vector2& vector, const Vector2& normal);
+
+[[nodiscard]] Vector2 rotate(const Vector2& vector, float angle);
+
+[[nodiscard]] Vector2 inverse(const Vector2& vector);
+
+[[nodiscard]] Vector2 clamp_length(const Vector2& vector, float min, float max);
 
 }
