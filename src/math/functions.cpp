@@ -105,5 +105,13 @@ float degrees(float radians)
 {
     return radians * (180.0f / pi);
 }
+float asin(float val)
+{
+    return std::asinf(val);
+}
+float acos(float val)
+{
+    return std::acosf(val);
+}
 
 }

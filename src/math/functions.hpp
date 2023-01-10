@@ -32,7 +32,11 @@ const float pi = 3.14159265358979323846264338327950288f;
 
 [[nodiscard]] float sin(float val);
 
+[[nodiscard]] float asin(float val);
+
 [[nodiscard]] float cos(float val);
+
+[[nodiscard]] float acos(float val);
 
 [[nodiscard]] float tan(float val);
 
