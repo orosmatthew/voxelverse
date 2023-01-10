@@ -85,5 +85,25 @@ int squared(int val)
 {
     return val * val;
 }
+float round(float val)
+{
+    return std::round(val);
+}
+float atan(float val)
+{
+    return std::atanf(val);
+}
+float atan2(float a, float b)
+{
+    return std::atan2f(a, b);
+}
+float radians(float degrees)
+{
+    return degrees * (pi / 180.0f);
+}
+float degrees(float radians)
+{
+    return radians * (180.0f / pi);
+}
 
 }

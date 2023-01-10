@@ -57,7 +57,8 @@ set(SOURCE_FILES
         src/util/fixed_loop.cpp
         src/math/functions.cpp
         src/math/vector2.cpp
-        src/math/vector2i.cpp)
+        src/math/vector2i.cpp
+        src/math/vector3.cpp)
 
 set(LIBS
         Vulkan::Vulkan
