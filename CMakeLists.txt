@@ -60,7 +60,8 @@ set(SOURCE_FILES
         src/math/vector2i.cpp
         src/math/vector3.cpp
         src/math/vector3i.cpp
-        src/math/vector4.cpp)
+        src/math/vector4.cpp
+        src/math/vector4i.cpp)
 
 set(LIBS
         Vulkan::Vulkan
