@@ -5,7 +5,7 @@
 #include <glm/ext.hpp>
 
 #include "logger.hpp"
-#include "math/vector2.hpp"
+#include "math/functions.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "util.hpp"
@@ -58,7 +58,7 @@ void run()
     auto resize_func = [&](glm::ivec2 new_size) {
         renderer.resize(window);
         glm::mat4 proj = glm::perspective(
-            glm::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 10.0f);
+            mve::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 10.0f);
         proj[1][1] *= -1;
         uniform_buffer.update(proj_location, proj);
     };
@@ -71,7 +71,7 @@ void run()
 
     descriptor_set.write_binding(fragment_shader.descriptor_set(0).binding(1), texture);
 
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 model = glm::rotate(glm::mat4(1.0f), mve::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
     const float camera_acceleration = 0.0045f;
     const float camera_speed = 0.05f;
@@ -99,20 +99,20 @@ void run()
         fixed_loop.update(20, [&]() {
             glm::vec3 dir(0.0f);
             if (window.is_key_down(mve::Key::w)) {
-                dir.x += glm::cos(glm::radians(camera_yaw));
-                dir.y += glm::sin(glm::radians(camera_yaw));
+                dir.x += mve::cos(mve::radians(camera_yaw));
+                dir.y += mve::sin(mve::radians(camera_yaw));
             }
             if (window.is_key_down(mve::Key::s)) {
-                dir.x -= glm::cos(glm::radians(camera_yaw));
-                dir.y -= glm::sin(glm::radians(camera_yaw));
+                dir.x -= mve::cos(mve::radians(camera_yaw));
+                dir.y -= mve::sin(mve::radians(camera_yaw));
             }
             if (window.is_key_down(mve::Key::a)) {
-                dir.x += glm::cos(glm::radians(camera_yaw + 90.0f));
-                dir.y += glm::sin(glm::radians(camera_yaw + 90.0f));
+                dir.x += mve::cos(mve::radians(camera_yaw + 90.0f));
+                dir.y += mve::sin(mve::radians(camera_yaw + 90.0f));
             }
             if (window.is_key_down(mve::Key::d)) {
-                dir.x -= glm::cos(glm::radians(camera_yaw + 90.0f));
-                dir.y -= glm::sin(glm::radians(camera_yaw + 90.0f));
+                dir.x -= mve::cos(mve::radians(camera_yaw + 90.0f));
+                dir.y -= mve::sin(mve::radians(camera_yaw + 90.0f));
             }
             if (window.is_key_down(mve::Key::space)) {
                 dir.z += 1;
@@ -131,10 +131,10 @@ void run()
             camera_pos += camera_velocity;
 
             if (window.is_key_down(mve::Key::left)) {
-                model = glm::rotate(model, glm::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+                model = glm::rotate(model, mve::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
             if (window.is_key_down(mve::Key::right)) {
-                model = glm::rotate(model, glm::radians(-0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+                model = glm::rotate(model, mve::radians(-0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
         });
 
@@ -146,9 +146,9 @@ void run()
 
         camera_pitch = glm::clamp(camera_pitch, -89.0f, 89.0f);
         glm::vec3 direction;
-        direction.x = glm::cos(glm::radians(camera_yaw)) * glm::cos(glm::radians(camera_pitch));
-        direction.y = glm::sin(glm::radians(camera_yaw)) * glm::cos(glm::radians(camera_pitch));
-        direction.z = glm::sin(glm::radians(camera_pitch));
+        direction.x = mve::cos(mve::radians(camera_yaw)) * mve::cos(mve::radians(camera_pitch));
+        direction.y = mve::sin(mve::radians(camera_yaw)) * mve::cos(mve::radians(camera_pitch));
+        direction.z = mve::sin(mve::radians(camera_pitch));
         camera_front = glm::normalize(direction);
 
         glm::vec3 pos = lerp(camera_pos_prev, camera_pos, fixed_loop.blend());
