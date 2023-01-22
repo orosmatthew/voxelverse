@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <functional>
 
-#include <glm/matrix.hpp>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
+#include "math/matrix3.hpp"
+#include "math/vector2.hpp"
+#include "math/vector3.hpp"
+#include "math/vector4.hpp"
 
 namespace mve {
 
@@ -42,17 +42,17 @@ public:
 
     void update(UniformLocation location, float value, bool persist = true);
 
-    void update(UniformLocation location, glm::vec2 value, bool persist = true);
+    void update(UniformLocation location, mve::Vector2 value, bool persist = true);
 
-    void update(UniformLocation location, glm::vec3 value, bool persist = true);
+    void update(UniformLocation location, mve::Vector3 value, bool persist = true);
 
-    void update(UniformLocation location, glm::vec4 value, bool persist = true);
+    void update(UniformLocation location, mve::Vector4 value, bool persist = true);
 
-    void update(UniformLocation location, glm::mat2 value, bool persist = true);
+    //    void update(UniformLocation location, glm::mat2 value, bool persist = true);
 
-    void update(UniformLocation location, glm::mat3 value, bool persist = true);
+    void update(UniformLocation location, mve::Matrix3 value, bool persist = true);
 
-    void update(UniformLocation location, glm::mat4 value, bool persist = true);
+    void update(UniformLocation location, mve::Matrix4 value, bool persist = true);
 
 private:
     bool m_valid = false;

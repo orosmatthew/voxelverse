@@ -2,7 +2,7 @@
 
 namespace mve {
 
-const float epsilon = 0.000001f;
+const float epsilon = 0.00001f;
 
 const float pi = 3.14159265358979323846264338327950288f;
 

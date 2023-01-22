@@ -7,8 +7,9 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
-#include <glm/vec2.hpp>
 
+#include "math/vector2.hpp"
+#include "math/vector2i.hpp"
 #include "monitor.hpp"
 
 namespace mve {
@@ -257,7 +258,7 @@ public:
      * @param title - Title of window
      * @param size - Initial size of window
      */
-    Window(const std::string& title, glm::ivec2 size, bool resizable = true);
+    Window(const std::string& title, mve::Vector2i size, bool resizable = true);
 
     /**
      * @brief Get GLFW window handle
@@ -269,7 +270,7 @@ public:
      * @brief Get current size of window
      * @return - Returns current window size
      */
-    [[nodiscard]] glm::ivec2 size() const;
+    [[nodiscard]] mve::Vector2i size() const;
 
     /**
      * @brief Determine if window should close such as if close button is pressed
@@ -281,7 +282,7 @@ public:
      * @brief Set callback function when window is resized
      * @param resize_callback - Resize callback. Takes ivec2 new size as parameter
      */
-    void set_resize_callback(const std::function<void(glm::ivec2)>& resize_callback);
+    void set_resize_callback(const std::function<void(mve::Vector2i)>& resize_callback);
 
     /**
      * @brief Remove window resize callback if set
@@ -319,9 +320,9 @@ public:
 
     [[nodiscard]] bool is_mouse_button_released(MouseButton button) const;
 
-    [[nodiscard]] glm::vec2 mouse_pos() const;
+    [[nodiscard]] mve::Vector2 mouse_pos() const;
 
-    [[nodiscard]] glm::vec2 mouse_delta() const;
+    [[nodiscard]] mve::Vector2 mouse_delta() const;
 
     void fullscreen(bool use_native = false);
 
@@ -339,13 +340,13 @@ public:
 
     void set_title(const std::string& title);
 
-    void move_to(glm::ivec2 pos);
+    void move_to(mve::Vector2i pos);
 
     void fullscreen_to(Monitor monitor, bool use_native = false);
 
-    void set_min_size(glm::ivec2 size);
+    void set_min_size(mve::Vector2i size);
 
-    void resize(glm::ivec2 size);
+    void resize(mve::Vector2i size);
 
     [[nodiscard]] bool is_minimized() const;
 
@@ -359,7 +360,7 @@ public:
 
     [[nodiscard]] Monitor current_monitor() const;
 
-    [[nodiscard]] glm::ivec2 position() const;
+    [[nodiscard]] mve::Vector2i position() const;
 
     void set_clipboard_text(const std::string& text);
 
@@ -384,14 +385,14 @@ public:
      * @param clamped_to_window - If true then returns value clamped inside of window
      * @return - Returns vec2 of cursor position
      */
-    glm::vec2 get_cursor_pos(bool clamped_to_window = true);
+    mve::Vector2 get_cursor_pos(bool clamped_to_window = true);
 
 private:
     using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>;
 
     const bool m_resizable;
     UniqueGlfwWindow m_glfw_window;
-    std::optional<std::function<void(glm::ivec2)>> m_resize_callback;
+    std::optional<std::function<void(mve::Vector2i)>> m_resize_callback;
     bool m_hidden;
     bool m_minimized;
     bool m_maximized;
@@ -399,11 +400,11 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
-    glm::ivec2 m_pos;
-    glm::ivec2 m_size;
-    glm::ivec2 m_windowed_size;
+    mve::Vector2i m_pos;
+    mve::Vector2i m_size;
+    mve::Vector2i m_windowed_size;
     bool m_fullscreen;
-    glm::ivec2 m_min_size;
+    mve::Vector2i m_min_size;
     std::set<Key> m_current_keys_down {};
     std::set<Key> m_keys_down {};
     std::set<Key> m_keys_pressed {};
@@ -416,10 +417,10 @@ private:
     std::set<MouseButton> m_mouse_buttons_pressed {};
     std::set<MouseButton> m_mouse_buttons_released {};
 
-    glm::vec2 m_current_mouse_pos;
-    glm::vec2 m_mouse_pos_prev;
-    glm::vec2 m_mouse_delta;
-    glm::vec2 m_mouse_pos;
+    mve::Vector2 m_current_mouse_pos;
+    mve::Vector2 m_mouse_pos_prev;
+    mve::Vector2 m_mouse_delta;
+    mve::Vector2 m_mouse_pos;
 
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 

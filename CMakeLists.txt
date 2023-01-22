@@ -33,7 +33,6 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(lib/glfw-3.3.8)
-add_subdirectory(lib/glm-0.9.9.8)
 
 set(LIB_SOURCE_FILES
         lib/whereami-ba364cd/src/whereami.c
@@ -61,12 +60,14 @@ set(SOURCE_FILES
         src/math/vector3.cpp
         src/math/vector3i.cpp
         src/math/vector4.cpp
-        src/math/vector4i.cpp)
+        src/math/vector4i.cpp
+        src/math/matrix4.cpp
+        src/math/matrix3.cpp
+        src/math/quaternion.cpp)
 
 set(LIBS
         Vulkan::Vulkan
-        glfw
-        glm)
+        glfw)
 
 set(LIB_INCLUDES
         lib/spdlog-1.11.0/include

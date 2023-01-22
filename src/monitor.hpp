@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "math/vector2i.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 
@@ -12,11 +13,11 @@ class Monitor {
 public:
     Monitor(GLFWmonitor* monitor);
 
-    [[nodiscard]] glm::ivec2 size() const;
+    [[nodiscard]] mve::Vector2i size() const;
 
-    [[nodiscard]] glm::ivec2 position() const;
+    [[nodiscard]] mve::Vector2i position() const;
 
-    [[nodiscard]] glm::ivec2 physical_size() const;
+    [[nodiscard]] mve::Vector2i physical_size() const;
 
     [[nodiscard]] GLFWmonitor* glfw_handle();
 

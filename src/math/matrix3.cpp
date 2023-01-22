@@ -1,0 +1,558 @@
+#include "matrix3.hpp"
+
+#include "functions.hpp"
+#include "matrix4.hpp"
+
+namespace mve {
+
+Matrix3::Matrix3()
+    : col0({ 1.0f, 0.0f, 0.0f })
+    , col1({ 0.0f, 1.0f, 0.0f })
+    , col2({ 0.0f, 0.0f, 1.0f })
+{
+}
+Matrix3::Matrix3(Vector3 col0, Vector3 col1, Vector3 col2)
+    : col0(col0)
+    , col1(col1)
+    , col2(col2)
+{
+}
+
+Matrix3::Matrix3(
+    float c0r0, float c0r1, float c0r2, float c1r0, float c1r1, float c1r2, float c2r0, float c2r1, float c2r2)
+    : col0({ c0r0, c0r1, c0r2 })
+    , col1({ c1r0, c1r1, c1r2 })
+    , col2({ c2r0, c2r1, c2r2 })
+{
+}
+Matrix3 Matrix3::zero()
+{
+    return Matrix3(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+}
+Matrix3 Matrix3::identity()
+{
+    return Matrix3(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+}
+Vector3 Matrix3::euler() const
+{
+    return mve::euler(*this);
+}
+Matrix3 Matrix3::from_axis_angle(Vector3 axis, float angle)
+{
+    Matrix3 result;
+    Vector3 axis_sq { squared(axis.x), squared(axis.y), squared(axis.z) };
+    float angle_cos = cos(angle);
+
+    result[0][0] = axis_sq.x + angle_cos * (1.0f - axis_sq.x);
+    result[1][1] = axis_sq.y + angle_cos * (1.0f - axis_sq.y);
+    result[2][2] = axis_sq.z + angle_cos * (1.0f - axis_sq.z);
+
+    float angle_sin = sin(angle);
+    float t = 1 - angle_sin;
+
+    float xyt = axis.x * axis.y * t;
+    float zs = axis.z * angle_sin;
+    result[1][0] = xyt - zs;
+    result[0][1] = xyt + zs;
+
+    float xzt = axis.x * axis.z * t;
+    float ys = axis.y * angle_sin;
+    result[2][0] = xzt + ys;
+    result[0][2] = xzt - ys;
+
+    float yzt = axis.y * axis.z * t;
+    float xs = axis.x * angle_sin;
+    result[2][1] = yzt - xs;
+    result[1][2] = yzt + xs;
+
+    return result;
+}
+Matrix3 Matrix3::from_euler(Vector3 euler)
+{
+    float c = cos(euler.x);
+    float s = sin(euler.x);
+    Matrix3 x { 1.0f, 0.0f, 0.0f, 0.0f, c, -s, 0.0f, s, c };
+
+    c = cos(euler.y);
+    s = sin(euler.y);
+    Matrix3 y { c, 0.0f, s, 0.0f, 1.0f, 0.0f, -s, 0.0f, c };
+
+    c = cos(euler.z);
+    s = sin(euler.z);
+    Matrix3 z { c, -s, 0.0f, s, c, 0.0f, 0.0f, 0.0f, 1.0f };
+
+    return x * (y * z);
+}
+Vector3 Matrix3::scale() const
+{
+    return mve::scale(*this);
+}
+float Matrix3::determinant() const
+{
+    return mve::determinant(*this);
+}
+float Matrix3::trace() const
+{
+    return mve::trace(*this);
+}
+Matrix3 Matrix3::transpose() const
+{
+    return mve::transpose(*this);
+}
+Matrix3 Matrix3::inverse() const
+{
+    return mve::inverse(*this);
+}
+Matrix3 Matrix3::orthonormalize() const
+{
+    return mve::orthonormalize(*this);
+}
+Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
+{
+    float quat_length_sq = quaternion.length_squared();
+    float s = 2.0f / quat_length_sq;
+
+    float xs = quaternion.x * s;
+    float ys = quaternion.y * s;
+    float zs = quaternion.z * s;
+    float wx = quaternion.w * xs;
+    float wy = quaternion.w * ys;
+    float wz = quaternion.w * zs;
+    float xx = quaternion.x * xs;
+    float xy = quaternion.x * ys;
+    float xz = quaternion.x * zs;
+    float yy = quaternion.y * ys;
+    float yz = quaternion.y * zs;
+    float zz = quaternion.z * zs;
+
+    return Matrix3(
+        1.0f - (yy + zz), xy - wz, xz + wy, xy + wz, 1.0f - (xx + zz), yz - wx, xz - wy, yz + wx, 1.0f - (xx + yy));
+}
+Matrix3 Matrix3::spherical_linear_interpolate(Matrix3 to, float weight) const
+{
+    return mve::spherical_linear_interpolate(*this, to, weight);
+}
+Matrix3 Matrix3::rotate(Vector3 axis, float angle) const
+{
+    return mve::rotate(*this, axis, angle);
+}
+Matrix3 Matrix3::scale(Vector3 scale) const
+{
+    return mve::scale(*this, scale);
+}
+bool Matrix3::is_equal_approx(Matrix3 matrix) const
+{
+    return mve::is_equal_approx(*this, matrix);
+}
+bool Matrix3::is_zero_approx() const
+{
+    return mve::is_zero_approx(*this);
+}
+Vector3& Matrix3::operator[](int index)
+{
+    switch (index) {
+    case 0:
+        return col0;
+    case 1:
+        return col1;
+    case 2:
+        return col2;
+    default:
+        return col0;
+    }
+}
+const Vector3& Matrix3::operator[](int index) const
+{
+    switch (index) {
+    case 0:
+        return col0;
+    case 1:
+        return col1;
+    case 2:
+        return col2;
+    default:
+        return col0;
+    }
+}
+Matrix3 Matrix3::operator+(Matrix3 other) const
+{
+    auto result = *this;
+    result[0] += other[0];
+    result[1] += other[1];
+    result[2] += other[2];
+    return result;
+}
+Matrix3& Matrix3::operator+=(Matrix3 other)
+{
+    col0 += other[0];
+    col1 += other[1];
+    col2 += other[2];
+    return *this;
+}
+Matrix3 Matrix3::operator-(Matrix3 other) const
+{
+    auto result = *this;
+    result[0] -= other[0];
+    result[1] -= other[1];
+    result[2] -= other[2];
+    return result;
+}
+Matrix3& Matrix3::operator-=(Matrix3 other)
+{
+    col0 -= other[0];
+    col1 -= other[1];
+    col2 -= other[2];
+    return *this;
+}
+
+Matrix3 Matrix3::operator*(Matrix3 other) const
+{
+    float a11 = (*this)[0][0], a12 = (*this)[1][0], a13 = (*this)[2][0];
+    float a21 = (*this)[0][1], a22 = (*this)[1][1], a23 = (*this)[2][1];
+    float a31 = (*this)[0][2], a32 = (*this)[1][2], a33 = (*this)[2][2];
+
+    float b11 = other[0][0], b12 = other[1][0], b13 = other[2][0];
+    float b21 = other[0][1], b22 = other[1][1], b23 = other[2][1];
+    float b31 = other[0][2], b32 = other[1][2], b33 = other[2][2];
+
+    Matrix3 result;
+    result[0][0] = (a11 * b11) + (a12 * b21) + (a13 * b31);
+    result[0][1] = (a11 * b12) + (a12 * b22) + (a13 * b32);
+    result[0][2] = (a11 * b13) + (a12 * b23) + (a13 * b33);
+
+    result[1][0] = (a21 * b11) + (a22 * b21) + (a23 * b31);
+    result[1][1] = (a21 * b12) + (a22 * b22) + (a23 * b32);
+    result[1][2] = (a21 * b13) + (a22 * b23) + (a23 * b33);
+
+    result[2][0] = (a31 * b11) + (a32 * b21) + (a33 * b31);
+    result[2][1] = (a31 * b12) + (a32 * b22) + (a33 * b32);
+    result[2][2] = (a31 * b13) + (a32 * b23) + (a33 * b33);
+
+    return result;
+}
+Matrix3& Matrix3::operator*=(Matrix3 other)
+{
+    *this = *this * other;
+    return *this;
+}
+Matrix3 Matrix3::operator*(float val) const
+{
+    Matrix3 result = *this;
+    result[0] *= val;
+    result[1] *= val;
+    result[2] *= val;
+    return result;
+}
+Matrix3& Matrix3::operator*=(float val)
+{
+    col0 *= val;
+    col1 *= val;
+    col2 *= val;
+    return *this;
+}
+Matrix3 Matrix3::operator*(int val) const
+{
+    Matrix3 result = *this;
+    result[0] *= val;
+    result[1] *= val;
+    result[2] *= val;
+    return result;
+}
+Matrix3& Matrix3::operator*=(int val)
+{
+    col0 *= val;
+    col1 *= val;
+    col2 *= val;
+    return *this;
+}
+bool Matrix3::operator!=(Matrix3 other) const
+{
+    if (col0 != other.col0) {
+        return false;
+    }
+    if (col1 != other.col1) {
+        return false;
+    }
+    if (col2 != other.col2) {
+        return false;
+    }
+    return true;
+}
+bool Matrix3::operator==(Matrix3 other) const
+{
+    return col0 == other.col0 && col1 == other.col1 && col2 == other.col2;
+}
+bool Matrix3::operator<(Matrix3 other) const
+{
+    if (col0 != other.col0) {
+        return col0 < other.col0;
+    }
+    if (col1 != other.col1) {
+        return col1 < other.col1;
+    }
+    if (col2 != other.col2) {
+        return col2 < other.col2;
+    }
+    return false;
+}
+bool Matrix3::operator<=(Matrix3 other) const
+{
+    if (col0 != other.col0) {
+        return col0 < other.col0;
+    }
+    if (col1 != other.col1) {
+        return col1 < other.col1;
+    }
+    if (col2 != other.col2) {
+        return col2 < other.col2;
+    }
+    return true;
+}
+bool Matrix3::operator>(Matrix3 other) const
+{
+    if (col0 != other.col0) {
+        return col0 > other.col0;
+    }
+    if (col1 != other.col1) {
+        return col1 > other.col1;
+    }
+    if (col2 != other.col2) {
+        return col2 > other.col2;
+    }
+    return false;
+}
+bool Matrix3::operator>=(Matrix3 other) const
+{
+    if (col0 != other.col0) {
+        return col0 > other.col0;
+    }
+    if (col1 != other.col1) {
+        return col1 > other.col1;
+    }
+    if (col2 != other.col2) {
+        return col2 > other.col2;
+    }
+    return true;
+}
+Matrix3 Matrix3::look_at(const Vector3 target, const Vector3 up)
+{
+    return mve::look_at(target, up);
+}
+Matrix3 Matrix3::from_matrix(const Matrix4& matrix)
+{
+    Matrix3 result;
+    result[0] = Vector3(matrix[0][0], matrix[0][1], matrix[0][2]);
+    result[1] = Vector3(matrix[1][0], matrix[1][1], matrix[1][2]);
+    result[2] = Vector3(matrix[2][0], matrix[2][1], matrix[2][2]);
+    return result;
+}
+Quaternion Matrix3::quaternion() const
+{
+    return mve::quaternion(*this);
+}
+Matrix3 Matrix3::from_quaternion_scale(const Quaternion& quaternion, const Vector3& scale)
+{
+    Matrix3 result;
+    result[0][0] = scale.x;
+    result[1][1] = scale.y;
+    result[2][2] = scale.z;
+
+    result = result.rotate(quaternion);
+
+    return result;
+}
+Matrix3 Matrix3::rotate(const Quaternion& quaternion) const
+{
+    return mve::rotate(*this, quaternion);
+}
+
+Vector3 euler(Matrix3 matrix)
+{
+    Vector3 euler;
+    float sy = matrix[2][0];
+    if (sy < 1.0f) {
+        if (sy > -1.0f) {
+            if (matrix[0][1] == 0.0f && matrix[1][0] == 0.0f && matrix[2][1] == 0.0f && matrix[1][2] == 0.0f
+                && matrix[1][1] == 1.0f) {
+                euler.x = 0.0f;
+                euler.y = atan2(matrix[2][0], matrix[0][0]);
+                euler.z = 0.0f;
+            }
+            else {
+                euler.x = atan2(-matrix[2][1], matrix[2][2]);
+                euler.y = asin(sy);
+                euler.z = atan2(-matrix[1][0], matrix[0][0]);
+            }
+        }
+        else {
+            euler.x = atan2(matrix[1][2], matrix[1][1]);
+            euler.y = -pi / 2.0f;
+            euler.z = 0.0f;
+        }
+    }
+    else {
+        euler.x = atan2(matrix[1][2], matrix[1][1]);
+        euler.y = pi / 2.0f;
+        euler.z = 0.0f;
+    }
+    return euler;
+}
+Vector3 scale(Matrix3 matrix)
+{
+    Vector3 scale_abs = Vector3(
+        Vector3(matrix[0][0], matrix[0][1], matrix[0][2]).length(),
+        Vector3(matrix[1][0], matrix[1][1], matrix[1][2]).length(),
+        Vector3(matrix[2][0], matrix[2][1], matrix[2][2]).length());
+
+    if (matrix.determinant() > 0) {
+        return scale_abs;
+    }
+    else {
+        return -scale_abs;
+    }
+}
+float determinant(Matrix3 matrix)
+{
+    float a00 = matrix[0][0], a01 = matrix[1][0], a02 = matrix[2][0];
+    float a10 = matrix[0][1], a11 = matrix[1][1], a12 = matrix[2][1];
+    float a20 = matrix[0][2], a21 = matrix[1][2], a22 = matrix[2][2];
+
+    return (a00 * a11 * a22) + (a01 * a12 * a20) + (a02 * a10 * a21) - (a02 * a11 * a20) - (a01 * a10 * a22)
+        - (a00 * a12 * a21);
+}
+float trace(Matrix3 matrix)
+{
+    return matrix[0][0] + matrix[1][1] + matrix[2][2];
+}
+Matrix3 transpose(Matrix3 matrix)
+{
+    Matrix3 result;
+
+    result[0][0] = matrix[0][0];
+    result[0][1] = matrix[1][0];
+    result[0][2] = matrix[2][0];
+    result[1][0] = matrix[0][1];
+    result[1][1] = matrix[1][1];
+    result[1][2] = matrix[2][1];
+    result[2][0] = matrix[0][2];
+    result[2][1] = matrix[1][2];
+    result[2][2] = matrix[2][2];
+
+    return result;
+}
+Matrix3 inverse(Matrix3 matrix)
+{
+    float a11 = matrix[0][0], a12 = matrix[1][0], a13 = matrix[2][0];
+    float a21 = matrix[0][1], a22 = matrix[1][1], a23 = matrix[2][1];
+    float a31 = matrix[0][2], a32 = matrix[1][2], a33 = matrix[2][2];
+
+    float inv_det = 1.0f
+        / ((a11 * a22 * a33) + (a12 * a33 * a31) + (a13 * a21 * a32) - (a13 * a22 * a31) - (a12 * a21 * a33)
+           - (a11 * a23 * a32));
+
+    Matrix3 result;
+
+    result[0][0] = ((a22 * a33) - (a23 * a32)) * inv_det;
+    result[0][1] = -((a21 * a33) - (a23 * a31)) * inv_det;
+    result[0][2] = ((a21 * a32) - (a22 * a31)) * inv_det;
+    result[1][0] = -((a12 * a33) - (a13 * a32)) * inv_det;
+    result[1][1] = ((a11 * a33) - (a13 * a31)) * inv_det;
+    result[1][2] = -((a11 * a32) - (a12 * a31)) * inv_det;
+    result[2][0] = ((a12 * a23) - (a13 * a22)) * inv_det;
+    result[2][1] = -((a11 * a23) - (a13 * a21)) * inv_det;
+    result[2][2] = ((a11 * a22) - (a12 * a21)) * inv_det;
+
+    return result;
+}
+Matrix3 spherical_linear_interpolate(Matrix3 from, Matrix3 to, float weight)
+{
+    Quaternion from_quat = from.quaternion();
+    Quaternion to_quat = to.quaternion();
+
+    Matrix3 matrix = from_quat.spherical_linear_interpolate(to_quat, weight).matrix();
+    matrix[0] *= linear_interpolate(from[0].length(), to[0].length(), weight);
+    matrix[1] *= linear_interpolate(from[1].length(), to[1].length(), weight);
+    matrix[2] *= linear_interpolate(from[2].length(), to[2].length(), weight);
+
+    return matrix;
+}
+Matrix3 orthonormalize(const Matrix3& matrix)
+{
+    Vector3 x = matrix.col0;
+    Vector3 y = matrix.col1;
+    Vector3 z = matrix.col2;
+
+    x = mve::normalize(x);
+    y = (y - x * (mve::dot(x, y)));
+    y = mve::normalize(y);
+    z = (z - x * (mve::dot(x, z)) - y * (mve::dot(y, z)));
+    z = mve::normalize(z);
+
+    return Matrix3(x, y, z);
+}
+Matrix3 rotate(Matrix3 matrix, Vector3 axis, float angle)
+{
+    return Matrix3::from_axis_angle(axis, angle) * matrix;
+}
+Matrix3 scale(const Matrix3& matrix, const Vector3& scale)
+{
+    Matrix3 result = matrix;
+    result[0][0] *= scale.x;
+    result[1][0] *= scale.x;
+    result[2][0] *= scale.x;
+    result[0][1] *= scale.y;
+    result[1][1] *= scale.y;
+    result[2][1] *= scale.y;
+    result[0][2] *= scale.z;
+    result[1][2] *= scale.z;
+    result[2][2] *= scale.z;
+
+    return result;
+}
+bool is_equal_approx(Matrix3 a, Matrix3 b)
+{
+    for (int c = 0; c < 3; c++) {
+        if (!is_equal_approx(a[c], b[c])) {
+            return false;
+        }
+    }
+    return true;
+}
+bool is_zero_approx(Matrix3 matrix)
+{
+    for (int c = 0; c < 3; c++) {
+        if (!is_zero_approx(matrix[c])) {
+            return false;
+        }
+    }
+    return true;
+}
+Matrix3 look_at(Vector3 target, Vector3 up)
+{
+    Matrix3 result;
+
+    Vector3 vz = mve::normalize(-target);
+    Vector3 vx = mve::normalize(up.cross(vz));
+    Vector3 vy = vz.cross(vx);
+
+    result[0][0] = vx.x;
+    result[0][1] = vy.x;
+    result[0][2] = vz.x;
+    result[1][0] = vx.y;
+    result[1][1] = vy.y;
+    result[1][2] = vz.y;
+    result[2][0] = vx.z;
+    result[2][1] = vy.z;
+    result[2][2] = vz.z;
+
+    return result;
+}
+Quaternion quaternion(const Matrix3& matrix)
+{
+    return Quaternion::from_matrix(matrix);
+}
+Matrix3 rotate(const Matrix3& matrix, const Quaternion& quaternion)
+{
+    return quaternion.matrix() * matrix;
+}
+}

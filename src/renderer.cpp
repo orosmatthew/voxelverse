@@ -13,6 +13,7 @@
 #include <stb_image.h>
 
 #include "logger.hpp"
+#include "math/matrix4.hpp"
 #include "vertex_data.hpp"
 #include "window.hpp"
 
@@ -2263,7 +2264,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector2 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
@@ -2276,7 +2277,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector3 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
@@ -2289,7 +2290,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector4 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
@@ -2302,20 +2303,20 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
-{
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat2), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
-}
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist)
+// void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
+//{
+//     uint64_t handle = uniform_buffer.handle();
+//     auto func = [this, handle, location, value](uint32_t frame_index) {
+//         this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat2), frame_index);
+//     };
+//     if (persist) {
+//         defer_to_all_frames(func);
+//     }
+//     else {
+//         defer_to_next_frame(func);
+//     }
+// }
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
@@ -2328,7 +2329,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist)
+void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix4 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {

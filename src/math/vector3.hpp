@@ -114,6 +114,8 @@ public:
 
     [[nodiscard]] float& operator[](int index);
 
+    [[nodiscard]] const float& operator[](int index) const;
+
     [[nodiscard]] float& operator[](Vector3Axis axis);
 
     [[nodiscard]] Vector3 operator+() const;

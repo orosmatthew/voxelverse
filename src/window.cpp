@@ -2,20 +2,19 @@
 
 #include <stdexcept>
 
-#include <glm/common.hpp>
-
 #include "logger.hpp"
+#include "math/functions.hpp"
 
 namespace mve {
 
-Window::Window(const std::string& title, glm::ivec2 size, bool resizable)
+Window::Window(const std::string& title, mve::Vector2i size, bool resizable)
     : m_resizable(resizable)
     , m_fullscreen(false)
     , m_hidden(false)
     , m_minimized(false)
     , m_maximized(false)
     , m_focused(true)
-    , m_min_size({ 0, 0 })
+    , m_min_size(0, 0)
     , m_cursor_hidden(false)
     , m_cursor_in_window(true)
     , m_event_waiting(false)
@@ -60,11 +59,11 @@ void Window::glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int
     glfwGetFramebufferSize(window, &(instance->m_size.x), &(instance->m_size.y));
 
     if (instance->m_resize_callback.has_value()) {
-        (*(instance->m_resize_callback))(glm::ivec2(width, height));
+        (*(instance->m_resize_callback))(mve::Vector2i(width, height));
     }
 }
 
-glm::ivec2 Window::size() const
+mve::Vector2i Window::size() const
 {
     return m_size;
 }
@@ -113,7 +112,7 @@ void Window::wait_for_events() const
     glfwWaitEvents();
 }
 
-void Window::set_resize_callback(const std::function<void(glm::ivec2)>& resize_callback)
+void Window::set_resize_callback(const std::function<void(mve::Vector2i)>& resize_callback)
 {
     m_resize_callback = resize_callback;
 }
@@ -123,14 +122,15 @@ void Window::remove_resize_callback()
     m_resize_callback.reset();
 }
 
-glm::vec2 Window::get_cursor_pos(bool clamped_to_window)
+mve::Vector2 Window::get_cursor_pos(bool clamped_to_window)
 {
-    glm::dvec2 mouse_pos;
-    glfwGetCursorPos(m_glfw_window.get(), &(mouse_pos.x), &(mouse_pos.y));
+    double glfw_cursor_pos[2];
+    glfwGetCursorPos(m_glfw_window.get(), &(glfw_cursor_pos[0]), &(glfw_cursor_pos[1]));
+    mve::Vector2 mouse_pos;
     if (clamped_to_window) {
-        glm::ivec2 window_size = size();
-        mouse_pos.x = glm::clamp(mouse_pos.x, 0.0, static_cast<double>(window_size.x));
-        mouse_pos.y = glm::clamp(mouse_pos.y, 0.0, static_cast<double>(window_size.y));
+        mve::Vector2i window_size = size();
+        mouse_pos.x = mve::clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
+        mouse_pos.y = mve::clamp(static_cast<float>(glfw_cursor_pos[1]), 0.0f, static_cast<float>(window_size.y));
     }
     return { mouse_pos };
 }
@@ -145,12 +145,12 @@ Monitor Window::current_monitor() const
         return (glfwGetWindowMonitor(m_glfw_window.get()));
     }
     else {
-        glm::ivec2 pos;
+        mve::Vector2i pos;
         glfwGetWindowPos(m_glfw_window.get(), &(pos.x), &(pos.y));
 
         for (int i = 0; i < monitor_count; i++) {
-            glm::ivec2 workarea_pos;
-            glm::ivec2 workarea_size;
+            mve::Vector2i workarea_pos;
+            mve::Vector2i workarea_size;
 
             monitor = monitors[i];
             glfwGetMonitorWorkarea(
@@ -243,14 +243,14 @@ void Window::set_title(const std::string& title)
     glfwSetWindowTitle(m_glfw_window.get(), title.c_str());
 }
 
-void Window::move_to(glm::ivec2 pos)
+void Window::move_to(mve::Vector2i pos)
 {
     glfwSetWindowPos(m_glfw_window.get(), pos.x, pos.y);
 }
 
 void Window::fullscreen_to(Monitor monitor, bool use_native)
 {
-    glm::ivec2 size;
+    mve::Vector2i size;
     if (m_resizable && use_native) {
         size = monitor.size();
     }
@@ -260,7 +260,7 @@ void Window::fullscreen_to(Monitor monitor, bool use_native)
     glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
 }
 
-void Window::set_min_size(glm::ivec2 size)
+void Window::set_min_size(mve::Vector2i size)
 {
     if (size.x > m_size.x || size.y > m_size.y) {
         resize(size);
@@ -268,12 +268,12 @@ void Window::set_min_size(glm::ivec2 size)
     glfwSetWindowSizeLimits(m_glfw_window.get(), size.x, size.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
 }
 
-void Window::resize(glm::ivec2 size)
+void Window::resize(mve::Vector2i size)
 {
     glfwSetWindowSize(m_glfw_window.get(), size.x, size.y);
 }
 
-glm::ivec2 Window::position() const
+mve::Vector2i Window::position() const
 {
     if (!m_fullscreen) {
         return m_pos;
@@ -383,7 +383,7 @@ void Window::windowed()
 
 void Window::fullscreen(bool use_native)
 {
-    glm::ivec2 size;
+    mve::Vector2i size;
     if (!m_fullscreen) {
         m_windowed_size = m_size;
         glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
@@ -419,7 +419,7 @@ void Window::glfw_mouse_button_callback(GLFWwindow* window, int button, int acti
 void Window::glfw_cursor_pos_callback(GLFWwindow* window, double pos_x, double pos_y)
 {
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-    instance->m_current_mouse_pos = glm::vec2(static_cast<float>(pos_x), static_cast<float>(pos_y));
+    instance->m_current_mouse_pos = mve::Vector2(static_cast<float>(pos_x), static_cast<float>(pos_y));
 }
 bool Window::is_mouse_button_down(MouseButton button) const
 {
@@ -433,11 +433,11 @@ bool Window::is_mouse_button_released(MouseButton button) const
 {
     return m_mouse_buttons_released.contains(button);
 }
-glm::vec2 Window::mouse_pos() const
+mve::Vector2 Window::mouse_pos() const
 {
     return m_mouse_pos;
 }
-glm::vec2 Window::mouse_delta() const
+mve::Vector2 Window::mouse_delta() const
 {
     return m_mouse_delta;
 }

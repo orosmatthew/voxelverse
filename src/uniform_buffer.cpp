@@ -1,5 +1,6 @@
 #include "uniform_buffer.hpp"
 
+#include "math/matrix4.hpp"
 #include "renderer.hpp"
 
 namespace mve {
@@ -52,27 +53,27 @@ bool UniformBuffer::is_valid() const
 {
     return m_valid;
 }
-void UniformBuffer::update(UniformLocation location, glm::mat4 value, bool persist)
+void UniformBuffer::update(UniformLocation location, mve::Matrix4 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-void UniformBuffer::update(UniformLocation location, glm::mat3 value, bool persist)
+void UniformBuffer::update(UniformLocation location, mve::Matrix3 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-void UniformBuffer::update(UniformLocation location, glm::mat2 value, bool persist)
+//void UniformBuffer::update(UniformLocation location, glm::mat2 value, bool persist)
+//{
+//    m_renderer->update_uniform(*this, location, value, persist);
+//}
+void UniformBuffer::update(UniformLocation location, mve::Vector4 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-void UniformBuffer::update(UniformLocation location, glm::vec4 value, bool persist)
+void UniformBuffer::update(UniformLocation location, mve::Vector3 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-void UniformBuffer::update(UniformLocation location, glm::vec3 value, bool persist)
-{
-    m_renderer->update_uniform(*this, location, value, persist);
-}
-void UniformBuffer::update(UniformLocation location, glm::vec2 value, bool persist)
+void UniformBuffer::update(UniformLocation location, mve::Vector2 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }

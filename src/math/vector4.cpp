@@ -468,4 +468,19 @@ Vector4 Vector4::operator-() const
 {
     return Vector4(-x, -y, -z, -w);
 }
+const float& Vector4::operator[](int index) const
+{
+    switch (index) {
+    case 0:
+        return x;
+    case 1:
+        return y;
+    case 2:
+        return z;
+    case 3:
+        return w;
+    default:
+        return x;
+    }
+}
 }

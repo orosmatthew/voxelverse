@@ -105,6 +105,8 @@ public:
 
     [[nodiscard]] float& operator[](int index);
 
+    [[nodiscard]] const float& operator[](int index) const;
+
     [[nodiscard]] float& operator[](Vector4Axis axis);
 
     [[nodiscard]] Vector4 operator+() const;

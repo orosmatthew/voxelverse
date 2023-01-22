@@ -503,4 +503,17 @@ Vector3 Vector3::operator-() const
 {
     return Vector3(-x, -y, -z);
 }
+const float& Vector3::operator[](int index) const
+{
+    switch (index) {
+    case 0:
+        return x;
+    case 1:
+        return y;
+    case 2:
+        return z;
+    default:
+        return x;
+    }
+}
 }

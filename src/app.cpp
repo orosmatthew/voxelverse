@@ -2,20 +2,14 @@
 
 #include <chrono>
 
-#include <glm/ext.hpp>
-
 #include "logger.hpp"
 #include "math/functions.hpp"
+#include "math/matrix4.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "util.hpp"
 #include "util/fixed_loop.hpp"
 #include "window.hpp"
-
-static glm::vec3 lerp(const glm::vec3& a, const glm::vec3& b, float t)
-{
-    return a * (1.0f - t) + b * t;
-}
 
 namespace app {
 
@@ -23,7 +17,7 @@ void run()
 {
     LOG->debug("Creating window");
 
-    mve::Window window("Mini Vulkan Engine", glm::ivec2(800, 600));
+    mve::Window window("Mini Vulkan Engine", mve::Vector2i(800, 600));
 
     window.set_min_size({ 800, 600 });
 
@@ -55,12 +49,12 @@ void run()
     mve::UniformLocation model_location = vertex_shader.descriptor_set(0).binding(0).member("model").location();
     mve::UniformLocation proj_location = vertex_shader.descriptor_set(0).binding(0).member("proj").location();
 
-    auto resize_func = [&](glm::ivec2 new_size) {
+    auto resize_func = [&](mve::Vector2i new_size) {
         renderer.resize(window);
-        glm::mat4 proj = glm::perspective(
+
+        mve::Matrix4 my_proj = mve::perspective(
             mve::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 10.0f);
-        proj[1][1] *= -1;
-        uniform_buffer.update(proj_location, proj);
+        uniform_buffer.update(proj_location, my_proj);
     };
 
     window.set_resize_callback(resize_func);
@@ -71,21 +65,21 @@ void run()
 
     descriptor_set.write_binding(fragment_shader.descriptor_set(0).binding(1), texture);
 
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), mve::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    mve::Matrix4 model = mve::Matrix4().rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(90.0f));
 
     const float camera_acceleration = 0.0045f;
     const float camera_speed = 0.05f;
     const float camera_friction = 0.1f;
-    glm::vec3 camera_pos = glm::vec3(0.0f, 3.0f, 0.0f);
-    glm::vec3 camera_pos_prev = camera_pos;
-    glm::vec3 camera_front = glm::vec3(0.0f, -1.0f, 0.0f);
-    glm::vec3 camera_direction;
-    glm::vec3 camera_up = glm::vec3(0.0f, 0.0f, 1.0f);
-    glm::vec3 camera_velocity = glm::vec3(0.0f);
-    glm::mat4 view;
+    mve::Vector3 camera_pos(0.0f, 3.0f, 0.0f);
+    mve::Vector3 camera_pos_prev = camera_pos;
+    mve::Vector3 camera_front(0.0f, -1.0f, 0.0f);
+    mve::Vector3 camera_direction;
+    mve::Vector3 camera_up(0.0f, 0.0f, 1.0f);
+    mve::Vector3 camera_velocity(0.0f);
+    mve::Matrix4 view;
     float camera_yaw = 0.0f;
     float camera_pitch = 0.0f;
-    view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
+    view = mve::look_at(camera_pos, camera_pos + camera_front, camera_up);
 
     uniform_buffer.update(view_location, view);
 
@@ -97,7 +91,7 @@ void run()
         window.poll_events();
 
         fixed_loop.update(20, [&]() {
-            glm::vec3 dir(0.0f);
+            mve::Vector3 dir(0.0f);
             if (window.is_key_down(mve::Key::w)) {
                 dir.x += mve::cos(mve::radians(camera_yaw));
                 dir.y += mve::sin(mve::radians(camera_yaw));
@@ -122,37 +116,37 @@ void run()
             }
             camera_velocity -= (camera_velocity * camera_friction);
             camera_pos_prev = camera_pos;
-            if (dir != glm::vec3(0.0f)) {
-                camera_velocity += glm::normalize(dir) * camera_acceleration;
+            if (dir != mve::Vector3(0.0f)) {
+                camera_velocity += dir.normalize() * camera_acceleration;
             }
-            if (glm::length(camera_velocity) > camera_speed) {
-                camera_velocity = glm::normalize(camera_velocity) * camera_speed;
+            if (camera_velocity.length() > camera_speed) {
+                camera_velocity = camera_velocity.normalize() * camera_speed;
             }
             camera_pos += camera_velocity;
 
             if (window.is_key_down(mve::Key::left)) {
-                model = glm::rotate(model, mve::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(0.5f));
             }
             if (window.is_key_down(mve::Key::right)) {
-                model = glm::rotate(model, mve::radians(-0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(-0.5f));
             }
         });
 
         if (cursor_captured) {
-            glm::vec2 mouse_delta = window.mouse_delta();
+            mve::Vector2 mouse_delta = window.mouse_delta();
             camera_yaw -= mouse_delta.x * 0.1f;
             camera_pitch -= mouse_delta.y * 0.1f;
         }
 
-        camera_pitch = glm::clamp(camera_pitch, -89.0f, 89.0f);
-        glm::vec3 direction;
+        camera_pitch = mve::clamp(camera_pitch, -89.0f, 89.0f);
+        mve::Vector3 direction;
         direction.x = mve::cos(mve::radians(camera_yaw)) * mve::cos(mve::radians(camera_pitch));
         direction.y = mve::sin(mve::radians(camera_yaw)) * mve::cos(mve::radians(camera_pitch));
         direction.z = mve::sin(mve::radians(camera_pitch));
-        camera_front = glm::normalize(direction);
+        camera_front = direction.normalize();
 
-        glm::vec3 pos = lerp(camera_pos_prev, camera_pos, fixed_loop.blend());
-        view = glm::lookAt(pos, pos + camera_front, camera_up);
+        mve::Vector3 pos = camera_pos_prev.linear_interpolate(camera_pos, fixed_loop.blend());
+        view = mve::look_at(pos, pos + camera_front, camera_up);
 
         uniform_buffer.update(view_location, view);
         if (window.is_key_pressed(mve::Key::escape)) {
@@ -179,7 +173,13 @@ void run()
             }
         }
 
-        uniform_buffer.update(model_location, model, false);
+        mve::Matrix4 my_model(
+            { model[0][0], model[0][1], model[0][2], model[0][3] },
+            { model[1][0], model[1][1], model[1][2], model[1][3] },
+            { model[2][0], model[2][1], model[2][2], model[2][3] },
+            { model[3][0], model[3][1], model[3][2], model[3][3] });
+
+        uniform_buffer.update(model_location, my_model, false);
 
         renderer.begin(window);
 

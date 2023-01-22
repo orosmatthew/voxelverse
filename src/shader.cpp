@@ -30,7 +30,7 @@ Shader::Shader(const std::filesystem::path& file_path, ShaderType shader_type)
 
     m_spv_code = contents;
     create_reflection_data();
-};
+}
 
 std::vector<uint32_t> Shader::spv_code() const noexcept
 {

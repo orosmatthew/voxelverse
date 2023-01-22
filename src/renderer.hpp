@@ -217,7 +217,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec2 value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector2 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer vec3
@@ -226,7 +227,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec3 value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector3 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer vec4
@@ -235,7 +237,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::vec4 value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector4 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer mat2
@@ -244,7 +247,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist = true);
+    //    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix value, bool persist =
+    //    true);
 
     /**
      * @brief Update uniform buffer mat3
@@ -253,7 +257,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat3 value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist = true);
 
     /**
      * @brief Update uniform buffer mat4
@@ -262,7 +267,8 @@ public:
      * @param value - value to set
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat4 value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix4 value, bool persist = true);
 
     /**
      * @brief Bind descriptor set
