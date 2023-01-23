@@ -66,6 +66,7 @@ void run()
     descriptor_set.write_binding(fragment_shader.descriptor_set(0).binding(1), texture);
 
     mve::Matrix4 model = mve::Matrix4().rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(90.0f));
+    mve::Matrix4 prev_model = model;
 
     const float camera_acceleration = 0.0045f;
     const float camera_speed = 0.05f;
@@ -73,7 +74,6 @@ void run()
     mve::Vector3 camera_pos(0.0f, 3.0f, 0.0f);
     mve::Vector3 camera_pos_prev = camera_pos;
     mve::Vector3 camera_front(0.0f, -1.0f, 0.0f);
-    mve::Vector3 camera_direction;
     mve::Vector3 camera_up(0.0f, 0.0f, 1.0f);
     mve::Vector3 camera_velocity(0.0f);
     mve::Matrix4 view;
@@ -124,12 +124,16 @@ void run()
             }
             camera_pos += camera_velocity;
 
+            prev_model = model;
             if (window.is_key_down(mve::Key::left)) {
+                model = model.translate(mve::Vector3(0.1f, 0.0f, 0.0f));
                 model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(0.5f));
             }
             if (window.is_key_down(mve::Key::right)) {
+                model = model.translate(mve::Vector3(-0.1f, 0.0f, 0.0f));
                 model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(-0.5f));
             }
+
         });
 
         if (cursor_captured) {
@@ -173,13 +177,7 @@ void run()
             }
         }
 
-        mve::Matrix4 my_model(
-            { model[0][0], model[0][1], model[0][2], model[0][3] },
-            { model[1][0], model[1][1], model[1][2], model[1][3] },
-            { model[2][0], model[2][1], model[2][2], model[2][3] },
-            { model[3][0], model[3][1], model[3][2], model[3][3] });
-
-        uniform_buffer.update(model_location, my_model, false);
+        uniform_buffer.update(model_location, prev_model.interpolate(model, fixed_loop.blend()), false);
 
         renderer.begin(window);
 

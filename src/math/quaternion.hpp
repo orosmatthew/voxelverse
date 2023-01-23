@@ -57,35 +57,37 @@ public:
 
     [[nodiscard]] Quaternion operator*(const Quaternion& other) const;
 
-    Quaternion& operator*=(const Quaternion& other);
+    void operator*=(const Quaternion& other);
 
     [[nodiscard]] Quaternion operator*(float value) const;
 
-    Quaternion& operator*=(float value);
+    void operator*=(float value);
 
     [[nodiscard]] Quaternion operator*(int value) const;
 
-    Quaternion& operator*=(int value);
+    void operator*=(int value);
 
     [[nodiscard]] Quaternion operator+(const Quaternion& other) const;
 
-    Quaternion& operator+=(const Quaternion& other);
+    void operator+=(const Quaternion& other);
 
     [[nodiscard]] Quaternion operator-(const Quaternion& other) const;
 
-    Quaternion& operator-=(const Quaternion& other);
+    void operator-=(const Quaternion& other);
 
     [[nodiscard]] Quaternion operator/(float value) const;
 
-    Quaternion& operator/=(float value);
+    void operator/=(float value);
 
     [[nodiscard]] Quaternion operator/(int value) const;
 
-    Quaternion& operator/=(int value);
+    void operator/=(int value);
 
     [[nodiscard]] bool operator==(const Quaternion& other) const;
 
     [[nodiscard]] float& operator[](int index);
+
+    [[nodiscard]] const float& operator[](int index) const;
 
     [[nodiscard]] Quaternion operator+() const;
 
@@ -109,8 +111,6 @@ public:
 [[nodiscard]] float length_squared(const Quaternion& quaternion);
 
 [[nodiscard]] Quaternion spherical_linear_interpolate(const Quaternion& from, const Quaternion& to, float weight);
-
-[[nodiscard]] Matrix3 matrix(const Quaternion& quaternion);
 
 [[nodiscard]] Quaternion normalize(const Quaternion& quaternion);
 

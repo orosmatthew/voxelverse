@@ -106,7 +106,7 @@ Quaternion Quaternion::operator*(const Quaternion& other) const
         w * other.z + z * other.w + x * other.y - y * other.x,
         w * other.w - x * other.x - y * other.y - z * other.z);
 }
-Quaternion& Quaternion::operator*=(const Quaternion& other)
+void Quaternion::operator*=(const Quaternion& other)
 {
     float new_x = w * other.x + x * other.w + y * other.z - z * other.y;
     float new_y = w * other.y + y * other.w + z * other.x - x * other.z;
@@ -115,62 +115,54 @@ Quaternion& Quaternion::operator*=(const Quaternion& other)
     x = new_x;
     y = new_y;
     z = new_z;
-
-    return *this;
 }
 Quaternion Quaternion::operator*(float value) const
 {
     return data * value;
 }
-Quaternion& Quaternion::operator*=(float value)
+void Quaternion::operator*=(float value)
 {
     data *= value;
-    return *this;
 }
 Quaternion Quaternion::operator*(int value) const
 {
     return data * value;
 }
-Quaternion& Quaternion::operator*=(int value)
+void Quaternion::operator*=(int value)
 {
     data *= value;
-    return *this;
 }
 Quaternion Quaternion::operator+(const Quaternion& other) const
 {
     return data + other.data;
 }
-Quaternion& Quaternion::operator+=(const Quaternion& other)
+void Quaternion::operator+=(const Quaternion& other)
 {
     data += other.data;
-    return *this;
 }
 Quaternion Quaternion::operator-(const Quaternion& other) const
 {
     return data - other.data;
 }
-Quaternion& Quaternion::operator-=(const Quaternion& other)
+void Quaternion::operator-=(const Quaternion& other)
 {
     data -= other.data;
-    return *this;
 }
 Quaternion Quaternion::operator/(float value) const
 {
     return data * (1.0f / value);
 }
-Quaternion& Quaternion::operator/=(float value)
+void Quaternion::operator/=(float value)
 {
     data *= 1.0f / value;
-    return *this;
 }
 Quaternion Quaternion::operator/(int value) const
 {
     return data * (1.0f / value);
 }
-Quaternion& Quaternion::operator/=(int value)
+void Quaternion::operator/=(int value)
 {
     data *= 1.0f / value;
-    return *this;
 }
 bool Quaternion::operator==(const Quaternion& other) const
 {
@@ -226,11 +218,15 @@ Quaternion Quaternion::from_matrix(const Matrix3& matrix)
 }
 Matrix3 Quaternion::matrix() const
 {
-    return mve::matrix(*this);
+    return Matrix3::from_quaternion(*this);
 }
 Quaternion Quaternion::normalize() const
 {
     return mve::normalize(*this);
+}
+const float& Quaternion::operator[](int index) const
+{
+    return data[index];
 }
 
 float angle_to(const Quaternion& from, const Quaternion& to)
