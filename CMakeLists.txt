@@ -90,6 +90,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${LIB_INCLUDES})
 
 add_shader(vulkan_testing simple.frag)
 add_shader(vulkan_testing simple.vert)
+add_shader(vulkan_testing color.frag)
+add_shader(vulkan_testing color.vert)
 
 set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)

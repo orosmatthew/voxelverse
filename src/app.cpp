@@ -13,6 +13,50 @@
 
 namespace app {
 
+static const mve::VertexLayout standard_vertex_layout = {
+    mve::VertexAttributeType::vec3, // Position
+    mve::VertexAttributeType::vec3, // Color
+    mve::VertexAttributeType::vec2 // UV
+};
+
+struct MeshData {
+    mve::VertexData vertex_data = mve::VertexData(standard_vertex_layout);
+    std::vector<uint32_t> indices;
+};
+
+MeshData create_quad_mesh(
+    mve::Vector3 pos_top_left,
+    mve::Vector3 pos_top_right,
+    mve::Vector3 pos_bottom_left,
+    mve::Vector2 uv_top_left,
+    mve::Vector2 uv_top_right,
+    mve::Vector2 uv_bottom_right,
+    mve::Vector2 uv_bottom_left,
+    mve::Vector3 color)
+{
+    MeshData mesh_data;
+    mesh_data.vertex_data.push_back(pos_top_left);
+    mesh_data.vertex_data.push_back(color);
+    mesh_data.vertex_data.push_back(uv_top_left);
+
+    mesh_data.vertex_data.push_back(pos_top_right);
+    mesh_data.vertex_data.push_back(color);
+    mesh_data.vertex_data.push_back(uv_top_right);
+
+    mve::Vector3 pos_bottom_right = pos_top_left.rotate(mve::normalize(pos_top_right - pos_bottom_left), mve::pi);
+    mesh_data.vertex_data.push_back(pos_bottom_right);
+    mesh_data.vertex_data.push_back(color);
+    mesh_data.vertex_data.push_back(uv_bottom_right);
+
+    mesh_data.vertex_data.push_back(pos_bottom_left);
+    mesh_data.vertex_data.push_back(color);
+    mesh_data.vertex_data.push_back(uv_bottom_left);
+
+    mesh_data.indices = { 0, 2, 3, 0, 1, 2 };
+
+    return mesh_data;
+}
+
 void run()
 {
     LOG->debug("Creating window");
@@ -36,11 +80,21 @@ void run()
     mve::GraphicsPipeline graphics_pipeline
         = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
 
+    mve::Shader color_vertex_shader("../res/bin/shader/color.vert.spv", mve::ShaderType::vertex);
+    mve::Shader color_fragment_shader("../res/bin/shader/color.frag.spv", mve::ShaderType::fragment);
+
+    mve::GraphicsPipeline color_pipeline
+        = renderer.create_graphics_pipeline(color_vertex_shader, color_fragment_shader, standard_vertex_layout);
+
+    mve::DescriptorSet color_descriptor_set
+        = color_pipeline.create_descriptor_set(color_vertex_shader.descriptor_set(0));
+
     mve::DescriptorSet descriptor_set = graphics_pipeline.create_descriptor_set(vertex_shader.descriptor_set(0));
 
     mve::UniformBuffer uniform_buffer = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 
     descriptor_set.write_binding(vertex_shader.descriptor_set(0).binding(0), uniform_buffer);
+    color_descriptor_set.write_binding(color_vertex_shader.descriptor_set(0).binding(0), uniform_buffer);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -87,7 +141,11 @@ void run()
 
     bool cursor_captured = true;
 
-    bool deleted = false;
+    MeshData quad_mesh = create_quad_mesh(
+        { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { 1, 0, 0 });
+
+    mve::VertexBuffer quad_vertex_buffer = renderer.create_vertex_buffer(quad_mesh.vertex_data);
+    mve::IndexBuffer quad_index_buffer = renderer.create_index_buffer(quad_mesh.indices);
 
     while (!window.should_close()) {
         window.poll_events();
@@ -186,7 +244,6 @@ void run()
         renderer.begin(window);
 
         renderer.bind_graphics_pipeline(graphics_pipeline);
-
         renderer.bind_descriptor_set(descriptor_set);
 
         if (model_vertex_buffer.has_value()) {
@@ -196,6 +253,12 @@ void run()
         if (model_index_buffer.has_value()) {
             renderer.draw_index_buffer(model_index_buffer.value());
         }
+
+        renderer.bind_graphics_pipeline(color_pipeline);
+        renderer.bind_descriptor_set(color_descriptor_set);
+
+        renderer.bind_vertex_buffer(quad_vertex_buffer);
+        renderer.draw_index_buffer(quad_index_buffer);
 
         renderer.end(window);
 

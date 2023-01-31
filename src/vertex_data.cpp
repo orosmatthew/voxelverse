@@ -13,13 +13,13 @@ int get_vertex_layout_bytes(const VertexLayout& vertex_layout)
             byte_count += sizeof(float);
             break;
         case VertexAttributeType::vec2:
-            byte_count += sizeof(glm::vec2);
+            byte_count += sizeof(mve::Vector2);
             break;
         case VertexAttributeType::vec3:
-            byte_count += sizeof(glm::vec3);
+            byte_count += sizeof(mve::Vector3);
             break;
         case VertexAttributeType::vec4:
-            byte_count += sizeof(glm::vec4);
+            byte_count += sizeof(mve::Vector4);
             break;
         }
     }
@@ -45,7 +45,7 @@ void VertexData::push_back(float value)
     m_data_count++;
 }
 
-void VertexData::push_back(glm::vec2 value)
+void VertexData::push_back(mve::Vector2 value)
 {
     if (next_type() != VertexAttributeType::vec2) {
         throw std::runtime_error("[VertexData] Invalid type: vec2");
@@ -57,7 +57,7 @@ void VertexData::push_back(glm::vec2 value)
     m_data_count++;
 }
 
-void VertexData::push_back(glm::vec3 value)
+void VertexData::push_back(mve::Vector3 value)
 {
     if (next_type() != VertexAttributeType::vec3) {
         throw std::runtime_error("[VertexData] Invalid type: vec3");
@@ -70,7 +70,7 @@ void VertexData::push_back(glm::vec3 value)
     m_data_count++;
 }
 
-void VertexData::push_back(glm::vec4 value)
+void VertexData::push_back(mve::Vector4 value)
 {
     if (next_type() != VertexAttributeType::vec4) {
         throw std::runtime_error("[VertexData] Invalid type: vec4");

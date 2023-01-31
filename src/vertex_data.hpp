@@ -1,10 +1,9 @@
 #pragma once
 
+#include "math/vector2.hpp"
+#include "math/vector3.hpp"
+#include "math/vector4.hpp"
 #include <vector>
-
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 
 namespace mve {
 
@@ -54,21 +53,21 @@ public:
      * @throws std::runtime_error - When invalid type is added
      * @param value - vec2 value
      */
-    void push_back(glm::vec2 value);
+    void push_back(mve::Vector2 value);
 
     /**
      * @brief Add vec3 to data
      * @throws std::runtime_error - When invalid type is added
      * @param value - vec3 value
      */
-    void push_back(glm::vec3 value);
+    void push_back(mve::Vector3 value);
 
     /**
      * @brief Add vec4 to data
      * @throws std::runtime_error - When invalid type is added
      * @param value - vec4 value
      */
-    void push_back(glm::vec4 value);
+    void push_back(mve::Vector4 value);
 
     /**
      * @brief Get the next attribute data type expected
