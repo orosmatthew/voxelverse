@@ -75,7 +75,7 @@ MeshData create_cube_mesh()
     };
 
     MeshData front_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
     push_data(data, front_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -83,7 +83,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData right_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
     push_data(data, right_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -91,7 +91,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData back_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
     push_data(data, back_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -99,7 +99,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData left_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
     push_data(data, left_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -110,7 +110,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData top_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0.5, 0 }, { 1, 0 }, { 1, 0.5 }, { 0.5, 0.5 });
     push_data(data, top_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -118,7 +118,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData bottom_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0.5 }, { 0.5, 0.5 }, { 0.5, 1 }, { 0, 1 });
     push_data(data, bottom_face_data);
 
     return data;
@@ -184,7 +184,7 @@ void run()
         .ubo = renderer.create_uniform_buffer(vertex_shader.descriptor_set(1).binding(0)),
         .vertex_buffer = renderer.create_vertex_buffer(quad_vertex_data),
         .index_buffer = renderer.create_index_buffer(quad_mesh.indices),
-        .texture = renderer.create_texture("../res/grass_side.png"),
+        .texture = renderer.create_texture("../res/atlas.png"),
         .model_location = vertex_shader.descriptor_set(1).binding(0).member("model").location()
     };
     grass_scene.descriptor_set.write_binding(vertex_shader.descriptor_set(1).binding(0), grass_scene.ubo);
