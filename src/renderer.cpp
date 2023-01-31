@@ -1083,19 +1083,19 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
 
 void Renderer::destroy(VertexBuffer& vertex_buffer)
 {
-    if (!vertex_buffer.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid vertex buffer");
-    }
-    LOG->info("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
-    uint64_t handle = vertex_buffer.handle();
-    vertex_buffer.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        vmaDestroyBuffer(
-            m_vma_allocator,
-            m_vertex_buffers.at(handle).buffer.vk_handle,
-            m_vertex_buffers.at(handle).buffer.vma_allocation);
-        m_vertex_buffers.erase(handle);
-    });
+    //    if (!vertex_buffer.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid vertex buffer");
+    //    }
+    //    LOG->info("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
+    //    uint64_t handle = vertex_buffer.handle();
+    //    vertex_buffer.invalidate();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        vmaDestroyBuffer(
+    //            m_vma_allocator,
+    //            m_vertex_buffers.at(handle).buffer.vk_handle,
+    //            m_vertex_buffers.at(handle).buffer.vma_allocation);
+    //        m_vertex_buffers.erase(handle);
+    //    });
 }
 
 Renderer::Buffer Renderer::create_buffer(
@@ -1648,8 +1648,10 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
 {
     auto sampler_info
         = vk::SamplerCreateInfo()
-              .setMagFilter(vk::Filter::eLinear)
-              .setMinFilter(vk::Filter::eLinear)
+              .setMagFilter(vk::Filter::eNearest)
+              .setMinFilter(vk::Filter::eNearest)
+              //.setMagFilter(vk::Filter::eLinear)
+              //.setMinFilter(vk::Filter::eLinear)
               .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
               .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
               .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
@@ -2047,7 +2049,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
     return VertexBuffer(*this, m_resource_handle_count - 1);
 }
 
-void Renderer::bind_vertex_buffer(VertexBuffer& vertex_buffer)
+void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
 {
     m_current_draw_state.command_buffer.bindVertexBuffers(
         0, m_vertex_buffers.at(vertex_buffer.handle()).buffer.vk_handle, { 0 });
@@ -2343,21 +2345,22 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
     }
 }
 
+// TODO: Fix this shit!
 void Renderer::destroy(Texture& texture)
 {
-    if (!texture.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid texture");
-    }
-    LOG->info("[Renderer] Destroyed texture with ID: {}", texture.handle());
-    uint64_t handle = texture.handle();
-    texture.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        TextureImpl& texture = m_textures.at(handle);
-        m_vk_device.destroy(texture.vk_sampler);
-        m_vk_device.destroy(texture.vk_image_view);
-        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
-        m_textures.erase(handle);
-    });
+    //    if (!texture.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid texture");
+    //    }
+    //    LOG->info("[Renderer] Destroyed texture with ID: {}", texture.handle());
+    //    uint64_t handle = texture.handle();
+    //    texture.invalidate();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        TextureImpl& texture = m_textures.at(handle);
+    //        m_vk_device.destroy(texture.vk_sampler);
+    //        m_vk_device.destroy(texture.vk_image_view);
+    //        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
+    //        m_textures.erase(handle);
+    //    });
 }
 
 Texture Renderer::create_texture(const std::filesystem::path& path)
@@ -2456,91 +2459,115 @@ void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
 
 void Renderer::destroy(DescriptorSet& descriptor_set)
 {
-    if (!descriptor_set.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid descriptor set");
-    }
-    LOG->info("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
-    uint64_t handle = descriptor_set.handle();
-    descriptor_set.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        std::vector<DescriptorSetImpl> sets_to_delete;
-        for (const FrameInFlight& frame : m_frames_in_flight) {
-            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
-        }
-        for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.descriptor_sets.erase(handle);
-        }
-        for (DescriptorSetImpl set : sets_to_delete) {
-            m_descriptor_set_allocator.free(m_vk_device, set);
-        }
-    });
+    //    if (!descriptor_set.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid descriptor set");
+    //    }
+    //    LOG->info("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
+    //    uint64_t handle = descriptor_set.handle();
+    //    descriptor_set.invalidate();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        std::vector<DescriptorSetImpl> sets_to_delete;
+    //        for (const FrameInFlight& frame : m_frames_in_flight) {
+    //            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
+    //        }
+    //        for (FrameInFlight& frame : m_frames_in_flight) {
+    //            frame.descriptor_sets.erase(handle);
+    //        }
+    //        for (DescriptorSetImpl set : sets_to_delete) {
+    //            m_descriptor_set_allocator.free(m_vk_device, set);
+    //        }
+    //    });
 }
 
 void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
 {
-    if (!graphics_pipeline.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid graphics pipeline");
-    }
-    LOG->info("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
-    uint64_t handle = graphics_pipeline.handle();
-    graphics_pipeline.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        // Descriptor set layouts
-        std::vector<DescriptorSetLayoutHandleImpl> deleted_descriptor_set_layout_handles;
-        for (auto& [set, set_layout] :
-             m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).descriptor_set_layouts) {
-            m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout));
-            deleted_descriptor_set_layout_handles.push_back(set_layout);
-        }
-        for (DescriptorSetLayoutHandleImpl descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
-            m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
-        }
-
-        // Pipeline layout
-        m_vk_device.destroy(m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).vk_handle);
-        m_graphics_pipeline_layouts.erase(m_graphics_pipelines.at(handle).layout);
-
-        // Graphics pipeline
-        m_vk_device.destroy(m_graphics_pipelines.at(handle).pipeline);
-        m_graphics_pipelines.erase(handle);
-    });
+    //    if (!graphics_pipeline.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid graphics pipeline");
+    //    }
+    //    LOG->info("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
+    //    uint64_t handle = graphics_pipeline.handle();
+    //    graphics_pipeline.invalidate();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        // Descriptor set layouts
+    //        std::vector<DescriptorSetLayoutHandleImpl> deleted_descriptor_set_layout_handles;
+    //        for (auto& [set, set_layout] :
+    //             m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).descriptor_set_layouts) {
+    //            m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout));
+    //            deleted_descriptor_set_layout_handles.push_back(set_layout);
+    //        }
+    //        for (DescriptorSetLayoutHandleImpl descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
+    //            m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
+    //        }
+    //
+    //        // Pipeline layout
+    //        m_vk_device.destroy(m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle).layout).vk_handle);
+    //        m_graphics_pipeline_layouts.erase(m_graphics_pipelines.at(handle).layout);
+    //
+    //        // Graphics pipeline
+    //        m_vk_device.destroy(m_graphics_pipelines.at(handle).pipeline);
+    //        m_graphics_pipelines.erase(handle);
+    //    });
 }
 
 void Renderer::destroy(UniformBuffer& uniform_buffer)
 {
-    if (!uniform_buffer.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid uniform buffer");
-    }
-    LOG->info("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
-    uniform_buffer.invalidate();
-    uint64_t handle = uniform_buffer.handle();
-    defer_after_all_frames([this, handle](uint32_t) {
-        for (const FrameInFlight& frame : m_frames_in_flight) {
-            UniformBufferImpl uniform_buffer = frame.uniform_buffers.at(handle);
-            vmaUnmapMemory(m_vma_allocator, uniform_buffer.buffer.vma_allocation);
-            vmaDestroyBuffer(m_vma_allocator, uniform_buffer.buffer.vk_handle, uniform_buffer.buffer.vma_allocation);
-        }
-        for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.uniform_buffers.erase(handle);
-        }
-    });
+    //    if (!uniform_buffer.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid uniform buffer");
+    //    }
+    //    LOG->info("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
+    //    uniform_buffer.invalidate();
+    //    uint64_t handle = uniform_buffer.handle();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        for (const FrameInFlight& frame : m_frames_in_flight) {
+    //            UniformBufferImpl uniform_buffer = frame.uniform_buffers.at(handle);
+    //            vmaUnmapMemory(m_vma_allocator, uniform_buffer.buffer.vma_allocation);
+    //            vmaDestroyBuffer(m_vma_allocator, uniform_buffer.buffer.vk_handle,
+    //            uniform_buffer.buffer.vma_allocation);
+    //        }
+    //        for (FrameInFlight& frame : m_frames_in_flight) {
+    //            frame.uniform_buffers.erase(handle);
+    //        }
+    //    });
 }
 
 void Renderer::destroy(IndexBuffer& index_buffer)
 {
-    if (!index_buffer.is_valid()) {
-        throw std::runtime_error("[Renderer] Attempted to destroy invalid index buffer");
+    //    if (!index_buffer.is_valid()) {
+    //        throw std::runtime_error("[Renderer] Attempted to destroy invalid index buffer");
+    //    }
+    //    LOG->info("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
+    //    uint64_t handle = index_buffer.handle();
+    //    index_buffer.invalidate();
+    //    defer_after_all_frames([this, handle](uint32_t) {
+    //        vmaDestroyBuffer(
+    //            m_vma_allocator,
+    //            m_index_buffers.at(handle).buffer.vk_handle,
+    //            m_index_buffers.at(handle).buffer.vma_allocation);
+    //        m_index_buffers.erase(handle);
+    //    });
+}
+
+void Renderer::bind_descriptor_sets(const std::vector<std::reference_wrapper<const DescriptorSet>>& descriptor_sets)
+{
+    if (descriptor_sets.size() > 4) {
+        throw std::runtime_error("[Renderer] Can only bind a maximum of 4 descriptor sets at a time");
     }
-    LOG->info("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
-    uint64_t handle = index_buffer.handle();
-    index_buffer.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        vmaDestroyBuffer(
-            m_vma_allocator,
-            m_index_buffers.at(handle).buffer.vk_handle,
-            m_index_buffers.at(handle).buffer.vma_allocation);
-        m_index_buffers.erase(handle);
-    });
+    std::vector<vk::DescriptorSet> sets;
+    sets.reserve(descriptor_sets.size());
+    for (const auto& descriptor_set : descriptor_sets) {
+        sets.push_back(m_frames_in_flight.at(m_current_draw_state.frame_index)
+                           .descriptor_sets.at(descriptor_set.get().handle())
+                           .vk_handle);
+    }
+
+    m_current_draw_state.command_buffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
+        0,
+        sets.size(),
+        sets.data(),
+        0,
+        nullptr);
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

@@ -73,7 +73,7 @@ public:
      * @brief Bind vertex buffer
      * @param vertex_buffer
      */
-    void bind_vertex_buffer(VertexBuffer& vertex_buffer);
+    void bind_vertex_buffer(const VertexBuffer& vertex_buffer);
 
     /**
      * @brief Bind graphics pipeline
@@ -276,6 +276,7 @@ public:
      */
     void bind_descriptor_set(DescriptorSet& descriptor_set);
 
+    void bind_descriptor_sets(const std::vector<std::reference_wrapper<const DescriptorSet>>& descriptor_sets);
     /**
      * @brief Get extent of renderer
      * @return Returns ivec2 of the extent of the renderer
