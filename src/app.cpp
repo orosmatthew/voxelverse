@@ -20,41 +20,108 @@ static const mve::VertexLayout standard_vertex_layout = {
 };
 
 struct MeshData {
-    mve::VertexData vertex_data = mve::VertexData(standard_vertex_layout);
+    std::vector<mve::Vector3> vertices;
+    std::vector<mve::Vector2> uvs;
     std::vector<uint32_t> indices;
 };
 
 MeshData create_quad_mesh(
     mve::Vector3 pos_top_left,
     mve::Vector3 pos_top_right,
+    mve::Vector3 pos_bottom_right,
     mve::Vector3 pos_bottom_left,
     mve::Vector2 uv_top_left,
     mve::Vector2 uv_top_right,
     mve::Vector2 uv_bottom_right,
-    mve::Vector2 uv_bottom_left,
-    mve::Vector3 color)
+    mve::Vector2 uv_bottom_left)
 {
     MeshData mesh_data;
-    mesh_data.vertex_data.push_back(pos_top_left);
-    mesh_data.vertex_data.push_back(color);
-    mesh_data.vertex_data.push_back(uv_top_left);
+    mesh_data.vertices.push_back(pos_top_left);
+    mesh_data.uvs.push_back(uv_top_left);
 
-    mesh_data.vertex_data.push_back(pos_top_right);
-    mesh_data.vertex_data.push_back(color);
-    mesh_data.vertex_data.push_back(uv_top_right);
+    mesh_data.vertices.push_back(pos_top_right);
+    mesh_data.uvs.push_back(uv_top_right);
 
-    mve::Vector3 pos_bottom_right = pos_top_left.rotate((pos_top_right - pos_bottom_left).normalize(), mve::pi);
-    mesh_data.vertex_data.push_back(pos_bottom_right);
-    mesh_data.vertex_data.push_back(color);
-    mesh_data.vertex_data.push_back(uv_bottom_right);
+    mesh_data.vertices.push_back(pos_bottom_right);
+    mesh_data.uvs.push_back(uv_bottom_right);
 
-    mesh_data.vertex_data.push_back(pos_bottom_left);
-    mesh_data.vertex_data.push_back(color);
-    mesh_data.vertex_data.push_back(uv_bottom_left);
+    mesh_data.vertices.push_back(pos_bottom_left);
+    mesh_data.uvs.push_back(uv_bottom_left);
 
     mesh_data.indices = { 0, 2, 3, 0, 1, 2 };
 
     return mesh_data;
+}
+
+void push_data(MeshData& data, const MeshData& face)
+{
+    uint32_t indices_offset = data.vertices.size();
+    for (int i = 0; i < face.vertices.size(); i++) {
+        data.vertices.push_back(face.vertices[i]);
+        data.uvs.push_back(face.uvs[i]);
+    }
+
+    for (int i = 0; i < face.indices.size(); i++) {
+        data.indices.push_back(face.indices[i] + indices_offset);
+    }
+}
+
+MeshData create_cube_mesh()
+{
+    MeshData data;
+
+    std::array<mve::Vector3, 4> quad_verts {
+        mve::Vector3(-1, 1, 1), mve::Vector3(1, 1, 1), mve::Vector3(1, 1, -1), mve::Vector3(-1, 1, -1)
+    };
+
+    MeshData front_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, front_face_data);
+
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
+    }
+
+    MeshData right_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, right_face_data);
+
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
+    }
+
+    MeshData back_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, back_face_data);
+
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
+    }
+
+    MeshData left_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, left_face_data);
+
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
+    }
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(1, 0, 0), mve::pi / 2.0f);
+    }
+
+    MeshData top_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, top_face_data);
+
+    for (int i = 0; i < 4; i++) {
+        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(1, 0, 0), mve::pi);
+    }
+
+    MeshData bottom_face_data = create_quad_mesh(
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+    push_data(data, bottom_face_data);
+
+    return data;
 }
 
 struct RenderObject {
@@ -100,15 +167,22 @@ void run()
     viking_scene.descriptor_set.write_binding(fragment_shader.descriptor_set(1).binding(1), viking_scene.texture);
     viking_scene.ubo.update(viking_scene.model_location, mve::Matrix4::identity());
 
-    render_objects.push_back(std::move(viking_scene));
+    //    render_objects.push_back(std::move(viking_scene));
 
-    MeshData quad_mesh = create_quad_mesh(
-        { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { 1, 0, 0 });
+    MeshData quad_mesh = create_cube_mesh();
+    //= create_quad_mesh({ -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
+
+    mve::VertexData quad_vertex_data(standard_vertex_layout);
+    for (int i = 0; i < quad_mesh.vertices.size(); i++) {
+        quad_vertex_data.push_back(quad_mesh.vertices.at(i));
+        quad_vertex_data.push_back({ 1, 1, 1 });
+        quad_vertex_data.push_back(quad_mesh.uvs.at(i));
+    }
 
     RenderObject grass_scene {
         .descriptor_set = graphics_pipeline.create_descriptor_set(vertex_shader.descriptor_set(1)),
         .ubo = renderer.create_uniform_buffer(vertex_shader.descriptor_set(1).binding(0)),
-        .vertex_buffer = renderer.create_vertex_buffer(quad_mesh.vertex_data),
+        .vertex_buffer = renderer.create_vertex_buffer(quad_vertex_data),
         .index_buffer = renderer.create_index_buffer(quad_mesh.indices),
         .texture = renderer.create_texture("../res/grass_side.png"),
         .model_location = vertex_shader.descriptor_set(1).binding(0).member("model").location()
@@ -136,7 +210,7 @@ void run()
         renderer.resize(window);
 
         mve::Matrix4 my_proj = mve::perspective(
-            mve::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 10.0f);
+            mve::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 1000.0f);
         global_ubo.update(proj_location, my_proj);
     };
 
@@ -147,8 +221,8 @@ void run()
     mve::Matrix4 model = mve::Matrix4().rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(90.0f));
     mve::Matrix4 prev_model = model;
 
-    const float camera_acceleration = 0.0045f;
-    const float camera_speed = 0.05f;
+    const float camera_acceleration = 0.02f;
+    const float camera_speed = 0.2f;
     const float camera_friction = 0.1f;
     mve::Vector3 camera_pos(0.0f, 3.0f, 0.0f);
     mve::Vector3 camera_pos_prev = camera_pos;
