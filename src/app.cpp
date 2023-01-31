@@ -70,12 +70,13 @@ MeshData create_cube_mesh()
 {
     MeshData data;
 
-    std::array<mve::Vector3, 4> quad_verts {
-        mve::Vector3(-1, 1, 1), mve::Vector3(1, 1, 1), mve::Vector3(1, 1, -1), mve::Vector3(-1, 1, -1)
-    };
+    std::array<mve::Vector3, 4> quad_verts { mve::Vector3(-0.5f, 0.5f, 0.5f),
+                                             mve::Vector3(0.5f, 0.5f, 0.5f),
+                                             mve::Vector3(0.5f, 0.5f, -0.5f),
+                                             mve::Vector3(-0.5f, 0.5f, -0.5f) };
 
     MeshData front_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
     push_data(data, front_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -83,7 +84,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData right_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
     push_data(data, right_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -91,7 +92,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData back_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
     push_data(data, back_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -99,7 +100,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData left_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5, 0 }, { 0.5, 0.5 }, { 0, 0.5 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
     push_data(data, left_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -110,7 +111,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData top_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0.5, 0 }, { 1, 0 }, { 1, 0.5 }, { 0.5, 0.5 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0.5f, 0 }, { 1, 0 }, { 1, 0.5f }, { 0.5f, 0.5f });
     push_data(data, top_face_data);
 
     for (int i = 0; i < 4; i++) {
@@ -118,7 +119,7 @@ MeshData create_cube_mesh()
     }
 
     MeshData bottom_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0.5 }, { 0.5, 0.5 }, { 0.5, 1 }, { 0, 1 });
+        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0.5f }, { 0.5f, 0.5f }, { 0.5f, 1 }, { 0, 1 });
     push_data(data, bottom_face_data);
 
     return data;
@@ -221,8 +222,8 @@ void run()
     mve::Matrix4 model = mve::Matrix4().rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(90.0f));
     mve::Matrix4 prev_model = model;
 
-    const float camera_acceleration = 0.02f;
-    const float camera_speed = 0.2f;
+    const float camera_acceleration = 0.01f;
+    const float camera_speed = 0.1f;
     const float camera_friction = 0.1f;
     mve::Vector3 camera_pos(0.0f, 3.0f, 0.0f);
     mve::Vector3 camera_pos_prev = camera_pos;
