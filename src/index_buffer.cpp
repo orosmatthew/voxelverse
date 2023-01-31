@@ -19,7 +19,9 @@ IndexBuffer::IndexBuffer(IndexBuffer&& other)
 
 IndexBuffer::~IndexBuffer()
 {
-    m_renderer->destroy(*this);
+    if (m_valid) {
+        m_renderer->destroy(*this);
+    }
 }
 
 uint64_t IndexBuffer::handle() const
