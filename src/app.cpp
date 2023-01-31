@@ -30,8 +30,8 @@ void run()
 
     mve::ModelData model_data = mve::load_model("../res/viking_room.obj");
 
-    mve::VertexBuffer model_vertex_buffer = renderer.create_vertex_buffer(model_data.vertex_data);
-    mve::IndexBuffer model_index_buffer = renderer.create_index_buffer(model_data.indices);
+    std::optional<mve::VertexBuffer> model_vertex_buffer = renderer.create_vertex_buffer(model_data.vertex_data);
+    std::optional<mve::IndexBuffer> model_index_buffer = renderer.create_index_buffer(model_data.indices);
 
     mve::GraphicsPipeline graphics_pipeline
         = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
@@ -87,6 +87,8 @@ void run()
 
     bool cursor_captured = true;
 
+    bool deleted = false;
+
     while (!window.should_close()) {
         window.poll_events();
 
@@ -126,15 +128,17 @@ void run()
 
             prev_model = model;
             if (window.is_key_down(mve::Key::left)) {
-                model = model.translate(mve::Vector3(0.1f, 0.0f, 0.0f));
-                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(0.5f));
+                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(1.0f));
             }
             if (window.is_key_down(mve::Key::right)) {
-                model = model.translate(mve::Vector3(-0.1f, 0.0f, 0.0f));
-                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(-0.5f));
+                model = model.rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(-1.0f));
             }
-
         });
+
+        if (window.is_key_pressed(mve::Key::g)) {
+            model_vertex_buffer.reset();
+            model_index_buffer.reset();
+        }
 
         if (cursor_captured) {
             mve::Vector2 mouse_delta = window.mouse_delta();
@@ -185,9 +189,13 @@ void run()
 
         renderer.bind_descriptor_set(descriptor_set);
 
-        renderer.bind_vertex_buffer(model_vertex_buffer);
+        if (model_vertex_buffer.has_value()) {
+            renderer.bind_vertex_buffer(model_vertex_buffer.value());
+        }
 
-        renderer.draw_index_buffer(model_index_buffer);
+        if (model_index_buffer.has_value()) {
+            renderer.draw_index_buffer(model_index_buffer.value());
+        }
 
         renderer.end(window);
 
