@@ -61,10 +61,7 @@ void UniformBuffer::update(UniformLocation location, mve::Matrix3 value, bool pe
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-//void UniformBuffer::update(UniformLocation location, glm::mat2 value, bool persist)
-//{
-//    m_renderer->update_uniform(*this, location, value, persist);
-//}
+
 void UniformBuffer::update(UniformLocation location, mve::Vector4 value, bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);

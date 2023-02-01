@@ -48,8 +48,6 @@ public:
 
     void update(UniformLocation location, mve::Vector4 value, bool persist = true);
 
-    //    void update(UniformLocation location, glm::mat2 value, bool persist = true);
-
     void update(UniformLocation location, mve::Matrix3 value, bool persist = true);
 
     void update(UniformLocation location, mve::Matrix4 value, bool persist = true);

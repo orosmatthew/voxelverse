@@ -52,4 +52,10 @@ const float pi = 3.14159265358979323846264338327950288f;
 
 [[nodiscard]] float linear_interpolate(float from, float to, float weight);
 
+[[nodiscard]] float min(float a, float b);
+
+[[nodiscard]] float max(float a, float b);
+
+[[nodiscard]] float log2(float val);
+
 }

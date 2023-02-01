@@ -4,15 +4,13 @@
 #include <set>
 #include <vector>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/gtc/matrix_transform.hpp>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include "logger.hpp"
+#include "math/functions.hpp"
 #include "math/matrix4.hpp"
 #include "vertex_data.hpp"
 #include "window.hpp"
@@ -867,10 +865,10 @@ Renderer::~Renderer()
 
 void Renderer::recreate_swapchain(const Window& window)
 {
-    glm::ivec2 window_size;
+    mve::Vector2i window_size;
     glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
 
-    while (window_size == glm::ivec2(0, 0)) {
+    while (window_size == mve::Vector2i(0, 0)) {
         glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
         window.wait_for_events();
     }
@@ -1025,15 +1023,15 @@ std::vector<vk::VertexInputAttributeDescription> Renderer::create_vk_attribute_d
             break;
         case VertexAttributeType::vec2:
             description.setFormat(vk::Format::eR32G32Sfloat);
-            offset += sizeof(glm::vec2);
+            offset += sizeof(mve::Vector2);
             break;
         case VertexAttributeType::vec3:
             description.setFormat(vk::Format::eR32G32B32Sfloat);
-            offset += sizeof(glm::vec3);
+            offset += sizeof(mve::Vector3);
             break;
         case VertexAttributeType::vec4:
             description.setFormat(vk::Format::eR32G32B32A32Sfloat);
-            offset += sizeof(glm::vec4);
+            offset += sizeof(mve::Vector4);
             break;
         }
 
@@ -1332,9 +1330,9 @@ std::vector<vk::DescriptorSet> Renderer::create_vk_descriptor_sets(
     return descriptor_sets_result.value;
 }
 
-glm::ivec2 Renderer::extent() const
+mve::Vector2i Renderer::extent() const
 {
-    return { m_vk_swapchain_extent.width, m_vk_swapchain_extent.height };
+    return { static_cast<int>(m_vk_swapchain_extent.width), static_cast<int>(m_vk_swapchain_extent.height) };
 }
 
 void Renderer::wait_ready()
@@ -2270,7 +2268,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec2), frame_index);
+        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector2), frame_index);
     };
     if (persist) {
         defer_to_all_frames(func);
@@ -2283,7 +2281,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec3), frame_index);
+        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector3), frame_index);
     };
     if (persist) {
         defer_to_all_frames(func);
@@ -2296,7 +2294,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::vec4), frame_index);
+        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector4), frame_index);
     };
     if (persist) {
         defer_to_all_frames(func);
@@ -2305,24 +2303,11 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
         defer_to_next_frame(func);
     }
 }
-// void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, glm::mat2 value, bool persist)
-//{
-//     uint64_t handle = uniform_buffer.handle();
-//     auto func = [this, handle, location, value](uint32_t frame_index) {
-//         this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat2), frame_index);
-//     };
-//     if (persist) {
-//         defer_to_all_frames(func);
-//     }
-//     else {
-//         defer_to_next_frame(func);
-//     }
-// }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist)
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat3), frame_index);
+        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Matrix3), frame_index);
     };
     if (persist) {
         defer_to_all_frames(func);
@@ -2335,7 +2320,7 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 {
     uint64_t handle = uniform_buffer.handle();
     auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(glm::mat4), frame_index);
+        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Matrix4), frame_index);
     };
     if (persist) {
         defer_to_all_frames(func);
@@ -2375,7 +2360,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
         throw std::runtime_error("[Renderer] Failed to load texture image");
     }
 
-    uint32_t mip_levels = static_cast<uint32_t>(glm::floor(glm::log2(static_cast<float>(glm::max(width, height))))) + 1;
+    uint32_t mip_levels = static_cast<uint32_t>(mve::floor(mve::log2(static_cast<float>(mve::max(width, height))))) + 1;
 
     Buffer staging_buffer = create_buffer(
         m_vma_allocator,

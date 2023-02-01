@@ -18,7 +18,6 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <glm/mat4x4.hpp>
 #include <vk_mem_alloc.h>
 #define VULKAN_HPP_NO_EXCEPTIONS
 #include <vulkan/vulkan.hpp>
@@ -281,7 +280,7 @@ public:
      * @brief Get extent of renderer
      * @return Returns ivec2 of the extent of the renderer
      */
-    [[nodiscard]] glm::ivec2 extent() const;
+    [[nodiscard]] mve::Vector2i extent() const;
 
 private:
     struct QueueFamilyIndices {

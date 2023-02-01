@@ -113,5 +113,27 @@ float acos(float val)
 {
     return std::acosf(val);
 }
+float min(float a, float b)
+{
+    if (a <= b) {
+        return a;
+    }
+    else {
+        return b;
+    }
+}
+float max(float a, float b)
+{
+    if (a >= b) {
+        return a;
+    }
+    else {
+        return b;
+    }
+}
+float log2(float val)
+{
+    return std::log2f(val);
+}
 
 }
