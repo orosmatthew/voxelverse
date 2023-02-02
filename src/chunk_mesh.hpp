@@ -21,9 +21,7 @@ public:
         mve::Shader& fragment_shader,
         std::shared_ptr<mve::Texture> texture);
 
-    mve::DescriptorSet& descriptor_set();
-    mve::VertexBuffer& vertex_buffer();
-    mve::IndexBuffer& index_buffer();
+    void draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set);
 
 private:
     struct MeshData {

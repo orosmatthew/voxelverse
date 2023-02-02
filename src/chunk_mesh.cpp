@@ -141,15 +141,9 @@ ChunkMesh::MeshBuffers ChunkMesh::create_buffers_from_chunk_data(mve::Renderer& 
 
     return { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(quad_mesh.indices) };
 }
-mve::DescriptorSet& ChunkMesh::descriptor_set()
+void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
 {
-    return m_descriptor_set;
-}
-mve::VertexBuffer& ChunkMesh::vertex_buffer()
-{
-    return m_mesh_buffers.vertex_buffer;
-}
-mve::IndexBuffer& ChunkMesh::index_buffer()
-{
-    return m_mesh_buffers.index_buffer;
+    renderer.bind_descriptor_sets({ global_descriptor_set, m_descriptor_set });
+    renderer.bind_vertex_buffer(m_mesh_buffers.vertex_buffer);
+    renderer.draw_index_buffer(m_mesh_buffers.index_buffer);
 }

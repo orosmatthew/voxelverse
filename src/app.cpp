@@ -182,9 +182,7 @@ void run()
         renderer.bind_graphics_pipeline(graphics_pipeline);
 
         for (ChunkMesh& mesh : chunk_meshes) {
-            renderer.bind_descriptor_sets({ global_descriptor_set, mesh.descriptor_set() });
-            renderer.bind_vertex_buffer(mesh.vertex_buffer());
-            renderer.draw_index_buffer(mesh.index_buffer());
+            mesh.draw(renderer, global_descriptor_set);
         }
 
         renderer.end(window);
