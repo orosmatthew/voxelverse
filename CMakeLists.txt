@@ -63,7 +63,9 @@ set(SOURCE_FILES
         src/math/vector4i.cpp
         src/math/matrix4.cpp
         src/math/matrix3.cpp
-        src/math/quaternion.cpp)
+        src/math/quaternion.cpp
+        src/chunk_mesh.cpp
+        src/chunk_data.cpp)
 
 set(LIBS
         Vulkan::Vulkan
