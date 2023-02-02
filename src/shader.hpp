@@ -100,6 +100,8 @@ private:
     const std::unordered_map<uint32_t, ShaderDescriptorBinding> m_bindings;
 };
 
+
+// TODO: Move shader reflection data to its own class
 /**
  * @brief Shader for use in renderer
  */
