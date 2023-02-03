@@ -41,21 +41,10 @@ void run()
     //    render_objects.push_back(std::move(viking_scene));
     std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
 
-    FastNoiseLite noise;
-    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-
+    WorldGenerator world_generator(1234);
     ChunkData chunk_data;
-    int block_count = 0;
-    for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-            for (int z = 0; z < 16; z++) {
-                chunk_data.set_block(
-                    { x, y, z },
-                    static_cast<uint8_t>(noise.GetNoise((float)x * 10, (float)y * 10, (float)z * 10) > 0.5f));
-                block_count++;
-            }
-        }
-    }
+    chunk_data.generate(world_generator);
+
     ChunkMesh chunk_mesh(chunk_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
     chunk_meshes.push_back(std::move(chunk_mesh));
 

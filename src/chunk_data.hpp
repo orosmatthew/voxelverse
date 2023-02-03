@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "math/vector3i.hpp"
+#include "world_generator.hpp"
 
 enum class Direction { front = 0, back, left, right, top, bottom };
 
@@ -13,6 +14,8 @@ Direction opposite_direction(Direction dir);
 class ChunkData {
 public:
     ChunkData();
+
+    void generate(const WorldGenerator& generator);
 
     void set_block(mve::Vector3i pos, uint8_t type);
     uint8_t get_block(mve::Vector3i pos) const;
