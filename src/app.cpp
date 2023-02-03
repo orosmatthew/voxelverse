@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include "SimplexNoise.h"
+
 #include "chunk_mesh.hpp"
 #include "logger.hpp"
 #include "math/functions.hpp"
@@ -39,12 +41,14 @@ void run()
     //    render_objects.push_back(std::move(viking_scene));
     std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
 
+    SimplexNoise noise;
+
     ChunkData chunk_data;
     int block_count = 0;
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                chunk_data.set_block({ x, y, z }, static_cast<uint8_t>(block_count % 2 == 0));
+                chunk_data.set_block({ x, y, z }, static_cast<uint8_t>(noise.noise(x * 0.1f, y * 0.1f, z * 0.1f) > 0.5f));
                 block_count++;
             }
         }
