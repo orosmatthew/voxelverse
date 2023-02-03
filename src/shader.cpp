@@ -80,10 +80,6 @@ void Shader::create_reflection_data()
     std::vector<SpvReflectInterfaceVariable*> input_vars(var_count);
     input_enum_result = spvReflectEnumerateInputVariables(&shader_module, &var_count, input_vars.data());
 
-    for (size_t i = 0; i < input_vars.size(); i++) {
-        LOG->info("NAME: {}", input_vars.at(i)->name);
-    }
-
     uint32_t set_count = 0;
     SpvReflectResult descriptor_set_result = spvReflectEnumerateDescriptorSets(&shader_module, &set_count, nullptr);
     if (descriptor_set_result != SPV_REFLECT_RESULT_SUCCESS) {
