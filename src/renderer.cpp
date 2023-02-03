@@ -1647,7 +1647,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
     auto sampler_info
         = vk::SamplerCreateInfo()
               .setMagFilter(vk::Filter::eNearest)
-              .setMinFilter(vk::Filter::eNearest)
+              .setMinFilter(vk::Filter::eLinear)
               //.setMagFilter(vk::Filter::eLinear)
               //.setMinFilter(vk::Filter::eLinear)
               .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
