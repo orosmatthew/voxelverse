@@ -13,9 +13,11 @@ Direction opposite_direction(Direction dir);
 
 class ChunkData {
 public:
-    ChunkData();
+    ChunkData(mve::Vector3i chunk_pos);
 
     void generate(const WorldGenerator& generator);
+
+    mve::Vector3i position() const;
 
     void set_block(mve::Vector3i pos, uint8_t type);
     uint8_t get_block(mve::Vector3i pos) const;
@@ -24,5 +26,6 @@ public:
 
 private:
     static const int sc_chunk_size = 16;
+    mve::Vector3i m_pos;
     uint8_t m_block_data[sc_chunk_size][sc_chunk_size][sc_chunk_size] = { 0 };
 };

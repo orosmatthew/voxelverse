@@ -4,9 +4,10 @@
 
 uint8_t WorldGenerator::get_block(mve::Vector3i pos) const
 {
+    int scale = 4;
     return static_cast<uint8_t>(
         m_noise->GetNoise(
-            static_cast<float>(pos.x) * 10, static_cast<float>(pos.y) * 10, static_cast<float>(pos.z) * 10)
+            static_cast<float>(pos.x) * scale, static_cast<float>(pos.y) * scale, static_cast<float>(pos.z) * scale)
         > 0.5f);
 }
 

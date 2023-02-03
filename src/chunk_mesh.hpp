@@ -10,6 +10,7 @@
 #include "shader.hpp"
 #include "uniform_buffer.hpp"
 #include "vertex_buffer.hpp"
+#include "math/matrix4.hpp"
 
 class ChunkMesh {
 public:
@@ -48,6 +49,7 @@ private:
 
     static std::optional<MeshBuffers> create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data);
 
+    mve::Matrix4 m_transform;
     mve::DescriptorSet m_descriptor_set;
     mve::UniformBuffer m_uniform_buffer;
     std::optional<MeshBuffers> m_mesh_buffers;

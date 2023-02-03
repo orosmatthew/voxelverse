@@ -306,8 +306,4 @@ Vector3i Vector3i::operator-() const
 {
     return Vector3i(-x, -y, -z);
 }
-Vector3i::operator bool() const
-{
-    return x != 0 || y != 0 || z != 0;
-}
 }

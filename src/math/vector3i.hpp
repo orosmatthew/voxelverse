@@ -91,8 +91,6 @@ public:
     [[nodiscard]] Vector3i operator+() const;
 
     [[nodiscard]] Vector3i operator-() const;
-
-    [[nodiscard]] operator bool() const;
 };
 
 [[nodiscard]] Vector3i abs(Vector3i vector);

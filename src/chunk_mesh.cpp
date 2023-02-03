@@ -10,7 +10,8 @@ ChunkMesh::ChunkMesh(
     mve::Shader& vertex_shader,
     mve::Shader& fragment_shader,
     std::shared_ptr<mve::Texture> texture)
-    : m_descriptor_set(renderer.create_descriptor_set(pipeline, vertex_shader.descriptor_set(1)))
+    : m_transform(mve::Matrix4::from_basis_translation(mve::Matrix3::identity(), data.position() * 16.0f))
+    , m_descriptor_set(renderer.create_descriptor_set(pipeline, vertex_shader.descriptor_set(1)))
     , m_uniform_buffer(renderer.create_uniform_buffer(vertex_shader.descriptor_set(1).binding(0)))
     , m_mesh_buffers(create_buffers_from_chunk_data(renderer, data))
     , m_texture(texture)
@@ -18,7 +19,7 @@ ChunkMesh::ChunkMesh(
 {
     m_descriptor_set.write_binding(vertex_shader.descriptor_set(1).binding(0), m_uniform_buffer);
     m_descriptor_set.write_binding(fragment_shader.descriptor_set(1).binding(1), *m_texture.get());
-    m_uniform_buffer.update(m_model_location, mve::Matrix4::identity());
+    m_uniform_buffer.update(m_model_location, m_transform);
 }
 
 void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)

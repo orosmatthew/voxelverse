@@ -1,6 +1,7 @@
 #include "chunk_data.hpp"
 
-ChunkData::ChunkData()
+ChunkData::ChunkData(mve::Vector3i chunk_pos)
+    : m_pos(chunk_pos)
 {
 }
 void ChunkData::set_block(mve::Vector3i pos, uint8_t type)
@@ -20,10 +21,14 @@ void ChunkData::generate(const WorldGenerator& generator)
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                set_block({ x, y, z }, generator.get_block({ x, y, z }));
+                set_block({ x, y, z }, generator.get_block(mve::Vector3i(x, y, z) + m_pos * 16));
             }
         }
     }
+}
+mve::Vector3i ChunkData::position() const
+{
+    return m_pos;
 }
 mve::Vector3i direction_vector(Direction dir)
 {

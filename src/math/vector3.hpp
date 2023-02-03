@@ -4,6 +4,8 @@ namespace mve {
 
 enum class Vector3Axis { x, y, z };
 
+class Vector3i;
+
 class Vector3 {
 public:
     float x;
@@ -11,6 +13,8 @@ public:
     float z;
 
     Vector3();
+
+    Vector3(Vector3i vector);
 
     explicit Vector3(float val);
 

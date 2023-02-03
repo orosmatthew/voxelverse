@@ -1,6 +1,7 @@
 #include "vector3.hpp"
 
 #include "functions.hpp"
+#include "vector3i.hpp"
 
 namespace mve {
 
@@ -515,5 +516,11 @@ const float& Vector3::operator[](int index) const
     default:
         return x;
     }
+}
+Vector3::Vector3(Vector3i vector)
+    : x(static_cast<float>(vector.x))
+    , y(static_cast<float>(vector.y))
+    , z(static_cast<float>(vector.z))
+{
 }
 }

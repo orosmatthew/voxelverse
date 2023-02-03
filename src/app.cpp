@@ -41,12 +41,18 @@ void run()
     //    render_objects.push_back(std::move(viking_scene));
     std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
 
-    WorldGenerator world_generator(1234);
-    ChunkData chunk_data;
-    chunk_data.generate(world_generator);
-
-    ChunkMesh chunk_mesh(chunk_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
-    chunk_meshes.push_back(std::move(chunk_mesh));
+    WorldGenerator world_generator(1);
+    for (int x = -4; x < 4; x++) {
+        for (int y = -4; y < 4; y++) {
+            for (int z = -4; z < 4; z++) {
+                ChunkData chunk_data({ x, y, z });
+                chunk_data.generate(world_generator);
+                ChunkMesh chunk_mesh(
+                    chunk_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
+                chunk_meshes.push_back(std::move(chunk_mesh));
+            }
+        }
+    }
 
     mve::UniformBuffer global_ubo = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 
@@ -76,8 +82,8 @@ void run()
     mve::Matrix4 model = mve::Matrix4().rotate(mve::Vector3(0.0f, 0.0f, 1.0f), mve::radians(90.0f));
     mve::Matrix4 prev_model = model;
 
-    const float camera_acceleration = 0.01f;
-    const float camera_speed = 0.1f;
+    const float camera_acceleration = 0.03f;
+    const float camera_speed = 0.3f;
     const float camera_friction = 0.1f;
     mve::Vector3 camera_pos(0.0f, 3.0f, 0.0f);
     mve::Vector3 camera_pos_prev = camera_pos;
