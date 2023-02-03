@@ -34,19 +34,9 @@ private:
         mve::IndexBuffer index_buffer;
     };
 
-    static MeshData create_quad_mesh(
-        mve::Vector3 pos_top_left,
-        mve::Vector3 pos_top_right,
-        mve::Vector3 pos_bottom_right,
-        mve::Vector3 pos_bottom_left,
-        mve::Vector2 uv_top_left,
-        mve::Vector2 uv_top_right,
-        mve::Vector2 uv_bottom_right,
-        mve::Vector2 uv_bottom_left);
+    static void combine_mesh_data(MeshData& data, const MeshData& other);
 
-    static void push_data(MeshData& data, const MeshData& face);
-
-    static MeshData create_cube_mesh();
+    static MeshData create_face_mesh(mve::Vector3 offset, BlockFace face);
 
     static MeshBuffers create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data);
 

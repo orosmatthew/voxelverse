@@ -1659,7 +1659,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
               .setUnnormalizedCoordinates(VK_FALSE)
               .setCompareEnable(VK_FALSE)
               .setCompareOp(vk::CompareOp::eAlways)
-              .setMipmapMode(vk::SamplerMipmapMode::eLinear)
+              .setMipmapMode(vk::SamplerMipmapMode::eNearest)
               .setMipLodBias(0.0f)
               .setMinLod(0.0f)
               .setMaxLod(static_cast<float>(mip_levels));
@@ -1858,7 +1858,7 @@ void Renderer::cmd_generate_mipmaps(
             vk::ImageLayout::eTransferDstOptimal,
             1,
             &blit,
-            vk::Filter::eLinear);
+            vk::Filter::eNearest);
 
         barrier.setOldLayout(vk::ImageLayout::eTransferSrcOptimal);
         barrier.setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -2360,7 +2360,9 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
         throw std::runtime_error("[Renderer] Failed to load texture image");
     }
 
-    uint32_t mip_levels = static_cast<uint32_t>(mve::floor(mve::log2(static_cast<float>(mve::max(width, height))))) + 1;
+    //    uint32_t mip_levels = static_cast<uint32_t>(mve::floor(mve::log2(static_cast<float>(mve::max(width,
+    //    height))))) + 1;
+    uint32_t mip_levels = 1;
 
     Buffer staging_buffer = create_buffer(
         m_vma_allocator,

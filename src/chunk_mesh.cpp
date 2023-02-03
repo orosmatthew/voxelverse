@@ -21,104 +21,17 @@ ChunkMesh::ChunkMesh(
     m_uniform_buffer.update(m_model_location, mve::Matrix4::identity());
 }
 
-ChunkMesh::MeshData ChunkMesh::create_quad_mesh(
-    mve::Vector3 pos_top_left,
-    mve::Vector3 pos_top_right,
-    mve::Vector3 pos_bottom_right,
-    mve::Vector3 pos_bottom_left,
-    mve::Vector2 uv_top_left,
-    mve::Vector2 uv_top_right,
-    mve::Vector2 uv_bottom_right,
-    mve::Vector2 uv_bottom_left)
-{
-    MeshData mesh_data;
-    mesh_data.vertices.push_back(pos_top_left);
-    mesh_data.uvs.push_back(uv_top_left);
-
-    mesh_data.vertices.push_back(pos_top_right);
-    mesh_data.uvs.push_back(uv_top_right);
-
-    mesh_data.vertices.push_back(pos_bottom_right);
-    mesh_data.uvs.push_back(uv_bottom_right);
-
-    mesh_data.vertices.push_back(pos_bottom_left);
-    mesh_data.uvs.push_back(uv_bottom_left);
-
-    mesh_data.indices = { 0, 2, 3, 0, 1, 2 };
-
-    return mesh_data;
-}
-
-void ChunkMesh::push_data(MeshData& data, const MeshData& face)
+void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 {
     uint32_t indices_offset = data.vertices.size();
-    for (int i = 0; i < face.vertices.size(); i++) {
-        data.vertices.push_back(face.vertices[i]);
-        data.uvs.push_back(face.uvs[i]);
+    for (int i = 0; i < other.vertices.size(); i++) {
+        data.vertices.push_back(other.vertices[i]);
+        data.uvs.push_back(other.uvs[i]);
     }
 
-    for (int i = 0; i < face.indices.size(); i++) {
-        data.indices.push_back(face.indices[i] + indices_offset);
+    for (int i = 0; i < other.indices.size(); i++) {
+        data.indices.push_back(other.indices[i] + indices_offset);
     }
-}
-
-ChunkMesh::MeshData ChunkMesh::create_cube_mesh()
-{
-    MeshData data;
-
-    std::array<mve::Vector3, 4> quad_verts { mve::Vector3(-0.5f, 0.5f, 0.5f),
-                                             mve::Vector3(0.5f, 0.5f, 0.5f),
-                                             mve::Vector3(0.5f, 0.5f, -0.5f),
-                                             mve::Vector3(-0.5f, 0.5f, -0.5f) };
-
-    MeshData front_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
-    push_data(data, front_face_data);
-
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
-    }
-
-    MeshData right_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
-    push_data(data, right_face_data);
-
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
-    }
-
-    MeshData back_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
-    push_data(data, back_face_data);
-
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
-    }
-
-    MeshData left_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0 }, { 0.5f, 0 }, { 0.5f, 0.5f }, { 0, 0.5f });
-    push_data(data, left_face_data);
-
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(0, 0, 1), mve::pi / 2.0f);
-    }
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(1, 0, 0), mve::pi / 2.0f);
-    }
-
-    MeshData top_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0.5f, 0 }, { 1, 0 }, { 1, 0.5f }, { 0.5f, 0.5f });
-    push_data(data, top_face_data);
-
-    for (int i = 0; i < 4; i++) {
-        quad_verts[i] = quad_verts[i].rotate(mve::Vector3(1, 0, 0), mve::pi);
-    }
-
-    MeshData bottom_face_data = create_quad_mesh(
-        quad_verts[0], quad_verts[1], quad_verts[2], quad_verts[3], { 0, 0.5f }, { 0.5f, 0.5f }, { 0.5f, 1 }, { 0, 1 });
-    push_data(data, bottom_face_data);
-
-    return data;
 }
 
 static const mve::VertexLayout standard_vertex_layout = {
@@ -129,21 +42,105 @@ static const mve::VertexLayout standard_vertex_layout = {
 
 ChunkMesh::MeshBuffers ChunkMesh::create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data)
 {
-    MeshData quad_mesh = create_cube_mesh();
-    //= create_quad_mesh({ -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 });
-
-    mve::VertexData quad_vertex_data(standard_vertex_layout);
-    for (int i = 0; i < quad_mesh.vertices.size(); i++) {
-        quad_vertex_data.push_back(quad_mesh.vertices.at(i));
-        quad_vertex_data.push_back({ 1, 1, 1 });
-        quad_vertex_data.push_back(quad_mesh.uvs.at(i));
+    MeshData mesh;
+    for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 16; y++) {
+            for (int z = 0; z < 16; z++) {
+                for (int f = 0; f < 6; f++) {
+                    MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), static_cast<BlockFace>(f));
+                    combine_mesh_data(mesh, face_mesh);
+                }
+            }
+        }
     }
 
-    return { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(quad_mesh.indices) };
+    mve::VertexData quad_vertex_data(standard_vertex_layout);
+    for (int i = 0; i < mesh.vertices.size(); i++) {
+        quad_vertex_data.push_back(mesh.vertices.at(i));
+        quad_vertex_data.push_back({ 1, 1, 1 });
+        quad_vertex_data.push_back(mesh.uvs.at(i));
+    }
+
+    return { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
 void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
 {
     renderer.bind_descriptor_sets({ global_descriptor_set, m_descriptor_set });
     renderer.bind_vertex_buffer(m_mesh_buffers.vertex_buffer);
     renderer.draw_index_buffer(m_mesh_buffers.index_buffer);
+}
+
+ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace face)
+{
+    MeshData data;
+    switch (face) {
+    case BlockFace::front:
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 0.0f });
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0 });
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0, 0.5f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    case BlockFace::back:
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 0.0f });
+        data.vertices.push_back(mve::Vector3(-0.5f, 0 - .5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0 });
+        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0, 0.5f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    case BlockFace::left:
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 0.0f });
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0 });
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0, 0.5f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    case BlockFace::right:
+        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 0.0f });
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0 });
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0, 0.5f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    case BlockFace::top:
+        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.0f });
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 1.0f, 0 });
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 1.0f, 0.5f });
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    case BlockFace::bottom:
+        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 0.5f });
+        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 0.5f });
+        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.5f, 1.0f });
+        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
+        data.uvs.push_back({ 0.0f, 1.0f });
+        data.indices = { 0, 2, 3, 0, 1, 2 };
+        return data;
+    default:
+        return data;
+    }
 }
