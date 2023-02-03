@@ -30,6 +30,11 @@ private:
         std::vector<mve::Vector2> uvs;
         std::vector<uint32_t> indices;
     };
+    struct FaceData {
+        std::array<mve::Vector3, 4> vertices;
+        std::array<mve::Vector2, 4> uvs;
+        std::array<uint32_t, 6> indices;
+    };
     struct MeshBuffers {
         mve::VertexBuffer vertex_buffer;
         mve::IndexBuffer index_buffer;
@@ -45,7 +50,9 @@ private:
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
-    static MeshData create_face_mesh(mve::Vector3 offset, Direction face);
+    static void add_face_to_mesh(MeshData& data, const FaceData& face);
+
+    static FaceData create_face_mesh(mve::Vector3 offset, Direction face);
 
     static std::optional<MeshBuffers> create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data);
 

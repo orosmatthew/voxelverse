@@ -58,16 +58,16 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers_from_chunk_data(
                     mve::Vector3i adj_block = mve::Vector3i(x, y, z) + direction_vector(dir);
                     if (chunk_data.in_bounds(adj_block)) {
                         if (chunk_data.get_block(adj_block) == 0) {
-                            MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), dir);
-                            combine_mesh_data(mesh, face_mesh);
+                            FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir);
+                            add_face_to_mesh(mesh, face);
                         }
                         else {
                             continue;
                         }
                     }
                     else {
-                        MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), dir);
-                        combine_mesh_data(mesh, face_mesh);
+                        FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir);
+                        add_face_to_mesh(mesh, face);
                     }
                 }
             }
@@ -95,86 +95,62 @@ void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descrip
     }
 }
 
-ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, Direction face)
+ChunkMesh::FaceData ChunkMesh::create_face_mesh(mve::Vector3 offset, Direction face)
 {
-    MeshData data;
+    FaceData data;
     FaceUVs uvs;
     switch (face) {
     case Direction::front:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[1] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[2] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        break;
     case Direction::back:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[3] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        break;
     case Direction::left:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        break;
     case Direction::right:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        break;
     case Direction::top:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 1, 0 });
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[3] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        break;
     case Direction::bottom:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 1 });
-        data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.top_left);
-        data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.top_right);
-        data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_right);
-        data.vertices.push_back(mve::Vector3(0.5f, -0.5f, -0.5f) + offset);
-        data.uvs.push_back(uvs.bottom_left);
-        data.indices = { 0, 3, 2, 0, 2, 1 };
-        return data;
+        data.vertices[0] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[1] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        break;
     default:
-        return data;
+        break;
     }
+    data.uvs[0] = uvs.top_left;
+    data.uvs[1] = uvs.top_right;
+    data.uvs[2] = uvs.bottom_right;
+    data.uvs[3] = uvs.bottom_left;
+    data.indices = { 0, 3, 2, 0, 2, 1 };
+    return data;
 }
 
 ChunkMesh::FaceUVs ChunkMesh::uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
@@ -194,4 +170,17 @@ ChunkMesh::FaceUVs ChunkMesh::uvs_from_atlas(mve::Vector2i texture_size, mve::Ve
     uvs.bottom_left += mve::Vector2(padding.x, -padding.y);
 
     return uvs;
+}
+
+void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::FaceData& face)
+{
+    uint32_t indices_offset = data.vertices.size();
+    for (int i = 0; i < face.vertices.size(); i++) {
+        data.vertices.push_back(face.vertices[i]);
+        data.uvs.push_back(face.uvs[i]);
+    }
+
+    for (int i = 0; i < face.indices.size(); i++) {
+        data.indices.push_back(face.indices[i] + indices_offset);
+    }
 }
