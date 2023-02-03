@@ -144,3 +144,9 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         return data;
     }
 }
+
+ChunkMesh::FaceUVs ChunkMesh::uvs_from_atlas(
+    int tex_width, int tex_height, int atlas_width, int atlas_height, int x, int y)
+{
+    return ChunkMesh::FaceUVs();
+}

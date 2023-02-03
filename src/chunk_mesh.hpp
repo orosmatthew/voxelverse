@@ -33,6 +33,14 @@ private:
         mve::VertexBuffer vertex_buffer;
         mve::IndexBuffer index_buffer;
     };
+    struct FaceUVs {
+        mve::Vector2 top_left;
+        mve::Vector2 top_right;
+        mve::Vector2 bottom_right;
+        mve::Vector2 bottom_left;
+    };
+
+    static FaceUVs uvs_from_atlas(int tex_width, int tex_height, int atlas_width, int atlas_height, int x, int y);
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
