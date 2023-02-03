@@ -44,13 +44,13 @@ private:
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
-    static MeshData create_face_mesh(mve::Vector3 offset, BlockFace face);
+    static MeshData create_face_mesh(mve::Vector3 offset, Direction face);
 
-    static MeshBuffers create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data);
+    static std::optional<MeshBuffers> create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data);
 
     mve::DescriptorSet m_descriptor_set;
     mve::UniformBuffer m_uniform_buffer;
-    MeshBuffers m_mesh_buffers;
+    std::optional<MeshBuffers> m_mesh_buffers;
     std::shared_ptr<mve::Texture> m_texture;
     mve::UniformLocation m_model_location;
 };

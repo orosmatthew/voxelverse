@@ -19,7 +19,6 @@ ChunkMesh::ChunkMesh(
     m_descriptor_set.write_binding(vertex_shader.descriptor_set(1).binding(0), m_uniform_buffer);
     m_descriptor_set.write_binding(fragment_shader.descriptor_set(1).binding(1), *m_texture.get());
     m_uniform_buffer.update(m_model_location, mve::Matrix4::identity());
-    FaceUVs thing = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
 }
 
 void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
@@ -41,18 +40,40 @@ static const mve::VertexLayout standard_vertex_layout = {
     mve::VertexAttributeType::vec2 // UV
 };
 
-ChunkMesh::MeshBuffers ChunkMesh::create_buffers_from_chunk_data(mve::Renderer& renderer, const ChunkData& chunk_data)
+std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers_from_chunk_data(
+    mve::Renderer& renderer, const ChunkData& chunk_data)
 {
+    bool empty = true;
     MeshData mesh;
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
+                if (chunk_data.get_block(mve::Vector3i(x, y, z)) == 0) {
+                    continue;
+                }
+                empty = false;
                 for (int f = 0; f < 6; f++) {
-                    MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), static_cast<BlockFace>(f));
-                    combine_mesh_data(mesh, face_mesh);
+                    Direction dir = static_cast<Direction>(f);
+                    mve::Vector3i adj_block = mve::Vector3i(x, y, z) + direction_vector(dir);
+                    if (chunk_data.in_bounds(adj_block)) {
+                        if (chunk_data.get_block(adj_block) == 0) {
+                            MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), dir);
+                            combine_mesh_data(mesh, face_mesh);
+                        }
+                        else {
+                            continue;
+                        }
+                    }
+                    else {
+                        MeshData face_mesh = create_face_mesh(mve::Vector3(x, y, z), dir);
+                        combine_mesh_data(mesh, face_mesh);
+                    }
                 }
             }
         }
+    }
+    if (empty) {
+        return {};
     }
 
     mve::VertexData quad_vertex_data(standard_vertex_layout);
@@ -62,21 +83,23 @@ ChunkMesh::MeshBuffers ChunkMesh::create_buffers_from_chunk_data(mve::Renderer& 
         quad_vertex_data.push_back(mesh.uvs.at(i));
     }
 
-    return { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(mesh.indices) };
+    return MeshBuffers { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
 void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
 {
-    renderer.bind_descriptor_sets({ global_descriptor_set, m_descriptor_set });
-    renderer.bind_vertex_buffer(m_mesh_buffers.vertex_buffer);
-    renderer.draw_index_buffer(m_mesh_buffers.index_buffer);
+    if (m_mesh_buffers.has_value()) {
+        renderer.bind_descriptor_sets({ global_descriptor_set, m_descriptor_set });
+        renderer.bind_vertex_buffer(m_mesh_buffers.value().vertex_buffer);
+        renderer.draw_index_buffer(m_mesh_buffers.value().index_buffer);
+    }
 }
 
-ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace face)
+ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, Direction face)
 {
     MeshData data;
     FaceUVs uvs;
     switch (face) {
-    case BlockFace::front:
+    case Direction::front:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
         data.vertices.push_back(mve::Vector3(-0.5f, -0.5f, 0.5f) + offset);
         data.uvs.push_back(uvs.top_left);
@@ -88,7 +111,7 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         data.uvs.push_back(uvs.bottom_left);
         data.indices = { 0, 3, 2, 0, 2, 1 };
         return data;
-    case BlockFace::back:
+    case Direction::back:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
         data.vertices.push_back(mve::Vector3(0.5f, 0.5f, 0.5f) + offset);
         data.uvs.push_back(uvs.top_left);
@@ -100,7 +123,7 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         data.uvs.push_back(uvs.bottom_left);
         data.indices = { 0, 3, 2, 0, 2, 1 };
         return data;
-    case BlockFace::left:
+    case Direction::left:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
         data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
         data.uvs.push_back(uvs.top_left);
@@ -112,7 +135,7 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         data.uvs.push_back(uvs.bottom_left);
         data.indices = { 0, 3, 2, 0, 2, 1 };
         return data;
-    case BlockFace::right:
+    case Direction::right:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
         data.vertices.push_back(mve::Vector3(0.5f, -0.5f, 0.5f) + offset);
         data.uvs.push_back(uvs.top_left);
@@ -124,7 +147,7 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         data.uvs.push_back(uvs.bottom_left);
         data.indices = { 0, 3, 2, 0, 2, 1 };
         return data;
-    case BlockFace::top:
+    case Direction::top:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 1, 0 });
         data.vertices.push_back(mve::Vector3(-0.5f, 0.5f, 0.5f) + offset);
         data.uvs.push_back(uvs.top_left);
@@ -136,7 +159,7 @@ ChunkMesh::MeshData ChunkMesh::create_face_mesh(mve::Vector3 offset, BlockFace f
         data.uvs.push_back(uvs.bottom_left);
         data.indices = { 0, 3, 2, 0, 2, 1 };
         return data;
-    case BlockFace::bottom:
+    case Direction::bottom:
         uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 1 });
         data.vertices.push_back(mve::Vector3(0.5f, 0.5f, -0.5f) + offset);
         data.uvs.push_back(uvs.top_left);

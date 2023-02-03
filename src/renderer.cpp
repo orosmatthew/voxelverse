@@ -1989,6 +1989,10 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
 {
     size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
 
+    if (buffer_size == 0) {
+        throw std::runtime_error("[Renderer] Attempt to allocate empty vertex buffer");
+    }
+
     Buffer staging_buffer = create_buffer(
         m_vma_allocator,
         buffer_size,
