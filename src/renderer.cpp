@@ -1653,7 +1653,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
               .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
               .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
               .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
-              .setAnisotropyEnable(VK_TRUE) // Disable with VK_FALSE
+              .setAnisotropyEnable(VK_FALSE) // Disable with VK_FALSE
               .setMaxAnisotropy(physical_device.getProperties().limits.maxSamplerAnisotropy) // Disable with 1.0f
               .setBorderColor(vk::BorderColor::eIntOpaqueBlack)
               .setUnnormalizedCoordinates(VK_FALSE)

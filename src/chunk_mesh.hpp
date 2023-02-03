@@ -40,7 +40,7 @@ private:
         mve::Vector2 bottom_left;
     };
 
-    static FaceUVs uvs_from_atlas(int tex_width, int tex_height, int atlas_width, int atlas_height, int x, int y);
+    static FaceUVs uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos);
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
