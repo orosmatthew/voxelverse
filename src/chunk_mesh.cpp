@@ -38,12 +38,6 @@ void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
     }
 }
 
-static const mve::VertexLayout standard_vertex_layout = {
-    mve::VertexAttributeType::vec3, // Position
-    mve::VertexAttributeType::vec3, // Color
-    mve::VertexAttributeType::vec2 // UV
-};
-
 std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data)
 {
@@ -84,14 +78,14 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
         return {};
     }
 
-    mve::VertexData quad_vertex_data(standard_vertex_layout);
+    mve::VertexData vertex_data(chunk_vertex_layout);
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        quad_vertex_data.push_back(mesh.vertices.at(i));
-        quad_vertex_data.push_back(mesh.colors.at(i));
-        quad_vertex_data.push_back(mesh.uvs.at(i));
+        vertex_data.push_back(mesh.vertices.at(i));
+        vertex_data.push_back(mesh.colors.at(i));
+        vertex_data.push_back(mesh.uvs.at(i));
     }
 
-    return MeshBuffers { renderer.create_vertex_buffer(quad_vertex_data), renderer.create_index_buffer(mesh.indices) };
+    return MeshBuffers { renderer.create_vertex_buffer(vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
 void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
 {

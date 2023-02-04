@@ -34,10 +34,8 @@ void run()
     mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex);
     mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment);
 
-    mve::ModelData model_data = mve::load_model("../res/viking_room.obj");
-
     mve::GraphicsPipeline graphics_pipeline
-        = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, model_data.vertex_data.layout());
+        = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, chunk_vertex_layout);
 
     //    render_objects.push_back(std::move(viking_scene));
     std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
