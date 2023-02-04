@@ -212,6 +212,14 @@ void Matrix4::operator*=(const Matrix4& other)
 {
     *this = *this * other;
 }
+Matrix4 Matrix4::rotate_local(const Vector3& axis, float angle) const
+{
+    return mve::rotate_local(*this, axis, angle);
+}
+Matrix4 Matrix4::translate_local(const Vector3& offset) const
+{
+    return mve::translate_local(*this, offset);
+}
 
 float determinant(Matrix4 matrix)
 {
@@ -256,46 +264,87 @@ Matrix4 transpose(const Matrix4& matrix)
 }
 Matrix4 inverse(Matrix4 matrix)
 {
-    float a00 = matrix[0][0], a01 = matrix[1][0], a02 = matrix[2][0], a03 = matrix[3][0];
-    float a10 = matrix[0][1], a11 = matrix[1][1], a12 = matrix[2][1], a13 = matrix[3][1];
-    float a20 = matrix[0][2], a21 = matrix[1][2], a22 = matrix[2][2], a23 = matrix[3][2];
-    float a30 = matrix[0][3], a31 = matrix[1][3], a32 = matrix[2][3], a33 = matrix[3][3];
-
-    float c00 = (a00 * a11) - (a01 * a10);
-    float c01 = (a00 * a12) - (a02 * a10);
-    float c02 = (a00 * a13) - (a03 * a10);
-    float c03 = (a01 * a12) - (a02 * a11);
-    float c04 = (a01 * a13) - (a03 * a11);
-    float c05 = (a02 * a13) - (a03 * a12);
-    float c06 = (a20 * a31) - (a21 * a30);
-    float c07 = (a20 * a32) - (a22 * a30);
-    float c08 = (a20 * a33) - (a23 * a30);
-    float c09 = (a21 * a32) - (a22 * a31);
-    float c10 = (a21 * a33) - (a23 * a31);
-    float c11 = (a22 * a33) - (a23 * a32);
-
-    float inv_det = 1.0f / ((c00 * c11) - (c01 * c10) + (c02 * c09) + (c03 * c08) - (c04 * c07) + (c05 * c06));
-
     Matrix4 result;
 
-    result[0][0] = ((a11 * c11) - (a12 * c10) + (a13 * c09)) * inv_det;
-    result[0][1] = ((-a01 * c11) + (a02 * c10) - (a03 * c09)) * inv_det;
-    result[0][2] = ((a31 * c05) - (a32 * c04) + (a33 * c03)) * inv_det;
-    result[0][3] = ((-a21 * c05) + (a22 * c04) - (a23 * c03)) * inv_det;
-    result[1][0] = ((-a10 * c11) + (a12 * c08) - (a13 * c07)) * inv_det;
-    result[1][1] = ((a00 * c11) - (a02 * c08) + (a03 * c07)) * inv_det;
-    result[1][2] = ((-a30 * c05) + (a32 * c02) - (a33 * c01)) * inv_det;
-    result[1][3] = ((a20 * c05) - (a22 * c02) + (a23 * c01)) * inv_det;
-    result[2][0] = ((a10 * c10) - (a11 * c08) + (a13 * c06)) * inv_det;
-    result[2][1] = ((-a00 * c10) + (a01 * c08) - (a03 * c06)) * inv_det;
-    result[2][2] = ((a30 * c04) - (a31 * c02) + (a33 * c00)) * inv_det;
-    result[2][3] = ((-a20 * c04) + (a21 * c02) - (a23 * c00)) * inv_det;
-    result[3][0] = ((-a10 * c09) + (a11 * c07) - (a12 * c06)) * inv_det;
-    result[3][1] = ((a00 * c09) - (a01 * c07) + (a02 * c06)) * inv_det;
-    result[3][2] = ((-a30 * c03) + (a31 * c01) - (a32 * c00)) * inv_det;
-    result[3][3] = ((a20 * c03) - (a21 * c01) + (a22 * c00)) * inv_det;
+    result[0][0] = matrix[1][1] * matrix[2][2] * matrix[3][3] - matrix[1][1] * matrix[2][3] * matrix[3][2]
+        - matrix[2][1] * matrix[1][2] * matrix[3][3] + matrix[2][1] * matrix[1][3] * matrix[3][2]
+        + matrix[3][1] * matrix[1][2] * matrix[2][3] - matrix[3][1] * matrix[1][3] * matrix[2][2];
 
-    return result;
+    result[1][0] = -matrix[1][0] * matrix[2][2] * matrix[3][3] + matrix[1][0] * matrix[2][3] * matrix[3][2]
+        + matrix[2][0] * matrix[1][2] * matrix[3][3] - matrix[2][0] * matrix[1][3] * matrix[3][2]
+        - matrix[3][0] * matrix[1][2] * matrix[2][3] + matrix[3][0] * matrix[1][3] * matrix[2][2];
+
+    result[2][0] = matrix[1][0] * matrix[2][1] * matrix[3][3] - matrix[1][0] * matrix[2][3] * matrix[3][1]
+        - matrix[2][0] * matrix[1][1] * matrix[3][3] + matrix[2][0] * matrix[1][3] * matrix[3][1]
+        + matrix[3][0] * matrix[1][1] * matrix[2][3] - matrix[3][0] * matrix[1][3] * matrix[2][1];
+
+    result[3][0] = -matrix[1][0] * matrix[2][1] * matrix[3][2] + matrix[1][0] * matrix[2][2] * matrix[3][1]
+        + matrix[2][0] * matrix[1][1] * matrix[3][2] - matrix[2][0] * matrix[1][2] * matrix[3][1]
+        - matrix[3][0] * matrix[1][1] * matrix[2][2] + matrix[3][0] * matrix[1][2] * matrix[2][1];
+
+    result[0][1] = -matrix[0][1] * matrix[2][2] * matrix[3][3] + matrix[0][1] * matrix[2][3] * matrix[3][2]
+        + matrix[2][1] * matrix[0][2] * matrix[3][3] - matrix[2][1] * matrix[0][3] * matrix[3][2]
+        - matrix[3][1] * matrix[0][2] * matrix[2][3] + matrix[3][1] * matrix[0][3] * matrix[2][2];
+
+    result[1][1] = matrix[0][0] * matrix[2][2] * matrix[3][3] - matrix[0][0] * matrix[2][3] * matrix[3][2]
+        - matrix[2][0] * matrix[0][2] * matrix[3][3] + matrix[2][0] * matrix[0][3] * matrix[3][2]
+        + matrix[3][0] * matrix[0][2] * matrix[2][3] - matrix[3][0] * matrix[0][3] * matrix[2][2];
+
+    result[2][1] = -matrix[0][0] * matrix[2][1] * matrix[3][3] + matrix[0][0] * matrix[2][3] * matrix[3][1]
+        + matrix[2][0] * matrix[0][1] * matrix[3][3] - matrix[2][0] * matrix[0][3] * matrix[3][1]
+        - matrix[3][0] * matrix[0][1] * matrix[2][3] + matrix[3][0] * matrix[0][3] * matrix[2][1];
+
+    result[3][1] = matrix[0][0] * matrix[2][1] * matrix[3][2] - matrix[0][0] * matrix[2][2] * matrix[3][1]
+        - matrix[2][0] * matrix[0][1] * matrix[3][2] + matrix[2][0] * matrix[0][2] * matrix[3][1]
+        + matrix[3][0] * matrix[0][1] * matrix[2][2] - matrix[3][0] * matrix[0][2] * matrix[2][1];
+
+    result[0][2] = matrix[0][1] * matrix[1][2] * matrix[3][3] - matrix[0][1] * matrix[1][3] * matrix[3][2]
+        - matrix[1][1] * matrix[0][2] * matrix[3][3] + matrix[1][1] * matrix[0][3] * matrix[3][2]
+        + matrix[3][1] * matrix[0][2] * matrix[1][3] - matrix[3][1] * matrix[0][3] * matrix[1][2];
+
+    result[1][2] = -matrix[0][0] * matrix[1][2] * matrix[3][3] + matrix[0][0] * matrix[1][3] * matrix[3][2]
+        + matrix[1][0] * matrix[0][2] * matrix[3][3] - matrix[1][0] * matrix[0][3] * matrix[3][2]
+        - matrix[3][0] * matrix[0][2] * matrix[1][3] + matrix[3][0] * matrix[0][3] * matrix[1][2];
+
+    result[2][2] = matrix[0][0] * matrix[1][1] * matrix[3][3] - matrix[0][0] * matrix[1][3] * matrix[3][1]
+        - matrix[1][0] * matrix[0][1] * matrix[3][3] + matrix[1][0] * matrix[0][3] * matrix[3][1]
+        + matrix[3][0] * matrix[0][1] * matrix[1][3] - matrix[3][0] * matrix[0][3] * matrix[1][1];
+
+    result[3][2] = -matrix[0][0] * matrix[1][1] * matrix[3][2] + matrix[0][0] * matrix[1][2] * matrix[3][1]
+        + matrix[1][0] * matrix[0][1] * matrix[3][2] - matrix[1][0] * matrix[0][2] * matrix[3][1]
+        - matrix[3][0] * matrix[0][1] * matrix[1][2] + matrix[3][0] * matrix[0][2] * matrix[1][1];
+
+    result[0][3] = -matrix[0][1] * matrix[1][2] * matrix[2][3] + matrix[0][1] * matrix[1][3] * matrix[2][2]
+        + matrix[1][1] * matrix[0][2] * matrix[2][3] - matrix[1][1] * matrix[0][3] * matrix[2][2]
+        - matrix[2][1] * matrix[0][2] * matrix[1][3] + matrix[2][1] * matrix[0][3] * matrix[1][2];
+
+    result[1][3] = matrix[0][0] * matrix[1][2] * matrix[2][3] - matrix[0][0] * matrix[1][3] * matrix[2][2]
+        - matrix[1][0] * matrix[0][2] * matrix[2][3] + matrix[1][0] * matrix[0][3] * matrix[2][2]
+        + matrix[2][0] * matrix[0][2] * matrix[1][3] - matrix[2][0] * matrix[0][3] * matrix[1][2];
+
+    result[2][3] = -matrix[0][0] * matrix[1][1] * matrix[2][3] + matrix[0][0] * matrix[1][3] * matrix[2][1]
+        + matrix[1][0] * matrix[0][1] * matrix[2][3] - matrix[1][0] * matrix[0][3] * matrix[2][1]
+        - matrix[2][0] * matrix[0][1] * matrix[1][3] + matrix[2][0] * matrix[0][3] * matrix[1][1];
+
+    result[3][3] = matrix[0][0] * matrix[1][1] * matrix[2][2] - matrix[0][0] * matrix[1][2] * matrix[2][1]
+        - matrix[1][0] * matrix[0][1] * matrix[2][2] + matrix[1][0] * matrix[0][2] * matrix[2][1]
+        + matrix[2][0] * matrix[0][1] * matrix[1][2] - matrix[2][0] * matrix[0][2] * matrix[1][1];
+
+    float det = matrix[0][0] * result[0][0] + matrix[0][1] * result[1][0] + matrix[0][2] * result[2][0]
+        + matrix[0][3] * result[3][0];
+
+    if (det == 0.0f)
+        return Matrix4::identity();
+
+    det = 1.0 / det;
+
+    for (int c = 0; c < 4; c++) {
+        for (int r = 0; r < 4; r++) {
+            result[c][r] *= det;
+        }
+    }
+
+    return result.transpose();
 }
 Matrix3 basis(const Matrix4& matrix)
 {
@@ -319,12 +368,11 @@ Matrix4 interpolate(Matrix4 from, Matrix4 to, float weight)
 
     return Matrix4::from_basis_translation(result_basis, result_translation);
 }
+
 Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle)
 {
-    Matrix3 basis = Matrix3::from_axis_angle(axis, angle);
-    Vector3 translation = matrix.translation();
-    Vector3 new_translation(basis[0].dot(translation), basis[1].dot(translation), basis[2].dot(translation));
-    return Matrix4::from_basis_translation(basis * matrix.basis(), new_translation);
+    mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
+    return mve::Matrix4::from_basis_translation(matrix.basis() * rotation_basis, matrix.translation());
 }
 Vector3 translation(const Matrix4& matrix)
 {
@@ -388,11 +436,7 @@ Matrix4 scale(Matrix4 matrix, Vector3 scale)
 }
 Matrix4 translate(Matrix4 matrix, Vector3 offset)
 {
-    Matrix4 result = matrix;
-    result[3][0] += offset.x;
-    result[3][1] += offset.y;
-    result[3][2] += offset.z;
-    return result;
+    return mve::Matrix4::from_basis_translation(matrix.basis(), matrix.translation() + offset);
 }
 bool is_equal_approx(Matrix4 a, Matrix4 b)
 {
@@ -403,6 +447,19 @@ bool is_zero_approx(Matrix4 matrix)
 {
     return mve::is_zero_approx(matrix[0]) && mve::is_zero_approx(matrix[1]) && mve::is_zero_approx(matrix[2])
         && mve::is_zero_approx(matrix[3]);
+}
+Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float angle)
+{
+    mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
+    return mve::Matrix4::from_basis_translation(rotation_basis * matrix.basis(), matrix.translation());
+}
+
+Matrix4 translate_local(const Matrix4& matrix, Vector3 offset)
+{
+    mve::Matrix3 basis = matrix.basis();
+    mve::Matrix3 basis_t = basis.transpose();
+    mve::Vector3 rotated_offset { basis_t.col0.dot(offset), basis_t.col1.dot(offset), basis_t.col2.dot(offset) };
+    return mve::Matrix4::from_basis_translation(basis, matrix.translation() + rotated_offset);
 }
 
 }

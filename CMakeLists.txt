@@ -68,7 +68,8 @@ set(SOURCE_FILES
         src/chunk_data.cpp
         src/world_generator.cpp
         src/world_data.cpp
-        src/world_renderer.cpp)
+        src/world_renderer.cpp
+        src/camera.cpp)
 
 set(LIBS
         Vulkan::Vulkan

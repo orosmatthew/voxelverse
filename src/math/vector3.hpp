@@ -5,6 +5,7 @@ namespace mve {
 enum class Vector3Axis { x, y, z };
 
 class Vector3i;
+class Matrix3;
 
 class Vector3 {
 public:

@@ -15,15 +15,9 @@ WorldData::WorldData(const WorldGenerator& generator, mve::Vector3i from, mve::V
     }
 }
 
-mve::Vector3i WorldData::chunk_from_block(mve::Vector3i block_pos)
-{
-    return { static_cast<int>(mve::floor(block_pos.x / 16.0f)),
-             static_cast<int>(mve::floor(block_pos.y / 16.0f)),
-             static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
-}
 std::optional<uint8_t> WorldData::block_at(mve::Vector3i block_pos) const
 {
-    mve::Vector3i chunk_pos = chunk_from_block(block_pos);
+    mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
     if (!m_chunks.contains(chunk_pos)) {
         return {};
     }
@@ -50,4 +44,19 @@ void WorldData::for_all_chunk_data(
     for (const auto& [pos, data] : m_chunks) {
         std::invoke(func, pos, data);
     }
+}
+void WorldData::set_block(mve::Vector3i block_pos, uint8_t type)
+{
+    mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+    m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+}
+mve::Vector3i WorldData::chunk_pos_from_block_pos(mve::Vector3i block_pos)
+{
+    return { static_cast<int>(mve::floor(block_pos.x / 16.0f)),
+             static_cast<int>(mve::floor(block_pos.y / 16.0f)),
+             static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
+}
+const ChunkData& WorldData::chunk_data_at(mve::Vector3i chunk_pos) const
+{
+    return m_chunks.at(chunk_pos);
 }

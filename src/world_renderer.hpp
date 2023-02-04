@@ -7,8 +7,6 @@
 
 class WorldRenderer {
 public:
-
-
     WorldRenderer(mve::Renderer& renderer);
 
     void add_data(const ChunkData& chunk_data, const WorldData& world_data);
@@ -22,7 +20,6 @@ public:
     static mve::VertexLayout chunk_vertex_layout();
 
 private:
-
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;

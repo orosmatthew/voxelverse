@@ -41,9 +41,13 @@ public:
 
     [[nodiscard]] Matrix4 rotate(const Vector3& axis, float angle) const;
 
+    [[nodiscard]] Matrix4 rotate_local(const Vector3& axis, float angle) const;
+
     [[nodiscard]] Matrix4 scale(const Vector3& scale) const;
 
     [[nodiscard]] Matrix4 translate(const Vector3& offset) const;
+
+    [[nodiscard]] Matrix4 translate_local(const Vector3& offset) const;
 
     [[nodiscard]] bool is_equal_approx(const Matrix4& matrix) const;
 
@@ -86,9 +90,13 @@ public:
 
 [[nodiscard]] Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle);
 
+[[nodiscard]] Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float angle);
+
 [[nodiscard]] Matrix4 scale(Matrix4 matrix, Vector3 scale);
 
 [[nodiscard]] Matrix4 translate(Matrix4 matrix, Vector3 offset);
+
+[[nodiscard]] Matrix4 translate_local(const Matrix4& matrix, Vector3 offset);
 
 [[nodiscard]] bool is_equal_approx(Matrix4 a, Matrix4 b);
 
