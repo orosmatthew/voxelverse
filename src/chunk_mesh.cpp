@@ -27,6 +27,7 @@ void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
     uint32_t indices_offset = data.vertices.size();
     for (int i = 0; i < other.vertices.size(); i++) {
         data.vertices.push_back(other.vertices[i]);
+        data.colors.push_back(other.colors[i]);
         data.uvs.push_back(other.uvs[i]);
     }
 
@@ -58,7 +59,8 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers_from_chunk_data(
                     mve::Vector3i adj_block = mve::Vector3i(x, y, z) + direction_vector(dir);
                     if (chunk_data.in_bounds(adj_block)) {
                         if (chunk_data.get_block(adj_block) == 0) {
-                            FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir);
+                            std::array<uint8_t, 4> face_lighting = calc_face_lighting(chunk_data, { x, y, z }, dir);
+                            FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                             add_face_to_mesh(mesh, face);
                         }
                         else {
@@ -66,7 +68,8 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers_from_chunk_data(
                         }
                     }
                     else {
-                        FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir);
+                        std::array<uint8_t, 4> face_lighting = calc_face_lighting(chunk_data, { x, y, z }, dir);
+                        FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                         add_face_to_mesh(mesh, face);
                     }
                 }
@@ -80,7 +83,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers_from_chunk_data(
     mve::VertexData quad_vertex_data(standard_vertex_layout);
     for (int i = 0; i < mesh.vertices.size(); i++) {
         quad_vertex_data.push_back(mesh.vertices.at(i));
-        quad_vertex_data.push_back({ 1, 1, 1 });
+        quad_vertex_data.push_back(mesh.colors.at(i));
         quad_vertex_data.push_back(mesh.uvs.at(i));
     }
 
@@ -95,7 +98,8 @@ void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descrip
     }
 }
 
-ChunkMesh::FaceData ChunkMesh::create_face_mesh(mve::Vector3 offset, Direction face)
+ChunkMesh::FaceData ChunkMesh::create_face_mesh(
+    mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting)
 {
     FaceData data;
     FaceUVs uvs;
@@ -149,6 +153,10 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(mve::Vector3 offset, Direction f
     data.uvs[1] = uvs.top_right;
     data.uvs[2] = uvs.bottom_right;
     data.uvs[3] = uvs.bottom_left;
+    data.colors[0] = { lighting[0] / 255.0f, lighting[0] / 255.0f, lighting[0] / 255.0f };
+    data.colors[1] = { lighting[1] / 255.0f, lighting[1] / 255.0f, lighting[1] / 255.0f };
+    data.colors[2] = { lighting[2] / 255.0f, lighting[2] / 255.0f, lighting[2] / 255.0f };
+    data.colors[3] = { lighting[3] / 255.0f, lighting[3] / 255.0f, lighting[3] / 255.0f };
     data.indices = { 0, 3, 2, 0, 2, 1 };
     return data;
 }
@@ -177,10 +185,121 @@ void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::Fac
     uint32_t indices_offset = data.vertices.size();
     for (int i = 0; i < face.vertices.size(); i++) {
         data.vertices.push_back(face.vertices[i]);
+        data.colors.push_back(face.colors[i]);
         data.uvs.push_back(face.uvs[i]);
     }
 
     for (int i = 0; i < face.indices.size(); i++) {
         data.indices.push_back(face.indices[i] + indices_offset);
     }
+}
+
+std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(const ChunkData& data, mve::Vector3i block_pos, Direction dir)
+{
+    std::array<mve::Vector3i, 8> check_blocks;
+    switch (dir) {
+    case Direction::front:
+        check_blocks[0] = { -1, -1, 1 };
+        check_blocks[1] = { 0, -1, 1 };
+        check_blocks[2] = { 1, -1, 1 };
+        check_blocks[3] = { 1, -1, 0 };
+        check_blocks[4] = { 1, -1, -1 };
+        check_blocks[5] = { 0, -1, -1 };
+        check_blocks[6] = { -1, -1, -1 };
+        check_blocks[7] = { -1, -1, 0 };
+        break;
+    case Direction::back:
+        check_blocks[0] = { 1, 1, 1 };
+        check_blocks[1] = { 0, 1, 1 };
+        check_blocks[2] = { -1, 1, 1 };
+        check_blocks[3] = { -1, 1, 0 };
+        check_blocks[4] = { -1, 1, -1 };
+        check_blocks[5] = { 0, 1, -1 };
+        check_blocks[6] = { 1, 1, -1 };
+        check_blocks[7] = { 1, 1, 0 };
+        break;
+    case Direction::left:
+        check_blocks[0] = { -1, 1, 1 };
+        check_blocks[1] = { -1, 0, 1 };
+        check_blocks[2] = { -1, -1, 1 };
+        check_blocks[3] = { -1, -1, 0 };
+        check_blocks[4] = { -1, -1, -1 };
+        check_blocks[5] = { -1, 0, -1 };
+        check_blocks[6] = { -1, 1, -1 };
+        check_blocks[7] = { -1, 1, 0 };
+        break;
+    case Direction::right:
+        check_blocks[0] = { 1, -1, 1 };
+        check_blocks[1] = { 1, 0, 1 };
+        check_blocks[2] = { 1, 1, 1 };
+        check_blocks[3] = { 1, 1, 0 };
+        check_blocks[4] = { 1, 1, -1 };
+        check_blocks[5] = { 1, 0, -1 };
+        check_blocks[6] = { 1, -1, -1 };
+        check_blocks[7] = { 1, -1, 0 };
+        break;
+    case Direction::top:
+        check_blocks[0] = { -1, 1, 1 };
+        check_blocks[1] = { 0, 1, 1 };
+        check_blocks[2] = { 1, 1, 1 };
+        check_blocks[3] = { 1, 0, 1 };
+        check_blocks[4] = { 1, -1, 1 };
+        check_blocks[5] = { 0, -1, 1 };
+        check_blocks[6] = { -1, -1, 1 };
+        check_blocks[7] = { -1, 0, 1 };
+        break;
+    case Direction::bottom:
+        check_blocks[0] = { 1, 1, -1 };
+        check_blocks[1] = { 0, 1, -1 };
+        check_blocks[2] = { -1, 1, -1 };
+        check_blocks[3] = { -1, 0, -1 };
+        check_blocks[4] = { -1, -1, -1 };
+        check_blocks[5] = { 0, -1, -1 };
+        check_blocks[6] = { 1, -1, -1 };
+        check_blocks[7] = { 1, 0, -1 };
+        break;
+    }
+
+    std::array<uint8_t, 4> lighting = { 255, 255, 255, 255 };
+    for (int i = 0; i < check_blocks.size(); i++) {
+        mve::Vector3i check_block = block_pos + check_blocks[i];
+        if (!data.in_bounds(check_block)) {
+            continue;
+        }
+        const float dark_fraction = 0.65f;
+        if (data.get_block(check_block) != 0) {
+            switch (i) {
+            case 0:
+                lighting[0] *= dark_fraction;
+                break;
+            case 1:
+                lighting[0] *= dark_fraction;
+                lighting[1] *= dark_fraction;
+                break;
+            case 2:
+                lighting[1] *= dark_fraction;
+                break;
+            case 3:
+                lighting[1] *= dark_fraction;
+                lighting[2] *= dark_fraction;
+                break;
+            case 4:
+                lighting[2] *= dark_fraction;
+                break;
+            case 5:
+                lighting[2] *= dark_fraction;
+                lighting[3] *= dark_fraction;
+                break;
+            case 6:
+                lighting[3] *= dark_fraction;
+                break;
+            case 7:
+                lighting[3] *= dark_fraction;
+                lighting[0] *= dark_fraction;
+                break;
+            }
+        }
+    }
+
+    return lighting;
 }

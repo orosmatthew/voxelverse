@@ -18,7 +18,7 @@ namespace app {
 
 void run()
 {
-    LOG->set_level(spdlog::level::info);
+    LOG->set_level(spdlog::level::warn);
     LOG->debug("Creating window");
 
     mve::Window window("Mini Vulkan Engine", mve::Vector2i(800, 600));
