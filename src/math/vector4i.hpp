@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace mve {
 
 enum class Vector4iAxis { x, y, z, w };
@@ -106,4 +108,16 @@ public:
 
 [[nodiscard]] Vector4iAxis min_axis(Vector4i vector);
 
+}
+
+namespace std {
+template <>
+struct hash<mve::Vector4i> {
+    int operator()(const mve::Vector4i& vector) const
+    {
+        int cantor_z_w = (vector.z + vector.w + 1) * (vector.z + vector.w) / 2 + vector.w;
+        int cantor_y_z_w = (vector.y + cantor_z_w + 1) * (vector.y + cantor_z_w) / 2 + cantor_z_w;
+        return (vector.x + cantor_y_z_w) * (vector.x + cantor_y_z_w) / 2 + cantor_y_z_w;
+    }
+};
 }

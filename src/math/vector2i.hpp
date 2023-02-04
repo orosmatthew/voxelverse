@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace mve {
 
 enum class Vector2iAxis { x, y };
@@ -114,4 +116,14 @@ public:
 
 [[nodiscard]] Vector2iAxis min_axis(const Vector2i& vector);
 
+}
+
+namespace std {
+template <>
+struct hash<mve::Vector2i> {
+    int operator()(const mve::Vector2i& vector) const
+    {
+        return (vector.x + vector.y + 1) * (vector.x + vector.y) / 2 + vector.y;
+    }
+};
 }
