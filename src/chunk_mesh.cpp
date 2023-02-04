@@ -3,6 +3,7 @@
 #include "logger.hpp"
 #include "math/matrix4.hpp"
 #include "math/vector2i.hpp"
+#include "world_renderer.hpp"
 
 ChunkMesh::ChunkMesh(
     mve::Vector3i chunk_pos,
@@ -78,7 +79,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
         return {};
     }
 
-    mve::VertexData vertex_data(chunk_vertex_layout);
+    mve::VertexData vertex_data(WorldRenderer::chunk_vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
         vertex_data.push_back(mesh.vertices.at(i));
         vertex_data.push_back(mesh.colors.at(i));

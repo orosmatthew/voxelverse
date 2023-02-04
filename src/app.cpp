@@ -13,12 +13,31 @@
 #include "util.hpp"
 #include "util/fixed_loop.hpp"
 #include "window.hpp"
+#include "world_renderer.hpp"
 
 namespace app {
 
+std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
+{
+    mve::Vector3 delta = end - start;
+    int steps = mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z)));
+    if (steps == 0) {
+        return { mve::Vector3i(mve::round(start.x), mve::round(start.y), mve::round(start.z)) };
+    }
+    mve::Vector3i increment = delta / steps;
+    std::vector<mve::Vector3i> blocks;
+    for (int i = 0; i <= steps; ++i) {
+        mve::Vector3i block { static_cast<int>(mve::round(start.x + i * increment.x)),
+                              static_cast<int>(mve::round(start.y + i * increment.y)),
+                              static_cast<int>(mve::round(start.z + i * increment.z)) };
+        blocks.push_back(block);
+    }
+    return blocks;
+}
+
 void run()
 {
-    LOG->set_level(spdlog::level::warn);
+    LOG->set_level(spdlog::level::info);
     LOG->debug("Creating window");
 
     mve::Window window("Mini Vulkan Engine", mve::Vector2i(800, 600));
@@ -29,45 +48,21 @@ void run()
 
     mve::Renderer renderer(window, "Vulkan Testing", 0, 0, 1);
 
-    std::vector<ChunkMesh> chunk_meshes;
-
-    mve::Shader vertex_shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex);
-    mve::Shader fragment_shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment);
-
-    mve::GraphicsPipeline graphics_pipeline
-        = renderer.create_graphics_pipeline(vertex_shader, fragment_shader, chunk_vertex_layout);
-
-    //    render_objects.push_back(std::move(viking_scene));
-    std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
+    WorldRenderer world_renderer(renderer);
 
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -4, -4, -4 }, { 4, 4, 4 });
 
     world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
-        ChunkMesh chunk_mesh(
-            chunk_pos, world_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
-        chunk_meshes.push_back(std::move(chunk_mesh));
+        world_renderer.add_data(chunk_data, world_data);
     });
-
-    mve::UniformBuffer global_ubo = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
-
-    mve::DescriptorSet global_descriptor_set
-        = renderer.create_descriptor_set(graphics_pipeline, vertex_shader.descriptor_set(0));
-
-    global_descriptor_set.write_binding(vertex_shader.descriptor_set(0).binding(0), global_ubo);
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
 
-    mve::UniformLocation view_location = vertex_shader.descriptor_set(0).binding(0).member("view").location();
-    mve::UniformLocation proj_location = vertex_shader.descriptor_set(0).binding(0).member("proj").location();
-
     auto resize_func = [&](mve::Vector2i new_size) {
         renderer.resize(window);
-
-        mve::Matrix4 my_proj = mve::perspective(
-            mve::radians(90.0f), (float)renderer.extent().x / (float)renderer.extent().y, 0.01f, 1000.0f);
-        global_ubo.update(proj_location, my_proj);
+        world_renderer.resize();
     };
 
     window.set_resize_callback(resize_func);
@@ -90,7 +85,7 @@ void run()
     float camera_pitch = 0.0f;
     view = mve::look_at(camera_pos, camera_pos + camera_front, camera_up);
 
-    global_ubo.update(view_location, view);
+    world_renderer.set_view(view);
 
     util::FixedLoop fixed_loop(60.0f);
 
@@ -158,7 +153,7 @@ void run()
         mve::Vector3 pos = camera_pos_prev.linear_interpolate(camera_pos, fixed_loop.blend());
         view = mve::look_at(pos, pos + camera_front, camera_up);
 
-        global_ubo.update(view_location, view);
+        world_renderer.set_view(view);
         if (window.is_key_pressed(mve::Key::escape)) {
             break;
         }
@@ -185,11 +180,7 @@ void run()
 
         renderer.begin(window);
 
-        renderer.bind_graphics_pipeline(graphics_pipeline);
-
-        for (ChunkMesh& mesh : chunk_meshes) {
-            mesh.draw(renderer, global_descriptor_set);
-        }
+        world_renderer.draw();
 
         renderer.end(window);
 

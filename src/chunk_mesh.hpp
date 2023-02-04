@@ -13,11 +13,7 @@
 #include "vertex_buffer.hpp"
 #include "world_data.hpp"
 
-static const mve::VertexLayout chunk_vertex_layout = {
-    mve::VertexAttributeType::vec3, // Position
-    mve::VertexAttributeType::vec3, // Color
-    mve::VertexAttributeType::vec2 // UV
-};
+
 
 class ChunkMesh {
 public:
