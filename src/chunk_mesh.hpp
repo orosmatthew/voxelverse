@@ -3,7 +3,6 @@
 #include <array>
 #include <memory>
 
-#include "chunk_data.hpp"
 #include "descriptor_set.hpp"
 #include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
@@ -12,11 +11,13 @@
 #include "shader.hpp"
 #include "uniform_buffer.hpp"
 #include "vertex_buffer.hpp"
+#include "world_data.hpp"
 
 class ChunkMesh {
 public:
     ChunkMesh(
-        const ChunkData& data,
+        mve::Vector3i chunk_pos,
+        const WorldData& data,
         mve::Renderer& renderer,
         mve::GraphicsPipeline& pipeline,
         mve::Shader& vertex_shader,
@@ -57,10 +58,10 @@ private:
 
     static FaceData create_face_mesh(mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting);
 
-    static std::array<uint8_t, 4> calc_face_lighting(const ChunkData& data, mve::Vector3i block_pos, Direction dir);
+    static std::array<uint8_t, 4> calc_face_lighting(const WorldData& data, mve::Vector3i block_pos, Direction dir);
 
-    static std::optional<MeshBuffers> create_buffers_from_chunk_data(
-        mve::Renderer& renderer, const ChunkData& chunk_data);
+    static std::optional<MeshBuffers> create_buffers(
+        mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);
 
     mve::Matrix4 m_transform;
     mve::DescriptorSet m_descriptor_set;

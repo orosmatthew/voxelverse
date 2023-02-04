@@ -20,6 +20,7 @@
 #include <GLFW/glfw3.h>
 #include <vk_mem_alloc.h>
 #define VULKAN_HPP_NO_EXCEPTIONS
+#define VULKAN_HPP_ASSERT_ON_RESULT
 #include <vulkan/vulkan.hpp>
 
 #include "shader.hpp"

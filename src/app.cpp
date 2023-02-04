@@ -43,17 +43,13 @@ void run()
     std::shared_ptr<mve::Texture> texture_atlas = std::make_shared<mve::Texture>(renderer, "../res/atlas.png");
 
     WorldGenerator world_generator(1);
-    for (int x = -4; x < 4; x++) {
-        for (int y = -4; y < 4; y++) {
-            for (int z = -4; z < 4; z++) {
-                ChunkData chunk_data({ x, y, z });
-                chunk_data.generate(world_generator);
-                ChunkMesh chunk_mesh(
-                    chunk_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
-                chunk_meshes.push_back(std::move(chunk_mesh));
-            }
-        }
-    }
+    WorldData world_data(world_generator, { -4, -4, -4 }, { 4, 4, 4 });
+
+    world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
+        ChunkMesh chunk_mesh(
+            chunk_pos, world_data, renderer, graphics_pipeline, vertex_shader, fragment_shader, texture_atlas);
+        chunk_meshes.push_back(std::move(chunk_mesh));
+    });
 
     mve::UniformBuffer global_ubo = renderer.create_uniform_buffer(vertex_shader.descriptor_set(0).binding(0));
 

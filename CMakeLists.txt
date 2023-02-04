@@ -66,7 +66,8 @@ set(SOURCE_FILES
         src/math/quaternion.cpp
         src/chunk_mesh.cpp
         src/chunk_data.cpp
-        src/world_generator.cpp)
+        src/world_generator.cpp
+        src/world_data.cpp)
 
 set(LIBS
         Vulkan::Vulkan

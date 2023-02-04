@@ -2648,7 +2648,6 @@ Renderer::DescriptorSetImpl Renderer::DescriptorSetAllocator::create(vk::Device 
         .id = id, .vk_handle = descriptor_set.value(), .vk_pool = m_descriptor_pools.at(m_current_pool_index)
     };
     m_descriptor_sets.insert({ id, descriptor_set_impl });
-
     return descriptor_set_impl;
 }
 
