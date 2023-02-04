@@ -20,7 +20,9 @@ UniformBuffer::UniformBuffer(UniformBuffer&& other)
 
 UniformBuffer::~UniformBuffer()
 {
-    m_renderer->destroy(*this);
+    if (m_valid) {
+        m_renderer->destroy(*this);
+    }
 }
 
 UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other)

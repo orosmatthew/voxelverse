@@ -18,7 +18,9 @@ Texture::Texture(Texture&& other)
 }
 Texture::~Texture()
 {
-    m_renderer->destroy(*this);
+    if (m_valid) {
+        m_renderer->destroy(*this);
+    }
 }
 Texture& Texture::operator=(Texture&& other)
 {
