@@ -1,5 +1,7 @@
 #include "camera.hpp"
 
+#include "logger.hpp"
+#include "math/functions.hpp"
 #include "math/matrix3.hpp"
 
 Camera::Camera()
@@ -17,6 +19,23 @@ void Camera::update(const mve::Window& window)
     mve::Vector2 mouse_delta = window.mouse_delta();
     m_body_transform = m_body_transform.rotate_local({ 0, 0, 1 }, -mouse_delta.x * 0.001f);
     m_head_transform = m_head_transform.rotate_local({ 1, 0, 0 }, -mouse_delta.y * 0.001f);
+    mve::Vector3 head_euler = m_head_transform.euler();
+    if (head_euler.x < 0.0f) {
+        if (mve::abs(head_euler.x) < mve::abs(head_euler.x + mve::pi)) {
+            head_euler.x = 0.0f;
+        }
+        else {
+            head_euler.x = 180.0f;
+        }
+    }
+    if (head_euler.x < mve::radians(0.01f)) {
+        m_head_transform = mve::Matrix4::from_basis_translation(
+            mve::Matrix3::from_euler({ mve::radians(0.01f), 0, 0 }), m_head_transform.translation());
+    }
+    if (head_euler.x > mve::radians(179.9f)) {
+        m_head_transform = mve::Matrix4::from_basis_translation(
+            mve::Matrix3::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
+    }
 }
 void Camera::fixed_update(const mve::Window& window)
 {

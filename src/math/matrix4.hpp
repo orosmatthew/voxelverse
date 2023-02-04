@@ -61,6 +61,8 @@ public:
 
     [[nodiscard]] Vector3 scale() const;
 
+    [[nodiscard]] Vector3 euler() const;
+
     Vector4& operator[](int index);
 
     const Vector4& operator[](int index) const;
@@ -115,5 +117,7 @@ public:
 [[nodiscard]] Vector3 translation(const Matrix4& matrix);
 
 [[nodiscard]] Vector3 scale(const Matrix4& matrix);
+
+[[nodiscard]] Vector3 euler(const Matrix4& matrix);
 
 }

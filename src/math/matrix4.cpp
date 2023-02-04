@@ -220,6 +220,10 @@ Matrix4 Matrix4::translate_local(const Vector3& offset) const
 {
     return mve::translate_local(*this, offset);
 }
+Vector3 Matrix4::euler() const
+{
+    return mve::euler(*this);
+}
 
 float determinant(Matrix4 matrix)
 {
@@ -460,6 +464,10 @@ Matrix4 translate_local(const Matrix4& matrix, Vector3 offset)
     mve::Matrix3 basis_t = basis.transpose();
     mve::Vector3 rotated_offset { basis_t.col0.dot(offset), basis_t.col1.dot(offset), basis_t.col2.dot(offset) };
     return mve::Matrix4::from_basis_translation(basis, matrix.translation() + rotated_offset);
+}
+Vector3 euler(const Matrix4& matrix)
+{
+    return matrix.basis().euler();
 }
 
 }
