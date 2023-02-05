@@ -1,6 +1,7 @@
 #include "vector3.hpp"
 
 #include "functions.hpp"
+#include "matrix3.hpp"
 #include "vector3i.hpp"
 
 namespace mve {
@@ -190,6 +191,10 @@ Vector3 rotate(Vector3 vector, Vector3 axis, float angle)
     result += wwv;
 
     return result;
+}
+Vector3 rotate(const Vector3& vector, const Matrix3& matrix)
+{
+    return matrix * vector;
 }
 
 Vector3::Vector3()
@@ -522,5 +527,9 @@ Vector3::Vector3(Vector3i vector)
     , y(static_cast<float>(vector.y))
     , z(static_cast<float>(vector.z))
 {
+}
+Vector3 Vector3::rotate(const Matrix3& matrix)
+{
+    return mve::rotate(*this, matrix);
 }
 }

@@ -73,6 +73,8 @@ public:
 
     [[nodiscard]] Vector3 rotate(Vector3 axis, float angle);
 
+    [[nodiscard]] Vector3 rotate(const Matrix3& matrix);
+
     [[nodiscard]] bool operator!=(Vector3 other) const;
 
     [[nodiscard]] Vector3 operator*(Vector3 other) const;
@@ -175,5 +177,7 @@ public:
 [[nodiscard]] float angle(Vector3 a, Vector3 b);
 
 [[nodiscard]] Vector3 rotate(Vector3 vector, Vector3 axis, float angle);
+
+[[nodiscard]] Vector3 rotate(const Vector3& vector, const Matrix3& matrix);
 
 }

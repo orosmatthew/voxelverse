@@ -1,6 +1,5 @@
 #include "camera.hpp"
 
-#include "logger.hpp"
 #include "math/functions.hpp"
 #include "math/matrix3.hpp"
 
@@ -80,4 +79,12 @@ mve::Matrix4 Camera::view_matrix(float interpolation_weight) const
 mve::Vector3 Camera::position() const
 {
     return m_body_transform.translation();
+}
+mve::Vector3 Camera::direction() const
+{
+    mve::Matrix4 transform = m_head_transform * m_body_transform;
+    mve::Matrix3 basis = transform.basis().transpose();
+    mve::Vector3 direction { 0, 0, -1 };
+    direction = direction.rotate(basis);
+    return direction;
 }

@@ -21,16 +21,93 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
     mve::Vector3 delta = end - start;
     int step = mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z))));
     mve::Vector3 increment = delta / static_cast<float>(step);
-    std::vector<mve::Vector3i> blocks;
+    std::set<mve::Vector3i> blocks_set;
     mve::Vector3 current = start;
     for (int i = 0; i < step; i++) {
         mve::Vector3i block { static_cast<int>(mve::round(current.x)),
                               static_cast<int>(mve::round(current.y)),
                               static_cast<int>(mve::round(current.z)) };
-        blocks.push_back(block);
+        blocks_set.insert(block);
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    blocks_set.insert(block + mve::Vector3i(x, y, z));
+                }
+            }
+        }
         current += increment;
     }
+    std::vector<mve::Vector3i> blocks;
+    blocks.reserve(blocks.size());
+    for (mve::Vector3i block : blocks_set) {
+        blocks.push_back(block);
+    }
+    std::sort(blocks.begin(), blocks.end(), [start](const mve::Vector3i& a, const mve::Vector3i& b) {
+        return start.distance_squared_to(mve::Vector3(a)) < start.distance_squared_to(mve::Vector3(b));
+    });
     return blocks;
+}
+
+struct Ray {
+    mve::Vector3 position;
+    mve::Vector3 direction;
+};
+
+struct BoundingBox {
+    mve::Vector3 min;
+    mve::Vector3 max;
+};
+
+struct RayCollision {
+    bool hit;
+    float distance;
+    mve::Vector3 point;
+    mve::Vector3 normal;
+};
+
+RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
+{
+    bool inside = (ray.position.x > box.min.x) && (ray.position.x < box.max.x) && (ray.position.y > box.min.y)
+        && (ray.position.y < box.max.y) && (ray.position.z > box.min.z) && (ray.position.z < box.max.z);
+
+    if (inside) {
+        ray.direction = -ray.direction;
+    }
+
+    std::array<float, 11> t = { 0 };
+
+    t[8] = 1.0f / ray.direction.x;
+    t[9] = 1.0f / ray.direction.y;
+    t[10] = 1.0f / ray.direction.z;
+
+    t[0] = (box.min.x - ray.position.x) * t[8];
+    t[1] = (box.max.x - ray.position.x) * t[8];
+    t[2] = (box.min.y - ray.position.y) * t[9];
+    t[3] = (box.max.y - ray.position.y) * t[9];
+    t[4] = (box.min.z - ray.position.z) * t[10];
+    t[5] = (box.max.z - ray.position.z) * t[10];
+    t[6] = mve::max(mve::max(mve::min(t[0], t[1]), mve::min(t[2], t[3])), mve::min(t[4], t[5]));
+    t[7] = mve::min(mve::min(mve::max(t[0], t[1]), mve::max(t[2], t[3])), mve::max(t[4], t[5]));
+
+    RayCollision collision = { 0 };
+    collision.hit = !((t[7] < 0) || (t[6] > t[7]));
+    collision.distance = t[6];
+    collision.point = ray.position + (ray.direction * collision.distance);
+    collision.normal = box.min.linear_interpolate(box.max, 0.5f);
+    collision.normal = collision.point - collision.normal;
+    collision.normal *= 2.01f;
+    collision.normal /= (box.max - box.min);
+    collision.normal.x = (float)((int)collision.normal.x);
+    collision.normal.y = (float)((int)collision.normal.y);
+    collision.normal.z = (float)((int)collision.normal.z);
+    collision.normal = collision.normal.normalize();
+
+    if (inside) {
+        ray.direction = -ray.direction;
+        collision.distance *= -1.0f;
+        collision.normal = -collision.normal;
+    }
+    return collision;
 }
 
 void run()
@@ -112,31 +189,73 @@ void run()
         }
 
         if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
-            mve::Vector3i player_block_pos { static_cast<int>(mve::round(camera.position().x)),
-                                             static_cast<int>(mve::round(camera.position().y)),
-                                             static_cast<int>(mve::round(camera.position().z)) };
-            std::optional<uint8_t> player_block = world_data.block_at(player_block_pos);
-            if (player_block.has_value() && player_block.value() == 0) {
-                world_data.set_block(player_block_pos, 1);
-                world_renderer.add_data(
-                    world_data.chunk_data_at(world_data.chunk_pos_from_block_pos(player_block_pos)), world_data);
+            std::set<mve::Vector3i> update_chunks;
+            std::vector<mve::Vector3i> blocks
+                = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
+            Ray ray { camera.position(), camera.direction().normalize() };
+            for (mve::Vector3i block_pos : blocks) {
+                std::optional<uint8_t> block = world_data.block_at(block_pos);
+                if (!block.has_value() || block.value() != 1) {
+                    continue;
+                }
+                BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
+                                 { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+                RayCollision collision = ray_box_collision(ray, bb);
+                if (collision.hit) {
+                    world_data.set_block(block_pos, 0);
+                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
+                    std::array<mve::Vector3i, 6> surrounding
+                        = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
+                            mve::Vector3i(0, -1, 0), mve::Vector3i(0, 0, 1),  mve::Vector3i(0, 0, -1) };
+                    for (mve::Vector3i surround_pos : surrounding) {
+                        if (world_data.chunk_in_bounds(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
+                            update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
+                        }
+                    }
+                    break;
+                }
+            }
+            for (mve::Vector3i chunk_pos : update_chunks) {
+                world_renderer.add_data(world_data.chunk_data_at(chunk_pos), world_data);
             }
         }
 
         if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
-            //            mve::Vector3 end = pos + (thing * 10.0f);
-            //            LOG->warn("start: {}, {}, {}", pos.x, pos.y, pos.z);
-            //            LOG->warn("end: {}, {}, {}", end.x, end.y, end.z);
-            //            std::vector<mve::Vector3i> blocks = ray_blocks(pos, end);
-            //            for (mve::Vector3i block_pos : blocks) {
-            //                std::optional<uint8_t> block = world_data.block_at(block_pos);
-            //                if (!block.has_value() || block.value() != 0) {
-            //                    continue;
-            //                }
-            //                world_data.set_block(block_pos, 1);
-            //                world_renderer.add_data(
-            //                    world_data.chunk_data_at(world_data.chunk_pos_from_block_pos(block_pos)), world_data);
-            //            }
+            std::set<mve::Vector3i> update_chunks;
+            std::vector<mve::Vector3i> blocks
+                = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
+            Ray ray { camera.position(), camera.direction().normalize() };
+            for (mve::Vector3i block_pos : blocks) {
+                std::optional<uint8_t> block = world_data.block_at(block_pos);
+                if (!block.has_value() || block.value() != 1) {
+                    continue;
+                }
+                BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
+                                 { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+                RayCollision collision = ray_box_collision(ray, bb);
+                if (collision.hit) {
+                    mve::Vector3i place_pos { static_cast<int>(mve::round(block_pos.x + collision.normal.x)),
+                                              static_cast<int>(mve::round(block_pos.y + collision.normal.y)),
+                                              static_cast<int>(mve::round(block_pos.z + collision.normal.z)) };
+                    if (!world_data.block_at(place_pos).has_value() || world_data.block_at(place_pos).value() != 0) {
+                        break;
+                    }
+                    world_data.set_block(place_pos, 1);
+                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
+                    std::array<mve::Vector3i, 6> surrounding
+                        = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
+                            mve::Vector3i(0, -1, 0), mve::Vector3i(0, 0, 1),  mve::Vector3i(0, 0, -1) };
+                    for (mve::Vector3i surround_pos : surrounding) {
+                        if (world_data.chunk_in_bounds(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
+                            update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
+                        }
+                    }
+                    break;
+                }
+            }
+            for (mve::Vector3i chunk_pos : update_chunks) {
+                world_renderer.add_data(world_data.chunk_data_at(chunk_pos), world_data);
+            }
         }
 
         renderer.begin(window);

@@ -60,3 +60,7 @@ const ChunkData& WorldData::chunk_data_at(mve::Vector3i chunk_pos) const
 {
     return m_chunks.at(chunk_pos);
 }
+bool WorldData::chunk_in_bounds(mve::Vector3i chunk_pos) const
+{
+    return m_chunks.contains(chunk_pos);
+}

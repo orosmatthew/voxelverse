@@ -360,6 +360,13 @@ Matrix3 Matrix3::from_scale(const Vector3& scale)
 {
     return Matrix3::identity().scale(scale);
 }
+Vector3 Matrix3::operator*(Vector3 vector) const
+{
+    const Matrix3& m = *this;
+    return { m[0][0] * vector.x + m[0][1] * vector.y + m[0][2] * vector.z,
+             m[1][0] * vector.x + m[1][1] * vector.y + m[1][2] * vector.z,
+             m[2][0] * vector.x + m[2][1] * vector.y + m[2][2] * vector.z };
+}
 
 Vector3 euler(const Matrix3& matrix)
 {

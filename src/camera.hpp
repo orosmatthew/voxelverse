@@ -15,6 +15,8 @@ public:
 
     mve::Matrix4 view_matrix(float interpolation_weight) const;
 
+    mve::Vector3 direction() const;
+
 private:
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;

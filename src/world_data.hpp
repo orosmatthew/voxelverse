@@ -20,6 +20,8 @@ public:
 
     const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const;
 
+    bool chunk_in_bounds(mve::Vector3i chunk_pos) const;
+
     static mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos);
 
 private:

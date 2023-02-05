@@ -91,6 +91,8 @@ public:
 
     void operator*=(int val);
 
+    [[nodiscard]] Vector3 operator*(Vector3 vector) const;
+
     [[nodiscard]] bool operator!=(const Matrix3& other) const;
 
     [[nodiscard]] bool operator==(const Matrix3& other) const;
