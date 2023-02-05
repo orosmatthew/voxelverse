@@ -163,7 +163,10 @@ public:
      * @return Returns graphics pipeline object
      */
     GraphicsPipeline create_graphics_pipeline(
-        const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout);
+        const Shader& vertex_shader,
+        const Shader& fragment_shader,
+        const VertexLayout& vertex_layout,
+        bool depth_test = true);
 
     /**
      * @brief Destroy vertex buffer manually
@@ -609,7 +612,8 @@ private:
         vk::PipelineLayout pipeline_layout,
         vk::RenderPass render_pass,
         const VertexLayout& vertex_layout,
-        vk::SampleCountFlagBits samples);
+        vk::SampleCountFlagBits samples,
+        bool depth_test);
 
     vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandleImpl>& layouts);
 

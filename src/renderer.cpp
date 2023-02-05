@@ -490,7 +490,8 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     vk::PipelineLayout pipeline_layout,
     vk::RenderPass render_pass,
     const VertexLayout& vertex_layout,
-    vk::SampleCountFlagBits samples)
+    vk::SampleCountFlagBits samples,
+    bool depth_test)
 {
     std::vector<uint32_t> vertex_spv_code = vertex_shader.spv_code();
     auto vertex_shader_create_info
@@ -2127,7 +2128,7 @@ void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
 }
 
 GraphicsPipeline Renderer::create_graphics_pipeline(
-    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
+    const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout, bool depth_test)
 {
     GraphicsPipelineLayoutHandleImpl layout = create_graphics_pipeline_layout(vertex_shader, fragment_shader);
 
@@ -2138,7 +2139,8 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
         m_graphics_pipeline_layouts.at(layout).vk_handle,
         m_vk_render_pass,
         vertex_layout,
-        m_msaa_samples);
+        m_msaa_samples,
+        depth_test);
 
     auto handle = m_resource_handle_count;
     m_resource_handle_count++;

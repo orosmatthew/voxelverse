@@ -69,7 +69,8 @@ set(SOURCE_FILES
         src/world_generator.cpp
         src/world_data.cpp
         src/world_renderer.cpp
-        src/camera.cpp)
+        src/camera.cpp
+        src/ui_renderer.cpp)
 
 set(LIBS
         Vulkan::Vulkan
@@ -99,6 +100,8 @@ add_shader(vulkan_testing simple.frag)
 add_shader(vulkan_testing simple.vert)
 add_shader(vulkan_testing color.frag)
 add_shader(vulkan_testing color.vert)
+add_shader(vulkan_testing ui.frag)
+add_shader(vulkan_testing ui.vert)
 
 set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)

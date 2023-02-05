@@ -10,6 +10,7 @@
 #include "math/functions.hpp"
 #include "math/matrix4.hpp"
 #include "renderer.hpp"
+#include "ui_renderer.hpp"
 #include "util/fixed_loop.hpp"
 #include "window.hpp"
 #include "world_renderer.hpp"
@@ -125,6 +126,8 @@ void run()
 
     WorldRenderer world_renderer(renderer);
 
+    UIRenderer ui_renderer(renderer);
+
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -4, -4, -4 }, { 4, 4, 4 });
 
@@ -138,6 +141,7 @@ void run()
     auto resize_func = [&](mve::Vector2i new_size) {
         renderer.resize(window);
         world_renderer.resize();
+        ui_renderer.resize();
     };
 
     window.set_resize_callback(resize_func);
@@ -261,6 +265,8 @@ void run()
         renderer.begin(window);
 
         world_renderer.draw();
+
+        ui_renderer.draw();
 
         renderer.end(window);
 

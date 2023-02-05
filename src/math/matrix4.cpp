@@ -469,5 +469,31 @@ Vector3 euler(const Matrix4& matrix)
 {
     return matrix.basis().euler();
 }
+Matrix4 ortho(float left, float right, float bottom, float top, float near, float far)
+{
+    float rl = right - left;
+    float tb = top - bottom;
+    float fn = far - near;
+
+    Matrix4 result;
+    result[0][0] = 2.0f / rl;
+    result[0][1] = 0.0f;
+    result[0][2] = 0.0f;
+    result[0][3] = 0.0f;
+    result[1][0] = 0.0f;
+    result[1][1] = 2.0f / tb;
+    result[1][2] = 0.0f;
+    result[1][3] = 0.0f;
+    result[2][0] = 0.0f;
+    result[2][1] = 0.0f;
+    result[2][2] = -2.0f / fn;
+    result[2][3] = 0.0f;
+    result[3][0] = -(left + right) / rl;
+    result[3][1] = -(top + bottom) / tb;
+    result[3][2] = -(far + near) / fn;
+    result[3][3] = 1.0f;
+
+    return result;
+}
 
 }
