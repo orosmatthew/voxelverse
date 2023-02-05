@@ -1,43 +1,42 @@
-#include "matrix3.hpp"
-
-#include "functions.hpp"
-#include "matrix4.hpp"
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
 
 namespace mve {
 
-Matrix3::Matrix3()
-    : col0({ 1.0f, 0.0f, 0.0f })
-    , col1({ 0.0f, 1.0f, 0.0f })
-    , col2({ 0.0f, 0.0f, 1.0f })
+inline Matrix3::Matrix3()
+    : col0(Vector3(1.0f, 0.0f, 0.0f))
+    , col1(Vector3(0.0f, 1.0f, 0.0f))
+    , col2(Vector3(0.0f, 0.0f, 1.0f))
 {
 }
-Matrix3::Matrix3(const Vector3& col0, const Vector3& col1, const Vector3& col2)
+inline Matrix3::Matrix3(const Vector3& col0, const Vector3& col1, const Vector3& col2)
     : col0(col0)
     , col1(col1)
     , col2(col2)
 {
 }
 
-Matrix3::Matrix3(
+inline Matrix3::Matrix3(
     float c0r0, float c0r1, float c0r2, float c1r0, float c1r1, float c1r2, float c2r0, float c2r1, float c2r2)
-    : col0({ c0r0, c0r1, c0r2 })
-    , col1({ c1r0, c1r1, c1r2 })
-    , col2({ c2r0, c2r1, c2r2 })
+    : col0(Vector3(c0r0, c0r1, c0r2))
+    , col1(Vector3(c1r0, c1r1, c1r2))
+    , col2(Vector3(c2r0, c2r1, c2r2))
 {
 }
-Matrix3 Matrix3::zero()
+inline Matrix3 Matrix3::zero()
 {
     return Matrix3(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 }
-Matrix3 Matrix3::identity()
+inline Matrix3 Matrix3::identity()
 {
     return Matrix3(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 }
-Vector3 Matrix3::euler() const
+inline Vector3 Matrix3::euler() const
 {
     return mve::euler(*this);
 }
-Matrix3 Matrix3::from_axis_angle(const Vector3& axis, float angle)
+inline Matrix3 Matrix3::from_axis_angle(const Vector3& axis, float angle)
 {
     Matrix3 result;
 
@@ -61,7 +60,7 @@ Matrix3 Matrix3::from_axis_angle(const Vector3& axis, float angle)
 
     return result;
 }
-Matrix3 Matrix3::from_euler(const Vector3& euler)
+inline Matrix3 Matrix3::from_euler(const Vector3& euler)
 {
     float c = cos(euler.x);
     float s = sin(euler.x);
@@ -77,31 +76,31 @@ Matrix3 Matrix3::from_euler(const Vector3& euler)
 
     return x * (y * z);
 }
-Vector3 Matrix3::scale() const
+inline Vector3 Matrix3::scale() const
 {
     return mve::scale(*this);
 }
-float Matrix3::determinant() const
+inline float Matrix3::determinant() const
 {
     return mve::determinant(*this);
 }
-float Matrix3::trace() const
+inline float Matrix3::trace() const
 {
     return mve::trace(*this);
 }
-Matrix3 Matrix3::transpose() const
+inline Matrix3 Matrix3::transpose() const
 {
     return mve::transpose(*this);
 }
-Matrix3 Matrix3::inverse() const
+inline Matrix3 Matrix3::inverse() const
 {
     return mve::inverse(*this);
 }
-Matrix3 Matrix3::orthonormalize() const
+inline Matrix3 Matrix3::orthonormalize() const
 {
     return mve::orthonormalize(*this);
 }
-Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
+inline Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
 {
     float quat_length_sq = quaternion.length_squared();
     float s = 2.0f / quat_length_sq;
@@ -131,27 +130,27 @@ Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
                1.0f - (xx + yy))
         .transpose();
 }
-Matrix3 Matrix3::spherical_linear_interpolate(const Matrix3& to, float weight) const
+inline Matrix3 Matrix3::spherical_linear_interpolate(const Matrix3& to, float weight) const
 {
     return mve::spherical_linear_interpolate(*this, to, weight);
 }
-Matrix3 Matrix3::rotate(const Vector3& axis, float angle) const
+inline Matrix3 Matrix3::rotate(const Vector3& axis, float angle) const
 {
     return mve::rotate(*this, axis, angle);
 }
-Matrix3 Matrix3::scale(const Vector3& scale) const
+inline Matrix3 Matrix3::scale(const Vector3& scale) const
 {
     return mve::scale(*this, scale);
 }
-bool Matrix3::is_equal_approx(const Matrix3& matrix) const
+inline bool Matrix3::is_equal_approx(const Matrix3& matrix) const
 {
     return mve::is_equal_approx(*this, matrix);
 }
-bool Matrix3::is_zero_approx() const
+inline bool Matrix3::is_zero_approx() const
 {
     return mve::is_zero_approx(*this);
 }
-Vector3& Matrix3::operator[](int index)
+inline Vector3& Matrix3::operator[](int index)
 {
     switch (index) {
     case 0:
@@ -164,7 +163,7 @@ Vector3& Matrix3::operator[](int index)
         return col0;
     }
 }
-const Vector3& Matrix3::operator[](int index) const
+inline const Vector3& Matrix3::operator[](int index) const
 {
     switch (index) {
     case 0:
@@ -177,7 +176,7 @@ const Vector3& Matrix3::operator[](int index) const
         return col0;
     }
 }
-Matrix3 Matrix3::operator+(const Matrix3& other) const
+inline Matrix3 Matrix3::operator+(const Matrix3& other) const
 {
     auto result = *this;
     result[0] += other[0];
@@ -185,13 +184,13 @@ Matrix3 Matrix3::operator+(const Matrix3& other) const
     result[2] += other[2];
     return result;
 }
-void Matrix3::operator+=(const Matrix3& other)
+inline void Matrix3::operator+=(const Matrix3& other)
 {
     col0 += other[0];
     col1 += other[1];
     col2 += other[2];
 }
-Matrix3 Matrix3::operator-(const Matrix3& other) const
+inline Matrix3 Matrix3::operator-(const Matrix3& other) const
 {
     auto result = *this;
     result[0] -= other[0];
@@ -199,14 +198,14 @@ Matrix3 Matrix3::operator-(const Matrix3& other) const
     result[2] -= other[2];
     return result;
 }
-void Matrix3::operator-=(const Matrix3& other)
+inline void Matrix3::operator-=(const Matrix3& other)
 {
     col0 -= other[0];
     col1 -= other[1];
     col2 -= other[2];
 }
 
-Matrix3 Matrix3::operator*(const Matrix3& other) const
+inline Matrix3 Matrix3::operator*(const Matrix3& other) const
 {
     Matrix3 result;
     result[0][0] = (*this)[0][0] * other[0][0] + (*this)[0][1] * other[1][0] + (*this)[0][2] * other[2][0];
@@ -220,11 +219,11 @@ Matrix3 Matrix3::operator*(const Matrix3& other) const
     result[2][2] = (*this)[2][0] * other[0][2] + (*this)[2][1] * other[1][2] + (*this)[2][2] * other[2][2];
     return result;
 }
-void Matrix3::operator*=(const Matrix3& other)
+inline void Matrix3::operator*=(const Matrix3& other)
 {
     *this = *this * other;
 }
-Matrix3 Matrix3::operator*(float val) const
+inline Matrix3 Matrix3::operator*(float val) const
 {
     Matrix3 result = *this;
     result[0] *= val;
@@ -232,13 +231,13 @@ Matrix3 Matrix3::operator*(float val) const
     result[2] *= val;
     return result;
 }
-void Matrix3::operator*=(float val)
+inline void Matrix3::operator*=(float val)
 {
     col0 *= val;
     col1 *= val;
     col2 *= val;
 }
-Matrix3 Matrix3::operator*(int val) const
+inline Matrix3 Matrix3::operator*(int val) const
 {
     Matrix3 result = *this;
     result[0] *= val;
@@ -246,13 +245,13 @@ Matrix3 Matrix3::operator*(int val) const
     result[2] *= val;
     return result;
 }
-void Matrix3::operator*=(int val)
+inline void Matrix3::operator*=(int val)
 {
     col0 *= val;
     col1 *= val;
     col2 *= val;
 }
-bool Matrix3::operator!=(const Matrix3& other) const
+inline bool Matrix3::operator!=(const Matrix3& other) const
 {
     if (col0 != other.col0) {
         return false;
@@ -265,11 +264,11 @@ bool Matrix3::operator!=(const Matrix3& other) const
     }
     return true;
 }
-bool Matrix3::operator==(const Matrix3& other) const
+inline bool Matrix3::operator==(const Matrix3& other) const
 {
     return col0 == other.col0 && col1 == other.col1 && col2 == other.col2;
 }
-bool Matrix3::operator<(const Matrix3& other) const
+inline bool Matrix3::operator<(const Matrix3& other) const
 {
     if (col0 != other.col0) {
         return col0 < other.col0;
@@ -282,7 +281,7 @@ bool Matrix3::operator<(const Matrix3& other) const
     }
     return false;
 }
-bool Matrix3::operator<=(const Matrix3& other) const
+inline bool Matrix3::operator<=(const Matrix3& other) const
 {
     if (col0 != other.col0) {
         return col0 < other.col0;
@@ -295,7 +294,7 @@ bool Matrix3::operator<=(const Matrix3& other) const
     }
     return true;
 }
-bool Matrix3::operator>(const Matrix3& other) const
+inline bool Matrix3::operator>(const Matrix3& other) const
 {
     if (col0 != other.col0) {
         return col0 > other.col0;
@@ -308,7 +307,7 @@ bool Matrix3::operator>(const Matrix3& other) const
     }
     return false;
 }
-bool Matrix3::operator>=(const Matrix3& other) const
+inline bool Matrix3::operator>=(const Matrix3& other) const
 {
     if (col0 != other.col0) {
         return col0 > other.col0;
@@ -321,11 +320,11 @@ bool Matrix3::operator>=(const Matrix3& other) const
     }
     return true;
 }
-Matrix3 Matrix3::look_at(const Vector3& target, const Vector3& up)
+inline Matrix3 Matrix3::look_at(const Vector3& target, const Vector3& up)
 {
     return mve::look_at(target, up);
 }
-Matrix3 Matrix3::from_matrix(const Matrix4& matrix)
+inline Matrix3 Matrix3::from_matrix(const Matrix4& matrix)
 {
     Matrix3 result;
     result[0] = Vector3(matrix[0][0], matrix[0][1], matrix[0][2]);
@@ -333,11 +332,11 @@ Matrix3 Matrix3::from_matrix(const Matrix4& matrix)
     result[2] = Vector3(matrix[2][0], matrix[2][1], matrix[2][2]);
     return result;
 }
-Quaternion Matrix3::quaternion() const
+inline Quaternion Matrix3::quaternion() const
 {
     return Quaternion::from_matrix(*this);
 }
-Matrix3 Matrix3::from_quaternion_scale(const Quaternion& quaternion, const Vector3& scale)
+inline Matrix3 Matrix3::from_quaternion_scale(const Quaternion& quaternion, const Vector3& scale)
 {
     Matrix3 result;
     result[0][0] = scale.x;
@@ -348,19 +347,19 @@ Matrix3 Matrix3::from_quaternion_scale(const Quaternion& quaternion, const Vecto
 
     return result;
 }
-Matrix3 Matrix3::rotate(const Quaternion& quaternion) const
+inline Matrix3 Matrix3::rotate(const Quaternion& quaternion) const
 {
     return mve::rotate(*this, quaternion);
 }
-Matrix4 Matrix3::with_translation(const Vector3 translation) const
+inline Matrix4 Matrix3::with_translation(const Vector3 translation) const
 {
     return mve::with_translation(*this, translation);
 }
-Matrix3 Matrix3::from_scale(const Vector3& scale)
+inline Matrix3 Matrix3::from_scale(const Vector3& scale)
 {
     return Matrix3::identity().scale(scale);
 }
-Vector3 Matrix3::operator*(Vector3 vector) const
+inline Vector3 Matrix3::operator*(Vector3 vector) const
 {
     const Matrix3& m = *this;
     return { m[0][0] * vector.x + m[0][1] * vector.y + m[0][2] * vector.z,
@@ -368,7 +367,7 @@ Vector3 Matrix3::operator*(Vector3 vector) const
              m[2][0] * vector.x + m[2][1] * vector.y + m[2][2] * vector.z };
 }
 
-Vector3 euler(const Matrix3& matrix)
+inline Vector3 euler(const Matrix3& matrix)
 {
     Vector3 euler;
     float sy = matrix[2][0];
@@ -399,7 +398,7 @@ Vector3 euler(const Matrix3& matrix)
     }
     return euler;
 }
-Vector3 scale(const Matrix3& matrix)
+inline Vector3 scale(const Matrix3& matrix)
 {
     Vector3 scale_abs = Vector3(
         Vector3(matrix[0][0], matrix[0][1], matrix[0][2]).length(),
@@ -413,7 +412,7 @@ Vector3 scale(const Matrix3& matrix)
         return -scale_abs;
     }
 }
-float determinant(const Matrix3& matrix)
+inline float determinant(const Matrix3& matrix)
 {
     float a00 = matrix[0][0], a01 = matrix[1][0], a02 = matrix[2][0];
     float a10 = matrix[0][1], a11 = matrix[1][1], a12 = matrix[2][1];
@@ -422,11 +421,11 @@ float determinant(const Matrix3& matrix)
     return (a00 * a11 * a22) + (a01 * a12 * a20) + (a02 * a10 * a21) - (a02 * a11 * a20) - (a01 * a10 * a22)
         - (a00 * a12 * a21);
 }
-float trace(const Matrix3& matrix)
+inline float trace(const Matrix3& matrix)
 {
     return matrix[0][0] + matrix[1][1] + matrix[2][2];
 }
-Matrix3 transpose(const Matrix3& matrix)
+inline Matrix3 transpose(const Matrix3& matrix)
 {
     Matrix3 result;
 
@@ -442,7 +441,7 @@ Matrix3 transpose(const Matrix3& matrix)
 
     return result;
 }
-Matrix3 inverse(const Matrix3& matrix)
+inline Matrix3 inverse(const Matrix3& matrix)
 {
     float a11 = matrix[0][0], a12 = matrix[1][0], a13 = matrix[2][0];
     float a21 = matrix[0][1], a22 = matrix[1][1], a23 = matrix[2][1];
@@ -466,7 +465,7 @@ Matrix3 inverse(const Matrix3& matrix)
 
     return result;
 }
-Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& to, float weight)
+inline Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& to, float weight)
 {
     Quaternion from_quat = from.quaternion();
     Quaternion to_quat = to.quaternion();
@@ -478,7 +477,7 @@ Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& to, flo
 
     return matrix;
 }
-Matrix3 orthonormalize(const Matrix3& matrix)
+inline Matrix3 orthonormalize(const Matrix3& matrix)
 {
     Vector3 x = matrix.col0;
     Vector3 y = matrix.col1;
@@ -492,11 +491,11 @@ Matrix3 orthonormalize(const Matrix3& matrix)
 
     return Matrix3(x, y, z);
 }
-Matrix3 rotate(const Matrix3& matrix, const Vector3& axis, float angle)
+inline Matrix3 rotate(const Matrix3& matrix, const Vector3& axis, float angle)
 {
     return Matrix3::from_axis_angle(axis, angle) * matrix;
 }
-Matrix3 scale(const Matrix3& matrix, const Vector3& scale)
+inline Matrix3 scale(const Matrix3& matrix, const Vector3& scale)
 {
     Matrix3 result = matrix;
     result[0][0] *= scale.x;
@@ -511,7 +510,7 @@ Matrix3 scale(const Matrix3& matrix, const Vector3& scale)
 
     return result;
 }
-bool is_equal_approx(const Matrix3& a, const Matrix3& b)
+inline bool is_equal_approx(const Matrix3& a, const Matrix3& b)
 {
     for (int c = 0; c < 3; c++) {
         if (!is_equal_approx(a[c], b[c])) {
@@ -529,7 +528,7 @@ bool is_zero_approx(const Matrix3& matrix)
     }
     return true;
 }
-Matrix3 look_at(const Vector3& target, const Vector3& up)
+inline Matrix3 look_at(const Vector3& target, const Vector3& up)
 {
     Matrix3 result;
 
@@ -549,11 +548,11 @@ Matrix3 look_at(const Vector3& target, const Vector3& up)
 
     return result;
 }
-Matrix3 rotate(const Matrix3& matrix, const Quaternion& quaternion)
+inline Matrix3 rotate(const Matrix3& matrix, const Quaternion& quaternion)
 {
     return quaternion.matrix() * matrix;
 }
-Matrix4 with_translation(const Matrix3& matrix, const Vector3 translation)
+inline Matrix4 with_translation(const Matrix3& matrix, const Vector3 translation)
 {
     return Matrix4::from_basis_translation(matrix, translation);
 }

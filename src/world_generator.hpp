@@ -3,7 +3,7 @@
 #include <memory>
 #include <stdint.h>
 
-#include "math/vector3i.hpp"
+#include "math/math.hpp"
 
 class FastNoiseLite;
 

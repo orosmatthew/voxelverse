@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 #include "logger.hpp"
-#include "math/functions.hpp"
+#include "math/math.hpp"
 
 namespace mve {
 

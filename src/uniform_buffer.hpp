@@ -3,10 +3,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "math/matrix3.hpp"
-#include "math/vector2.hpp"
-#include "math/vector3.hpp"
-#include "math/vector4.hpp"
+#include "math/math.hpp"
 
 namespace mve {
 

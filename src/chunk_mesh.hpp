@@ -6,7 +6,7 @@
 #include "descriptor_set.hpp"
 #include "graphics_pipeline.hpp"
 #include "index_buffer.hpp"
-#include "math/matrix4.hpp"
+#include "math/math.hpp"
 #include "renderer.hpp"
 #include "shader.hpp"
 #include "uniform_buffer.hpp"

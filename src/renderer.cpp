@@ -10,8 +10,7 @@
 #include <stb_image.h>
 
 #include "logger.hpp"
-#include "math/functions.hpp"
-#include "math/matrix4.hpp"
+#include "math/math.hpp"
 #include "vertex_data.hpp"
 #include "window.hpp"
 

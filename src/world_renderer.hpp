@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include "chunk_mesh.hpp"
-#include "math/vector3i.hpp"
+#include "math/math.hpp"
 
 class WorldRenderer {
 public:

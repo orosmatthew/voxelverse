@@ -1,8 +1,7 @@
 #include "chunk_mesh.hpp"
 
 #include "logger.hpp"
-#include "math/matrix4.hpp"
-#include "math/vector2i.hpp"
+#include "math/math.hpp"
 #include "world_renderer.hpp"
 
 ChunkMesh::ChunkMesh(
@@ -47,18 +46,19 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                mve::Vector3i world_block = { chunk_pos.x * 16 + x, chunk_pos.y * 16 + y, chunk_pos.z * 16 + z };
-                if (world_data.block_at(world_block).has_value() && world_data.block_at(world_block).value() == 0) {
+                mve::Vector3i world_block_pos = { chunk_pos.x * 16 + x, chunk_pos.y * 16 + y, chunk_pos.z * 16 + z };
+                std::optional<uint8_t> world_block = world_data.block_at(world_block_pos);
+                if (world_block.has_value() && world_block.value() == 0) {
                     continue;
                 }
                 empty = false;
                 for (int f = 0; f < 6; f++) {
                     Direction dir = static_cast<Direction>(f);
-                    mve::Vector3i adj_block_pos = world_block + direction_vector(dir);
+                    mve::Vector3i adj_block_pos = world_block_pos + direction_vector(dir);
                     std::optional<uint8_t> adj_block = world_data.block_at(adj_block_pos);
                     if (adj_block.has_value()) {
                         if (adj_block.value() == 0) {
-                            std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block, dir);
+                            std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block_pos, dir);
                             FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                             add_face_to_mesh(mesh, face);
                         }
@@ -67,7 +67,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
                         }
                     }
                     else {
-                        std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block, dir);
+                        std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block_pos, dir);
                         FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                         add_face_to_mesh(mesh, face);
                     }

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "math/vector2.hpp"
-#include "math/vector3.hpp"
-#include "math/vector4.hpp"
+#include "math/math.hpp"
 #include <vector>
 
 namespace mve {

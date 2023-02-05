@@ -8,8 +8,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "math/vector2.hpp"
-#include "math/vector2i.hpp"
+#include "math/math.hpp"
 #include "monitor.hpp"
 
 namespace mve {

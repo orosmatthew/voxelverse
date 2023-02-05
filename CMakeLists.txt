@@ -54,16 +54,6 @@ set(SOURCE_FILES
         src/uniform_buffer.cpp
         src/texture.cpp
         src/util/fixed_loop.cpp
-        src/math/functions.cpp
-        src/math/vector2.cpp
-        src/math/vector2i.cpp
-        src/math/vector3.cpp
-        src/math/vector3i.cpp
-        src/math/vector4.cpp
-        src/math/vector4i.cpp
-        src/math/matrix4.cpp
-        src/math/matrix3.cpp
-        src/math/quaternion.cpp
         src/chunk_mesh.cpp
         src/chunk_data.cpp
         src/world_generator.cpp

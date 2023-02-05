@@ -1,12 +1,11 @@
 #include "camera.hpp"
 
-#include "math/functions.hpp"
-#include "math/matrix3.hpp"
+#include "math/math.hpp"
 
 Camera::Camera()
     : m_body_transform(mve::Matrix4::identity())
     , m_head_transform(mve::Matrix4::identity())
-    , m_prev_pos({ 0, 0, 0 })
+    , m_prev_pos(mve::Vector3(0, 0, 0))
     , m_friction(0.1f)
     , m_acceleration(0.03f)
     , m_max_speed(0.3f)

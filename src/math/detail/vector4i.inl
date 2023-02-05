@@ -1,14 +1,14 @@
-#include "vector4i.hpp"
-
-#include "functions.hpp"
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
 
 namespace mve {
 
-Vector4i abs(Vector4i vector)
+inline Vector4i abs(Vector4i vector)
 {
     return Vector4i(abs(vector.x), abs(vector.y), abs(vector.z), abs(vector.w));
 }
-Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max)
+inline Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max)
 {
     return Vector4i(
         clamp(vector.x, min.x, max.x),
@@ -16,15 +16,15 @@ Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max)
         clamp(vector.z, min.z, max.z),
         clamp(vector.w, min.w, max.w));
 }
-float length(Vector4i vector)
+inline float length(Vector4i vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w));
 }
-float length_squared(Vector4i vector)
+inline float length_squared(Vector4i vector)
 {
     return squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w);
 }
-Vector4iAxis max_axis(Vector4i vector)
+inline Vector4iAxis max_axis(Vector4i vector)
 {
     float max_val = vector.x;
     Vector4iAxis max_axis = Vector4iAxis::x;
@@ -45,7 +45,7 @@ Vector4iAxis max_axis(Vector4i vector)
 
     return max_axis;
 }
-Vector4iAxis min_axis(Vector4i vector)
+inline Vector4iAxis min_axis(Vector4i vector)
 {
     float min_val = vector.x;
     Vector4iAxis min_axis = Vector4iAxis::x;
@@ -66,68 +66,68 @@ Vector4iAxis min_axis(Vector4i vector)
 
     return min_axis;
 }
-Vector4i::Vector4i()
+inline Vector4i::Vector4i()
     : x(0)
     , y(0)
     , z(0)
     , w(0)
 {
 }
-Vector4i::Vector4i(int x, int y, int z, int w)
+inline Vector4i::Vector4i(int x, int y, int z, int w)
     : x(x)
     , y(y)
     , z(z)
     , w(w)
 {
 }
-Vector4i::Vector4i(int val)
+inline Vector4i::Vector4i(int val)
     : x(val)
     , y(val)
     , z(val)
     , w(val)
 {
 }
-Vector4i Vector4i::zero()
+inline Vector4i Vector4i::zero()
 {
     return Vector4i(0, 0, 0, 0);
 }
-Vector4i Vector4i::one()
+inline Vector4i Vector4i::one()
 {
     return Vector4i(1, 1, 1, 1);
 }
-Vector4i Vector4i::abs() const
+inline Vector4i Vector4i::abs() const
 {
     return mve::abs(*this);
 }
-Vector4i Vector4i::clamp(Vector4i min, Vector4i max) const
+inline Vector4i Vector4i::clamp(Vector4i min, Vector4i max) const
 {
     return mve::clamp(*this, min, max);
 }
-float Vector4i::length() const
+inline float Vector4i::length() const
 {
     return mve::length(*this);
 }
-float Vector4i::length_squared() const
+inline float Vector4i::length_squared() const
 {
     return mve::length_squared(*this);
 }
-Vector4iAxis Vector4i::max_axis() const
+inline Vector4iAxis Vector4i::max_axis() const
 {
     return mve::max_axis(*this);
 }
-Vector4iAxis Vector4i::min_axis() const
+inline Vector4iAxis Vector4i::min_axis() const
 {
     return mve::min_axis(*this);
 }
-bool Vector4i::operator!=(Vector4i other) const
+inline bool Vector4i::operator!=(Vector4i other) const
 {
     return x != other.x || y != other.y || z != other.z || w != other.w;
 }
-Vector4i Vector4i::operator%(Vector4i other) const
+inline Vector4i Vector4i::operator%(Vector4i other) const
 {
     return Vector4i(x % other.x, y & other.y, z % other.z, w % other.w);
 }
-Vector4i& Vector4i::operator%=(Vector4i other)
+inline Vector4i& Vector4i::operator%=(Vector4i other)
 {
     x %= other.x;
     y %= other.y;
@@ -136,11 +136,11 @@ Vector4i& Vector4i::operator%=(Vector4i other)
 
     return *this;
 }
-Vector4i Vector4i::operator%(int val) const
+inline Vector4i Vector4i::operator%(int val) const
 {
     return Vector4i(x % val, y % val, z % val, w % val);
 }
-Vector4i& Vector4i::operator%=(int val)
+inline Vector4i& Vector4i::operator%=(int val)
 {
     x %= val;
     y %= val;
@@ -149,11 +149,11 @@ Vector4i& Vector4i::operator%=(int val)
 
     return *this;
 }
-Vector4i Vector4i::operator*(Vector4i other) const
+inline Vector4i Vector4i::operator*(Vector4i other) const
 {
     return Vector4i(x * other.x, y * other.y, z * other.z, w * other.w);
 }
-Vector4i& Vector4i::operator*=(Vector4i other)
+inline Vector4i& Vector4i::operator*=(Vector4i other)
 {
     x *= other.x;
     y *= other.y;
@@ -162,11 +162,11 @@ Vector4i& Vector4i::operator*=(Vector4i other)
 
     return *this;
 }
-Vector4i Vector4i::operator*(float val) const
+inline Vector4i Vector4i::operator*(float val) const
 {
     return Vector4i(x * val, y * val, z * val, w * val);
 }
-Vector4i& Vector4i::operator*=(float val)
+inline Vector4i& Vector4i::operator*=(float val)
 {
     x *= val;
     y *= val;
@@ -175,11 +175,11 @@ Vector4i& Vector4i::operator*=(float val)
 
     return *this;
 }
-Vector4i Vector4i::operator+(Vector4i other) const
+inline Vector4i Vector4i::operator+(Vector4i other) const
 {
     return Vector4i(x + other.x, y + other.y, z + other.z, w + other.w);
 }
-Vector4i& Vector4i::operator+=(Vector4i other)
+inline Vector4i& Vector4i::operator+=(Vector4i other)
 {
     x += other.x;
     y += other.y;
@@ -188,11 +188,11 @@ Vector4i& Vector4i::operator+=(Vector4i other)
 
     return *this;
 }
-Vector4i Vector4i::operator-(Vector4i other) const
+inline Vector4i Vector4i::operator-(Vector4i other) const
 {
     return Vector4i(x - other.x, y - other.y, z - other.z, w - other.w);
 }
-Vector4i& Vector4i::operator-=(Vector4i other)
+inline Vector4i& Vector4i::operator-=(Vector4i other)
 {
     x -= other.x;
     y -= other.y;
@@ -201,11 +201,11 @@ Vector4i& Vector4i::operator-=(Vector4i other)
 
     return *this;
 }
-Vector4i Vector4i::operator/(Vector4i other) const
+inline Vector4i Vector4i::operator/(Vector4i other) const
 {
     return Vector4i(x / other.x, y / other.y, z / other.z, w / other.w);
 }
-Vector4i& Vector4i::operator/=(Vector4i other)
+inline Vector4i& Vector4i::operator/=(Vector4i other)
 {
     x /= other.x;
     y /= other.y;
@@ -214,11 +214,11 @@ Vector4i& Vector4i::operator/=(Vector4i other)
 
     return *this;
 }
-Vector4i Vector4i::operator/(float val) const
+inline Vector4i Vector4i::operator/(float val) const
 {
     return Vector4i(x / val, y / val, z / val, w / val);
 }
-Vector4i& Vector4i::operator/=(float val)
+inline Vector4i& Vector4i::operator/=(float val)
 {
     x /= val;
     y /= val;
@@ -227,11 +227,11 @@ Vector4i& Vector4i::operator/=(float val)
 
     return *this;
 }
-Vector4i Vector4i::operator/(int val) const
+inline Vector4i Vector4i::operator/(int val) const
 {
     return Vector4i(x / val, y / val, z / val, w / val);
 }
-Vector4i& Vector4i::operator/=(int val)
+inline Vector4i& Vector4i::operator/=(int val)
 {
     x /= val;
     y /= val;
@@ -240,7 +240,7 @@ Vector4i& Vector4i::operator/=(int val)
 
     return *this;
 }
-bool Vector4i::operator<(Vector4i other) const
+inline bool Vector4i::operator<(Vector4i other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -256,7 +256,7 @@ bool Vector4i::operator<(Vector4i other) const
     }
     return false;
 }
-bool Vector4i::operator<=(Vector4i other) const
+inline bool Vector4i::operator<=(Vector4i other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -272,11 +272,11 @@ bool Vector4i::operator<=(Vector4i other) const
     }
     return true;
 }
-bool Vector4i::operator==(Vector4i other) const
+inline bool Vector4i::operator==(Vector4i other) const
 {
     return x == other.x && y == other.y && z == other.z && w == other.w;
 }
-bool Vector4i::operator>(Vector4i other) const
+inline bool Vector4i::operator>(Vector4i other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -292,7 +292,7 @@ bool Vector4i::operator>(Vector4i other) const
     }
     return false;
 }
-bool Vector4i::operator>=(Vector4i other) const
+inline bool Vector4i::operator>=(Vector4i other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -308,7 +308,7 @@ bool Vector4i::operator>=(Vector4i other) const
     }
     return true;
 }
-int& Vector4i::operator[](int index)
+inline int& Vector4i::operator[](int index)
 {
     switch (index) {
     case 0:
@@ -323,7 +323,7 @@ int& Vector4i::operator[](int index)
         return x;
     }
 }
-int& Vector4i::operator[](Vector4iAxis axis)
+inline int& Vector4i::operator[](Vector4iAxis axis)
 {
     switch (axis) {
     case Vector4iAxis::x:
@@ -338,16 +338,29 @@ int& Vector4i::operator[](Vector4iAxis axis)
         return x;
     }
 }
-Vector4i Vector4i::operator+() const
+inline Vector4i Vector4i::operator+() const
 {
     return Vector4i(x, y, z, w);
 }
-Vector4i Vector4i::operator-() const
+inline Vector4i Vector4i::operator-() const
 {
     return Vector4i(-x, -y, -z, -w);
 }
-Vector4i::operator bool() const
+inline Vector4i::operator bool() const
 {
     return x != 0 && y != 0 && z != 0 && w != 0;
 }
+
+}
+
+namespace std {
+template <>
+struct hash<mve::Vector4i> {
+    int operator()(const mve::Vector4i& vector) const
+    {
+        int cantor_z_w = (vector.z + vector.w + 1) * (vector.z + vector.w) / 2 + vector.w;
+        int cantor_y_z_w = (vector.y + cantor_z_w + 1) * (vector.y + cantor_z_w) / 2 + cantor_z_w;
+        return (vector.x + cantor_y_z_w) * (vector.x + cantor_y_z_w) / 2 + cantor_y_z_w;
+    }
+};
 }

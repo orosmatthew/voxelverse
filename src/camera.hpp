@@ -1,7 +1,6 @@
 #pragma once
 
-#include "math/matrix4.hpp"
-#include "math/vector3.hpp"
+#include "math/math.hpp"
 #include "window.hpp"
 
 class Camera {

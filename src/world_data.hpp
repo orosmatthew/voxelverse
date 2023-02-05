@@ -1,10 +1,11 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <unordered_map>
 
 #include "chunk_data.hpp"
-#include "math/vector3i.hpp"
+#include "math/math.hpp"
 #include "world_generator.hpp"
 
 class WorldData {
@@ -22,7 +23,12 @@ public:
 
     bool chunk_in_bounds(mve::Vector3i chunk_pos) const;
 
-    static mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos);
+    static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
+    {
+        return { static_cast<int>(mve::floor(block_pos.x / 16.0f)),
+                 static_cast<int>(mve::floor(block_pos.y / 16.0f)),
+                 static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
+    }
 
 private:
     static mve::Vector3i block_world_to_local(mve::Vector3i world_block_pos);

@@ -1,46 +1,42 @@
-#include "matrix4.hpp"
-
-#include "functions.hpp"
-#include "matrix3.hpp"
-#include "quaternion.hpp"
-#include "vector3.hpp"
-#include "vector4.hpp"
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
 
 namespace mve {
 
-Matrix4::Matrix4()
+inline Matrix4::Matrix4()
     : col0({ 1.0f, 0.0f, 0.0f, 0.0f })
     , col1({ 0.0f, 1.0f, 0.0f, 0.0f })
     , col2({ 0.0f, 0.0f, 1.0f, 0.0f })
     , col3({ 0.0f, 0.0f, 0.0f, 1.0f })
 {
 }
-Matrix4::Matrix4(const Vector4& col0, const Vector4& col1, const Vector4& col2, const Vector4& col3)
+inline Matrix4::Matrix4(const Vector4& col0, const Vector4& col1, const Vector4& col2, const Vector4& col3)
     : col0(col0)
     , col1(col1)
     , col2(col2)
     , col3(col3)
 {
 }
-Matrix4 Matrix4::identity()
+inline Matrix4 Matrix4::identity()
 {
     return Matrix4(
         { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f });
 }
-Matrix4 Matrix4::zero()
+inline Matrix4 Matrix4::zero()
 {
     return Matrix4(
         { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f });
 }
-float Matrix4::determinant() const
+inline float Matrix4::determinant() const
 {
     return mve::determinant(*this);
 }
-float Matrix4::trace() const
+inline float Matrix4::trace() const
 {
     return mve::trace(*this);
 }
-Vector4& Matrix4::operator[](int index)
+inline Vector4& Matrix4::operator[](int index)
 {
     switch (index) {
     case 0:
@@ -55,19 +51,19 @@ Vector4& Matrix4::operator[](int index)
         return col0;
     }
 }
-Matrix4 Matrix4::transpose() const
+inline Matrix4 Matrix4::transpose() const
 {
     return mve::transpose(*this);
 }
-Matrix4 Matrix4::inverse() const
+inline Matrix4 Matrix4::inverse() const
 {
     return mve::inverse(*this);
 }
-Matrix4 Matrix4::interpolate(const Matrix4& to, float weight) const
+inline Matrix4 Matrix4::interpolate(const Matrix4& to, float weight) const
 {
     return mve::interpolate(*this, to, weight);
 }
-const Vector4& Matrix4::operator[](int index) const
+inline const Vector4& Matrix4::operator[](int index) const
 {
     switch (index) {
     case 0:
@@ -82,23 +78,23 @@ const Vector4& Matrix4::operator[](int index) const
         return col0;
     }
 }
-Matrix3 Matrix4::basis() const
+inline Matrix3 Matrix4::basis() const
 {
     return mve::basis(*this);
 }
-Vector3 Matrix4::translation() const
+inline Vector3 Matrix4::translation() const
 {
     return mve::translation(*this);
 }
-Quaternion Matrix4::quaternion() const
+inline Quaternion Matrix4::quaternion() const
 {
     return Quaternion::from_matrix(basis());
 }
-Vector3 Matrix4::scale() const
+inline Vector3 Matrix4::scale() const
 {
     return mve::scale(*this);
 }
-Matrix4 Matrix4::from_basis_translation(const Matrix3& basis, const Vector3& translation)
+inline Matrix4 Matrix4::from_basis_translation(const Matrix3& basis, const Vector3& translation)
 {
     Matrix4 result;
     result[0][0] = basis[0][0];
@@ -117,27 +113,27 @@ Matrix4 Matrix4::from_basis_translation(const Matrix3& basis, const Vector3& tra
 
     return result;
 }
-Matrix4 Matrix4::rotate(const Vector3& axis, float angle) const
+inline Matrix4 Matrix4::rotate(const Vector3& axis, float angle) const
 {
     return mve::rotate(*this, axis, angle);
 }
-Matrix4 Matrix4::scale(const Vector3& scale) const
+inline Matrix4 Matrix4::scale(const Vector3& scale) const
 {
     return mve::scale(*this, scale);
 }
-Matrix4 Matrix4::translate(const Vector3& offset) const
+inline Matrix4 Matrix4::translate(const Vector3& offset) const
 {
     return mve::translate(*this, offset);
 }
-bool Matrix4::is_equal_approx(const Matrix4& matrix) const
+inline bool Matrix4::is_equal_approx(const Matrix4& matrix) const
 {
     return mve::is_equal_approx(*this, matrix);
 }
-bool Matrix4::is_zero_approx() const
+inline bool Matrix4::is_zero_approx() const
 {
     return mve::is_zero_approx(*this);
 }
-Matrix4 Matrix4::from_rotation_translation(
+inline Matrix4 Matrix4::from_rotation_translation(
     const Vector3& rotation_x, const Vector3& rotation_y, const Vector3& rotation_z, const Vector3& translation)
 {
     Matrix4 result;
@@ -147,29 +143,29 @@ Matrix4 Matrix4::from_rotation_translation(
     result[3] = Vector4(translation.x, translation.y, translation.z, 1.0f);
     return result;
 }
-Matrix4 Matrix4::operator+(const Matrix4& other) const
+inline Matrix4 Matrix4::operator+(const Matrix4& other) const
 {
     return Matrix4(col0 + other.col0, col1 + other.col1, col2 + other.col2, col3 + other.col3);
 }
-void Matrix4::operator+=(const Matrix4& other)
+inline void Matrix4::operator+=(const Matrix4& other)
 {
     col0 += other.col0;
     col1 += other.col1;
     col2 += other.col2;
     col3 += other.col3;
 }
-Matrix4 Matrix4::operator-(const Matrix4& other) const
+inline Matrix4 Matrix4::operator-(const Matrix4& other) const
 {
     return Matrix4(col0 - other.col0, col1 - other.col1, col2 - other.col2, col3 - other.col3);
 }
-void Matrix4::operator-=(const Matrix4& other)
+inline void Matrix4::operator-=(const Matrix4& other)
 {
     col0 -= other.col0;
     col1 -= other.col1;
     col2 -= other.col2;
     col3 -= other.col3;
 }
-Matrix4 Matrix4::operator*(const Matrix4& other) const
+inline Matrix4 Matrix4::operator*(const Matrix4& other) const
 {
     Matrix4 result;
 
@@ -208,24 +204,24 @@ Matrix4 Matrix4::operator*(const Matrix4& other) const
 
     return result;
 }
-void Matrix4::operator*=(const Matrix4& other)
+inline void Matrix4::operator*=(const Matrix4& other)
 {
     *this = *this * other;
 }
-Matrix4 Matrix4::rotate_local(const Vector3& axis, float angle) const
+inline Matrix4 Matrix4::rotate_local(const Vector3& axis, float angle) const
 {
     return mve::rotate_local(*this, axis, angle);
 }
-Matrix4 Matrix4::translate_local(const Vector3& offset) const
+inline Matrix4 Matrix4::translate_local(const Vector3& offset) const
 {
     return mve::translate_local(*this, offset);
 }
-Vector3 Matrix4::euler() const
+inline Vector3 Matrix4::euler() const
 {
     return mve::euler(*this);
 }
 
-float determinant(Matrix4 matrix)
+inline float determinant(Matrix4 matrix)
 {
     float a00 = matrix[0][0], a01 = matrix[1][0], a02 = matrix[2][0], a03 = matrix[3][0];
     float a10 = matrix[0][1], a11 = matrix[1][1], a12 = matrix[2][1], a13 = matrix[3][1];
@@ -239,11 +235,11 @@ float determinant(Matrix4 matrix)
         + (a10 * a01 * a32 * a23) - (a00 * a11 * a32 * a23) - (a20 * a11 * a02 * a33) + (a10 * a21 * a02 * a33)
         + (a20 * a01 * a12 * a33) - (a00 * a21 * a12 * a33) - (a10 * a01 * a22 * a33) + (a00 * a11 * a22 * a33);
 }
-float trace(Matrix4 matrix)
+inline float trace(Matrix4 matrix)
 {
     return matrix[0][0] + matrix[1][1] + matrix[2][2] + matrix[3][3];
 }
-Matrix4 transpose(const Matrix4& matrix)
+inline Matrix4 transpose(const Matrix4& matrix)
 {
     Matrix4 result;
 
@@ -266,7 +262,7 @@ Matrix4 transpose(const Matrix4& matrix)
 
     return result;
 }
-Matrix4 inverse(Matrix4 matrix)
+inline Matrix4 inverse(Matrix4 matrix)
 {
     Matrix4 result;
 
@@ -350,11 +346,11 @@ Matrix4 inverse(Matrix4 matrix)
 
     return result.transpose();
 }
-Matrix3 basis(const Matrix4& matrix)
+inline Matrix3 basis(const Matrix4& matrix)
 {
     return Matrix3::from_matrix(matrix);
 }
-Matrix4 interpolate(Matrix4 from, Matrix4 to, float weight)
+inline Matrix4 interpolate(Matrix4 from, Matrix4 to, float weight)
 {
     Vector3 from_scale = from.scale();
     Quaternion from_rotation = from.quaternion();
@@ -373,20 +369,20 @@ Matrix4 interpolate(Matrix4 from, Matrix4 to, float weight)
     return Matrix4::from_basis_translation(result_basis, result_translation);
 }
 
-Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle)
+inline Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle)
 {
     mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
     return mve::Matrix4::from_basis_translation(matrix.basis() * rotation_basis, matrix.translation());
 }
-Vector3 translation(const Matrix4& matrix)
+inline Vector3 translation(const Matrix4& matrix)
 {
     return Vector3(matrix[3][0], matrix[3][1], matrix[3][2]);
 }
-Vector3 scale(const Matrix4& matrix)
+inline Vector3 scale(const Matrix4& matrix)
 {
     return matrix.basis().scale();
 }
-Matrix4 perspective(float fov_y, float aspect, float near, float far)
+inline Matrix4 perspective(float fov_y, float aspect, float near, float far)
 {
     float top = near * tan(fov_y * 0.5f);
     float bottom = -top;
@@ -409,7 +405,7 @@ Matrix4 perspective(float fov_y, float aspect, float near, float far)
 
     return result;
 }
-Matrix4 look_at(Vector3 eye, Vector3 target, Vector3 up)
+inline Matrix4 look_at(Vector3 eye, Vector3 target, Vector3 up)
 {
     Vector3 target_eye = (target - eye).normalize();
     Vector3 cross_up = target_eye.cross(up).normalize();
@@ -432,44 +428,44 @@ Matrix4 look_at(Vector3 eye, Vector3 target, Vector3 up)
 
     return result;
 }
-Matrix4 scale(Matrix4 matrix, Vector3 scale)
+inline Matrix4 scale(Matrix4 matrix, Vector3 scale)
 {
     Matrix3 basis = matrix.basis().scale(scale);
     Vector3 translation = matrix.translation() * scale;
     return Matrix4::from_basis_translation(basis, translation);
 }
-Matrix4 translate(Matrix4 matrix, Vector3 offset)
+inline Matrix4 translate(Matrix4 matrix, Vector3 offset)
 {
     return mve::Matrix4::from_basis_translation(matrix.basis(), matrix.translation() + offset);
 }
-bool is_equal_approx(Matrix4 a, Matrix4 b)
+inline bool is_equal_approx(Matrix4 a, Matrix4 b)
 {
     return mve::is_equal_approx(a[0], b[0]) && mve::is_equal_approx(a[1], b[1]) && mve::is_equal_approx(a[2], b[2])
         && mve::is_equal_approx(a[3], b[3]);
 }
-bool is_zero_approx(Matrix4 matrix)
+inline bool is_zero_approx(Matrix4 matrix)
 {
     return mve::is_zero_approx(matrix[0]) && mve::is_zero_approx(matrix[1]) && mve::is_zero_approx(matrix[2])
         && mve::is_zero_approx(matrix[3]);
 }
-Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float angle)
+inline Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float angle)
 {
     mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
     return mve::Matrix4::from_basis_translation(rotation_basis * matrix.basis(), matrix.translation());
 }
 
-Matrix4 translate_local(const Matrix4& matrix, Vector3 offset)
+inline Matrix4 translate_local(const Matrix4& matrix, Vector3 offset)
 {
     mve::Matrix3 basis = matrix.basis();
     mve::Matrix3 basis_t = basis.transpose();
     mve::Vector3 rotated_offset { basis_t.col0.dot(offset), basis_t.col1.dot(offset), basis_t.col2.dot(offset) };
     return mve::Matrix4::from_basis_translation(basis, matrix.translation() + rotated_offset);
 }
-Vector3 euler(const Matrix4& matrix)
+inline Vector3 euler(const Matrix4& matrix)
 {
     return matrix.basis().euler();
 }
-Matrix4 ortho(float left, float right, float bottom, float top, float near, float far)
+inline Matrix4 ortho(float left, float right, float bottom, float top, float near, float far)
 {
     float rl = right - left;
     float tb = top - bottom;

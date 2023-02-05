@@ -1,6 +1,6 @@
 #include "uniform_buffer.hpp"
 
-#include "math/matrix4.hpp"
+#include "math/math.hpp"
 #include "renderer.hpp"
 
 namespace mve {

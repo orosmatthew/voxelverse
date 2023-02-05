@@ -1,8 +1,6 @@
 #include "ui_renderer.hpp"
 
-#include "math/functions.hpp"
-#include "math/matrix4.hpp"
-#include "math/vector2i.hpp"
+#include "math/math.hpp"
 
 UIRenderer::UIRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
@@ -23,16 +21,18 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
 
     mve::VertexData cross_data(c_vertex_layout);
 
+    const mve::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
+
     cross_data.push_back({ -0.5f * 10.0f, 0.5f * 10.0f, 0.0f });
-    cross_data.push_back({ 1.0f, 1.0f, 1.0f });
+    cross_data.push_back(cross_color);
     cross_data.push_back({ 0.0f, 0.0f });
 
     cross_data.push_back({ 0.5f * 10.0f, 0.5f * 10.0f, 0.0f });
-    cross_data.push_back({ 1.0f, 1.0f, 1.0f });
+    cross_data.push_back(cross_color);
     cross_data.push_back({ 0.0f, 0.0f });
 
     cross_data.push_back({ 0.0f * 10.0f, -0.5f * 10.0f, 0.0f });
-    cross_data.push_back({ 1.0f, 1.0f, 1.0f });
+    cross_data.push_back(cross_color);
     cross_data.push_back({ 0.0f, 0.0f });
 
     Cross cross { .vertex_buffer = renderer.create_vertex_buffer(cross_data),

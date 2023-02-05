@@ -1,24 +1,22 @@
-#include "quaternion.hpp"
-
-#include "functions.hpp"
-#include "matrix3.hpp"
-#include "vector3.hpp"
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
 
 namespace mve {
 
-Quaternion::Quaternion()
+inline Quaternion::Quaternion()
     : data(0.0f, 0.0f, 0.0f, 0.0f)
 {
 }
-Quaternion::Quaternion(const Vector4& vector)
+inline Quaternion::Quaternion(const Vector4& vector)
     : data(vector)
 {
 }
-Quaternion::Quaternion(float x, float y, float z, float w)
+inline Quaternion::Quaternion(float x, float y, float z, float w)
     : data(x, y, z, w)
 {
 }
-Quaternion Quaternion::from_axis_angle(const Vector3& axis, float angle)
+inline Quaternion Quaternion::from_axis_angle(const Vector3& axis, float angle)
 {
     Vector4 data;
 
@@ -41,7 +39,7 @@ Quaternion Quaternion::from_axis_angle(const Vector3& axis, float angle)
 
     return Quaternion(data);
 }
-Quaternion Quaternion::from_euler(const Vector3& euler)
+inline Quaternion Quaternion::from_euler(const Vector3& euler)
 {
     Vector3 half = euler / 2.0f;
 
@@ -58,47 +56,47 @@ Quaternion Quaternion::from_euler(const Vector3& euler)
         -sin_x * sin_y * cos_z + cos_x * cos_y * sin_z,
         sin_x * sin_y * sin_z + cos_x * cos_y * cos_z);
 }
-float Quaternion::angle_to(const Quaternion& to) const
+inline float Quaternion::angle_to(const Quaternion& to) const
 {
     return mve::angle_to(*this, to);
 }
-float Quaternion::dot(const Quaternion& quaternion) const
+inline float Quaternion::dot(const Quaternion& quaternion) const
 {
     return mve::dot(*this, quaternion);
 }
-Vector3 Quaternion::euler() const
+inline Vector3 Quaternion::euler() const
 {
     return mve::euler(*this);
 }
-Quaternion Quaternion::inverse() const
+inline Quaternion Quaternion::inverse() const
 {
     return mve::inverse(*this);
 }
-bool Quaternion::is_equal_approx(const Quaternion& quaternion) const
+inline bool Quaternion::is_equal_approx(const Quaternion& quaternion) const
 {
     return mve::is_equal_approx(*this, quaternion);
 }
-bool Quaternion::is_zero_approx() const
+inline bool Quaternion::is_zero_approx() const
 {
     return mve::is_zero_approx(*this);
 }
-float Quaternion::length() const
+inline float Quaternion::length() const
 {
     return mve::length(*this);
 }
-float Quaternion::length_squared() const
+inline float Quaternion::length_squared() const
 {
     return mve::length_squared(*this);
 }
-Quaternion Quaternion::spherical_linear_interpolate(const Quaternion& to, float weight) const
+inline Quaternion Quaternion::spherical_linear_interpolate(const Quaternion& to, float weight) const
 {
     return mve::spherical_linear_interpolate(*this, to, weight);
 }
-bool Quaternion::operator!=(const Quaternion& other) const
+inline bool Quaternion::operator!=(const Quaternion& other) const
 {
     return data != other.data;
 }
-Quaternion Quaternion::operator*(const Quaternion& other) const
+inline Quaternion Quaternion::operator*(const Quaternion& other) const
 {
     return Quaternion(
         w * other.x + x * other.w + y * other.z - z * other.y,
@@ -106,7 +104,7 @@ Quaternion Quaternion::operator*(const Quaternion& other) const
         w * other.z + z * other.w + x * other.y - y * other.x,
         w * other.w - x * other.x - y * other.y - z * other.z);
 }
-void Quaternion::operator*=(const Quaternion& other)
+inline void Quaternion::operator*=(const Quaternion& other)
 {
     float new_x = w * other.x + x * other.w + y * other.z - z * other.y;
     float new_y = w * other.y + y * other.w + z * other.x - x * other.z;
@@ -116,71 +114,71 @@ void Quaternion::operator*=(const Quaternion& other)
     y = new_y;
     z = new_z;
 }
-Quaternion Quaternion::operator*(float value) const
+inline Quaternion Quaternion::operator*(float value) const
 {
     return data * value;
 }
-void Quaternion::operator*=(float value)
+inline void Quaternion::operator*=(float value)
 {
     data *= value;
 }
-Quaternion Quaternion::operator*(int value) const
+inline Quaternion Quaternion::operator*(int value) const
 {
     return data * value;
 }
-void Quaternion::operator*=(int value)
+inline void Quaternion::operator*=(int value)
 {
     data *= value;
 }
-Quaternion Quaternion::operator+(const Quaternion& other) const
+inline Quaternion Quaternion::operator+(const Quaternion& other) const
 {
     return data + other.data;
 }
-void Quaternion::operator+=(const Quaternion& other)
+inline void Quaternion::operator+=(const Quaternion& other)
 {
     data += other.data;
 }
-Quaternion Quaternion::operator-(const Quaternion& other) const
+inline Quaternion Quaternion::operator-(const Quaternion& other) const
 {
     return data - other.data;
 }
-void Quaternion::operator-=(const Quaternion& other)
+inline void Quaternion::operator-=(const Quaternion& other)
 {
     data -= other.data;
 }
-Quaternion Quaternion::operator/(float value) const
+inline Quaternion Quaternion::operator/(float value) const
 {
     return data * (1.0f / value);
 }
-void Quaternion::operator/=(float value)
+inline void Quaternion::operator/=(float value)
 {
     data *= 1.0f / value;
 }
-Quaternion Quaternion::operator/(int value) const
+inline Quaternion Quaternion::operator/(int value) const
 {
     return data * (1.0f / value);
 }
-void Quaternion::operator/=(int value)
+inline void Quaternion::operator/=(int value)
 {
     data *= 1.0f / value;
 }
-bool Quaternion::operator==(const Quaternion& other) const
+inline bool Quaternion::operator==(const Quaternion& other) const
 {
     return data == other.data;
 }
-float& Quaternion::operator[](int index)
+inline float& Quaternion::operator[](int index)
 {
     return data[index];
 }
-Quaternion Quaternion::operator+() const
+inline Quaternion Quaternion::operator+() const
 {
     return Quaternion(data);
 }
-Quaternion Quaternion::operator-() const
+inline Quaternion Quaternion::operator-() const
 {
     return -data;
 }
-Quaternion Quaternion::from_matrix(const Matrix3& matrix)
+inline Quaternion Quaternion::from_matrix(const Matrix3& matrix)
 {
     float trace = matrix.trace();
     Quaternion result;
@@ -216,55 +214,55 @@ Quaternion Quaternion::from_matrix(const Matrix3& matrix)
 
     return result;
 }
-Matrix3 Quaternion::matrix() const
+inline Matrix3 Quaternion::matrix() const
 {
     return Matrix3::from_quaternion(*this);
 }
-Quaternion Quaternion::normalize() const
+inline Quaternion Quaternion::normalize() const
 {
     return mve::normalize(*this);
 }
-const float& Quaternion::operator[](int index) const
+inline const float& Quaternion::operator[](int index) const
 {
     return data[index];
 }
 
-float angle_to(const Quaternion& from, const Quaternion& to)
+inline float angle_to(const Quaternion& from, const Quaternion& to)
 {
     float dot = mve::dot(from, to);
     return acos(clamp(squared(dot) * 2.0f - 1.0f, -1.0f, 1.0f));
 }
-float dot(const Quaternion& a, const Quaternion& b)
+inline float dot(const Quaternion& a, const Quaternion& b)
 {
     return mve::dot(a.data, b.data);
 }
-Vector3 euler(const Quaternion& quaternion)
+inline Vector3 euler(const Quaternion& quaternion)
 {
     return quaternion.matrix().euler();
 }
-Quaternion inverse(const Quaternion& quaternion)
+inline Quaternion inverse(const Quaternion& quaternion)
 {
     return Quaternion(-quaternion.x, -quaternion.y, -quaternion.z, quaternion.w);
 }
-bool is_equal_approx(const Quaternion& a, const Quaternion& b)
+inline bool is_equal_approx(const Quaternion& a, const Quaternion& b)
 {
     return is_equal_approx(a.x, b.x) && is_equal_approx(a.y, b.y) && is_equal_approx(a.z, b.z)
         && is_equal_approx(a.w, b.w);
 }
-bool is_zero_approx(const Quaternion& quaternion)
+inline bool is_zero_approx(const Quaternion& quaternion)
 {
     return is_zero_approx(quaternion.x) && is_zero_approx(quaternion.y) && is_zero_approx(quaternion.z)
         && is_zero_approx(quaternion.w);
 }
-float length(const Quaternion& quaternion)
+inline float length(const Quaternion& quaternion)
 {
     return quaternion.data.length();
 }
-float length_squared(const Quaternion& quaternion)
+inline float length_squared(const Quaternion& quaternion)
 {
     return quaternion.data.length_squared();
 }
-Quaternion spherical_linear_interpolate(const Quaternion& from, const Quaternion& to, float weight)
+inline Quaternion spherical_linear_interpolate(const Quaternion& from, const Quaternion& to, float weight)
 {
     float dot = mve::dot(from, to);
 
@@ -296,12 +294,13 @@ Quaternion spherical_linear_interpolate(const Quaternion& from, const Quaternion
         scale0 * from.z + scale1 * to_new.z,
         scale0 * from.w + scale1 * to_new.w);
 }
-Matrix3 matrix(const Quaternion& quaternion)
+inline Matrix3 matrix(const Quaternion& quaternion)
 {
     return Matrix3::from_quaternion(quaternion);
 }
-Quaternion normalize(const Quaternion& quaternion)
+inline Quaternion normalize(const Quaternion& quaternion)
 {
     return quaternion / quaternion.length();
 }
+
 }

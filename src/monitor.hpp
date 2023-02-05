@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "math/vector2i.hpp"
+#include "math/math.hpp"
 #include <GLFW/glfw3.h>
 
 namespace mve {
