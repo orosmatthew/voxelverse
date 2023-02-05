@@ -14,7 +14,13 @@ public:
 
     std::optional<uint8_t> block_at(mve::Vector3i block_pos) const;
 
+    std::optional<uint8_t> block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const;
+
+    std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const;
+
     void set_block(mve::Vector3i block_pos, uint8_t type);
+
+    void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type);
 
     void for_all_chunk_data(
         const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const;
@@ -30,8 +36,34 @@ public:
                  static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
     }
 
-private:
-    static mve::Vector3i block_world_to_local(mve::Vector3i world_block_pos);
+    static inline mve::Vector3i block_local_to_world(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos)
+    {
+        return { chunk_pos.x * 16 + local_block_pos.x,
+                 chunk_pos.y * 16 + local_block_pos.y,
+                 chunk_pos.z * 16 + local_block_pos.z };
+    }
 
+    static inline mve::Vector3i block_world_to_local(mve::Vector3i world_block_pos)
+    {
+        mve::Vector3i mod = world_block_pos % 16;
+        if (mod.x < 0) {
+            mod.x = 16 + mod.x;
+        }
+        if (mod.y < 0) {
+            mod.y = 16 + mod.y;
+        }
+        if (mod.z < 0) {
+            mod.z = 16 + mod.z;
+        }
+        return mod;
+    }
+
+    static inline bool is_block_pos_local(mve::Vector3i block_pos)
+    {
+        return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16 && block_pos.z >= 0
+            && block_pos.z < 16;
+    }
+
+private:
     std::unordered_map<mve::Vector3i, ChunkData> m_chunks {};
 };

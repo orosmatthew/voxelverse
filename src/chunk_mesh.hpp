@@ -13,8 +13,6 @@
 #include "vertex_buffer.hpp"
 #include "world_data.hpp"
 
-
-
 class ChunkMesh {
 public:
     ChunkMesh(
@@ -60,7 +58,8 @@ private:
 
     static FaceData create_face_mesh(mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting);
 
-    static std::array<uint8_t, 4> calc_face_lighting(const WorldData& data, mve::Vector3i block_pos, Direction dir);
+    static std::array<uint8_t, 4> calc_face_lighting(
+        const WorldData& data, mve::Vector3i chunk_pos, mve::Vector3i local_block_pos, Direction dir);
 
     static std::optional<MeshBuffers> create_buffers(
         mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);

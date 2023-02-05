@@ -162,14 +162,16 @@ void trigger_break_block(const Camera& camera, WorldData& world_data, WorldRende
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
         RayCollision collision = ray_box_collision(ray, bb);
         if (collision.hit) {
-            world_data.set_block(block_pos, 0);
-            update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
+            mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
+            mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
+            world_data.set_block_local(chunk_pos, local_pos, 0);
+            update_chunks.insert(chunk_pos);
             std::array<mve::Vector3i, 6> surrounding
                 = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
                     mve::Vector3i(0, -1, 0), mve::Vector3i(0, 0, 1),  mve::Vector3i(0, 0, -1) };
             for (mve::Vector3i surround_pos : surrounding) {
-                if (world_data.chunk_in_bounds(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
-                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
+                if (world_data.chunk_in_bounds(chunk_pos + surround_pos)) {
+                    update_chunks.insert(chunk_pos + surround_pos);
                 }
             }
             break;

@@ -1,6 +1,5 @@
 #include "chunk_mesh.hpp"
 
-#include "logger.hpp"
 #include "math/math.hpp"
 #include "world_renderer.hpp"
 
@@ -46,19 +45,20 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                mve::Vector3i world_block_pos = { chunk_pos.x * 16 + x, chunk_pos.y * 16 + y, chunk_pos.z * 16 + z };
-                std::optional<uint8_t> world_block = world_data.block_at(world_block_pos);
-                if (world_block.has_value() && world_block.value() == 0) {
+                mve::Vector3i local_pos { x, y, z };
+                std::optional<uint8_t> block = world_data.block_at_relative(chunk_pos, local_pos);
+                if (block.has_value() && block.value() == 0) {
                     continue;
                 }
                 empty = false;
                 for (int f = 0; f < 6; f++) {
                     Direction dir = static_cast<Direction>(f);
-                    mve::Vector3i adj_block_pos = world_block_pos + direction_vector(dir);
-                    std::optional<uint8_t> adj_block = world_data.block_at(adj_block_pos);
+                    mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
+                    std::optional<uint8_t> adj_block = world_data.block_at_relative(chunk_pos, adj_local_pos);
                     if (adj_block.has_value()) {
                         if (adj_block.value() == 0) {
-                            std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block_pos, dir);
+                            std::array<uint8_t, 4> face_lighting
+                                = calc_face_lighting(world_data, chunk_pos, local_pos, dir);
                             FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                             add_face_to_mesh(mesh, face);
                         }
@@ -67,7 +67,8 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
                         }
                     }
                     else {
-                        std::array<uint8_t, 4> face_lighting = calc_face_lighting(world_data, world_block_pos, dir);
+                        std::array<uint8_t, 4> face_lighting
+                            = calc_face_lighting(world_data, chunk_pos, local_pos, dir);
                         FaceData face = create_face_mesh(mve::Vector3(x, y, z), dir, face_lighting);
                         add_face_to_mesh(mesh, face);
                     }
@@ -193,7 +194,8 @@ void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::Fac
     }
 }
 
-std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(const WorldData& data, mve::Vector3i block_pos, Direction dir)
+std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
+    const WorldData& data, mve::Vector3i chunk_pos, mve::Vector3i local_block_pos, Direction dir)
 {
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
@@ -261,8 +263,8 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(const WorldData& data, mve:
 
     std::array<uint8_t, 4> lighting = { 255, 255, 255, 255 };
     for (int i = 0; i < check_blocks.size(); i++) {
-        mve::Vector3i check_block_pos = block_pos + check_blocks[i];
-        std::optional<uint8_t> check_block = data.block_at(check_block_pos);
+        mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
+        std::optional<uint8_t> check_block = data.block_at_relative(chunk_pos, check_block_local);
         if (!check_block.has_value()) {
             continue;
         }

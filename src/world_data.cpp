@@ -26,20 +26,6 @@ std::optional<uint8_t> WorldData::block_at(mve::Vector3i block_pos) const
         return result->second.get_block(block_world_to_local(block_pos));
     }
 }
-mve::Vector3i WorldData::block_world_to_local(mve::Vector3i world_block_pos)
-{
-    mve::Vector3i mod = world_block_pos % 16;
-    if (mod.x < 0) {
-        mod.x = 16 + mod.x;
-    }
-    if (mod.y < 0) {
-        mod.y = 16 + mod.y;
-    }
-    if (mod.z < 0) {
-        mod.z = 16 + mod.z;
-    }
-    return mod;
-}
 
 void WorldData::for_all_chunk_data(
     const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const
@@ -60,4 +46,28 @@ const ChunkData& WorldData::chunk_data_at(mve::Vector3i chunk_pos) const
 bool WorldData::chunk_in_bounds(mve::Vector3i chunk_pos) const
 {
     return m_chunks.contains(chunk_pos);
+}
+
+void WorldData::set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type)
+{
+    m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+}
+std::optional<uint8_t> WorldData::block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
+{
+    auto result = m_chunks.find(chunk_pos);
+    if (result == m_chunks.end()) {
+        return {};
+    }
+    else {
+        return result->second.get_block(block_world_to_local(block_pos));
+    }
+}
+std::optional<uint8_t> WorldData::block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
+{
+    if (WorldData::is_block_pos_local(local_block_pos)) {
+        return block_at_local(chunk_pos, local_block_pos);
+    }
+    else {
+        return block_at(WorldData::block_local_to_world(chunk_pos, local_block_pos));
+    }
 }
