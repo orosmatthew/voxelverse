@@ -2541,19 +2541,18 @@ void Renderer::bind_descriptor_sets(const std::vector<std::reference_wrapper<con
     if (descriptor_sets.size() > 4) {
         throw std::runtime_error("[Renderer] Can only bind a maximum of 4 descriptor sets at a time");
     }
-    std::vector<vk::DescriptorSet> sets;
-    sets.reserve(descriptor_sets.size());
-    for (const auto& descriptor_set : descriptor_sets) {
-        sets.push_back(m_frames_in_flight.at(m_current_draw_state.frame_index)
-                           .descriptor_sets.at(descriptor_set.get().handle())
-                           .vk_handle);
+    std::array<vk::DescriptorSet, 4> sets;
+    for (int i = 0; i < descriptor_sets.size(); i++) {
+        sets[i] = (m_frames_in_flight.at(m_current_draw_state.frame_index)
+                       .descriptor_sets.at(descriptor_sets.at(i).get().handle())
+                       .vk_handle);
     }
 
     m_current_draw_state.command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
         0,
-        sets.size(),
+        descriptor_sets.size(),
         sets.data(),
         0,
         nullptr);
