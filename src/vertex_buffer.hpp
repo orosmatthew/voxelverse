@@ -9,6 +9,9 @@ class Renderer;
 class VertexData;
 
 class VertexBuffer {
+
+    friend Renderer;
+
 public:
     VertexBuffer(Renderer& renderer, const VertexData& vertex_data);
 

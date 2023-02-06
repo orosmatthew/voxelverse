@@ -1656,7 +1656,7 @@ vk::Sampler Renderer::create_texture_sampler(vk::PhysicalDevice physical_device,
     auto sampler_info
         = vk::SamplerCreateInfo()
               .setMagFilter(vk::Filter::eNearest)
-              .setMinFilter(vk::Filter::eLinear)
+              .setMinFilter(vk::Filter::eNearest)
               //.setMagFilter(vk::Filter::eLinear)
               //.setMinFilter(vk::Filter::eLinear)
               .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
@@ -1777,7 +1777,7 @@ Renderer::Image Renderer::create_image(
 
     VmaAllocationCreateInfo vma_alloc_info = {};
     vma_alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
-    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;  // TODO: Don't use dedicated
+    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT; // TODO: Don't use dedicated
 
     VkImage image;
     VmaAllocation image_allocation;
@@ -2069,8 +2069,9 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
 
 void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
 {
+    vk::DeviceSize offset = 0;
     m_current_draw_state.command_buffer.bindVertexBuffers(
-        0, m_vertex_buffers_new.at(vertex_buffer.handle())->buffer.vk_handle, { 0 });
+        0, 1, &m_vertex_buffers_new[vertex_buffer.m_handle]->buffer.vk_handle, &offset);
 }
 
 IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
@@ -2145,7 +2146,7 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
 
 void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
 {
-    IndexBufferImpl& index_buffer_impl = *m_index_buffers_new.at(index_buffer.handle());
+    IndexBufferImpl& index_buffer_impl = *m_index_buffers_new[index_buffer.m_handle];
     m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer_impl.buffer.vk_handle, 0, vk::IndexType::eUint32);
     m_current_draw_state.command_buffer.drawIndexed(index_buffer_impl.index_count, 1, 0, 0, 0);
 }

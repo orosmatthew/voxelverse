@@ -8,6 +8,9 @@ namespace mve {
 class Renderer;
 
 class IndexBuffer {
+
+    friend Renderer;
+
 public:
     IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices);
 
