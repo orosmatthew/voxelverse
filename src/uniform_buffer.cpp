@@ -47,7 +47,7 @@ bool UniformBuffer::operator<(const UniformBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
-uint64_t UniformBuffer::handle() const
+size_t UniformBuffer::handle() const
 {
     return m_handle;
 }
@@ -85,7 +85,7 @@ void UniformBuffer::invalidate()
     m_valid = false;
 }
 
-UniformBuffer::UniformBuffer(Renderer& renderer, uint64_t handle)
+UniformBuffer::UniformBuffer(Renderer& renderer, size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

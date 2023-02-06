@@ -279,7 +279,7 @@ public:
      */
     void bind_descriptor_set(DescriptorSet& descriptor_set);
 
-    void bind_descriptor_sets(const std::vector<std::reference_wrapper<const DescriptorSet>>& descriptor_sets);
+    void bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorSet& descriptor_set_b);
     /**
      * @brief Get extent of renderer
      * @return Returns ivec2 of the extent of the renderer
@@ -360,8 +360,8 @@ private:
         vk::Semaphore image_available_semaphore;
         vk::Semaphore render_finished_semaphore;
         vk::Fence in_flight_fence;
-        std::unordered_map<uint64_t, UniformBufferImpl> uniform_buffers {};
-        std::unordered_map<uint64_t, DescriptorSetImpl> descriptor_sets {};
+        std::vector<std::optional<UniformBufferImpl>> uniform_buffers {};
+        std::vector<std::optional<DescriptorSetImpl>> descriptor_sets {};
         std::queue<uint32_t> funcs;
     };
 
@@ -404,7 +404,7 @@ private:
 
         uint64_t m_id_count;
         std::vector<vk::DescriptorPool> m_descriptor_pools {};
-        std::unordered_map<uint64_t, DescriptorSetImpl> m_descriptor_sets {};
+        std::vector<std::optional<DescriptorSetImpl>> m_descriptor_sets {};
         size_t m_current_pool_index;
 
         static std::optional<vk::DescriptorSet> try_create(
@@ -441,9 +441,12 @@ private:
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
-    std::unordered_map<uint64_t, VertexBufferImpl> m_vertex_buffers;
+    std::vector<std::optional<VertexBufferImpl>> m_vertex_buffers_new;
 
-    std::unordered_map<uint64_t, IndexBufferImpl> m_index_buffers;
+    std::vector<std::optional<IndexBufferImpl>> m_index_buffers_new;
+    //    std::unordered_map<size_t, VertexBufferImpl> m_vertex_buffers;
+
+    //    std::unordered_map<siz, IndexBufferImpl> m_index_buffers;
 
     std::unordered_map<DescriptorSetLayoutHandleImpl, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 
@@ -491,7 +494,7 @@ private:
 
     static vk::Format find_depth_format(vk::PhysicalDevice physical_device);
 
-    void update_uniform(uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+    void update_uniform(size_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
     static bool has_stencil_component(vk::Format format);
 

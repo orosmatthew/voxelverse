@@ -60,7 +60,7 @@ void UIRenderer::draw()
 {
     m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
     if (m_cross.has_value()) {
-        m_renderer->bind_descriptor_sets({ m_global_descriptor_set, m_cross.value().descriptor_set });
+        m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_cross.value().descriptor_set);
         m_renderer->draw_vertex_buffer(m_cross.value().vertex_buffer);
     }
 }

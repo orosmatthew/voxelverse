@@ -56,6 +56,8 @@ Renderer::Renderer(
     m_vk_graphics_queue = m_vk_device.getQueue(m_vk_queue_family_indices.graphics_family.value(), 0);
     m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0);
 
+    //    allocatorCreateInfo.preferredLargeHeapBlockSize = 2048ull * 1024 * 1024;
+
     VmaAllocatorCreateInfo allocatorCreateInfo = {};
     allocatorCreateInfo.physicalDevice = m_vk_physical_device;
     allocatorCreateInfo.device = m_vk_device;
@@ -819,9 +821,12 @@ Renderer::~Renderer()
     m_descriptor_set_allocator.cleanup(m_vk_device);
 
     for (FrameInFlight& frame : m_frames_in_flight) {
-        for (auto& pair : frame.uniform_buffers) {
-            vmaUnmapMemory(m_vma_allocator, pair.second.buffer.vma_allocation);
-            vmaDestroyBuffer(m_vma_allocator, pair.second.buffer.vk_handle, pair.second.buffer.vma_allocation);
+        for (std::optional<UniformBufferImpl>& uniform_buffer : frame.uniform_buffers) {
+            if (uniform_buffer.has_value()) {
+                vmaUnmapMemory(m_vma_allocator, uniform_buffer->buffer.vma_allocation);
+                vmaDestroyBuffer(
+                    m_vma_allocator, uniform_buffer->buffer.vk_handle, uniform_buffer->buffer.vma_allocation);
+            }
         }
     }
 
@@ -829,12 +834,16 @@ Renderer::~Renderer()
         m_vk_device.destroy(layout);
     }
 
-    for (auto& buffer : m_vertex_buffers) {
-        vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
+    for (std::optional<VertexBufferImpl>& vertex_buffer : m_vertex_buffers_new) {
+        if (vertex_buffer.has_value()) {
+            vmaDestroyBuffer(m_vma_allocator, vertex_buffer->buffer.vk_handle, vertex_buffer->buffer.vma_allocation);
+        }
     }
 
-    for (auto& buffer : m_index_buffers) {
-        vmaDestroyBuffer(m_vma_allocator, buffer.second.buffer.vk_handle, buffer.second.buffer.vma_allocation);
+    for (std::optional<IndexBufferImpl>& index_buffer : m_index_buffers_new) {
+        if (index_buffer.has_value()) {
+            vmaDestroyBuffer(m_vma_allocator, index_buffer->buffer.vk_handle, index_buffer->buffer.vma_allocation);
+        }
     }
 
     vmaDestroyAllocator(m_vma_allocator);
@@ -1085,14 +1094,14 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
         throw std::runtime_error("[Renderer] Attempted to destroy invalid vertex buffer");
     }
     LOG->info("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
-    uint64_t handle = vertex_buffer.handle();
+    size_t handle = vertex_buffer.handle();
     vertex_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
-            m_vertex_buffers.at(handle).buffer.vk_handle,
-            m_vertex_buffers.at(handle).buffer.vma_allocation);
-        m_vertex_buffers.erase(handle);
+            m_vertex_buffers_new.at(handle)->buffer.vk_handle,
+            m_vertex_buffers_new.at(handle)->buffer.vma_allocation);
+        m_vertex_buffers_new[handle].reset();
     });
 }
 
@@ -1346,9 +1355,9 @@ void Renderer::wait_ready()
 }
 
 void Renderer::update_uniform(
-    uint64_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
+    size_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index)
 {
-    UniformBufferImpl& buffer = m_frames_in_flight.at(frame_index).uniform_buffers.at(handle);
+    UniformBufferImpl& buffer = *(m_frames_in_flight.at(frame_index).uniform_buffers.at(handle));
     memcpy(&(buffer.mapped_ptr[location.value()]), data_ptr, size);
 }
 
@@ -1768,7 +1777,7 @@ Renderer::Image Renderer::create_image(
 
     VmaAllocationCreateInfo vma_alloc_info = {};
     vma_alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
-    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;  // TODO: Don't use dedicated
 
     VkImage image;
     VmaAllocation image_allocation;
@@ -1974,7 +1983,7 @@ void Renderer::write_descriptor_binding(
         auto descriptor_write
             = vk::WriteDescriptorSet()
                   .setDstSet(
-                      this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle).vk_handle)
+                      this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle)->vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
@@ -2009,8 +2018,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
         cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
@@ -2041,20 +2049,28 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
         });
     });
 
-    VertexBufferImpl vertex_buffer { buffer, vertex_data.vertex_count() };
+    std::optional<size_t> id;
+    for (size_t i = 0; i < m_vertex_buffers_new.size(); i++) {
+        if (!m_vertex_buffers_new[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = m_vertex_buffers_new.size();
+        m_vertex_buffers_new.push_back({});
+    }
+    m_vertex_buffers_new[*id] = { buffer, vertex_data.vertex_count() };
 
-    m_vertex_buffers[m_resource_handle_count] = vertex_buffer;
-    m_resource_handle_count++;
+    LOG->info("[Renderer] Vertex buffer created with ID: {}", *id);
 
-    LOG->info("[Renderer] Vertex buffer created with ID: {}", m_resource_handle_count - 1);
-
-    return VertexBuffer(*this, m_resource_handle_count - 1);
+    return VertexBuffer(*this, *id);
 }
 
 void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
 {
     m_current_draw_state.command_buffer.bindVertexBuffers(
-        0, m_vertex_buffers.at(vertex_buffer.handle()).buffer.vk_handle, { 0 });
+        0, m_vertex_buffers_new.at(vertex_buffer.handle())->buffer.vk_handle, { 0 });
 }
 
 IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
@@ -2077,8 +2093,8 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        {});
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
         cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
@@ -2109,19 +2125,27 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
         });
     });
 
-    IndexBufferImpl index_buffer { buffer, indices.size() };
+    std::optional<size_t> id;
+    for (size_t i = 0; i < m_index_buffers_new.size(); i++) {
+        if (!m_index_buffers_new[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = m_index_buffers_new.size();
+        m_index_buffers_new.push_back({});
+    }
+    m_index_buffers_new[*id] = { buffer, indices.size() };
 
-    m_index_buffers[m_resource_handle_count] = index_buffer;
-    m_resource_handle_count++;
+    LOG->info("[Renderer] Index buffer created with ID: {}", *id);
 
-    LOG->info("[Renderer] Index buffer created with ID: {}", m_resource_handle_count - 1);
-
-    return IndexBuffer(*this, m_resource_handle_count - 1);
+    return IndexBuffer(*this, *id);
 }
 
 void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
 {
-    IndexBufferImpl& index_buffer_impl = m_index_buffers.at(index_buffer.handle());
+    IndexBufferImpl& index_buffer_impl = *m_index_buffers_new.at(index_buffer.handle());
     m_current_draw_state.command_buffer.bindIndexBuffer(index_buffer_impl.buffer.vk_handle, 0, vk::IndexType::eUint32);
     m_current_draw_state.command_buffer.drawIndexed(index_buffer_impl.index_count, 1, 0, 0, 0);
 }
@@ -2167,18 +2191,29 @@ DescriptorSet Renderer::create_descriptor_set(
         descriptor_sets.push_back(m_descriptor_set_allocator.create(m_vk_device, layout));
     }
 
-    auto descriptor_set_handle = m_resource_handle_count;
-    m_resource_handle_count++;
-
+    FrameInFlight& ref_frame = m_frames_in_flight.at(0);
+    std::optional<size_t> id;
+    for (size_t i = 0; i < ref_frame.descriptor_sets.size(); i++) {
+        if (!ref_frame.descriptor_sets[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = ref_frame.descriptor_sets.size();
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            frame.descriptor_sets.push_back({});
+        }
+    }
     int i = 0;
     for (FrameInFlight& frame : m_frames_in_flight) {
-        frame.descriptor_sets.insert({ descriptor_set_handle, descriptor_sets.at(i) });
+        frame.descriptor_sets[*id] = descriptor_sets.at(i);
         i++;
     }
 
-    LOG->info("[Renderer] Descriptor set created with ID: {}", descriptor_set_handle);
+    LOG->info("[Renderer] Descriptor set created with ID: {}", *id);
 
-    return DescriptorSet(*this, descriptor_set_handle);
+    return DescriptorSet(*this, *id);
 }
 
 void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
@@ -2192,19 +2227,19 @@ void Renderer::write_descriptor_binding(
     DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
 {
     uint32_t binding_num = descriptor_binding.binding();
-    uint64_t uniform_buffer_handle = uniform_buffer.handle();
-    uint64_t descriptor_set_handle = descriptor_set.handle();
+    size_t uniform_buffer_handle = uniform_buffer.handle();
+    size_t descriptor_set_handle = descriptor_set.handle();
     defer_to_all_frames([this, uniform_buffer_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto buffer_info
             = vk::DescriptorBufferInfo()
                   .setBuffer(
-                      m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle).buffer.vk_handle)
+                      m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle)->buffer.vk_handle)
                   .setOffset(0)
-                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle).size);
+                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle)->size);
 
         auto descriptor_write
             = vk::WriteDescriptorSet()
-                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle).vk_handle)
+                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle)->vk_handle)
                   .setDstBinding(binding_num)
                   .setDstArrayElement(0)
                   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
@@ -2224,7 +2259,7 @@ void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
         1,
         &(m_frames_in_flight.at(m_current_draw_state.frame_index)
               .descriptor_sets.at(descriptor_set.handle())
-              .vk_handle),
+              ->vk_handle),
         0,
         nullptr);
 }
@@ -2237,23 +2272,34 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
 
     uint32_t struct_size = descriptor_binding.block().size();
 
-    auto handle = m_resource_handle_count;
-    m_resource_handle_count++;
-
+    FrameInFlight& ref_frame = m_frames_in_flight.at(0);
+    std::optional<size_t> id;
+    for (size_t i = 0; i < ref_frame.uniform_buffers.size(); i++) {
+        if (!ref_frame.uniform_buffers[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = ref_frame.uniform_buffers.size();
+        for (FrameInFlight& frame : m_frames_in_flight) {
+            frame.uniform_buffers.push_back({});
+        }
+    }
+    int i = 0;
     for (FrameInFlight& frame : m_frames_in_flight) {
-
         Buffer buffer = create_buffer(
             m_vma_allocator, struct_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
         void* ptr;
         vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
-
-        frame.uniform_buffers[handle] = UniformBufferImpl { buffer, struct_size, static_cast<std::byte*>(ptr) };
+        frame.uniform_buffers[*id] = { buffer, struct_size, static_cast<std::byte*>(ptr) };
+        i++;
     }
 
-    LOG->info("[Renderer] Uniform buffer created with ID: {}", handle);
+    LOG->info("[Renderer] Uniform buffer created with ID: {}", *id);
 
-    return UniformBuffer(*this, handle);
+    return UniformBuffer(*this, *id);
 }
 
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
@@ -2443,7 +2489,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
 
 void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
 {
-    VertexBufferImpl& vertex_buffer_impl = m_vertex_buffers.at(vertex_buffer.handle());
+    VertexBufferImpl& vertex_buffer_impl = *m_vertex_buffers_new.at(vertex_buffer.handle());
     m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer_impl.buffer.vk_handle, { 0 });
     m_current_draw_state.command_buffer.draw(vertex_buffer_impl.vertex_count, 1, 0, 0);
 }
@@ -2459,10 +2505,10 @@ void Renderer::destroy(DescriptorSet& descriptor_set)
     defer_after_all_frames([this, handle](uint32_t) {
         std::vector<DescriptorSetImpl> sets_to_delete;
         for (const FrameInFlight& frame : m_frames_in_flight) {
-            sets_to_delete.push_back(frame.descriptor_sets.at(handle));
+            sets_to_delete.push_back(*frame.descriptor_sets.at(handle));
         }
         for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.descriptor_sets.erase(handle);
+            frame.descriptor_sets[handle].reset();
         }
         for (DescriptorSetImpl set : sets_to_delete) {
             m_descriptor_set_allocator.free(m_vk_device, set);
@@ -2507,15 +2553,15 @@ void Renderer::destroy(UniformBuffer& uniform_buffer)
     }
     LOG->info("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
     uniform_buffer.invalidate();
-    uint64_t handle = uniform_buffer.handle();
+    size_t handle = uniform_buffer.handle();
     defer_after_all_frames([this, handle](uint32_t) {
         for (const FrameInFlight& frame : m_frames_in_flight) {
-            UniformBufferImpl uniform_buffer = frame.uniform_buffers.at(handle);
+            UniformBufferImpl uniform_buffer = *(frame.uniform_buffers.at(handle));
             vmaUnmapMemory(m_vma_allocator, uniform_buffer.buffer.vma_allocation);
             vmaDestroyBuffer(m_vma_allocator, uniform_buffer.buffer.vk_handle, uniform_buffer.buffer.vma_allocation);
         }
         for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.uniform_buffers.erase(handle);
+            frame.uniform_buffers[handle].reset();
         }
     });
 }
@@ -2531,29 +2577,30 @@ void Renderer::destroy(IndexBuffer& index_buffer)
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
-            m_index_buffers.at(handle).buffer.vk_handle,
-            m_index_buffers.at(handle).buffer.vma_allocation);
-        m_index_buffers.erase(handle);
+            m_index_buffers_new.at(handle)->buffer.vk_handle,
+            m_index_buffers_new.at(handle)->buffer.vma_allocation);
+        m_index_buffers_new[handle].reset();
     });
 }
 
-void Renderer::bind_descriptor_sets(const std::vector<std::reference_wrapper<const DescriptorSet>>& descriptor_sets)
+void Renderer::bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorSet& descriptor_set_b)
 {
-    if (descriptor_sets.size() > 4) {
-        throw std::runtime_error("[Renderer] Can only bind a maximum of 4 descriptor sets at a time");
-    }
-    std::array<vk::DescriptorSet, 4> sets;
-    for (int i = 0; i < descriptor_sets.size(); i++) {
-        sets[i] = (m_frames_in_flight.at(m_current_draw_state.frame_index)
-                       .descriptor_sets.at(descriptor_sets.at(i).get().handle())
-                       .vk_handle);
-    }
+    //    if (descriptor_sets.size() > 4) {
+    //        throw std::runtime_error("[Renderer] Can only bind a maximum of 4 descriptor sets at a time");
+    //    }
+    std::array<vk::DescriptorSet, 2> sets
+        = { (m_frames_in_flight.at(m_current_draw_state.frame_index)
+                 .descriptor_sets.at(descriptor_set_a.handle())
+                 ->vk_handle),
+            (m_frames_in_flight.at(m_current_draw_state.frame_index)
+                 .descriptor_sets.at(descriptor_set_b.handle())
+                 ->vk_handle) };
 
     m_current_draw_state.command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
         0,
-        descriptor_sets.size(),
+        sets.size(),
         sets.data(),
         0,
         nullptr);
@@ -2600,8 +2647,10 @@ vk::DescriptorPool Renderer::DescriptorSetAllocator::create_pool(vk::Device devi
 
 void Renderer::DescriptorSetAllocator::cleanup(vk::Device device)
 {
-    for (auto& [id, descriptor_set] : m_descriptor_sets) {
-        device.freeDescriptorSets(descriptor_set.vk_pool, 1, &descriptor_set.vk_handle);
+    for (std::optional<DescriptorSetImpl>& set : m_descriptor_sets) {
+        if (set.has_value()) {
+            device.freeDescriptorSets(set->vk_pool, 1, &(set->vk_handle));
+        }
     }
     for (vk::DescriptorPool descriptor_pool : m_descriptor_pools) {
         device.destroy(descriptor_pool);
@@ -2640,12 +2689,21 @@ Renderer::DescriptorSetImpl Renderer::DescriptorSetAllocator::create(vk::Device 
             }
         }
     }
-    uint64_t id = m_id_count;
-    m_id_count++;
+    std::optional<size_t> id;
+    for (size_t i = 0; i < m_descriptor_sets.size(); i++) {
+        if (!m_descriptor_sets[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = m_descriptor_sets.size();
+        m_descriptor_sets.push_back({});
+    }
     DescriptorSetImpl descriptor_set_impl {
-        .id = id, .vk_handle = descriptor_set.value(), .vk_pool = m_descriptor_pools.at(m_current_pool_index)
+        .id = *id, .vk_handle = *descriptor_set, .vk_pool = m_descriptor_pools.at(m_current_pool_index)
     };
-    m_descriptor_sets.insert({ id, descriptor_set_impl });
+    m_descriptor_sets[*id] = descriptor_set_impl;
     return descriptor_set_impl;
 }
 
@@ -2672,7 +2730,7 @@ std::optional<vk::DescriptorSet> Renderer::DescriptorSetAllocator::try_create(
 void Renderer::DescriptorSetAllocator::free(vk::Device device, DescriptorSetImpl descriptor_set)
 {
     device.freeDescriptorSets(descriptor_set.vk_pool, 1, &descriptor_set.vk_handle);
-    m_descriptor_sets.erase(descriptor_set.id);
+    m_descriptor_sets[descriptor_set.id].reset();
 }
 
 }

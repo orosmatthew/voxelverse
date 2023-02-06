@@ -48,7 +48,7 @@ bool DescriptorSet::operator<(const DescriptorSet& other) const
 {
     return m_handle < other.m_handle;
 }
-uint64_t DescriptorSet::handle() const
+size_t DescriptorSet::handle() const
 {
     return m_handle;
 }
@@ -65,7 +65,7 @@ void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_bind
     m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }
 
-DescriptorSet::DescriptorSet(Renderer& renderer, uint64_t handle)
+DescriptorSet::DescriptorSet(Renderer& renderer, size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

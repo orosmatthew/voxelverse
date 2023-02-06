@@ -200,11 +200,11 @@ void run()
     UIRenderer ui_renderer(renderer);
 
     WorldGenerator world_generator(1);
-    WorldData world_data(world_generator, { -4, -4, -4 }, { 4, 4, 4 });
+    WorldData world_data(world_generator, { -16, -16, -4 }, { 16, 16, 4 });
 
-    world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
-        world_renderer.add_data(chunk_data, world_data);
-    });
+    //    world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
+    //        world_renderer.add_data(chunk_data, world_data);
+    //    });
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -227,6 +227,8 @@ void run()
 
     bool cursor_captured = true;
 
+    mve::Vector3i current_gen { -16, -16, -4 };
+
     while (!window.should_close()) {
         window.poll_events();
 
@@ -234,6 +236,24 @@ void run()
 
         if (cursor_captured) {
             camera.update(window);
+        }
+
+        if (current_gen != mve::Vector3i(16, 16, 4)) {
+            if (world_data.chunk_in_bounds(current_gen)) {
+                world_renderer.add_data(world_data.chunk_data_at(current_gen), world_data);
+            }
+            if (current_gen.x < 16) {
+                current_gen.x++;
+            }
+            else if (current_gen.y < 16) {
+                current_gen.y++;
+                current_gen.x = -16;
+            }
+            else if (current_gen.z < 4) {
+                current_gen.z++;
+                current_gen.y = -16;
+                current_gen.x = -16;
+            }
         }
 
         mve::Matrix4 view = camera.view_matrix(fixed_loop.blend());

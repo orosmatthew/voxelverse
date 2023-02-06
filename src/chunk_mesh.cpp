@@ -92,7 +92,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
 void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
 {
     if (m_mesh_buffers.has_value()) {
-        renderer.bind_descriptor_sets({ global_descriptor_set, m_descriptor_set });
+        renderer.bind_descriptor_sets(global_descriptor_set, m_descriptor_set);
         renderer.bind_vertex_buffer(m_mesh_buffers.value().vertex_buffer);
         renderer.draw_index_buffer(m_mesh_buffers.value().index_buffer);
     }

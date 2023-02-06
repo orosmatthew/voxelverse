@@ -24,7 +24,7 @@ VertexBuffer::~VertexBuffer()
         m_renderer->destroy(*this);
     }
 }
-uint64_t VertexBuffer::handle() const
+size_t VertexBuffer::handle() const
 {
     return m_handle;
 }
@@ -56,7 +56,7 @@ bool VertexBuffer::operator<(const VertexBuffer& other) const
     return m_handle < other.m_handle;
 }
 
-VertexBuffer::VertexBuffer(Renderer& renderer, uint64_t handle)
+VertexBuffer::VertexBuffer(Renderer& renderer, size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

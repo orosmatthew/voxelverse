@@ -24,7 +24,7 @@ IndexBuffer::~IndexBuffer()
     }
 }
 
-uint64_t IndexBuffer::handle() const
+size_t IndexBuffer::handle() const
 {
     return m_handle;
 }
@@ -57,7 +57,7 @@ bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
-IndexBuffer::IndexBuffer(Renderer& renderer, uint64_t handle)
+IndexBuffer::IndexBuffer(Renderer& renderer, size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

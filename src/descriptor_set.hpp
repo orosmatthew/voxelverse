@@ -18,7 +18,7 @@ class DescriptorSet {
 public:
     DescriptorSet(Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
-    DescriptorSet(Renderer& renderer, uint64_t handle);
+    DescriptorSet(Renderer& renderer, size_t handle);
 
     DescriptorSet(const DescriptorSet&) = delete;
 
@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] bool operator<(const DescriptorSet& other) const;
 
-    [[nodiscard]] uint64_t handle() const;
+    [[nodiscard]] size_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
 
@@ -47,7 +47,7 @@ public:
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    uint64_t m_handle;
+    size_t m_handle;
 };
 }
 

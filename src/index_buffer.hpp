@@ -11,7 +11,7 @@ class IndexBuffer {
 public:
     IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices);
 
-    IndexBuffer(Renderer& renderer, uint64_t handle);
+    IndexBuffer(Renderer& renderer, size_t handle);
 
     IndexBuffer(const IndexBuffer&) = delete;
 
@@ -27,7 +27,7 @@ public:
 
     [[nodiscard]] bool operator<(const IndexBuffer& other) const;
 
-    [[nodiscard]] uint64_t handle() const;
+    [[nodiscard]] size_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
 
@@ -36,7 +36,7 @@ public:
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    uint64_t m_handle;
+    size_t m_handle;
 };
 }
 
@@ -45,7 +45,7 @@ template <>
 struct hash<mve::IndexBuffer> {
     std::size_t operator()(const mve::IndexBuffer& index_buffer) const
     {
-        return hash<uint64_t>()(index_buffer.handle());
+        return hash<size_t>()(index_buffer.handle());
     }
 };
 }

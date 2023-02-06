@@ -12,7 +12,7 @@ class VertexBuffer {
 public:
     VertexBuffer(Renderer& renderer, const VertexData& vertex_data);
 
-    VertexBuffer(Renderer& renderer, uint64_t handle);
+    VertexBuffer(Renderer& renderer, size_t handle);
 
     VertexBuffer(const VertexBuffer&) = delete;
 
@@ -28,7 +28,7 @@ public:
 
     [[nodiscard]] bool operator<(const VertexBuffer& other) const;
 
-    [[nodiscard]] uint64_t handle() const;
+    [[nodiscard]] size_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
 
@@ -37,7 +37,7 @@ public:
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    uint64_t m_handle;
+    size_t m_handle;
 };
 
 }
