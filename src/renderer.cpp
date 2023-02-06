@@ -2253,16 +2253,7 @@ void Renderer::write_descriptor_binding(
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
 {
-    m_current_draw_state.command_buffer.bindDescriptorSets(
-        vk::PipelineBindPoint::eGraphics,
-        m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
-        0,
-        1,
-        &(m_frames_in_flight.at(m_current_draw_state.frame_index)
-              .descriptor_sets.at(descriptor_set.m_handle)
-              ->vk_handle),
-        0,
-        nullptr);
+    bind_descriptor_sets(1, { &descriptor_set, nullptr, nullptr, nullptr });
 }
 
 UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& descriptor_binding)
@@ -2586,22 +2577,23 @@ void Renderer::destroy(IndexBuffer& index_buffer)
 
 void Renderer::bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorSet& descriptor_set_b)
 {
-    //    if (descriptor_sets.size() > 4) {
-    //        throw std::runtime_error("[Renderer] Can only bind a maximum of 4 descriptor sets at a time");
-    //    }
-    std::array<vk::DescriptorSet, 2> sets
-        = { (m_frames_in_flight.at(m_current_draw_state.frame_index)
-                 .descriptor_sets.at(descriptor_set_a.m_handle)
-                 ->vk_handle),
-            (m_frames_in_flight.at(m_current_draw_state.frame_index)
-                 .descriptor_sets.at(descriptor_set_b.m_handle)
-                 ->vk_handle) };
+    bind_descriptor_sets(2, { &descriptor_set_a, &descriptor_set_b, nullptr, nullptr });
+}
+
+void Renderer::bind_descriptor_sets(uint32_t num, const std::array<DescriptorSet*, 4>& descriptor_sets)
+{
+    std::array<vk::DescriptorSet, 4> sets;
+    for (uint32_t i = 0; i < num; i++) {
+        sets[i] = (m_frames_in_flight[m_current_draw_state.frame_index]
+                       .descriptor_sets[descriptor_sets[i]->m_handle]
+                       ->vk_handle);
+    }
 
     m_current_draw_state.command_buffer.bindDescriptorSets(
         vk::PipelineBindPoint::eGraphics,
         m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(m_current_draw_state.current_pipeline).layout).vk_handle,
         0,
-        sets.size(),
+        num,
         sets.data(),
         0,
         nullptr);

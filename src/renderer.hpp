@@ -439,6 +439,8 @@ private:
     vk::SampleCountFlagBits m_msaa_samples;
     RenderImage m_color_image;
 
+    void bind_descriptor_sets(uint32_t num, const std::array<DescriptorSet*, 4>& descriptor_sets);
+
     std::vector<FrameInFlight> m_frames_in_flight;
 
     std::vector<std::optional<VertexBufferImpl>> m_vertex_buffers_new;
