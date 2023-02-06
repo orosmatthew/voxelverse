@@ -45,7 +45,7 @@ GraphicsPipeline::~GraphicsPipeline()
         m_renderer->destroy(*this);
     }
 }
-uint64_t GraphicsPipeline::handle() const
+size_t GraphicsPipeline::handle() const
 {
     return m_handle;
 }
@@ -63,7 +63,7 @@ void GraphicsPipeline::invalidate()
     m_valid = false;
 }
 
-GraphicsPipeline::GraphicsPipeline(Renderer& renderer, uint64_t handle)
+GraphicsPipeline::GraphicsPipeline(Renderer& renderer, size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)

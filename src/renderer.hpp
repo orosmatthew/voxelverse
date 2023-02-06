@@ -304,7 +304,6 @@ private:
     };
 
     using DescriptorSetLayoutHandleImpl = uint64_t;
-    using GraphicsPipelineLayoutHandleImpl = uint64_t;
 
     struct Buffer {
         vk::Buffer vk_handle;
@@ -384,7 +383,7 @@ private:
     };
 
     struct GraphicsPipelineImpl {
-        GraphicsPipelineLayoutHandleImpl layout;
+        size_t layout;
         vk::Pipeline pipeline;
     };
 
@@ -452,9 +451,12 @@ private:
 
     std::unordered_map<DescriptorSetLayoutHandleImpl, vk::DescriptorSetLayout> m_descriptor_set_layouts;
 
-    std::unordered_map<uint64_t, GraphicsPipelineImpl> m_graphics_pipelines {};
+    std::vector<std::optional<GraphicsPipelineImpl>> m_graphics_pipelines_new {};
+    //    std::unordered_map<uint64_t, GraphicsPipelineImpl> m_graphics_pipelines {};
 
-    std::unordered_map<GraphicsPipelineLayoutHandleImpl, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts {};
+    std::vector<std::optional<GraphicsPipelineLayoutImpl>> m_graphics_pipeline_layouts_new {};
+    //    std::unordered_map<GraphicsPipelineLayoutHandleImpl, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts
+    //    {};
 
     std::unordered_map<uint64_t, TextureImpl> m_textures {};
 
@@ -474,8 +476,7 @@ private:
     DescriptorSetLayoutHandleImpl create_descriptor_set_layout(
         uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader);
 
-    GraphicsPipelineLayoutHandleImpl create_graphics_pipeline_layout(
-        const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
+    size_t create_graphics_pipeline_layout(const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
 
     static vk::SampleCountFlagBits get_max_sample_count(vk::PhysicalDevice physical_device);
 

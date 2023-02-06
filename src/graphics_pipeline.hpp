@@ -20,7 +20,7 @@ public:
         const Shader& fragment_shader,
         const VertexLayout& vertex_layout);
 
-    GraphicsPipeline(Renderer& renderer, uint64_t handle);
+    GraphicsPipeline(Renderer& renderer, size_t handle);
 
     GraphicsPipeline(const GraphicsPipeline&) = delete;
 
@@ -36,7 +36,7 @@ public:
 
     [[nodiscard]] bool operator<(const GraphicsPipeline& other) const;
 
-    [[nodiscard]] uint64_t handle() const;
+    [[nodiscard]] size_t handle() const;
 
     [[nodiscard]] bool is_valid() const;
 
@@ -47,7 +47,7 @@ public:
 private:
     bool m_valid = false;
     Renderer* m_renderer;
-    uint64_t m_handle;
+    size_t m_handle;
 };
 
 }
