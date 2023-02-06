@@ -1,7 +1,3 @@
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Vector4i abs(Vector4i vector)
