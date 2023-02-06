@@ -3,24 +3,9 @@
 #include "math/math.hpp"
 #include "world_renderer.hpp"
 
-ChunkMesh::ChunkMesh(
-    mve::Vector3i chunk_pos,
-    const WorldData& data,
-    mve::Renderer& renderer,
-    mve::GraphicsPipeline& pipeline,
-    mve::Shader& vertex_shader,
-    mve::Shader& fragment_shader,
-    std::shared_ptr<mve::Texture> texture)
-    : m_transform(mve::Matrix4::from_basis_translation(mve::Matrix3::identity(), chunk_pos * 16.0f))
-    , m_descriptor_set(renderer.create_descriptor_set(pipeline, vertex_shader.descriptor_set(1)))
-    , m_uniform_buffer(renderer.create_uniform_buffer(vertex_shader.descriptor_set(1).binding(0)))
-    , m_mesh_buffers(create_buffers(chunk_pos, renderer, data))
-    , m_texture(texture)
-    , m_model_location(vertex_shader.descriptor_set(1).binding(0).member("model").location())
+ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer)
+    : m_mesh_buffers(create_buffers(chunk_pos, renderer, data))
 {
-    m_descriptor_set.write_binding(vertex_shader.descriptor_set(1).binding(0), m_uniform_buffer);
-    m_descriptor_set.write_binding(fragment_shader.descriptor_set(1).binding(1), *m_texture.get());
-    m_uniform_buffer.update(m_model_location, m_transform);
 }
 
 void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
@@ -82,17 +67,16 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
 
     mve::VertexData vertex_data(WorldRenderer::chunk_vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i));
+        vertex_data.push_back(mesh.vertices.at(i) + chunk_pos * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
     }
 
     return MeshBuffers { renderer.create_vertex_buffer(vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
-void ChunkMesh::draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set)
+void ChunkMesh::draw(mve::Renderer& renderer)
 {
     if (m_mesh_buffers.has_value()) {
-        renderer.bind_descriptor_sets(global_descriptor_set, m_descriptor_set);
         renderer.bind_vertex_buffer(m_mesh_buffers.value().vertex_buffer);
         renderer.draw_index_buffer(m_mesh_buffers.value().index_buffer);
     }

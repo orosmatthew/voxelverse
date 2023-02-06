@@ -2258,7 +2258,7 @@ void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
         0,
         1,
         &(m_frames_in_flight.at(m_current_draw_state.frame_index)
-              .descriptor_sets.at(descriptor_set.handle())
+              .descriptor_sets.at(descriptor_set.m_handle)
               ->vk_handle),
         0,
         nullptr);
@@ -2590,10 +2590,10 @@ void Renderer::bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorS
     //    }
     std::array<vk::DescriptorSet, 2> sets
         = { (m_frames_in_flight.at(m_current_draw_state.frame_index)
-                 .descriptor_sets.at(descriptor_set_a.handle())
+                 .descriptor_sets.at(descriptor_set_a.m_handle)
                  ->vk_handle),
             (m_frames_in_flight.at(m_current_draw_state.frame_index)
-                 .descriptor_sets.at(descriptor_set_b.handle())
+                 .descriptor_sets.at(descriptor_set_b.m_handle)
                  ->vk_handle) };
 
     m_current_draw_state.command_buffer.bindDescriptorSets(

@@ -15,16 +15,9 @@
 
 class ChunkMesh {
 public:
-    ChunkMesh(
-        mve::Vector3i chunk_pos,
-        const WorldData& data,
-        mve::Renderer& renderer,
-        mve::GraphicsPipeline& pipeline,
-        mve::Shader& vertex_shader,
-        mve::Shader& fragment_shader,
-        std::shared_ptr<mve::Texture> texture);
+    ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer);
 
-    void draw(mve::Renderer& renderer, mve::DescriptorSet& global_descriptor_set);
+    void draw(mve::Renderer& renderer);
 
 private:
     struct MeshData {
@@ -64,10 +57,5 @@ private:
     static std::optional<MeshBuffers> create_buffers(
         mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);
 
-    mve::Matrix4 m_transform;
-    mve::DescriptorSet m_descriptor_set;
-    mve::UniformBuffer m_uniform_buffer;
     std::optional<MeshBuffers> m_mesh_buffers;
-    std::shared_ptr<mve::Texture> m_texture;
-    mve::UniformLocation m_model_location;
 };

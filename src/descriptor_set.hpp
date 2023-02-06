@@ -15,6 +15,9 @@ class Texture;
 class ShaderDescriptorSet;
 
 class DescriptorSet {
+
+    friend Renderer;
+
 public:
     DescriptorSet(Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 

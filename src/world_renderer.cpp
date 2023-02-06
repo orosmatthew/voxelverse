@@ -7,14 +7,7 @@ void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world
     if (m_chunk_meshes.contains(chunk_data.position())) {
         m_chunk_meshes.erase(chunk_data.position());
     }
-    ChunkMesh mesh(
-        chunk_data.position(),
-        world_data,
-        *m_renderer,
-        m_graphics_pipeline,
-        m_vertex_shader,
-        m_fragment_shader,
-        m_block_texture);
+    ChunkMesh mesh(chunk_data.position(), world_data, *m_renderer);
     m_chunk_meshes.insert({ chunk_data.position(), std::move(mesh) });
 }
 
@@ -30,6 +23,7 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     , m_proj_location(m_vertex_shader.descriptor_set(0).binding(0).member("proj").location())
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
+    m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
 }
 
 void WorldRenderer::resize()
@@ -47,7 +41,8 @@ void WorldRenderer::draw()
     m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
 
     for (auto& [pos, mesh] : m_chunk_meshes) {
-        mesh.draw(*m_renderer, m_global_descriptor_set);
+        m_renderer->bind_descriptor_set(m_global_descriptor_set);
+        mesh.draw(*m_renderer);
     }
 }
 mve::VertexLayout WorldRenderer::chunk_vertex_layout()

@@ -239,13 +239,13 @@ void run()
         }
 
         if (current_gen != mve::Vector3i(16, 16, 4)) {
-            if (world_data.chunk_in_bounds(current_gen)) {
-                world_renderer.add_data(world_data.chunk_data_at(current_gen), world_data);
+            for (int x = -16; x < 16; x++) {
+                current_gen.x = x;
+                if (world_data.chunk_in_bounds(current_gen)) {
+                    world_renderer.add_data(world_data.chunk_data_at(current_gen), world_data);
+                }
             }
-            if (current_gen.x < 16) {
-                current_gen.x++;
-            }
-            else if (current_gen.y < 16) {
+            if (current_gen.y < 16) {
                 current_gen.y++;
                 current_gen.x = -16;
             }
