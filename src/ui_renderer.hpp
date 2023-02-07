@@ -19,6 +19,8 @@ private:
 
     struct Cross {
         mve::VertexBuffer vertex_buffer;
+        mve::IndexBuffer index_buffer;
+        mve::Texture texture;
         mve::DescriptorSet descriptor_set;
         mve::UniformBuffer uniform_buffer;
         mve::UniformLocation model_location;

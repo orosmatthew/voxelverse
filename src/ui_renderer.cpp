@@ -21,25 +21,31 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
 
     mve::VertexData cross_data(c_vertex_layout);
 
+    const float cross_scale = 30.0f;
+
     const mve::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
 
-    cross_data.push_back({ -0.5f * 10.0f, 0.5f * 10.0f, 0.0f });
+    cross_data.push_back(mve::Vector3(-0.5f, -0.5f, 0.0f) * cross_scale);
     cross_data.push_back(cross_color);
     cross_data.push_back({ 0.0f, 0.0f });
-
-    cross_data.push_back({ 0.5f * 10.0f, 0.5f * 10.0f, 0.0f });
+    cross_data.push_back(mve::Vector3(0.5f, -0.5f, 0.0f) * cross_scale);
     cross_data.push_back(cross_color);
-    cross_data.push_back({ 0.0f, 0.0f });
-
-    cross_data.push_back({ 0.0f * 10.0f, -0.5f * 10.0f, 0.0f });
+    cross_data.push_back({ 1.0f, 0.0f });
+    cross_data.push_back(mve::Vector3(0.5f, 0.5f, 0.0f) * cross_scale);
     cross_data.push_back(cross_color);
-    cross_data.push_back({ 0.0f, 0.0f });
+    cross_data.push_back({ 1.0f, 1.0f });
+    cross_data.push_back(mve::Vector3(-0.5f, 0.5f, 0.0f) * cross_scale);
+    cross_data.push_back(cross_color);
+    cross_data.push_back({ 0.0f, 1.0f });
 
     Cross cross { .vertex_buffer = renderer.create_vertex_buffer(cross_data),
+                  .index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 }),
+                  .texture = renderer.create_texture("../res/cross.png"),
                   .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),
                   .uniform_buffer = renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)),
                   .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };
     cross.descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), cross.uniform_buffer);
+    cross.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), cross.texture);
     cross.uniform_buffer.update(cross.model_location, mve::Matrix4::identity());
     m_cross = std::move(cross);
 }
@@ -61,6 +67,7 @@ void UIRenderer::draw()
     m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
     if (m_cross.has_value()) {
         m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_cross.value().descriptor_set);
-        m_renderer->draw_vertex_buffer(m_cross.value().vertex_buffer);
+        m_renderer->bind_vertex_buffer(m_cross.value().vertex_buffer);
+        m_renderer->draw_index_buffer(m_cross.value().index_buffer);
     }
 }
