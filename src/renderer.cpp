@@ -578,7 +578,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 
     auto depth_stencil
         = vk::PipelineDepthStencilStateCreateInfo()
-              .setDepthTestEnable(VK_TRUE)
+              .setDepthTestEnable(depth_test)
               .setDepthWriteEnable(VK_TRUE)
               .setDepthCompareOp(vk::CompareOp::eLess)
               .setDepthBoundsTestEnable(VK_FALSE)
