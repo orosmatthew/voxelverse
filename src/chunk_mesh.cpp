@@ -72,6 +72,10 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
         vertex_data.push_back(mesh.uvs.at(i));
     }
 
+    if (vertex_data.vertex_count() == 0) {
+        return {};
+    }
+
     return MeshBuffers { renderer.create_vertex_buffer(vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
 void ChunkMesh::draw(mve::Renderer& renderer)

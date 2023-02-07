@@ -1964,7 +1964,7 @@ Renderer::RenderImage Renderer::create_color_image(
         samples,
         swapchain_format,
         vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment);
+        vk::ImageUsageFlagBits::eColorAttachment);
 
     vk::ImageView image_view
         = create_image_view(device, color_image.vk_handle, swapchain_format, vk::ImageAspectFlagBits::eColor, 1);
