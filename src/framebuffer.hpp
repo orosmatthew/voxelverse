@@ -7,6 +7,9 @@ namespace mve {
 class Renderer;
 
 class Framebuffer {
+
+    friend Renderer;
+
 public:
     Framebuffer(Renderer& renderer);
 

@@ -68,6 +68,8 @@ public:
 
     void begin_render_pass_present();
 
+    void begin_render_pass_framebuffer(Framebuffer& framebuffer);
+
     /**
      * @brief Bind and draw vertex buffer
      * @param vertex_buffer
@@ -99,6 +101,8 @@ public:
     void end_frame(const Window& window);
 
     void end_render_pass_present();
+
+    void end_render_pass_framebuffer();
 
     /**
      * @brief Resize the renderer. Should be called on window resize

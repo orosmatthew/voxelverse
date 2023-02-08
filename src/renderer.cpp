@@ -1188,6 +1188,40 @@ void Renderer::begin_render_pass_present()
     m_current_draw_state.command_buffer.setScissor(0, { scissor });
 }
 
+void Renderer::begin_render_pass_framebuffer(Framebuffer& framebuffer)
+{
+    auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+
+    std::array<vk::ClearValue, 2> clear_values {};
+    clear_values[0].setColor(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+    clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
+
+    auto render_pass_begin_info
+        = vk::RenderPassBeginInfo()
+              .setRenderPass(m_vk_render_pass)
+              .setFramebuffer(m_framebuffers[framebuffer.m_handle]->vk_framebuffers[m_current_draw_state.image_index])
+              .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
+              .setClearValueCount(static_cast<uint32_t>(clear_values.size()))
+              .setPClearValues(clear_values.data());
+
+    m_current_draw_state.command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+    auto viewport
+        = vk::Viewport()
+              .setX(0.0f)
+              .setY(0.0f)
+              .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
+              .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
+              .setMinDepth(0.0f)
+              .setMaxDepth(1.0f);
+
+    m_current_draw_state.command_buffer.setViewport(0, { viewport });
+
+    auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
+
+    m_current_draw_state.command_buffer.setScissor(0, { scissor });
+}
+
 void Renderer::begin_frame(const Window& window)
 {
     if (m_current_draw_state.is_drawing) {
@@ -2762,6 +2796,10 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
     FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture_impl) };
 
     return framebuffer_impl;
+}
+void Renderer::end_render_pass_framebuffer()
+{
+    m_current_draw_state.command_buffer.endRenderPass();
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

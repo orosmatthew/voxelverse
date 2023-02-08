@@ -295,6 +295,10 @@ void run()
 
         renderer.begin_frame(window);
 
+        renderer.begin_render_pass_framebuffer(framebuffer);
+
+        renderer.end_render_pass_framebuffer();
+
         renderer.begin_render_pass_present();
 
         world_renderer.draw();
