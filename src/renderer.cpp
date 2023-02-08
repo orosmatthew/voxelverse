@@ -812,6 +812,18 @@ Renderer::~Renderer()
 
     cleanup_vk_swapchain();
 
+    for (std::optional<FramebufferImpl>& framebuffer : m_framebuffers) {
+        if (framebuffer.has_value()) {
+            m_vk_device.destroy(framebuffer->texture.vk_sampler);
+            m_vk_device.destroy(framebuffer->texture.vk_image_view);
+            vmaDestroyImage(
+                m_vma_allocator, framebuffer->texture.image.vk_handle, framebuffer->texture.image.vma_allocation);
+            for (vk::Framebuffer& buffer : framebuffer->vk_framebuffers) {
+                m_vk_device.destroy(buffer);
+            }
+        }
+    }
+
     for (auto& [handle, texture] : m_textures) {
         m_vk_device.destroy(texture.vk_sampler);
         m_vk_device.destroy(texture.vk_image_view);
@@ -1965,7 +1977,7 @@ Renderer::RenderImage Renderer::create_color_image(
         samples,
         swapchain_format,
         vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eColorAttachment);
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled); // TODO: make the sampled optional
 
     vk::ImageView image_view
         = create_image_view(device, color_image.vk_handle, swapchain_format, vk::ImageAspectFlagBits::eColor, 1);
@@ -2620,6 +2632,87 @@ void Renderer::end_render_pass_present()
 {
     m_current_draw_state.command_buffer.endRenderPass();
 }
+Framebuffer Renderer::create_framebuffer()
+{
+    RenderImage render_image = create_color_image(
+        m_vk_device,
+        m_vma_allocator,
+        m_vk_swapchain_extent,
+        m_vk_swapchain_image_format.format,
+        vk::SampleCountFlagBits::e1);
+
+    std::vector<vk::Framebuffer> framebuffers;
+    framebuffers.reserve(m_vk_swapchain_framebuffers.size());
+
+    for (size_t i = 0; i < m_vk_swapchain_framebuffers.size(); i++) {
+
+        std::array<vk::ImageView, 3> attachments
+            = { m_color_image.vk_image_view, m_depth_image.vk_image_view, render_image.vk_image_view };
+
+        auto framebuffer_info
+            = vk::FramebufferCreateInfo()
+                  .setRenderPass(m_vk_render_pass)
+                  .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+                  .setPAttachments(attachments.data())
+                  .setWidth(m_vk_swapchain_extent.width)
+                  .setHeight(m_vk_swapchain_extent.height)
+                  .setLayers(1);
+
+        vk::ResultValue<vk::Framebuffer> framebuffer_result = m_vk_device.createFramebuffer(framebuffer_info);
+        if (framebuffer_result.result != vk::Result::eSuccess) {
+            throw std::runtime_error("[Renderer] Failed to create framebuffer");
+        }
+        framebuffers.push_back(std::move(framebuffer_result.value));
+    }
+
+    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, 1);
+
+    TextureImpl texture_impl = {
+        .image = render_image.image, .vk_image_view = render_image.vk_image_view, .vk_sampler = sampler, .mip_levels = 1
+    };
+
+    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture_impl) };
+
+    std::optional<size_t> id;
+    for (size_t i = 0; i < m_framebuffers.size(); i++) {
+        if (!m_framebuffers[i].has_value()) {
+            id = i;
+            break;
+        }
+    }
+    if (!id.has_value()) {
+        id = m_framebuffers.size();
+        m_framebuffers.push_back({});
+    }
+    m_framebuffers[*id] = std::move(framebuffer_impl);
+
+    LOG->info("[Renderer] Framebuffer created with ID: {}", *id);
+
+    return Framebuffer(*this, *id);
+}
+void Renderer::destroy(Framebuffer& framebuffer)
+{
+    if (!framebuffer.is_valid()) {
+        throw std::runtime_error("[Renderer] Attempted to destroy invalid framebuffer");
+    }
+    LOG->info("[Renderer] Destroyed framebuffer with ID: {}", framebuffer.handle());
+    size_t handle = framebuffer.handle();
+    framebuffer.invalidate();
+    defer_after_all_frames([this, handle](uint32_t) {
+        FramebufferImpl& framebuffer = m_framebuffers.at(handle).value();
+
+        m_vk_device.destroy(framebuffer.texture.vk_sampler);
+        m_vk_device.destroy(framebuffer.texture.vk_image_view);
+        vmaDestroyImage(m_vma_allocator, framebuffer.texture.image.vk_handle, framebuffer.texture.image.vma_allocation);
+        m_textures.erase(handle);
+
+        for (vk::Framebuffer& buffer : framebuffer.vk_framebuffers) {
+            m_vk_device.destroy(buffer);
+        }
+
+        m_framebuffers.at(handle).reset();
+    });
+}
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
     : m_sizes({ { vk::DescriptorType::eSampler, 0.5f },
@@ -2747,5 +2840,4 @@ void Renderer::DescriptorSetAllocator::free(vk::Device device, DescriptorSetImpl
     device.freeDescriptorSets(descriptor_set.vk_pool, 1, &descriptor_set.vk_handle);
     m_descriptor_sets[descriptor_set.id].reset();
 }
-
 }

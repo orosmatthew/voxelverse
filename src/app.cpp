@@ -229,6 +229,8 @@ void run()
 
     mve::Vector3i current_gen { -16, -16, -4 };
 
+    mve::Framebuffer framebuffer = renderer.create_framebuffer();
+
     while (!window.should_close()) {
         window.poll_events();
 

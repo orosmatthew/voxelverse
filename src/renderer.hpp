@@ -23,6 +23,7 @@
 #define VULKAN_HPP_ASSERT_ON_RESULT
 #include <vulkan/vulkan.hpp>
 
+#include "framebuffer.hpp"
 #include "shader.hpp"
 #include "vertex_data.hpp"
 
@@ -210,6 +211,8 @@ public:
      */
     void destroy(Texture& texture);
 
+    void destroy(Framebuffer& framebuffer);
+
     /**
      * @brief Update uniform buffer float
      * @param uniform_buffer
@@ -291,6 +294,8 @@ public:
      * @return Returns ivec2 of the extent of the renderer
      */
     [[nodiscard]] mve::Vector2i extent() const;
+
+    Framebuffer create_framebuffer();
 
 private:
     struct QueueFamilyIndices {
@@ -393,6 +398,11 @@ private:
         vk::Pipeline pipeline;
     };
 
+    struct FramebufferImpl {
+        std::vector<vk::Framebuffer> vk_framebuffers;
+        TextureImpl texture;
+    };
+
     class DescriptorSetAllocator {
     public:
         DescriptorSetAllocator();
@@ -463,6 +473,8 @@ private:
     std::vector<std::optional<GraphicsPipelineLayoutImpl>> m_graphics_pipeline_layouts_new {};
     //    std::unordered_map<GraphicsPipelineLayoutHandleImpl, GraphicsPipelineLayoutImpl> m_graphics_pipeline_layouts
     //    {};
+
+    std::vector<std::optional<FramebufferImpl>> m_framebuffers {};
 
     std::unordered_map<uint64_t, TextureImpl> m_textures {};
 

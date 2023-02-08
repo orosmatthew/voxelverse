@@ -60,7 +60,8 @@ set(SOURCE_FILES
         src/world_data.cpp
         src/world_renderer.cpp
         src/camera.cpp
-        src/ui_renderer.cpp)
+        src/ui_renderer.cpp
+        src/framebuffer.cpp)
 
 set(LIBS
         Vulkan::Vulkan
