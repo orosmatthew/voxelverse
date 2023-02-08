@@ -291,13 +291,17 @@ void run()
             trigger_place_block(camera, world_data, world_renderer);
         }
 
-        renderer.begin(window);
+        renderer.begin_frame(window);
+
+        renderer.begin_render_pass_present();
 
         world_renderer.draw();
 
         ui_renderer.draw();
 
-        renderer.end(window);
+        renderer.end_render_pass_present();
+
+        renderer.end_frame(window);
 
         std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
 

@@ -1140,7 +1140,41 @@ void Renderer::cmd_copy_buffer(
     command_buffer.copyBuffer(src_buffer, dst_buffer, 1, &copy_region);
 }
 
-void Renderer::begin(const Window& window)
+void Renderer::begin_render_pass_present()
+{
+    auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+
+    std::array<vk::ClearValue, 2> clear_values {};
+    clear_values[0].setColor(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+    clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
+
+    auto render_pass_begin_info
+        = vk::RenderPassBeginInfo()
+              .setRenderPass(m_vk_render_pass)
+              .setFramebuffer(m_vk_swapchain_framebuffers[m_current_draw_state.image_index])
+              .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
+              .setClearValueCount(static_cast<uint32_t>(clear_values.size()))
+              .setPClearValues(clear_values.data());
+
+    m_current_draw_state.command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+    auto viewport
+        = vk::Viewport()
+              .setX(0.0f)
+              .setY(0.0f)
+              .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
+              .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
+              .setMinDepth(0.0f)
+              .setMaxDepth(1.0f);
+
+    m_current_draw_state.command_buffer.setViewport(0, { viewport });
+
+    auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
+
+    m_current_draw_state.command_buffer.setScissor(0, { scissor });
+}
+
+void Renderer::begin_frame(const Window& window)
 {
     if (m_current_draw_state.is_drawing) {
         throw std::runtime_error("[Renderer] Already drawing");
@@ -1202,47 +1236,14 @@ void Renderer::begin(const Window& window)
         throw std::runtime_error("[Renderer] Failed to begin command buffer recording");
     }
 
-    auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
-
-    std::array<vk::ClearValue, 2> clear_values {};
-    clear_values[0].setColor(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
-    clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
-
-    auto render_pass_begin_info
-        = vk::RenderPassBeginInfo()
-              .setRenderPass(m_vk_render_pass)
-              .setFramebuffer(m_vk_swapchain_framebuffers[m_current_draw_state.image_index])
-              .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
-              .setClearValueCount(static_cast<uint32_t>(clear_values.size()))
-              .setPClearValues(clear_values.data());
-
     while (!m_command_buffer_deferred_functions.empty()) {
         std::invoke(m_command_buffer_deferred_functions.front(), m_current_draw_state.command_buffer);
         m_command_buffer_deferred_functions.pop();
     }
-
-    m_current_draw_state.command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-
-    auto viewport
-        = vk::Viewport()
-              .setX(0.0f)
-              .setY(0.0f)
-              .setWidth(static_cast<float>(m_vk_swapchain_extent.width))
-              .setHeight(static_cast<float>(m_vk_swapchain_extent.height))
-              .setMinDepth(0.0f)
-              .setMaxDepth(1.0f);
-
-    m_current_draw_state.command_buffer.setViewport(0, { viewport });
-
-    auto scissor = vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent);
-
-    m_current_draw_state.command_buffer.setScissor(0, { scissor });
 }
 
-void Renderer::end(const Window& window)
+void Renderer::end_frame(const Window& window)
 {
-    m_current_draw_state.command_buffer.endRenderPass();
-
     vk::Result end_result = m_current_draw_state.command_buffer.end();
     if (end_result != vk::Result::eSuccess) {
         throw std::runtime_error("[Renderer] Failed to end command buffer recording");
@@ -2613,6 +2614,11 @@ void Renderer::bind_descriptor_sets(uint32_t num, const std::array<DescriptorSet
         sets.data(),
         0,
         nullptr);
+}
+
+void Renderer::end_render_pass_present()
+{
+    m_current_draw_state.command_buffer.endRenderPass();
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

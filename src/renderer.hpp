@@ -30,6 +30,8 @@
 #define MVE_ENABLE_VALIDATION_LAYERS
 #endif
 
+#define MVE_ENABLE_VALIDATION_LAYERS
+
 namespace mve {
 
 // Forward declarations
@@ -61,7 +63,9 @@ public:
     /**
      * @brief Begin recording commands
      */
-    void begin(const Window& window);
+    void begin_frame(const Window& window);
+
+    void begin_render_pass_present();
 
     /**
      * @brief Bind and draw vertex buffer
@@ -91,7 +95,9 @@ public:
      * @brief End recording commands
      * @param window
      */
-    void end(const Window& window);
+    void end_frame(const Window& window);
+
+    void end_render_pass_present();
 
     /**
      * @brief Resize the renderer. Should be called on window resize
