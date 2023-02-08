@@ -489,6 +489,19 @@ private:
 
     void recreate_swapchain(const Window& window);
 
+    void recreate_framebuffers();
+
+    static FramebufferImpl create_framebuffer_impl(
+        vk::PhysicalDevice physical_device,
+        vk::Device device,
+        VmaAllocator allocator,
+        vk::Extent2D extent,
+        vk::Format image_format,
+        size_t count,
+        RenderImage& color_image,
+        DepthImage& depth_image,
+        vk::RenderPass render_pass);
+
     void wait_ready();
 
     DescriptorSetLayoutHandleImpl create_descriptor_set_layout(

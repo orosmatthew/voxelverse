@@ -942,6 +942,8 @@ void Renderer::recreate_swapchain(const Window& window)
         m_vk_swapchain_extent,
         m_color_image.vk_image_view,
         m_depth_image.vk_image_view);
+
+    recreate_framebuffers();
 }
 
 void Renderer::cleanup_vk_swapchain()
@@ -2634,44 +2636,6 @@ void Renderer::end_render_pass_present()
 }
 Framebuffer Renderer::create_framebuffer()
 {
-    RenderImage render_image = create_color_image(
-        m_vk_device,
-        m_vma_allocator,
-        m_vk_swapchain_extent,
-        m_vk_swapchain_image_format.format,
-        vk::SampleCountFlagBits::e1);
-
-    std::vector<vk::Framebuffer> framebuffers;
-    framebuffers.reserve(m_vk_swapchain_framebuffers.size());
-
-    for (size_t i = 0; i < m_vk_swapchain_framebuffers.size(); i++) {
-
-        std::array<vk::ImageView, 3> attachments
-            = { m_color_image.vk_image_view, m_depth_image.vk_image_view, render_image.vk_image_view };
-
-        auto framebuffer_info
-            = vk::FramebufferCreateInfo()
-                  .setRenderPass(m_vk_render_pass)
-                  .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
-                  .setPAttachments(attachments.data())
-                  .setWidth(m_vk_swapchain_extent.width)
-                  .setHeight(m_vk_swapchain_extent.height)
-                  .setLayers(1);
-
-        vk::ResultValue<vk::Framebuffer> framebuffer_result = m_vk_device.createFramebuffer(framebuffer_info);
-        if (framebuffer_result.result != vk::Result::eSuccess) {
-            throw std::runtime_error("[Renderer] Failed to create framebuffer");
-        }
-        framebuffers.push_back(std::move(framebuffer_result.value));
-    }
-
-    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, 1);
-
-    TextureImpl texture_impl = {
-        .image = render_image.image, .vk_image_view = render_image.vk_image_view, .vk_sampler = sampler, .mip_levels = 1
-    };
-
-    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture_impl) };
 
     std::optional<size_t> id;
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
@@ -2684,7 +2648,16 @@ Framebuffer Renderer::create_framebuffer()
         id = m_framebuffers.size();
         m_framebuffers.push_back({});
     }
-    m_framebuffers[*id] = std::move(framebuffer_impl);
+    m_framebuffers[*id] = std::move(create_framebuffer_impl(
+        m_vk_physical_device,
+        m_vk_device,
+        m_vma_allocator,
+        m_vk_swapchain_extent,
+        m_vk_swapchain_image_format.format,
+        m_vk_swapchain_framebuffers.size(),
+        m_color_image,
+        m_depth_image,
+        m_vk_render_pass));
 
     LOG->info("[Renderer] Framebuffer created with ID: {}", *id);
 
@@ -2712,6 +2685,83 @@ void Renderer::destroy(Framebuffer& framebuffer)
 
         m_framebuffers.at(handle).reset();
     });
+}
+void Renderer::recreate_framebuffers()
+{
+    std::set<size_t> ids_to_recreate;
+    for (size_t i = 0; i < m_framebuffers.size(); i++) {
+        if (m_framebuffers[i].has_value()) {
+            ids_to_recreate.insert(i);
+            m_vk_device.destroy(m_framebuffers[i]->texture.vk_sampler);
+            m_vk_device.destroy(m_framebuffers[i]->texture.vk_image_view);
+            vmaDestroyImage(
+                m_vma_allocator,
+                m_framebuffers[i]->texture.image.vk_handle,
+                m_framebuffers[i]->texture.image.vma_allocation);
+            for (vk::Framebuffer& buffer : m_framebuffers[i]->vk_framebuffers) {
+                m_vk_device.destroy(buffer);
+            }
+        }
+    }
+    for (size_t id : ids_to_recreate) {
+        m_framebuffers[id] = std::move(create_framebuffer_impl(
+            m_vk_physical_device,
+            m_vk_device,
+            m_vma_allocator,
+            m_vk_swapchain_extent,
+            m_vk_swapchain_image_format.format,
+            m_vk_swapchain_framebuffers.size(),
+            m_color_image,
+            m_depth_image,
+            m_vk_render_pass));
+    }
+}
+Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
+    vk::PhysicalDevice physical_device,
+    vk::Device device,
+    VmaAllocator allocator,
+    vk::Extent2D extent,
+    vk::Format image_format,
+    size_t count,
+    RenderImage& color_image,
+    DepthImage& depth_image,
+    vk::RenderPass render_pass)
+{
+    RenderImage render_image = create_color_image(device, allocator, extent, image_format, vk::SampleCountFlagBits::e1);
+
+    std::vector<vk::Framebuffer> framebuffers;
+    framebuffers.reserve(count);
+
+    for (size_t i = 0; i < count; i++) {
+
+        std::array<vk::ImageView, 3> attachments
+            = { color_image.vk_image_view, depth_image.vk_image_view, render_image.vk_image_view };
+
+        auto framebuffer_info
+            = vk::FramebufferCreateInfo()
+                  .setRenderPass(render_pass)
+                  .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+                  .setPAttachments(attachments.data())
+                  .setWidth(extent.width)
+                  .setHeight(extent.height)
+                  .setLayers(1);
+
+        vk::ResultValue<vk::Framebuffer> framebuffer_result = device.createFramebuffer(framebuffer_info);
+        if (framebuffer_result.result != vk::Result::eSuccess) {
+            throw std::runtime_error("[Renderer] Failed to create framebuffer");
+        }
+        framebuffers.push_back(std::move(framebuffer_result.value));
+    }
+
+    vk::Sampler sampler = create_texture_sampler(physical_device, device, 1);
+
+    TextureImpl texture_impl = {
+        .image = render_image.image, .vk_image_view = render_image.vk_image_view, .vk_sampler = sampler, .mip_levels = 1
+    };
+
+    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture_impl) };
+
+    return framebuffer_impl;
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
