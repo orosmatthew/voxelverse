@@ -1853,7 +1853,8 @@ Renderer::DepthImage Renderer::create_depth_image(
         samples,
         depth_format,
         vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        true);
 
     vk::ImageView depth_image_view
         = create_image_view(device, depth_image.vk_handle, depth_format, vk::ImageAspectFlagBits::eDepth, 1);
@@ -1912,7 +1913,8 @@ Renderer::Image Renderer::create_image(
     vk::SampleCountFlagBits samples,
     vk::Format format,
     vk::ImageTiling tiling,
-    vk::ImageUsageFlags usage)
+    vk::ImageUsageFlags usage,
+    bool dedicated)
 {
     VkImageCreateInfo image_info = {};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1931,7 +1933,9 @@ Renderer::Image Renderer::create_image(
 
     VmaAllocationCreateInfo vma_alloc_info = {};
     vma_alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
-    vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT; // TODO: Don't use dedicated
+    if (dedicated) {
+        vma_alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+    }
 
     VkImage image;
     VmaAllocation image_allocation;
@@ -2109,7 +2113,8 @@ Renderer::RenderImage Renderer::create_color_image(
         samples,
         swapchain_format,
         vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled); // TODO: make the sampled optional
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+        true); // TODO: make the sampled optional
 
     vk::ImageView image_view
         = create_image_view(device, color_image.vk_handle, swapchain_format, vk::ImageAspectFlagBits::eColor, 1);
@@ -2173,7 +2178,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO);
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
         cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
@@ -2249,7 +2254,7 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO,
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
         {});
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
@@ -2593,7 +2598,8 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
         vk::SampleCountFlagBits::e1,
         vk::Format::eR8G8B8A8Srgb,
         vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
+        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+        false);
 
     defer_to_command_buffer_front(
         [this, image, mip_levels, staging_buffer, width, height](vk::CommandBuffer command_buffer) {

@@ -31,7 +31,7 @@
 #define MVE_ENABLE_VALIDATION_LAYERS
 #endif
 
-#define MVE_ENABLE_VALIDATION_LAYERS
+// #define MVE_ENABLE_VALIDATION_LAYERS
 
 namespace mve {
 
@@ -544,7 +544,8 @@ private:
         vk::SampleCountFlagBits samples,
         vk::Format format,
         vk::ImageTiling tiling,
-        vk::ImageUsageFlags usage);
+        vk::ImageUsageFlags usage,
+        bool dedicated);
 
     void defer_to_all_frames(std::function<void(uint32_t)> func);
 
