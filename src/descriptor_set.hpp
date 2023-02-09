@@ -45,7 +45,7 @@ public:
 
     void write_binding(const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer);
 
-    void write_binding(const ShaderDescriptorBinding& descriptor_binding, Texture& texture);
+    void write_binding(const ShaderDescriptorBinding& descriptor_binding, const Texture& texture);
 
 private:
     bool m_valid = false;

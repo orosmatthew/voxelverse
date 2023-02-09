@@ -5,6 +5,7 @@
 namespace mve {
 
 class Renderer;
+class Texture;
 
 class Framebuffer {
 
@@ -20,6 +21,8 @@ public:
     Framebuffer(Framebuffer&& other);
 
     ~Framebuffer();
+
+    const Texture& texture() const;
 
     Framebuffer& operator=(const Framebuffer&) = delete;
 

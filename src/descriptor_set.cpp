@@ -60,7 +60,7 @@ void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_bind
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, uniform_buffer);
 }
-void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
+void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }

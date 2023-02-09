@@ -81,6 +81,9 @@ Renderer::Renderer(
     m_vk_render_pass = create_vk_render_pass(
         m_vk_device, m_vk_swapchain_image_format.format, find_depth_format(m_vk_physical_device), m_msaa_samples);
 
+    m_vk_render_pass_framebuffer = create_vk_render_pass_framebuffer(
+        m_vk_device, m_vk_swapchain_image_format.format, find_depth_format(m_vk_physical_device), m_msaa_samples);
+
     m_vk_swapchain_framebuffers = create_vk_framebuffers(
         m_vk_device,
         m_vk_swapchain_image_views,
@@ -655,6 +658,92 @@ vk::PipelineLayout Renderer::create_vk_pipeline_layout(const std::vector<Descrip
     return pipeline_layout_result.value;
 }
 
+vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
+    vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples)
+{
+    auto color_attachment
+        = vk::AttachmentDescription()
+              .setFormat(swapchain_format)
+              .setSamples(samples)
+              .setLoadOp(vk::AttachmentLoadOp::eClear)
+              .setStoreOp(vk::AttachmentStoreOp::eStore)
+              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+              .setInitialLayout(vk::ImageLayout::eUndefined)
+              .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    auto depth_attachment
+        = vk::AttachmentDescription()
+              .setFormat(depth_format)
+              .setSamples(samples)
+              .setLoadOp(vk::AttachmentLoadOp::eClear)
+              .setStoreOp(vk::AttachmentStoreOp::eDontCare)
+              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+              .setInitialLayout(vk::ImageLayout::eUndefined)
+              .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    auto color_attachment_resolve
+        = vk::AttachmentDescription()
+              .setFormat(swapchain_format)
+              .setSamples(vk::SampleCountFlagBits::e1)
+              .setLoadOp(vk::AttachmentLoadOp::eDontCare)
+              .setStoreOp(vk::AttachmentStoreOp::eStore)
+              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+              .setInitialLayout(vk::ImageLayout::eUndefined)
+              .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    auto color_attachment_ref
+        = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    auto depth_attachment_ref
+        = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    auto color_attachment_resolve_ref
+        = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    auto subpass
+        = vk::SubpassDescription()
+              .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+              .setColorAttachmentCount(1)
+              .setPColorAttachments(&color_attachment_ref)
+              .setPDepthStencilAttachment(&depth_attachment_ref)
+              .setPResolveAttachments(&color_attachment_resolve_ref);
+
+    auto subpass_dependency
+        = vk::SubpassDependency()
+              .setSrcSubpass(VK_SUBPASS_EXTERNAL)
+              .setDstSubpass(0)
+              .setSrcStageMask(
+                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests
+                  | vk::PipelineStageFlagBits::eLateFragmentTests)
+              .setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+              .setDstStageMask(
+                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests
+                  | vk::PipelineStageFlagBits::eLateFragmentTests)
+              .setDstAccessMask(
+                  vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite);
+
+    std::array<vk::AttachmentDescription, 3> attachments
+        = { color_attachment, depth_attachment, color_attachment_resolve };
+
+    auto render_pass_info
+        = vk::RenderPassCreateInfo()
+              .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+              .setPAttachments(attachments.data())
+              .setSubpassCount(1)
+              .setPSubpasses(&subpass)
+              .setSubpassCount(1)
+              .setPDependencies(&subpass_dependency);
+
+    vk::ResultValue<vk::RenderPass> render_pass_result = device.createRenderPass(render_pass_info);
+    if (render_pass_result.result != vk::Result::eSuccess) {
+        throw std::runtime_error("[Renderer] Failed to create render pass");
+    }
+    return render_pass_result.value;
+}
+
 vk::RenderPass Renderer::create_vk_render_pass(
     vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples)
 {
@@ -713,10 +802,12 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setSrcSubpass(VK_SUBPASS_EXTERNAL)
               .setDstSubpass(0)
               .setSrcStageMask(
-                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests)
-              .setSrcAccessMask(vk::AccessFlagBits::eNone)
+                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests
+                  | vk::PipelineStageFlagBits::eLateFragmentTests)
+              .setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
               .setDstStageMask(
-                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests)
+                  vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests
+                  | vk::PipelineStageFlagBits::eLateFragmentTests)
               .setDstAccessMask(
                   vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite);
 
@@ -814,12 +905,11 @@ Renderer::~Renderer()
 
     for (std::optional<FramebufferImpl>& framebuffer : m_framebuffers) {
         if (framebuffer.has_value()) {
-            m_vk_device.destroy(framebuffer->texture.vk_sampler);
-            m_vk_device.destroy(framebuffer->texture.vk_image_view);
-            vmaDestroyImage(
-                m_vma_allocator, framebuffer->texture.image.vk_handle, framebuffer->texture.image.vma_allocation);
             for (vk::Framebuffer& buffer : framebuffer->vk_framebuffers) {
                 m_vk_device.destroy(buffer);
+            }
+            if (framebuffer->texture.is_valid()) {
+                destroy(framebuffer->texture);
             }
         }
     }
@@ -890,60 +980,60 @@ Renderer::~Renderer()
 
 void Renderer::recreate_swapchain(const Window& window)
 {
-    mve::Vector2i window_size;
-    glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
-
-    while (window_size == mve::Vector2i(0, 0)) {
-        glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
-        window.wait_for_events();
-    }
-
-    vk::Result wait_result = m_vk_device.waitIdle();
-    if (wait_result != vk::Result::eSuccess) {
-        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation");
-    }
-
-    cleanup_vk_swapchain();
-
-    SwapchainSupportDetails swapchain_support_details
-        = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
-
-    m_vk_swapchain_extent = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.glfw_handle());
-
-    m_vk_swapchain = create_vk_swapchain(
-        m_vk_physical_device,
-        m_vk_device,
-        m_vk_surface,
-        m_vk_swapchain_image_format,
-        m_vk_swapchain_extent,
-        m_vk_queue_family_indices);
-
-    m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
-
-    m_vk_swapchain_image_views
-        = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
-
-    m_color_image = create_color_image(
-        m_vk_device, m_vma_allocator, m_vk_swapchain_extent, m_vk_swapchain_image_format.format, m_msaa_samples);
-
-    m_depth_image = create_depth_image(
-        m_vk_physical_device,
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        m_vma_allocator,
-        m_vk_swapchain_extent,
-        m_msaa_samples);
-
-    m_vk_swapchain_framebuffers = create_vk_framebuffers(
-        m_vk_device,
-        m_vk_swapchain_image_views,
-        m_vk_render_pass,
-        m_vk_swapchain_extent,
-        m_color_image.vk_image_view,
-        m_depth_image.vk_image_view);
-
-    recreate_framebuffers();
+    //    mve::Vector2i window_size;
+    //    glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
+    //
+    //    while (window_size == mve::Vector2i(0, 0)) {
+    //        glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
+    //        window.wait_for_events();
+    //    }
+    //
+    //    vk::Result wait_result = m_vk_device.waitIdle();
+    //    if (wait_result != vk::Result::eSuccess) {
+    //        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation");
+    //    }
+    //
+    //    cleanup_vk_swapchain();
+    //
+    //    SwapchainSupportDetails swapchain_support_details
+    //        = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
+    //
+    //    m_vk_swapchain_extent = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.glfw_handle());
+    //
+    //    m_vk_swapchain = create_vk_swapchain(
+    //        m_vk_physical_device,
+    //        m_vk_device,
+    //        m_vk_surface,
+    //        m_vk_swapchain_image_format,
+    //        m_vk_swapchain_extent,
+    //        m_vk_queue_family_indices);
+    //
+    //    m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
+    //
+    //    m_vk_swapchain_image_views
+    //        = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
+    //
+    //    m_color_image = create_color_image(
+    //        m_vk_device, m_vma_allocator, m_vk_swapchain_extent, m_vk_swapchain_image_format.format, m_msaa_samples);
+    //
+    //    m_depth_image = create_depth_image(
+    //        m_vk_physical_device,
+    //        m_vk_device,
+    //        m_vk_command_pool,
+    //        m_vk_graphics_queue,
+    //        m_vma_allocator,
+    //        m_vk_swapchain_extent,
+    //        m_msaa_samples);
+    //
+    //    m_vk_swapchain_framebuffers = create_vk_framebuffers(
+    //        m_vk_device,
+    //        m_vk_swapchain_image_views,
+    //        m_vk_render_pass,
+    //        m_vk_swapchain_extent,
+    //        m_color_image.vk_image_view,
+    //        m_depth_image.vk_image_view);
+    //
+    //    recreate_framebuffers();
 }
 
 void Renderer::cleanup_vk_swapchain()
@@ -1198,7 +1288,7 @@ void Renderer::begin_render_pass_framebuffer(Framebuffer& framebuffer)
 
     auto render_pass_begin_info
         = vk::RenderPassBeginInfo()
-              .setRenderPass(m_vk_render_pass)
+              .setRenderPass(m_vk_render_pass_framebuffer)
               .setFramebuffer(m_framebuffers[framebuffer.m_handle]->vk_framebuffers[m_current_draw_state.image_index])
               .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
               .setClearValueCount(static_cast<uint32_t>(clear_values.size()))
@@ -2027,11 +2117,12 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
 }
 
 void Renderer::write_descriptor_binding(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture)
+    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
     uint32_t binding_num = descriptor_binding.binding();
     uint64_t texture_handle = texture.handle();
     uint64_t descriptor_set_handle = descriptor_set.handle();
+    begin_single_submit(m_vk_device, m_vk_command_pool);
     defer_to_all_frames([this, texture_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
         auto image_info = vk::DescriptorImageInfo()
                               .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
@@ -2543,6 +2634,21 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
     return Texture(*this, handle);
 }
 
+Texture Renderer::create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels)
+{
+    TextureImpl texture {
+        .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels
+    };
+
+    auto handle = m_resource_handle_count;
+    m_resource_handle_count++;
+    m_textures.insert({ handle, texture });
+
+    LOG->info("[Renderer] Texture created with ID: {}", handle);
+
+    return Texture(*this, handle);
+}
+
 void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
 {
     VertexBufferImpl& vertex_buffer_impl = *m_vertex_buffers_new.at(vertex_buffer.handle());
@@ -2682,16 +2788,7 @@ Framebuffer Renderer::create_framebuffer()
         id = m_framebuffers.size();
         m_framebuffers.push_back({});
     }
-    m_framebuffers[*id] = std::move(create_framebuffer_impl(
-        m_vk_physical_device,
-        m_vk_device,
-        m_vma_allocator,
-        m_vk_swapchain_extent,
-        m_vk_swapchain_image_format.format,
-        m_vk_swapchain_framebuffers.size(),
-        m_color_image,
-        m_depth_image,
-        m_vk_render_pass));
+    m_framebuffers[*id] = std::move(create_framebuffer_impl());
 
     LOG->info("[Renderer] Framebuffer created with ID: {}", *id);
 
@@ -2708,9 +2805,6 @@ void Renderer::destroy(Framebuffer& framebuffer)
     defer_after_all_frames([this, handle](uint32_t) {
         FramebufferImpl& framebuffer = m_framebuffers.at(handle).value();
 
-        m_vk_device.destroy(framebuffer.texture.vk_sampler);
-        m_vk_device.destroy(framebuffer.texture.vk_image_view);
-        vmaDestroyImage(m_vma_allocator, framebuffer.texture.image.vk_handle, framebuffer.texture.image.vma_allocation);
         m_textures.erase(handle);
 
         for (vk::Framebuffer& buffer : framebuffer.vk_framebuffers) {
@@ -2726,80 +2820,93 @@ void Renderer::recreate_framebuffers()
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
         if (m_framebuffers[i].has_value()) {
             ids_to_recreate.insert(i);
-            m_vk_device.destroy(m_framebuffers[i]->texture.vk_sampler);
-            m_vk_device.destroy(m_framebuffers[i]->texture.vk_image_view);
-            vmaDestroyImage(
-                m_vma_allocator,
-                m_framebuffers[i]->texture.image.vk_handle,
-                m_framebuffers[i]->texture.image.vma_allocation);
             for (vk::Framebuffer& buffer : m_framebuffers[i]->vk_framebuffers) {
                 m_vk_device.destroy(buffer);
             }
         }
     }
     for (size_t id : ids_to_recreate) {
-        m_framebuffers[id] = std::move(create_framebuffer_impl(
-            m_vk_physical_device,
-            m_vk_device,
-            m_vma_allocator,
-            m_vk_swapchain_extent,
-            m_vk_swapchain_image_format.format,
-            m_vk_swapchain_framebuffers.size(),
-            m_color_image,
-            m_depth_image,
-            m_vk_render_pass));
+        m_framebuffers[id] = std::move(create_framebuffer_impl());
     }
 }
-Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
-    vk::PhysicalDevice physical_device,
-    vk::Device device,
-    VmaAllocator allocator,
-    vk::Extent2D extent,
-    vk::Format image_format,
-    size_t count,
-    RenderImage& color_image,
-    DepthImage& depth_image,
-    vk::RenderPass render_pass)
+Renderer::FramebufferImpl Renderer::create_framebuffer_impl()
 {
-    RenderImage render_image = create_color_image(device, allocator, extent, image_format, vk::SampleCountFlagBits::e1);
+    RenderImage render_image = create_color_image(
+        m_vk_device,
+        m_vma_allocator,
+        m_vk_swapchain_extent,
+        m_vk_swapchain_image_format.format,
+        vk::SampleCountFlagBits::e1);
 
     std::vector<vk::Framebuffer> framebuffers;
-    framebuffers.reserve(count);
+    framebuffers.reserve(m_vk_swapchain_framebuffers.size());
 
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < m_vk_swapchain_framebuffers.size(); i++) {
 
         std::array<vk::ImageView, 3> attachments
-            = { color_image.vk_image_view, depth_image.vk_image_view, render_image.vk_image_view };
+            = { m_color_image.vk_image_view, m_depth_image.vk_image_view, render_image.vk_image_view };
 
         auto framebuffer_info
             = vk::FramebufferCreateInfo()
-                  .setRenderPass(render_pass)
+                  .setRenderPass(m_vk_render_pass)
                   .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
                   .setPAttachments(attachments.data())
-                  .setWidth(extent.width)
-                  .setHeight(extent.height)
+                  .setWidth(m_vk_swapchain_extent.width)
+                  .setHeight(m_vk_swapchain_extent.height)
                   .setLayers(1);
 
-        vk::ResultValue<vk::Framebuffer> framebuffer_result = device.createFramebuffer(framebuffer_info);
+        vk::ResultValue<vk::Framebuffer> framebuffer_result = m_vk_device.createFramebuffer(framebuffer_info);
         if (framebuffer_result.result != vk::Result::eSuccess) {
             throw std::runtime_error("[Renderer] Failed to create framebuffer");
         }
         framebuffers.push_back(std::move(framebuffer_result.value));
     }
 
-    vk::Sampler sampler = create_texture_sampler(physical_device, device, 1);
+    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, 1);
 
-    TextureImpl texture_impl = {
-        .image = render_image.image, .vk_image_view = render_image.vk_image_view, .vk_sampler = sampler, .mip_levels = 1
-    };
+    Texture texture = create_texture(render_image.image, render_image.vk_image_view, sampler, 1);
 
-    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture_impl) };
+    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture) };
 
     return framebuffer_impl;
 }
-void Renderer::end_render_pass_framebuffer()
+
+void Renderer::end_render_pass_framebuffer(const Framebuffer& framebuffer)
 {
     m_current_draw_state.command_buffer.endRenderPass();
+//
+    //    auto subresource_range
+    //        = vk::ImageSubresourceRange()
+    //              .setAspectMask(vk::ImageAspectFlagBits::eColor)
+    //              .setBaseArrayLayer(0)
+    //              .setLayerCount(1)
+    //              .setLevelCount(1);
+    //
+    //    auto barrier
+    //        = vk::ImageMemoryBarrier()
+    //              .setImage(m_textures[framebuffer.texture().m_handle].image.vk_handle)
+    //              .setOldLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+    //              .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+    //              .setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
+    //              .setDstAccessMask(vk::AccessFlagBits::eShaderRead)
+    //              .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+    //              .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+    //              .setSubresourceRange(subresource_range);
+    //
+    //    m_current_draw_state.command_buffer.pipelineBarrier(
+    //        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //        vk::PipelineStageFlagBits::eFragmentShader,
+    //        {},
+    //        0,
+    //        nullptr,
+    //        0,
+    //        nullptr,
+    //        1,
+    //        &barrier);
+}
+const Texture& Renderer::framebuffer_texture(const Framebuffer& framebuffer)
+{
+    return m_framebuffers[framebuffer.m_handle]->texture;
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

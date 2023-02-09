@@ -102,7 +102,7 @@ public:
 
     void end_render_pass_present();
 
-    void end_render_pass_framebuffer();
+    void end_render_pass_framebuffer(const Framebuffer& framebuffer);
 
     /**
      * @brief Resize the renderer. Should be called on window resize
@@ -157,7 +157,7 @@ public:
      * @param texture
      */
     void write_descriptor_binding(
-        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, Texture& texture);
+        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture);
 
     /**
      * @brief Create texture from image file-path
@@ -301,6 +301,8 @@ public:
 
     Framebuffer create_framebuffer();
 
+    const Texture& framebuffer_texture(const Framebuffer& framebuffer);
+
 private:
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphics_family;
@@ -404,7 +406,7 @@ private:
 
     struct FramebufferImpl {
         std::vector<vk::Framebuffer> vk_framebuffers;
-        TextureImpl texture;
+        Texture texture;
     };
 
     class DescriptorSetAllocator {
@@ -447,6 +449,7 @@ private:
     std::vector<vk::Image> m_vk_swapchain_images;
     std::vector<vk::ImageView> m_vk_swapchain_image_views;
     vk::RenderPass m_vk_render_pass;
+    vk::RenderPass m_vk_render_pass_framebuffer;
     std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
     vk::CommandPool m_vk_command_pool;
     QueueFamilyIndices m_vk_queue_family_indices;
@@ -495,16 +498,9 @@ private:
 
     void recreate_framebuffers();
 
-    static FramebufferImpl create_framebuffer_impl(
-        vk::PhysicalDevice physical_device,
-        vk::Device device,
-        VmaAllocator allocator,
-        vk::Extent2D extent,
-        vk::Format image_format,
-        size_t count,
-        RenderImage& color_image,
-        DepthImage& depth_image,
-        vk::RenderPass render_pass);
+    Texture create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
+
+    FramebufferImpl create_framebuffer_impl();
 
     void wait_ready();
 
@@ -659,6 +655,9 @@ private:
     vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandleImpl>& layouts);
 
     static vk::RenderPass create_vk_render_pass(
+        vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples);
+
+    static vk::RenderPass create_vk_render_pass_framebuffer(
         vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples);
 
     static std::vector<vk::Framebuffer> create_vk_framebuffers(

@@ -197,7 +197,9 @@ void run()
 
     WorldRenderer world_renderer(renderer);
 
-    UIRenderer ui_renderer(renderer);
+    mve::Framebuffer framebuffer = renderer.create_framebuffer();
+
+    UIRenderer ui_renderer(renderer, framebuffer.texture());
 
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -16, -16, -4 }, { 16, 16, 4 });
@@ -228,8 +230,6 @@ void run()
     bool cursor_captured = true;
 
     mve::Vector3i current_gen { -16, -16, -4 };
-
-    mve::Framebuffer framebuffer = renderer.create_framebuffer();
 
     while (!window.should_close()) {
         window.poll_events();
@@ -297,11 +297,11 @@ void run()
 
         renderer.begin_render_pass_framebuffer(framebuffer);
 
-        renderer.end_render_pass_framebuffer();
+        world_renderer.draw();
+
+        renderer.end_render_pass_framebuffer(framebuffer);
 
         renderer.begin_render_pass_present();
-
-        world_renderer.draw();
 
         ui_renderer.draw();
 

@@ -9,6 +9,9 @@ namespace mve {
 class Renderer;
 
 class Texture {
+
+    friend Renderer;
+
 public:
     Texture(Renderer& renderer, const std::filesystem::path& path);
 

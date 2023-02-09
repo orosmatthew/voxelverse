@@ -61,4 +61,8 @@ void Framebuffer::invalidate()
 {
     m_valid = false;
 }
+const Texture& Framebuffer::texture() const
+{
+    return m_renderer->framebuffer_texture(*this);
+}
 }
