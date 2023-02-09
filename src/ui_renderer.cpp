@@ -2,7 +2,7 @@
 
 #include "math/math.hpp"
 
-UIRenderer::UIRenderer(mve::Renderer& renderer, const mve::Texture& texture)
+UIRenderer::UIRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
     , m_vertex_shader(mve::Shader("../res/bin/shader/ui.vert.spv", mve::ShaderType::vertex))
     , m_fragment_shader(mve::Shader("../res/bin/shader/ui.frag.spv", mve::ShaderType::fragment))
@@ -40,12 +40,12 @@ UIRenderer::UIRenderer(mve::Renderer& renderer, const mve::Texture& texture)
 
     Cross cross { .vertex_buffer = renderer.create_vertex_buffer(cross_data),
                   .index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 }),
-                  //                  .texture = renderer.create_texture("../res/cross.png"),
+                  .texture = renderer.create_texture("../res/cross.png"),
                   .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),
                   .uniform_buffer = renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)),
                   .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };
     cross.descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), cross.uniform_buffer);
-    cross.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
+    cross.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), cross.texture);
     cross.uniform_buffer.update(cross.model_location, mve::Matrix4::identity());
     m_cross = std::move(cross);
 }
@@ -70,4 +70,8 @@ void UIRenderer::draw()
         m_renderer->bind_vertex_buffer(m_cross.value().vertex_buffer);
         m_renderer->draw_index_buffer(m_cross.value().index_buffer);
     }
+}
+void UIRenderer::update_framebuffer_texture(const mve::Texture& texture)
+{
+    m_cross->descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
 }

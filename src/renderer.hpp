@@ -299,7 +299,7 @@ public:
      */
     [[nodiscard]] mve::Vector2i extent() const;
 
-    Framebuffer create_framebuffer();
+    Framebuffer create_framebuffer(std::function<void(void)> callback);
 
     const Texture& framebuffer_texture(const Framebuffer& framebuffer);
 
@@ -407,6 +407,7 @@ private:
     struct FramebufferImpl {
         std::vector<vk::Framebuffer> vk_framebuffers;
         Texture texture;
+        std::optional<std::function<void(void)>> callback;
     };
 
     class DescriptorSetAllocator {
@@ -500,7 +501,7 @@ private:
 
     Texture create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
 
-    FramebufferImpl create_framebuffer_impl();
+    FramebufferImpl create_framebuffer_impl(std::optional<std::function<void(void)>> callback);
 
     void wait_ready();
 

@@ -12,7 +12,7 @@ class Framebuffer {
     friend Renderer;
 
 public:
-    Framebuffer(Renderer& renderer);
+    Framebuffer(Renderer& renderer, std::function<void(void)> callback);
 
     Framebuffer(Renderer& renderer, size_t handle);
 

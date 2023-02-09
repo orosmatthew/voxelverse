@@ -4,9 +4,9 @@
 
 namespace mve {
 
-Framebuffer::Framebuffer(Renderer& renderer)
+Framebuffer::Framebuffer(Renderer& renderer, std::function<void(void)> callback)
 {
-    *this = renderer.create_framebuffer();
+    *this = renderer.create_framebuffer(callback);
 }
 Framebuffer::Framebuffer(Renderer& renderer, size_t handle)
     : m_valid(true)

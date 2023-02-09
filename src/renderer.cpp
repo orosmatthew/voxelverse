@@ -963,6 +963,7 @@ Renderer::~Renderer()
     }
 
     m_vk_device.destroy(m_vk_render_pass);
+    m_vk_device.destroy(m_vk_render_pass_framebuffer);
 
     for (FrameInFlight& frame : m_frames_in_flight) {
         m_vk_device.destroy(frame.render_finished_semaphore);
@@ -980,60 +981,60 @@ Renderer::~Renderer()
 
 void Renderer::recreate_swapchain(const Window& window)
 {
-    //    mve::Vector2i window_size;
-    //    glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
-    //
-    //    while (window_size == mve::Vector2i(0, 0)) {
-    //        glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
-    //        window.wait_for_events();
-    //    }
-    //
-    //    vk::Result wait_result = m_vk_device.waitIdle();
-    //    if (wait_result != vk::Result::eSuccess) {
-    //        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation");
-    //    }
-    //
-    //    cleanup_vk_swapchain();
-    //
-    //    SwapchainSupportDetails swapchain_support_details
-    //        = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
-    //
-    //    m_vk_swapchain_extent = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.glfw_handle());
-    //
-    //    m_vk_swapchain = create_vk_swapchain(
-    //        m_vk_physical_device,
-    //        m_vk_device,
-    //        m_vk_surface,
-    //        m_vk_swapchain_image_format,
-    //        m_vk_swapchain_extent,
-    //        m_vk_queue_family_indices);
-    //
-    //    m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
-    //
-    //    m_vk_swapchain_image_views
-    //        = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
-    //
-    //    m_color_image = create_color_image(
-    //        m_vk_device, m_vma_allocator, m_vk_swapchain_extent, m_vk_swapchain_image_format.format, m_msaa_samples);
-    //
-    //    m_depth_image = create_depth_image(
-    //        m_vk_physical_device,
-    //        m_vk_device,
-    //        m_vk_command_pool,
-    //        m_vk_graphics_queue,
-    //        m_vma_allocator,
-    //        m_vk_swapchain_extent,
-    //        m_msaa_samples);
-    //
-    //    m_vk_swapchain_framebuffers = create_vk_framebuffers(
-    //        m_vk_device,
-    //        m_vk_swapchain_image_views,
-    //        m_vk_render_pass,
-    //        m_vk_swapchain_extent,
-    //        m_color_image.vk_image_view,
-    //        m_depth_image.vk_image_view);
-    //
-    //    recreate_framebuffers();
+    mve::Vector2i window_size;
+    glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
+
+    while (window_size == mve::Vector2i(0, 0)) {
+        glfwGetFramebufferSize(window.glfw_handle(), &(window_size.x), &(window_size.y));
+        window.wait_for_events();
+    }
+
+    vk::Result wait_result = m_vk_device.waitIdle();
+    if (wait_result != vk::Result::eSuccess) {
+        throw std::runtime_error("[Renderer] Failed to wait idle for swapchain recreation");
+    }
+
+    cleanup_vk_swapchain();
+
+    SwapchainSupportDetails swapchain_support_details
+        = get_vk_swapchain_support_details(m_vk_physical_device, m_vk_surface);
+
+    m_vk_swapchain_extent = get_vk_swapchain_extent(swapchain_support_details.capabilities, window.glfw_handle());
+
+    m_vk_swapchain = create_vk_swapchain(
+        m_vk_physical_device,
+        m_vk_device,
+        m_vk_surface,
+        m_vk_swapchain_image_format,
+        m_vk_swapchain_extent,
+        m_vk_queue_family_indices);
+
+    m_vk_swapchain_images = get_vk_swapchain_images(m_vk_device, m_vk_swapchain);
+
+    m_vk_swapchain_image_views
+        = create_vk_swapchain_image_views(m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
+
+    m_color_image = create_color_image(
+        m_vk_device, m_vma_allocator, m_vk_swapchain_extent, m_vk_swapchain_image_format.format, m_msaa_samples);
+
+    m_depth_image = create_depth_image(
+        m_vk_physical_device,
+        m_vk_device,
+        m_vk_command_pool,
+        m_vk_graphics_queue,
+        m_vma_allocator,
+        m_vk_swapchain_extent,
+        m_msaa_samples);
+
+    m_vk_swapchain_framebuffers = create_vk_framebuffers(
+        m_vk_device,
+        m_vk_swapchain_image_views,
+        m_vk_render_pass,
+        m_vk_swapchain_extent,
+        m_color_image.vk_image_view,
+        m_depth_image.vk_image_view);
+
+    recreate_framebuffers();
 }
 
 void Renderer::cleanup_vk_swapchain()
@@ -2774,9 +2775,8 @@ void Renderer::end_render_pass_present()
 {
     m_current_draw_state.command_buffer.endRenderPass();
 }
-Framebuffer Renderer::create_framebuffer()
+Framebuffer Renderer::create_framebuffer(std::function<void(void)> callback)
 {
-
     std::optional<size_t> id;
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
         if (!m_framebuffers[i].has_value()) {
@@ -2788,7 +2788,7 @@ Framebuffer Renderer::create_framebuffer()
         id = m_framebuffers.size();
         m_framebuffers.push_back({});
     }
-    m_framebuffers[*id] = std::move(create_framebuffer_impl());
+    m_framebuffers[*id] = std::move(create_framebuffer_impl(callback));
 
     LOG->info("[Renderer] Framebuffer created with ID: {}", *id);
 
@@ -2816,20 +2816,23 @@ void Renderer::destroy(Framebuffer& framebuffer)
 }
 void Renderer::recreate_framebuffers()
 {
-    std::set<size_t> ids_to_recreate;
+    std::vector<std::pair<size_t, std::optional<std::function<void(void)>>>> ids_to_recreate;
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
         if (m_framebuffers[i].has_value()) {
-            ids_to_recreate.insert(i);
+            ids_to_recreate.push_back({ i, m_framebuffers[i]->callback });
             for (vk::Framebuffer& buffer : m_framebuffers[i]->vk_framebuffers) {
                 m_vk_device.destroy(buffer);
             }
         }
     }
-    for (size_t id : ids_to_recreate) {
-        m_framebuffers[id] = std::move(create_framebuffer_impl());
+    for (auto& [id, callback] : ids_to_recreate) {
+        m_framebuffers[id] = std::move(create_framebuffer_impl(callback));
+    }
+    for (const std::optional<FramebufferImpl>& framebuffer : m_framebuffers) {
+        std::invoke(*framebuffer->callback);
     }
 }
-Renderer::FramebufferImpl Renderer::create_framebuffer_impl()
+Renderer::FramebufferImpl Renderer::create_framebuffer_impl(std::optional<std::function<void(void)>> callback)
 {
     RenderImage render_image = create_color_image(
         m_vk_device,
@@ -2866,7 +2869,9 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl()
 
     Texture texture = create_texture(render_image.image, render_image.vk_image_view, sampler, 1);
 
-    FramebufferImpl framebuffer_impl { .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture) };
+    FramebufferImpl framebuffer_impl {
+        .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture), .callback = callback
+    };
 
     return framebuffer_impl;
 }
@@ -2874,7 +2879,7 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl()
 void Renderer::end_render_pass_framebuffer(const Framebuffer& framebuffer)
 {
     m_current_draw_state.command_buffer.endRenderPass();
-//
+    //
     //    auto subresource_range
     //        = vk::ImageSubresourceRange()
     //              .setAspectMask(vk::ImageAspectFlagBits::eColor)

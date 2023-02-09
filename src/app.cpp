@@ -197,9 +197,10 @@ void run()
 
     WorldRenderer world_renderer(renderer);
 
-    mve::Framebuffer framebuffer = renderer.create_framebuffer();
+    UIRenderer ui_renderer(renderer);
 
-    UIRenderer ui_renderer(renderer, framebuffer.texture());
+    mve::Framebuffer framebuffer
+        = renderer.create_framebuffer([&]() { ui_renderer.update_framebuffer_texture(framebuffer.texture()); });
 
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -16, -16, -4 }, { 16, 16, 4 });
