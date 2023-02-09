@@ -56,12 +56,11 @@ Renderer::Renderer(
     m_vk_graphics_queue = m_vk_device.getQueue(m_vk_queue_family_indices.graphics_family.value(), 0);
     m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0);
 
-    //    allocatorCreateInfo.preferredLargeHeapBlockSize = 2048ull * 1024 * 1024;
-
     VmaAllocatorCreateInfo allocatorCreateInfo = {};
     allocatorCreateInfo.physicalDevice = m_vk_physical_device;
     allocatorCreateInfo.device = m_vk_device;
     allocatorCreateInfo.instance = m_vk_instance;
+    allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 
     vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
 
@@ -296,6 +295,8 @@ vk::Device Renderer::create_vk_logical_device(
     device_features.sampleRateShading = VK_TRUE;
 
     std::vector<const char*> required_exts = get_vk_device_required_exts();
+
+    required_exts.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
     const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
@@ -1062,6 +1063,8 @@ std::vector<const char*> Renderer::get_vk_instance_required_exts()
 
     std::vector<const char*> exts(glfw_exts, glfw_exts + glfw_ext_count);
 
+    exts.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
     exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
@@ -1228,7 +1231,7 @@ Renderer::Buffer Renderer::create_buffer(
 
     VmaAllocationCreateInfo vma_alloc_info = {};
     vma_alloc_info.usage = memory_usage;
-    vma_alloc_info.flags = flags;
+    vma_alloc_info.flags = flags | VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT;
 
     VkBuffer vk_buffer;
     VmaAllocation allocation;
@@ -1336,6 +1339,8 @@ void Renderer::begin_frame(const Window& window)
         return;
     }
     m_current_draw_state.image_index = acquire_result.value;
+
+    vmaSetCurrentFrameIndex(m_vma_allocator, acquire_result.value);
 
     m_vk_device.resetFences({ frame.in_flight_fence });
 
@@ -2168,7 +2173,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+        VMA_MEMORY_USAGE_AUTO);
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
         cmd_copy_buffer(command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
@@ -2244,7 +2249,7 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        VMA_MEMORY_USAGE_AUTO,
         {});
 
     defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](vk::CommandBuffer command_buffer) {
@@ -2437,7 +2442,11 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
     int i = 0;
     for (FrameInFlight& frame : m_frames_in_flight) {
         Buffer buffer = create_buffer(
-            m_vma_allocator, struct_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+            m_vma_allocator,
+            struct_size,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VMA_MEMORY_USAGE_AUTO,
+            VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
         void* ptr;
         vmaMapMemory(m_vma_allocator, buffer.vma_allocation, &ptr);
@@ -2870,7 +2879,10 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl(std::optional<std::f
     Texture texture = create_texture(render_image.image, render_image.vk_image_view, sampler, 1);
 
     FramebufferImpl framebuffer_impl {
-        .vk_framebuffers = std::move(framebuffers), .texture = std::move(texture), .callback = callback
+        .vk_framebuffers = std::move(framebuffers),
+        .texture = std::move(texture),
+        .callback = callback,
+        .size = { static_cast<int>(m_vk_swapchain_extent.width), static_cast<int>(m_vk_swapchain_extent.height) }
     };
 
     return framebuffer_impl;
@@ -2912,6 +2924,10 @@ void Renderer::end_render_pass_framebuffer(const Framebuffer& framebuffer)
 const Texture& Renderer::framebuffer_texture(const Framebuffer& framebuffer)
 {
     return m_framebuffers[framebuffer.m_handle]->texture;
+}
+Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer)
+{
+    return m_framebuffers[framebuffer.m_handle]->size;
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

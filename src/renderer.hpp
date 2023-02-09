@@ -301,6 +301,8 @@ public:
 
     Framebuffer create_framebuffer(std::function<void(void)> callback);
 
+    Vector2i framebuffer_size(const Framebuffer& framebuffer);
+
     const Texture& framebuffer_texture(const Framebuffer& framebuffer);
 
 private:
@@ -408,6 +410,7 @@ private:
         std::vector<vk::Framebuffer> vk_framebuffers;
         Texture texture;
         std::optional<std::function<void(void)>> callback;
+        Vector2i size;
     };
 
     class DescriptorSetAllocator {

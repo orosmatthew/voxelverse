@@ -21,7 +21,8 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
 
     mve::VertexData cross_data(c_vertex_layout);
 
-    const float cross_scale = 300.0f;
+//    const float cross_scale = 300.0f;
+    const float cross_scale = 25.0f;
 
     const mve::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
 
