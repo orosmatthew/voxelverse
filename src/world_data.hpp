@@ -12,22 +12,60 @@ class WorldData {
 public:
     WorldData(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to);
 
-    std::optional<uint8_t> block_at(mve::Vector3i block_pos) const;
+    inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
+    {
+        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        auto result = m_chunks.find(chunk_pos);
+        if (result == m_chunks.end()) {
+            return {};
+        }
+        else {
+            return result->second.get_block(block_world_to_local(block_pos));
+        }
+    }
 
-    uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const;
+    inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
+    {
+        return m_chunks.at(chunk_pos).get_block(block_world_to_local(block_pos));
+    }
 
-    std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const;
+    inline std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
+    {
+        if (WorldData::is_block_pos_local(local_block_pos)) {
+            return block_at_local(chunk_pos, local_block_pos);
+        }
+        else {
+            return block_at(WorldData::block_local_to_world(chunk_pos, local_block_pos));
+        }
+    }
 
-    void set_block(mve::Vector3i block_pos, uint8_t type);
+    inline void set_block(mve::Vector3i block_pos, uint8_t type)
+    {
+        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+    }
 
-    void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type);
+    inline void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type)
+    {
+        m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+    }
 
-    void for_all_chunk_data(
-        const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const;
+    void for_all_chunk_data(const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const
+    {
+        for (const auto& [pos, data] : m_chunks) {
+            std::invoke(func, pos, data);
+        }
+    }
 
-    const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const;
+    inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
+    {
+        return m_chunks.at(chunk_pos);
+    }
 
-    bool chunk_in_bounds(mve::Vector3i chunk_pos) const;
+    inline bool chunk_in_bounds(mve::Vector3i chunk_pos) const
+    {
+        return m_chunks.contains(chunk_pos);
+    }
 
     static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
     {

@@ -17,7 +17,13 @@ public:
 
     void draw();
 
-    static mve::VertexLayout chunk_vertex_layout();
+    inline static mve::VertexLayout chunk_vertex_layout() {
+        return {
+            mve::VertexAttributeType::vec3, // Position
+            mve::VertexAttributeType::vec3, // Color
+            mve::VertexAttributeType::vec2 // UV
+        };
+    }
 
 private:
     mve::Renderer* m_renderer;

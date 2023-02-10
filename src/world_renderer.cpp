@@ -46,11 +46,3 @@ void WorldRenderer::draw()
         mesh.draw(*m_renderer);
     }
 }
-mve::VertexLayout WorldRenderer::chunk_vertex_layout()
-{
-    return {
-        mve::VertexAttributeType::vec3, // Position
-        mve::VertexAttributeType::vec3, // Color
-        mve::VertexAttributeType::vec2 // UV
-    };
-}

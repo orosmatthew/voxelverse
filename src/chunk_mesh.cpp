@@ -25,13 +25,16 @@ void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data)
 {
+    std::unordered_map<mve::Vector3i, std::optional<const std::reference_wrapper<ChunkMesh>>> adj_chunk_cache;
+
     bool empty = true;
     MeshData mesh;
+    const ChunkData& chunk_data = world_data.chunk_data_at(chunk_pos);
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
                 mve::Vector3i local_pos { x, y, z };
-                std::optional<uint8_t> block = world_data.block_at_relative(chunk_pos, local_pos);
+                std::optional<uint8_t> block = chunk_data.get_block(local_pos);
                 if (block.has_value() && block.value() == 0) {
                     continue;
                 }
@@ -39,7 +42,13 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
                 for (int f = 0; f < 6; f++) {
                     Direction dir = static_cast<Direction>(f);
                     mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
-                    std::optional<uint8_t> adj_block = world_data.block_at_relative(chunk_pos, adj_local_pos);
+                    std::optional<uint8_t> adj_block;
+                    if (WorldData::is_block_pos_local(adj_local_pos)) {
+                        adj_block = chunk_data.get_block(adj_local_pos);
+                    }
+                    else {
+                        adj_block = world_data.block_at(WorldData::block_local_to_world(chunk_pos, adj_local_pos));
+                    }
                     if (adj_block.has_value()) {
                         if (adj_block.value() == 0) {
                             std::array<uint8_t, 4> face_lighting
