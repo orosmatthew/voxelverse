@@ -52,15 +52,9 @@ void WorldData::set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos
 {
     m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
 }
-std::optional<uint8_t> WorldData::block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
+uint8_t WorldData::block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
 {
-    auto result = m_chunks.find(chunk_pos);
-    if (result == m_chunks.end()) {
-        return {};
-    }
-    else {
-        return result->second.get_block(block_world_to_local(block_pos));
-    }
+    return m_chunks.at(chunk_pos).get_block(block_world_to_local(block_pos));
 }
 std::optional<uint8_t> WorldData::block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
 {

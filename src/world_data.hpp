@@ -14,7 +14,7 @@ public:
 
     std::optional<uint8_t> block_at(mve::Vector3i block_pos) const;
 
-    std::optional<uint8_t> block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const;
+    uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const;
 
     std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const;
 

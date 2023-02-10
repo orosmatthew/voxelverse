@@ -205,7 +205,7 @@ void run()
     });
 
     WorldGenerator world_generator(1);
-    WorldData world_data(world_generator, { -16, -16, -4 }, { 16, 16, 4 });
+    WorldData world_data(world_generator, { -32, -32, -4 }, { 32, 32, 4 });
 
     //    world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
     //        world_renderer.add_data(chunk_data, world_data);
@@ -232,7 +232,7 @@ void run()
 
     bool cursor_captured = true;
 
-    mve::Vector3i current_gen { -16, -16, -4 };
+    mve::Vector3i current_gen { -32, -32, -4 };
 
     while (!window.should_close()) {
         window.poll_events();
@@ -243,21 +243,21 @@ void run()
             camera.update(window);
         }
 
-        if (current_gen != mve::Vector3i(16, 16, 4)) {
-            for (int x = -16; x < 16; x++) {
+        if (current_gen != mve::Vector3i(32, 32, 4)) {
+            for (int x = -32; x < 32; x++) {
                 current_gen.x = x;
                 if (world_data.chunk_in_bounds(current_gen)) {
                     world_renderer.add_data(world_data.chunk_data_at(current_gen), world_data);
                 }
             }
-            if (current_gen.y < 16) {
+            if (current_gen.y < 32) {
                 current_gen.y++;
-                current_gen.x = -16;
+                current_gen.x = -32;
             }
             else if (current_gen.z < 4) {
                 current_gen.z++;
-                current_gen.y = -16;
-                current_gen.x = -16;
+                current_gen.y = -32;
+                current_gen.x = -32;
             }
         }
 
