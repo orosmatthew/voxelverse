@@ -373,7 +373,7 @@ vk::SurfaceFormatKHR Renderer::choose_vk_swapchain_surface_format(
     const std::vector<vk::SurfaceFormatKHR>& available_formats)
 {
     for (const vk::SurfaceFormatKHR& available_format : available_formats) {
-        if (available_format.format == vk::Format::eB8G8R8A8Srgb
+        if (available_format.format == vk::Format::eB8G8R8A8Unorm
             && available_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
             return available_format;
         }
@@ -593,7 +593,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
               .setColorWriteMask(
                   vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB
                   | vk::ColorComponentFlagBits::eA)
-              .setBlendEnable(false)
+              .setBlendEnable(true)
               .setSrcColorBlendFactor(vk::BlendFactor::eOne)
               .setDstColorBlendFactor(vk::BlendFactor::eZero)
               .setColorBlendOp(vk::BlendOp::eAdd)
@@ -1284,10 +1284,11 @@ void Renderer::begin_render_pass_present()
 
 void Renderer::begin_render_pass_framebuffer(Framebuffer& framebuffer)
 {
-    auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+    auto clear_color
+        = vk::ClearColorValue(std::array<float, 4> { 142.0f / 255.0f, 186.0f / 255.0f, 255.0f / 255.0f, 1.0f });
 
     std::array<vk::ClearValue, 2> clear_values {};
-    clear_values[0].setColor(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
+    clear_values[0].setColor(clear_color);
     clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
 
     auto render_pass_begin_info
@@ -2596,7 +2597,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
         static_cast<uint32_t>(height),
         mip_levels,
         vk::SampleCountFlagBits::e1,
-        vk::Format::eR8G8B8A8Srgb,
+        vk::Format::eR8G8B8A8Unorm,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         false);
@@ -2606,7 +2607,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
             cmd_transition_image_layout(
                 command_buffer,
                 image.vk_handle,
-                vk::Format::eR8G8B8A8Srgb,
+                vk::Format::eR8G8B8A8Unorm,
                 vk::ImageLayout::eUndefined,
                 vk::ImageLayout::eTransferDstOptimal,
                 mip_levels);
@@ -2622,7 +2623,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
                 m_vk_physical_device,
                 command_buffer,
                 image.vk_handle,
-                vk::Format::eR8G8B8A8Srgb,
+                vk::Format::eR8G8B8A8Unorm,
                 static_cast<uint32_t>(width),
                 static_cast<uint32_t>(height),
                 mip_levels);
@@ -2633,7 +2634,7 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
         });
 
     vk::ImageView image_view = create_image_view(
-        m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mip_levels);
+        m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Unorm, vk::ImageAspectFlagBits::eColor, mip_levels);
 
     vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
 

@@ -256,7 +256,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         if (!check_block.has_value()) {
             continue;
         }
-        const float dark_fraction = 0.7f;
+        const float dark_fraction = 0.8f;
         if (check_block.value() != 0) {
             switch (i) {
             case 0:

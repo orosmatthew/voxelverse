@@ -199,8 +199,10 @@ void run()
 
     UIRenderer ui_renderer(renderer);
 
-    mve::Framebuffer framebuffer
-        = renderer.create_framebuffer([&]() { /*ui_renderer.update_framebuffer_texture(framebuffer.texture());*/ });
+    mve::Framebuffer world_framebuffer = renderer.create_framebuffer([&]() {
+        ui_renderer.update_framebuffer_texture(
+            world_framebuffer.texture(), renderer.framebuffer_size(world_framebuffer));
+    });
 
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -16, -16, -4 }, { 16, 16, 4 });
@@ -296,13 +298,13 @@ void run()
 
         renderer.begin_frame(window);
 
-        renderer.begin_render_pass_framebuffer(framebuffer);
-
-        renderer.end_render_pass_framebuffer(framebuffer);
-
-        renderer.begin_render_pass_present();
+        renderer.begin_render_pass_framebuffer(world_framebuffer);
 
         world_renderer.draw();
+
+        renderer.end_render_pass_framebuffer(world_framebuffer);
+
+        renderer.begin_render_pass_present();
 
         ui_renderer.draw();
 
