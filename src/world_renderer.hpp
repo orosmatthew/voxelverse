@@ -2,8 +2,11 @@
 
 #include <unordered_map>
 
+#include "camera.hpp"
 #include "chunk_mesh.hpp"
+#include "common.hpp"
 #include "math/math.hpp"
+#include "frustum.hpp"
 
 class WorldRenderer {
 public:
@@ -15,9 +18,10 @@ public:
 
     void resize();
 
-    void draw();
+    void draw(const Camera& camera);
 
-    inline static mve::VertexLayout chunk_vertex_layout() {
+    inline static mve::VertexLayout chunk_vertex_layout()
+    {
         return {
             mve::VertexAttributeType::vec3, // Position
             mve::VertexAttributeType::vec3, // Color
@@ -36,4 +40,5 @@ private:
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
     std::unordered_map<mve::Vector3i, ChunkMesh> m_chunk_meshes {};
+    Frustum m_frustum;
 };

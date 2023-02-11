@@ -364,11 +364,11 @@ inline Vector3& Vector3::operator+=(Vector3 other)
 
     return *this;
 }
-inline Vector3 Vector3::operator-(Vector3 other) const
+inline Vector3 Vector3::operator-(const Vector3& other) const
 {
     return Vector3(x - other.x, y - other.y, z - other.z);
 }
-inline Vector3& Vector3::operator-=(Vector3 other)
+inline Vector3& Vector3::operator-=(const Vector3& other)
 {
     x -= other.x;
     y -= other.y;

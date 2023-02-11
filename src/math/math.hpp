@@ -372,9 +372,9 @@ public:
 
     inline Vector3i& operator*=(float val);
 
-    [[nodiscard]] inline Vector3i operator+(Vector3i other) const;
+    [[nodiscard]] inline Vector3i operator+(const Vector3i& other) const;
 
-    inline Vector3i& operator+=(Vector3i other);
+    inline Vector3i& operator+=(const Vector3i& other);
 
     [[nodiscard]] inline Vector3i operator-(Vector3i other) const;
 
@@ -1000,9 +1000,9 @@ public:
 
     inline Vector3& operator+=(Vector3 other);
 
-    [[nodiscard]] inline Vector3 operator-(Vector3 other) const;
+    [[nodiscard]] inline Vector3 operator-(const Vector3& other) const;
 
-    inline Vector3& operator-=(Vector3 other);
+    inline Vector3& operator-=(const Vector3& other);
 
     [[nodiscard]] inline Vector3 operator/(Vector3 other) const;
 
@@ -1231,7 +1231,5 @@ public:
 #include "detail/vector4i.inl"
 
 namespace std {
-
-
 
 }

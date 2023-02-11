@@ -51,8 +51,26 @@ private:
 
     static FaceData create_face_mesh(mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting);
 
+    static void calc_block_faces(
+        MeshData& mesh,
+        const WorldData& world_data,
+        const ChunkData& chunk_data,
+        mve::Vector3i chunk_pos,
+        mve::Vector3i local_pos);
+
+    static void calc_block_faces_em(
+        MeshData& mesh,
+        const WorldData& world_data,
+        const ChunkData& chunk_data,
+        mve::Vector3i chunk_pos,
+        mve::Vector3i local_pos);
+
     static std::array<uint8_t, 4> calc_face_lighting(
-        const WorldData& data, mve::Vector3i chunk_pos, mve::Vector3i local_block_pos, Direction dir);
+        const WorldData& data,
+        const ChunkData& chunk_data,
+        mve::Vector3i chunk_pos,
+        mve::Vector3i local_block_pos,
+        Direction dir);
 
     static std::optional<MeshBuffers> create_buffers(
         mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);

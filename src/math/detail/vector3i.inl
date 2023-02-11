@@ -151,11 +151,11 @@ inline Vector3i& Vector3i::operator*=(float val)
 
     return *this;
 }
-inline Vector3i Vector3i::operator+(Vector3i other) const
+inline Vector3i Vector3i::operator+(const Vector3i& other) const
 {
     return Vector3i(x + other.x, y + other.y, z + other.z);
 }
-inline Vector3i& Vector3i::operator+=(Vector3i other)
+inline Vector3i& Vector3i::operator+=(const Vector3i& other)
 {
     x += other.x;
     y += other.y;

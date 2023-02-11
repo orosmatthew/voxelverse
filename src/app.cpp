@@ -6,6 +6,7 @@
 
 #include "camera.hpp"
 #include "chunk_mesh.hpp"
+#include "common.hpp"
 #include "logger.hpp"
 #include "math/math.hpp"
 #include "renderer.hpp"
@@ -207,9 +208,13 @@ void run()
     WorldGenerator world_generator(1);
     WorldData world_data(world_generator, { -32, -32, -4 }, { 32, 32, 4 });
 
-    //    world_data.for_all_chunk_data([&](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
-    //        world_renderer.add_data(chunk_data, world_data);
-    //    });
+    std::vector<mve::Vector3i> chunk_mesh_queue;
+    for_3d({ -32, -32, -4 }, { 32, 32, 4 }, [&](mve::Vector3i pos) { chunk_mesh_queue.push_back(pos); });
+
+    std::sort(chunk_mesh_queue.begin(), chunk_mesh_queue.end(), [](const mve::Vector3i& a, const mve::Vector3i& b) {
+        return mve::Vector3(a).distance_squared_to(mve::Vector3(0))
+            > mve::Vector3(b).distance_squared_to(mve::Vector3(0));
+    });
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
     int frame_count = 0;
@@ -232,7 +237,9 @@ void run()
 
     bool cursor_captured = true;
 
-    mve::Vector3i current_gen { -32, -32, -4 };
+    const int mesh_updates_per_frame = 32;
+
+    bool printed = false;
 
     while (!window.should_close()) {
         window.poll_events();
@@ -243,22 +250,21 @@ void run()
             camera.update(window);
         }
 
-        if (current_gen != mve::Vector3i(32, 32, 4)) {
-            for (int x = -32; x < 32; x++) {
-                current_gen.x = x;
-                if (world_data.chunk_in_bounds(current_gen)) {
-                    world_renderer.add_data(world_data.chunk_data_at(current_gen), world_data);
-                }
+        int count = 0;
+        while (!chunk_mesh_queue.empty()) {
+            if (world_data.chunk_in_bounds(chunk_mesh_queue.back())) {
+                world_renderer.add_data(world_data.chunk_data_at(chunk_mesh_queue.back()), world_data);
             }
-            if (current_gen.y < 32) {
-                current_gen.y++;
-                current_gen.x = -32;
+            chunk_mesh_queue.pop_back();
+            count++;
+            if (count > mesh_updates_per_frame) {
+                break;
             }
-            else if (current_gen.z < 4) {
-                current_gen.z++;
-                current_gen.y = -32;
-                current_gen.x = -32;
-            }
+        }
+
+        if (chunk_mesh_queue.empty() && !printed) {
+            LOG->warn("DONE!");
+            printed = true;
         }
 
         mve::Matrix4 view = camera.view_matrix(fixed_loop.blend());
@@ -300,7 +306,7 @@ void run()
 
         renderer.begin_render_pass_framebuffer(world_framebuffer);
 
-        world_renderer.draw();
+        world_renderer.draw(camera);
 
         renderer.end_render_pass_framebuffer(world_framebuffer);
 

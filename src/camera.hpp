@@ -10,11 +10,39 @@ public:
     void update(const mve::Window& window);
     void fixed_update(const mve::Window& window);
 
-    mve::Vector3 position() const;
+    inline mve::Vector3 position() const
+    {
+        return m_body_transform.translation();
+    }
 
-    mve::Matrix4 view_matrix(float interpolation_weight) const;
+    inline mve::Matrix4 view_matrix(float interpolation_weight) const
+    {
+        mve::Matrix4 transform = m_head_transform * m_body_transform;
+        mve::Matrix3 basis = transform.basis();
+        mve::Matrix4 interpolated_transform = mve::Matrix4::from_basis_translation(
+            basis, m_prev_pos.linear_interpolate(transform.translation(), interpolation_weight));
+        mve::Matrix4 view = interpolated_transform.inverse().transpose();
+        return view;
+    }
 
-    mve::Vector3 direction() const;
+    inline mve::Vector3 direction() const
+    {
+        mve::Matrix4 transform = m_head_transform * m_body_transform;
+        mve::Matrix3 basis = transform.basis().transpose();
+        mve::Vector3 direction { 0, 0, -1 };
+        direction = direction.rotate(basis);
+        return direction.normalize();
+    }
+
+    inline mve::Vector3 target() const
+    {
+        return position() + direction();
+    }
+
+    inline mve::Vector3 up() const
+    {
+        return { 0, 0, 1 };
+    }
 
 private:
     mve::Matrix4 m_body_transform;

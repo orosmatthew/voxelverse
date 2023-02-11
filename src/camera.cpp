@@ -66,24 +66,3 @@ void Camera::fixed_update(const mve::Window& window)
     }
     m_body_transform = m_body_transform.translate_local(m_velocity);
 }
-mve::Matrix4 Camera::view_matrix(float interpolation_weight) const
-{
-    mve::Matrix4 transform = m_head_transform * m_body_transform;
-    mve::Matrix3 basis = transform.basis();
-    mve::Matrix4 interpolated_transform = mve::Matrix4::from_basis_translation(
-        basis, m_prev_pos.linear_interpolate(transform.translation(), interpolation_weight));
-    mve::Matrix4 view = interpolated_transform.inverse().transpose();
-    return view;
-}
-mve::Vector3 Camera::position() const
-{
-    return m_body_transform.translation();
-}
-mve::Vector3 Camera::direction() const
-{
-    mve::Matrix4 transform = m_head_transform * m_body_transform;
-    mve::Matrix3 basis = transform.basis().transpose();
-    mve::Vector3 direction { 0, 0, -1 };
-    direction = direction.rotate(basis);
-    return direction;
-}
