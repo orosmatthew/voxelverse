@@ -1,3 +1,6 @@
+
+#include "../math.hpp"
+
 #ifndef MVE_MATH_DEFS
 #include "../math.hpp"
 #endif

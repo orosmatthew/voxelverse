@@ -381,7 +381,7 @@ public:
 
     /**
      * @brief Get cursor translation
-     * @param clamped_to_window - If true then returns value clamped inside of window
+     * @param clamped_to_window - If true then returns value clamp inside of window
      * @return - Returns vec2 of cursor translation
      */
     mve::Vector2 get_cursor_pos(bool clamped_to_window = true);

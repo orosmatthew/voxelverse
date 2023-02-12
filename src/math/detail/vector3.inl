@@ -317,7 +317,7 @@ inline float Vector3::angle(Vector3 vector) const
 {
     return mve::angle(*this, vector);
 }
-inline Vector3 Vector3::rotate(Vector3 axis, float angle)
+inline Vector3 Vector3::rotate(Vector3 axis, float angle) const
 {
     return mve::rotate(*this, axis, angle);
 }
@@ -530,11 +530,11 @@ inline Vector3::Vector3(Vector3i vector)
     , z(static_cast<float>(vector.z))
 {
 }
-Vector3 Vector3::rotate(const Matrix3& matrix)
+Vector3 Vector3::rotate(const Matrix3& matrix) const
 {
     return mve::rotate(*this, matrix);
 }
-Vector3 Vector3::transform(const Matrix4& matrix)
+Vector3 Vector3::transform(const Matrix4& matrix) const
 {
     return mve::transform(*this, matrix);
 }

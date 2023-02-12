@@ -722,6 +722,10 @@ public:
 
     [[nodiscard]] inline static Quaternion from_matrix(const Matrix3& matrix);
 
+    [[nodiscard]] inline static Quaternion from_vector3_to_vector3(const Vector3& from, const Vector3& to);
+
+    [[nodiscard]] inline static Quaternion from_direction(const Vector3& dir, const Vector3& up);
+
     [[nodiscard]] inline float angle_to(const Quaternion& to) const;
 
     [[nodiscard]] inline float dot(const Quaternion& quaternion) const;
@@ -838,7 +842,11 @@ public:
 
     [[nodiscard]] inline Matrix4 rotate(const Vector3& axis, float angle) const;
 
+    [[nodiscard]] inline Matrix4 rotate(const Matrix3& basis) const;
+
     [[nodiscard]] inline Matrix4 rotate_local(const Vector3& axis, float angle) const;
+
+    [[nodiscard]] inline Matrix4 rotate_local(const Matrix3& basis) const;
 
     [[nodiscard]] inline Matrix4 scale(const Vector3& scale) const;
 
@@ -891,7 +899,11 @@ public:
 
 [[nodiscard]] inline Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle);
 
+[[nodiscard]] inline Matrix4 rotate(const Matrix4& matrix, const Matrix3& basis);
+
 [[nodiscard]] inline Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float angle);
+
+[[nodiscard]] inline Matrix4 rotate_local(const Matrix4& matrix, const Matrix3& basis);
 
 [[nodiscard]] inline Matrix4 scale(Matrix4 matrix, Vector3 scale);
 
@@ -985,11 +997,11 @@ public:
 
     [[nodiscard]] inline float angle(Vector3 vector) const;
 
-    [[nodiscard]] inline Vector3 rotate(Vector3 axis, float angle);
+    [[nodiscard]] inline Vector3 rotate(Vector3 axis, float angle) const;
 
-    [[nodiscard]] inline Vector3 rotate(const Matrix3& matrix);
+    [[nodiscard]] inline Vector3 rotate(const Matrix3& matrix) const;
 
-    [[nodiscard]] inline Vector3 transform(const Matrix4& matrix);
+    [[nodiscard]] inline Vector3 transform(const Matrix4& matrix) const;
 
     [[nodiscard]] inline bool operator!=(Vector3 other) const;
 
@@ -1128,6 +1140,8 @@ public:
     [[nodiscard]] inline static Matrix3 look_at(const Vector3& target, const Vector3& up);
 
     [[nodiscard]] inline static Matrix3 from_matrix(const Matrix4& matrix);
+
+    [[nodiscard]] inline static Matrix3 from_direction(const Vector3& dir, const Vector3& up);
 
     [[nodiscard]] inline Vector3 euler() const;
 

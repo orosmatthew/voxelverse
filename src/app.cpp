@@ -44,7 +44,7 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
         blocks.push_back(block);
     }
     std::sort(blocks.begin(), blocks.end(), [start](const mve::Vector3i& a, const mve::Vector3i& b) {
-        return start.distance_squared_to(mve::Vector3(a)) < start.distance_squared_to(mve::Vector3(b));
+        return start.distance_sqrd_to(mve::Vector3(a)) < start.distance_sqrd_to(mve::Vector3(b));
     });
     return blocks;
 }
@@ -212,8 +212,7 @@ void run()
     for_3d({ -32, -32, -4 }, { 32, 32, 4 }, [&](mve::Vector3i pos) { chunk_mesh_queue.push_back(pos); });
 
     std::sort(chunk_mesh_queue.begin(), chunk_mesh_queue.end(), [](const mve::Vector3i& a, const mve::Vector3i& b) {
-        return mve::Vector3(a).distance_squared_to(mve::Vector3(0))
-            > mve::Vector3(b).distance_squared_to(mve::Vector3(0));
+        return mve::Vector3(a).distance_sqrd_to(mve::Vector3(0)) > mve::Vector3(b).distance_sqrd_to(mve::Vector3(0));
     });
 
     std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
@@ -300,6 +299,25 @@ void run()
 
         if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
             trigger_place_block(camera, world_data, world_renderer);
+        }
+
+        std::vector<mve::Vector3i> blocks
+            = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
+        Ray ray { camera.position(), camera.direction().normalize() };
+        world_renderer.hide_selection();
+        for (mve::Vector3i block_pos : blocks) {
+            std::optional<uint8_t> block = world_data.block_at(block_pos);
+            if (!block.has_value() || block.value() != 1) {
+                continue;
+            }
+            BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
+                             { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+            RayCollision collision = ray_box_collision(ray, bb);
+            if (collision.hit) {
+                world_renderer.show_selection();
+                world_renderer.set_selection_position(block_pos);
+                break;
+            }
         }
 
         renderer.begin_frame(window);

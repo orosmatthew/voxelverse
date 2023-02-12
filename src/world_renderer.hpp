@@ -7,6 +7,7 @@
 #include "common.hpp"
 #include "frustum.hpp"
 #include "math/math.hpp"
+#include "select_box_mesh.hpp"
 
 class WorldRenderer {
 public:
@@ -18,9 +19,21 @@ public:
 
     void resize();
 
+    void set_selection_position(mve::Vector3 position);
+
+    inline void hide_selection()
+    {
+        m_selection_box.is_shown = false;
+    }
+
+    inline void show_selection()
+    {
+        m_selection_box.is_shown = true;
+    }
+
     void draw(const Camera& camera);
 
-    inline static mve::VertexLayout chunk_vertex_layout()
+    inline static mve::VertexLayout vertex_layout()
     {
         return {
             mve::VertexAttributeType::vec3, // Position
@@ -30,6 +43,11 @@ public:
     }
 
 private:
+    struct SelectionBox {
+        bool is_shown;
+        SelectBoxMesh mesh;
+    };
+
     void rebuild_mesh_lookup();
 
     mve::Renderer* m_renderer;
@@ -38,10 +56,13 @@ private:
     mve::GraphicsPipeline m_graphics_pipeline;
     std::shared_ptr<mve::Texture> m_block_texture;
     mve::UniformBuffer m_global_ubo;
+    mve::UniformBuffer m_chunk_ubo;
     mve::DescriptorSet m_global_descriptor_set;
+    mve::DescriptorSet m_chunk_descriptor_set;
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
     std::unordered_map<mve::Vector3i, size_t> m_chunk_mesh_lookup {};
     std::vector<ChunkMesh> m_chunk_meshes;
     Frustum m_frustum;
+    SelectionBox m_selection_box;
 };

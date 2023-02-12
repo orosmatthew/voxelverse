@@ -292,7 +292,7 @@ public:
      */
     void bind_descriptor_set(DescriptorSet& descriptor_set);
 
-    void bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorSet& descriptor_set_b);
+    void bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b);
     /**
      * @brief Get extent of renderer
      * @return Returns ivec2 of the extent of the renderer
@@ -465,7 +465,7 @@ private:
     vk::SampleCountFlagBits m_msaa_samples;
     RenderImage m_color_image;
 
-    void bind_descriptor_sets(uint32_t num, const std::array<DescriptorSet*, 4>& descriptor_sets);
+    void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets);
 
     std::vector<FrameInFlight> m_frames_in_flight;
 

@@ -120,7 +120,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     //        return {};
     //    }
 
-    mve::VertexData vertex_data(WorldRenderer::chunk_vertex_layout());
+    mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
         vertex_data.push_back(mesh.vertices.at(i) + chunk_pos * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));

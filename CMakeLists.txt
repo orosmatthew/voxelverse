@@ -61,7 +61,8 @@ set(SOURCE_FILES
         src/world_renderer.cpp
         src/camera.cpp
         src/ui_renderer.cpp
-        src/framebuffer.cpp)
+        src/framebuffer.cpp
+        src/select_box_mesh.cpp)
 
 set(LIBS
         Vulkan::Vulkan

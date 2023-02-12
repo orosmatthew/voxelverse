@@ -1,3 +1,6 @@
+
+#include "../math.hpp"
+
 #ifndef MVE_MATH_DEFS
 #include "../math.hpp"
 #endif
@@ -102,33 +105,20 @@ inline Matrix3 Matrix3::orthonormalize() const
 }
 inline Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
 {
-    float quat_length_sq = quaternion.length_sqrd();
-    float s = 2.0f / quat_length_sq;
+    Matrix3 result;
+    result[0][0] = 2 * (quaternion.x * quaternion.x + quaternion.y * quaternion.y) - 1;
+    result[0][1] = 2 * (quaternion.y * quaternion.z - quaternion.x * quaternion.w);
+    result[0][2] = 2 * (quaternion.y * quaternion.w + quaternion.x * quaternion.z);
 
-    float xs = quaternion.x * s;
-    float ys = quaternion.y * s;
-    float zs = quaternion.z * s;
-    float wx = quaternion.w * xs;
-    float wy = quaternion.w * ys;
-    float wz = quaternion.w * zs;
-    float xx = quaternion.x * xs;
-    float xy = quaternion.x * ys;
-    float xz = quaternion.x * zs;
-    float yy = quaternion.y * ys;
-    float yz = quaternion.y * zs;
-    float zz = quaternion.z * zs;
+    result[1][0] = 2 * (quaternion.y * quaternion.z + quaternion.x * quaternion.w);
+    result[1][1] = 2 * (quaternion.x * quaternion.x + quaternion.z * quaternion.z) - 1;
+    result[1][2] = 2 * (quaternion.z * quaternion.w - quaternion.x * quaternion.y);
 
-    return Matrix3(
-               1.0f - (yy + zz),
-               xy - wz,
-               xz + wy,
-               xy + wz,
-               1.0f - (xx + zz),
-               yz - wx,
-               xz - wy,
-               yz + wx,
-               1.0f - (xx + yy))
-        .transpose();
+    result[2][0] = 2 * (quaternion.y * quaternion.w - quaternion.x * quaternion.z);
+    result[2][1] = 2 * (quaternion.z * quaternion.w + quaternion.x * quaternion.y);
+    result[2][2] = 2 * (quaternion.x * quaternion.x + quaternion.w * quaternion.w) - 1;
+
+    return result;
 }
 inline Matrix3 Matrix3::spherical_linear_interpolate(const Matrix3& to, float weight) const
 {
@@ -339,12 +329,12 @@ inline Quaternion Matrix3::quaternion() const
 inline Matrix3 Matrix3::from_quaternion_scale(const Quaternion& quaternion, const Vector3& scale)
 {
     Matrix3 result;
+
     result[0][0] = scale.x;
     result[1][1] = scale.y;
     result[2][2] = scale.z;
 
     result = result.rotate(quaternion);
-
     return result;
 }
 inline Matrix3 Matrix3::rotate(const Quaternion& quaternion) const
@@ -365,6 +355,25 @@ inline Vector3 Matrix3::operator*(Vector3 vector) const
     return { m[0][0] * vector.x + m[0][1] * vector.y + m[0][2] * vector.z,
              m[1][0] * vector.x + m[1][1] * vector.y + m[1][2] * vector.z,
              m[2][0] * vector.x + m[2][1] * vector.y + m[2][2] * vector.z };
+}
+Matrix3 Matrix3::from_direction(const Vector3& dir, const Vector3& up)
+{
+    Vector3 axis_x = up.cross(dir).normalize();
+    Vector3 axis_y = dir.cross(axis_x).normalize();
+
+    Matrix3 result;
+
+    result[0][0] = axis_x.x;
+    result[0][1] = axis_y.x;
+    result[0][2] = dir.x;
+    result[1][0] = axis_x.y;
+    result[1][1] = axis_y.y;
+    result[1][2] = dir.y;
+    result[2][0] = axis_x.z;
+    result[2][1] = axis_y.z;
+    result[2][2] = dir.z;
+
+    return result;
 }
 
 inline Vector3 euler(const Matrix3& matrix)

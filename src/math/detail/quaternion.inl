@@ -1,3 +1,6 @@
+
+#include "../math.hpp"
+
 #ifndef MVE_MATH_DEFS
 #include "../math.hpp"
 #endif
@@ -225,6 +228,42 @@ inline Quaternion Quaternion::normalize() const
 inline const float& Quaternion::operator[](int index) const
 {
     return data[index];
+}
+Quaternion Quaternion::from_direction(const Vector3& dir, const Vector3& up)
+{
+    Quaternion result;
+    float angle = mve::atan2(dir.x, dir.z);
+    result.x = up.x;
+    result.y = up.y * mve::sin(angle / 2.0f);
+    result.z = up.z;
+    result.w = mve::cos(angle / 2.0f);
+    return result;
+}
+Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const Vector3& to)
+{
+    Quaternion result;
+
+    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z);    // Vector3DotProduct(from, to)
+    Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
+
+    result.x = cross.x;
+    result.y = cross.y;
+    result.z = cross.z;
+    result.w = 1.0f + cos2Theta;
+
+    // QuaternionNormalize(q);
+    // NOTE: Normalize to essentially nlerp the original and identity to 0.5
+    Quaternion q = result;
+    float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    if (length == 0.0f) length = 1.0f;
+    float ilength = 1.0f/length;
+
+    result.x = q.x*ilength;
+    result.y = q.y*ilength;
+    result.z = q.z*ilength;
+    result.w = q.w*ilength;
+
+    return result;
 }
 
 inline float angle(const Quaternion& from, const Quaternion& to)

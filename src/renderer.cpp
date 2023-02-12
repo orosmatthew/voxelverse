@@ -2762,12 +2762,12 @@ void Renderer::destroy(IndexBuffer& index_buffer)
     });
 }
 
-void Renderer::bind_descriptor_sets(DescriptorSet& descriptor_set_a, DescriptorSet& descriptor_set_b)
+void Renderer::bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b)
 {
     bind_descriptor_sets(2, { &descriptor_set_a, &descriptor_set_b, nullptr, nullptr });
 }
 
-void Renderer::bind_descriptor_sets(uint32_t num, const std::array<DescriptorSet*, 4>& descriptor_sets)
+void Renderer::bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets)
 {
     std::array<vk::DescriptorSet, 4> sets;
     for (uint32_t i = 0; i < num; i++) {

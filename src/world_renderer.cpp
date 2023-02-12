@@ -18,17 +18,29 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
     , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex))
     , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment))
-    , m_graphics_pipeline(
-          renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, chunk_vertex_layout(), true))
+    , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
     , m_block_texture(std::make_shared<mve::Texture>(renderer, "../res/atlas.png"))
     , m_global_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
+    , m_chunk_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)))
     , m_global_descriptor_set(renderer.create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))
+    , m_chunk_descriptor_set(m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)))
     , m_view_location(m_vertex_shader.descriptor_set(0).binding(0).member("view").location())
     , m_proj_location(m_vertex_shader.descriptor_set(0).binding(0).member("proj").location())
+    , m_selection_box(SelectionBox {
+          .is_shown = true,
+          .mesh = SelectBoxMesh(
+              renderer,
+              m_graphics_pipeline,
+              m_vertex_shader.descriptor_set(1),
+              m_vertex_shader.descriptor_set(1).binding(0)) })
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
+    m_chunk_ubo.update(
+        m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4::identity());
+    m_chunk_descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), m_chunk_ubo);
     m_frustum = {};
+    m_selection_box.mesh.set_position({ 0, 0, 0 });
 }
 
 void WorldRenderer::resize()
@@ -52,9 +64,13 @@ void WorldRenderer::draw(const Camera& camera)
 
     m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
 
+    if (m_selection_box.is_shown) {
+        m_selection_box.mesh.draw(m_global_descriptor_set);
+    }
+
     for (const ChunkMesh& mesh : m_chunk_meshes) {
         if (m_frustum.contains_sphere(mesh.chunk_position() * 16.0f, 30.0f)) {
-            m_renderer->bind_descriptor_set(m_global_descriptor_set);
+            m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
             mesh.draw(*m_renderer);
         }
     }
@@ -65,4 +81,8 @@ void WorldRenderer::rebuild_mesh_lookup()
     for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
         m_chunk_mesh_lookup[m_chunk_meshes.at(i).chunk_position()] = i;
     }
+}
+void WorldRenderer::set_selection_position(mve::Vector3 position)
+{
+    m_selection_box.mesh.set_position(position);
 }
