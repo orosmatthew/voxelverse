@@ -20,11 +20,11 @@ inline Vector4 clamp(Vector4 vector, Vector4 min, Vector4 max)
         clamp(vector.z, min.z, max.z),
         clamp(vector.w, min.w, max.w));
 }
-inline Vector4 direction_to(Vector4 from, Vector4 to)
+inline Vector4 direction(Vector4 from, Vector4 to)
 {
     return mve::normalize(to - from);
 }
-inline float distance_squared_to(Vector4 from, Vector4 to)
+inline float distance_sqrd(Vector4 from, Vector4 to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
@@ -32,7 +32,7 @@ inline float distance_squared_to(Vector4 from, Vector4 to)
     float diff_w = to.w - from.w;
     return squared(diff_x) + squared(diff_y) + squared(diff_z) + squared(diff_w);
 }
-inline float distance_to(Vector4 from, Vector4 to)
+inline float distance(Vector4 from, Vector4 to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
@@ -60,7 +60,7 @@ inline float length(Vector4 vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w));
 }
-inline float length_squared(Vector4 vector)
+inline float length_sqrd(Vector4 vector)
 {
     return squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w);
 }
@@ -133,7 +133,7 @@ inline Vector4 inverse(Vector4 vector)
 }
 inline Vector4 clamp_length(Vector4 vector, float min, float max)
 {
-    float length_sqr = mve::length_squared(vector);
+    float length_sqr = mve::length_sqrd(vector);
     if (length_sqr > 0.0f) {
         float length = sqrt(length_sqr);
         if (length < min) {
@@ -192,15 +192,15 @@ inline Vector4 Vector4::clamp(Vector4 min, Vector4 max) const
 }
 inline Vector4 Vector4::direction_to(Vector4 to) const
 {
-    return mve::direction_to(*this, to);
+    return mve::direction(*this, to);
 }
-inline float Vector4::distance_squared_to(Vector4 to) const
+inline float Vector4::distance_sqrd_to(Vector4 to) const
 {
-    return mve::distance_squared_to(*this, to);
+    return mve::distance_sqrd(*this, to);
 }
 inline float Vector4::distance_to(Vector4 to) const
 {
-    return mve::distance_to(*this, to);
+    return mve::distance(*this, to);
 }
 inline Vector4 Vector4::normalize() const
 {
@@ -214,9 +214,9 @@ inline float Vector4::length() const
 {
     return mve::length(*this);
 }
-inline float Vector4::length_squared() const
+inline float Vector4::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector4 Vector4::linear_interpolate(Vector4 to, float weight) const
 {

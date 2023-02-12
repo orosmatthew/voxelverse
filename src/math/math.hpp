@@ -82,7 +82,7 @@ public:
 
     inline Vector4i();
 
-    //    Vector4i(Vector4 vector);
+    inline Vector4i(const Vector4& vector);
 
     inline Vector4i(int x, int y, int z, int w);
 
@@ -98,7 +98,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector4iAxis max_axis() const;
 
@@ -169,7 +169,7 @@ public:
 
 [[nodiscard]] inline float length(Vector4i vector);
 
-[[nodiscard]] inline float length_squared(Vector4i vector);
+[[nodiscard]] inline float length_sqrd(Vector4i vector);
 
 [[nodiscard]] inline Vector4iAxis max_axis(Vector4i vector);
 
@@ -202,7 +202,7 @@ public:
 
     [[nodiscard]] inline Vector4 direction_to(Vector4 to) const;
 
-    [[nodiscard]] inline float distance_squared_to(Vector4 to) const;
+    [[nodiscard]] inline float distance_sqrd_to(Vector4 to) const;
 
     [[nodiscard]] inline float distance_to(Vector4 to) const;
 
@@ -212,7 +212,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector4 linear_interpolate(Vector4 to, float weight) const;
 
@@ -293,11 +293,11 @@ public:
 
 [[nodiscard]] inline Vector4 clamp(Vector4 vector, Vector4 min, Vector4 max);
 
-[[nodiscard]] inline Vector4 direction_to(Vector4 from, Vector4 to);
+[[nodiscard]] inline Vector4 direction(Vector4 from, Vector4 to);
 
-[[nodiscard]] inline float distance_squared_to(Vector4 from, Vector4 to);
+[[nodiscard]] inline float distance_sqrd(Vector4 from, Vector4 to);
 
-[[nodiscard]] inline float distance_to(Vector4 from, Vector4 to);
+[[nodiscard]] inline float distance(Vector4 from, Vector4 to);
 
 [[nodiscard]] inline Vector4 normalize(Vector4 vector);
 
@@ -305,7 +305,7 @@ public:
 
 [[nodiscard]] inline float length(Vector4 vector);
 
-[[nodiscard]] inline float length_squared(Vector4 vector);
+[[nodiscard]] inline float length_sqrd(Vector4 vector);
 
 [[nodiscard]] inline Vector4 linear_interpolate(Vector4 from, Vector4 to, float weight);
 
@@ -351,7 +351,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector3iAxis max_axis() const;
 
@@ -420,7 +420,7 @@ public:
 
 [[nodiscard]] inline float length(Vector3i vector);
 
-[[nodiscard]] inline float length_squared(Vector3i vector);
+[[nodiscard]] inline float length_sqrd(Vector3i vector);
 
 [[nodiscard]] inline Vector3iAxis max_axis(Vector3i vector);
 
@@ -453,7 +453,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector2iAxis max_axis() const;
 
@@ -530,7 +530,7 @@ public:
 
 [[nodiscard]] inline float length(const Vector2i& vector);
 
-[[nodiscard]] inline float length_squared(const Vector2i& vector);
+[[nodiscard]] inline float length_sqrd(const Vector2i& vector);
 
 [[nodiscard]] inline Vector2iAxis max_axis(const Vector2i& vector);
 
@@ -565,7 +565,7 @@ public:
 
     [[nodiscard]] inline Vector2 direction_to(const Vector2& to) const;
 
-    [[nodiscard]] inline float distance_squared_to(const Vector2& to) const;
+    [[nodiscard]] inline float direction_sqrd_to(const Vector2& to) const;
 
     [[nodiscard]] inline float distance_to(const Vector2& to) const;
 
@@ -575,7 +575,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector2 linear_interpolate(const Vector2& to, float weight) const;
 
@@ -592,6 +592,8 @@ public:
     [[nodiscard]] inline float dot(const Vector2& vector) const;
 
     [[nodiscard]] inline Vector2 reflect(const Vector2& normal) const;
+
+    [[nodiscard]] inline Vector2 rotate(float angle);
 
     [[nodiscard]] inline Vector2 inverse() const;
 
@@ -660,11 +662,11 @@ public:
 
 [[nodiscard]] inline Vector2 clamp(const Vector2& vector, const Vector2& min, const Vector2& max);
 
-[[nodiscard]] inline Vector2 direction_to(const Vector2& from, const Vector2& to);
+[[nodiscard]] inline Vector2 direction(const Vector2& from, const Vector2& to);
 
-[[nodiscard]] inline float distance_squared_to(const Vector2& from, const Vector2& to);
+[[nodiscard]] inline float distance_sqrd(const Vector2& from, const Vector2& to);
 
-[[nodiscard]] inline float distance_to(const Vector2& from, const Vector2& to);
+[[nodiscard]] inline float distance(const Vector2& from, const Vector2& to);
 
 [[nodiscard]] inline Vector2 normalize(const Vector2& vector);
 
@@ -672,7 +674,7 @@ public:
 
 [[nodiscard]] inline float length(const Vector2& vector);
 
-[[nodiscard]] inline float length_squared(const Vector2& vector);
+[[nodiscard]] inline float length_sqrd(const Vector2& vector);
 
 [[nodiscard]] inline Vector2 linear_interpolate(const Vector2& from, const Vector2& to, float weight);
 
@@ -734,7 +736,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Quaternion spherical_linear_interpolate(const Quaternion& to, float weight) const;
 
@@ -783,7 +785,7 @@ public:
     [[nodiscard]] inline Quaternion operator-() const;
 };
 
-[[nodiscard]] inline float angle_to(const Quaternion& from, const Quaternion& to);
+[[nodiscard]] inline float angle(const Quaternion& from, const Quaternion& to);
 
 [[nodiscard]] inline float dot(const Quaternion& a, const Quaternion& b);
 
@@ -797,7 +799,7 @@ public:
 
 [[nodiscard]] inline float length(const Quaternion& quaternion);
 
-[[nodiscard]] inline float length_squared(const Quaternion& quaternion);
+[[nodiscard]] inline float length_sqrd(const Quaternion& quaternion);
 
 [[nodiscard]] inline Quaternion spherical_linear_interpolate(
     const Quaternion& from, const Quaternion& to, float weight);
@@ -945,7 +947,7 @@ public:
 
     [[nodiscard]] inline Vector3 direction_to(Vector3 to) const;
 
-    [[nodiscard]] inline float distance_squared_to(Vector3 to) const;
+    [[nodiscard]] inline float distance_sqrd_to(Vector3 to) const;
 
     [[nodiscard]] inline float distance_to(Vector3 to) const;
 
@@ -955,7 +957,7 @@ public:
 
     [[nodiscard]] inline float length() const;
 
-    [[nodiscard]] inline float length_squared() const;
+    [[nodiscard]] inline float length_sqrd() const;
 
     [[nodiscard]] inline Vector3 linear_interpolate(Vector3 to, float weight) const;
 
@@ -1050,11 +1052,11 @@ public:
 
 [[nodiscard]] inline Vector3 clamp(Vector3 vector, Vector3 min, Vector3 max);
 
-[[nodiscard]] inline Vector3 direction_to(Vector3 from, Vector3 to);
+[[nodiscard]] inline Vector3 direction(Vector3 from, Vector3 to);
 
-[[nodiscard]] inline float distance_squared_to(Vector3 from, Vector3 to);
+[[nodiscard]] inline float distance_sqrd(Vector3 from, Vector3 to);
 
-[[nodiscard]] inline float distance_to(Vector3 from, Vector3 to);
+[[nodiscard]] inline float distance(Vector3 from, Vector3 to);
 
 [[nodiscard]] inline Vector3 normalize(Vector3 vector);
 
@@ -1062,7 +1064,7 @@ public:
 
 [[nodiscard]] inline float length(Vector3 vector);
 
-[[nodiscard]] inline float length_squared(Vector3 vector);
+[[nodiscard]] inline float length_sqrd(Vector3 vector);
 
 [[nodiscard]] inline Vector3 linear_interpolate(Vector3 from, Vector3 to, float weight);
 

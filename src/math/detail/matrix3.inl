@@ -102,7 +102,7 @@ inline Matrix3 Matrix3::orthonormalize() const
 }
 inline Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
 {
-    float quat_length_sq = quaternion.length_squared();
+    float quat_length_sq = quaternion.length_sqrd();
     float s = 2.0f / quat_length_sq;
 
     float xs = quaternion.x * s;

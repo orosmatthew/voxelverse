@@ -1,3 +1,6 @@
+
+#include "../math.hpp"
+
 #ifndef MVE_MATH_DEFS
 #include "../math.hpp"
 #endif
@@ -52,22 +55,22 @@ inline Vector2 Vector2::normalize() const
     return mve::normalize(*this);
 }
 
-inline float Vector2::distance_squared_to(const Vector2& to) const
+inline float Vector2::direction_sqrd_to(const Vector2& to) const
 {
-    return mve::distance_squared_to(*this, to);
+    return mve::distance_sqrd(*this, to);
 }
 
 inline float Vector2::distance_to(const Vector2& to) const
 {
-    return mve::distance_to(*this, to);
+    return mve::distance(*this, to);
 }
 inline float Vector2::length() const
 {
     return mve::length(*this);
 }
-inline float Vector2::length_squared() const
+inline float Vector2::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector2 Vector2::linear_interpolate(const Vector2& to, float weight) const
 {
@@ -91,7 +94,7 @@ inline float Vector2::aspect_ratio() const
 }
 inline Vector2 Vector2::direction_to(const Vector2& to) const
 {
-    return mve::direction_to(*this, to);
+    return mve::direction(*this, to);
 }
 inline Vector2 Vector2::floor() const
 {
@@ -289,6 +292,10 @@ inline Vector2::Vector2(const Vector2i& vector)
     , y(static_cast<float>(vector.y))
 {
 }
+Vector2 Vector2::rotate(float angle)
+{
+    return mve::rotate(*this, angle);
+}
 
 inline Vector2 abs(const Vector2& vector)
 {
@@ -310,7 +317,7 @@ inline Vector2 clamp(const Vector2& vector, const Vector2& min, const Vector2& m
     return Vector2(clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y));
 }
 
-inline Vector2 direction_to(const Vector2& from, const Vector2& to)
+inline Vector2 direction(const Vector2& from, const Vector2& to)
 {
     return normalize(to - from);
 }
@@ -328,14 +335,14 @@ inline Vector2 normalize(const Vector2& vector)
     return result;
 }
 
-inline float distance_squared_to(const Vector2& from, const Vector2& to)
+inline float distance_sqrd(const Vector2& from, const Vector2& to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
     return squared(diff_x) + squared(diff_y);
 }
 
-inline float distance_to(const Vector2& from, const Vector2& to)
+inline float distance(const Vector2& from, const Vector2& to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
@@ -351,7 +358,7 @@ inline float length(const Vector2& vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y));
 }
-inline float length_squared(const Vector2& vector)
+inline float length_sqrd(const Vector2& vector)
 {
     return squared(vector.x) + squared(vector.y);
 }
@@ -423,7 +430,7 @@ inline Vector2 inverse(const Vector2& vector)
 }
 inline Vector2 clamp_length(const Vector2& vector, float min, float max)
 {
-    float length_sqr = mve::length_squared(vector);
+    float length_sqr = mve::length_sqrd(vector);
     if (length_sqr > 0.0f) {
         float length = sqrt(length_sqr);
         if (length < min) {

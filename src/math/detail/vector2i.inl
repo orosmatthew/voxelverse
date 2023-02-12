@@ -40,9 +40,9 @@ inline float Vector2i::length() const
 {
     return mve::length(*this);
 }
-inline float Vector2i::length_squared() const
+inline float Vector2i::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector2iAxis Vector2i::max_axis() const
 {
@@ -268,7 +268,7 @@ inline float length(const Vector2i& vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y));
 }
-inline float length_squared(const Vector2i& vector)
+inline float length_sqrd(const Vector2i& vector)
 {
     return squared(vector.x) + squared(vector.y);
 }

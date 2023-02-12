@@ -58,7 +58,7 @@ inline Quaternion Quaternion::from_euler(const Vector3& euler)
 }
 inline float Quaternion::angle_to(const Quaternion& to) const
 {
-    return mve::angle_to(*this, to);
+    return mve::angle(*this, to);
 }
 inline float Quaternion::dot(const Quaternion& quaternion) const
 {
@@ -84,9 +84,9 @@ inline float Quaternion::length() const
 {
     return mve::length(*this);
 }
-inline float Quaternion::length_squared() const
+inline float Quaternion::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Quaternion Quaternion::spherical_linear_interpolate(const Quaternion& to, float weight) const
 {
@@ -227,7 +227,7 @@ inline const float& Quaternion::operator[](int index) const
     return data[index];
 }
 
-inline float angle_to(const Quaternion& from, const Quaternion& to)
+inline float angle(const Quaternion& from, const Quaternion& to)
 {
     float dot = mve::dot(from, to);
     return acos(clamp(squared(dot) * 2.0f - 1.0f, -1.0f, 1.0f));
@@ -258,9 +258,9 @@ inline float length(const Quaternion& quaternion)
 {
     return quaternion.data.length();
 }
-inline float length_squared(const Quaternion& quaternion)
+inline float length_sqrd(const Quaternion& quaternion)
 {
-    return quaternion.data.length_squared();
+    return quaternion.data.length_sqrd();
 }
 inline Quaternion spherical_linear_interpolate(const Quaternion& from, const Quaternion& to, float weight)
 {

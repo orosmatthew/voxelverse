@@ -16,18 +16,18 @@ inline Vector3 clamp(Vector3 vector, Vector3 min, Vector3 max)
 {
     return Vector3(clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y), clamp(vector.z, min.z, max.z));
 }
-inline Vector3 direction_to(Vector3 from, Vector3 to)
+inline Vector3 direction(Vector3 from, Vector3 to)
 {
     return normalize(to - from);
 }
-inline float distance_squared_to(Vector3 from, Vector3 to)
+inline float distance_sqrd(Vector3 from, Vector3 to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
     float diff_z = to.z - from.z;
     return squared(diff_x) + squared(diff_y) + squared(diff_z);
 }
-inline float distance_to(Vector3 from, Vector3 to)
+inline float distance(Vector3 from, Vector3 to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
@@ -54,7 +54,7 @@ inline float length(Vector3 vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z));
 }
-inline float length_squared(Vector3 vector)
+inline float length_sqrd(Vector3 vector)
 {
     return squared(vector.x) + squared(vector.y) + squared(vector.z);
 }
@@ -142,7 +142,7 @@ inline Vector3 inverse(Vector3 vector)
 }
 inline Vector3 clamp_length(Vector3 vector, float min, float max)
 {
-    float length_sqr = mve::length_squared(vector);
+    float length_sqr = mve::length_sqrd(vector);
     if (length_sqr > 0.0f) {
         float length = sqrt(length_sqr);
         if (length < min) {
@@ -239,15 +239,15 @@ inline Vector3 Vector3::clamp(Vector3 min, Vector3 max) const
 }
 inline Vector3 Vector3::direction_to(Vector3 to) const
 {
-    return mve::direction_to(*this, to);
+    return mve::direction(*this, to);
 }
-inline float Vector3::distance_squared_to(Vector3 to) const
+inline float Vector3::distance_sqrd_to(Vector3 to) const
 {
-    return mve::distance_squared_to(*this, to);
+    return mve::distance_sqrd(*this, to);
 }
 inline float Vector3::distance_to(Vector3 to) const
 {
-    return mve::distance_to(*this, to);
+    return mve::distance(*this, to);
 }
 inline Vector3 Vector3::normalize() const
 {
@@ -261,9 +261,9 @@ inline float Vector3::length() const
 {
     return mve::length(*this);
 }
-inline float Vector3::length_squared() const
+inline float Vector3::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector3 Vector3::linear_interpolate(Vector3 to, float weight) const
 {

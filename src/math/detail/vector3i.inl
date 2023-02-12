@@ -16,7 +16,7 @@ inline float length(Vector3i vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z));
 }
-inline float length_squared(Vector3i vector)
+inline float length_sqrd(Vector3i vector)
 {
     return squared(vector.x) + squared(vector.y) + squared(vector.z);
 }
@@ -91,9 +91,9 @@ inline float Vector3i::length() const
 {
     return mve::length(*this);
 }
-inline float Vector3i::length_squared() const
+inline float Vector3i::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector3iAxis Vector3i::max_axis() const
 {

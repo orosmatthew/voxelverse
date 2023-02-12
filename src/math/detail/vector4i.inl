@@ -20,7 +20,7 @@ inline float length(Vector4i vector)
 {
     return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w));
 }
-inline float length_squared(Vector4i vector)
+inline float length_sqrd(Vector4i vector)
 {
     return squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w);
 }
@@ -107,9 +107,9 @@ inline float Vector4i::length() const
 {
     return mve::length(*this);
 }
-inline float Vector4i::length_squared() const
+inline float Vector4i::length_sqrd() const
 {
-    return mve::length_squared(*this);
+    return mve::length_sqrd(*this);
 }
 inline Vector4iAxis Vector4i::max_axis() const
 {
@@ -349,6 +349,13 @@ inline Vector4i Vector4i::operator-() const
 inline Vector4i::operator bool() const
 {
     return x != 0 && y != 0 && z != 0 && w != 0;
+}
+Vector4i::Vector4i(const Vector4& vector)
+    : x(static_cast<int>(vector.x))
+    , y(static_cast<int>(vector.y))
+    , z(static_cast<int>(vector.z))
+    , w(static_cast<int>(vector.w))
+{
 }
 
 }
