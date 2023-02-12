@@ -1,7 +1,3 @@
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 #include <cmath>
 
 namespace mve {

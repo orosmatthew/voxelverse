@@ -3,6 +3,8 @@
 #include <memory>
 #include <stdint.h>
 
+#include "FastNoiseLite.h"
+
 #include "math/math.hpp"
 
 class FastNoiseLite;

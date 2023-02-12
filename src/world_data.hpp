@@ -10,7 +10,9 @@
 
 class WorldData {
 public:
-    WorldData(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to);
+    WorldData();
+
+    void generate(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to);
 
     inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
     {

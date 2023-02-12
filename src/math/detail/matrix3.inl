@@ -1,10 +1,3 @@
-
-#include "../math.hpp"
-
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Matrix3::Matrix3()
@@ -356,7 +349,7 @@ inline Vector3 Matrix3::operator*(Vector3 vector) const
              m[1][0] * vector.x + m[1][1] * vector.y + m[1][2] * vector.z,
              m[2][0] * vector.x + m[2][1] * vector.y + m[2][2] * vector.z };
 }
-Matrix3 Matrix3::from_direction(const Vector3& dir, const Vector3& up)
+inline Matrix3 Matrix3::from_direction(const Vector3& dir, const Vector3& up)
 {
     Vector3 axis_x = up.cross(dir).normalize();
     Vector3 axis_y = dir.cross(axis_x).normalize();
@@ -528,7 +521,7 @@ inline bool is_equal_approx(const Matrix3& a, const Matrix3& b)
     }
     return true;
 }
-bool is_zero_approx(const Matrix3& matrix)
+inline bool is_zero_approx(const Matrix3& matrix)
 {
     for (int c = 0; c < 3; c++) {
         if (!is_zero_approx(matrix[c])) {

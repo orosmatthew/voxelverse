@@ -1,19 +1,6 @@
 #include "app.hpp"
 
-#include <chrono>
-
-#include "FastNoiseLite.h"
-
-#include "camera.hpp"
-#include "chunk_mesh.hpp"
-#include "common.hpp"
 #include "logger.hpp"
-#include "math/math.hpp"
-#include "renderer.hpp"
-#include "ui_renderer.hpp"
-#include "util/fixed_loop.hpp"
-#include "window.hpp"
-#include "world_renderer.hpp"
 
 namespace app {
 
@@ -183,130 +170,120 @@ void trigger_break_block(const Camera& camera, WorldData& world_data, WorldRende
     }
 }
 
-void run()
+App::App()
+    : m_window("Mini Vulkan Engine", mve::Vector2i(800, 600))
+    , m_renderer(m_window, "Vulkan Testing", 0, 0, 1)
+    , m_ui_renderer(m_renderer)
+    , m_world_framebuffer(m_renderer.create_framebuffer([this]() {
+        m_ui_renderer.update_framebuffer_texture(
+            m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
+    }))
+    , m_fixed_loop(60.0f)
+    , m_cursor_captured(true)
+    , m_world_renderer(m_renderer)
+    , m_mesh_updates_per_frame(32)
+    , m_printed(false)
+    , m_begin_time(std::chrono::high_resolution_clock::now())
+    , m_frame_count(0)
+    , m_camera()
+    , m_world_data()
+    , m_chunk_mesh_queue()
 {
     LOG->set_level(spdlog::level::info);
-    LOG->debug("Creating window");
-
-    mve::Window window("Mini Vulkan Engine", mve::Vector2i(800, 600));
-
-    window.set_min_size({ 800, 600 });
-
-    window.disable_cursor();
-
-    mve::Renderer renderer(window, "Vulkan Testing", 0, 0, 1);
-
-    WorldRenderer world_renderer(renderer);
-
-    UIRenderer ui_renderer(renderer);
-
-    mve::Framebuffer world_framebuffer = renderer.create_framebuffer([&]() {
-        ui_renderer.update_framebuffer_texture(
-            world_framebuffer.texture(), renderer.framebuffer_size(world_framebuffer));
-    });
+    m_window.set_min_size({ 800, 600 });
+    m_window.disable_cursor();
 
     WorldGenerator world_generator(1);
-    WorldData world_data(world_generator, { -32, -32, -4 }, { 32, 32, 4 });
+    m_world_data.generate(world_generator, { -32, -32, -4 }, { 32, 32, 4 });
 
-    std::vector<mve::Vector3i> chunk_mesh_queue;
-    for_3d({ -32, -32, -4 }, { 32, 32, 4 }, [&](mve::Vector3i pos) { chunk_mesh_queue.push_back(pos); });
+    for_3d({ -32, -32, -4 }, { 32, 32, 4 }, [&](mve::Vector3i pos) { m_chunk_mesh_queue.push_back(pos); });
 
-    std::sort(chunk_mesh_queue.begin(), chunk_mesh_queue.end(), [](const mve::Vector3i& a, const mve::Vector3i& b) {
+    std::sort(m_chunk_mesh_queue.begin(), m_chunk_mesh_queue.end(), [](const mve::Vector3i& a, const mve::Vector3i& b) {
         return mve::Vector3(a).distance_sqrd_to(mve::Vector3(0)) > mve::Vector3(b).distance_sqrd_to(mve::Vector3(0));
     });
 
-    std::chrono::high_resolution_clock::time_point begin_time = std::chrono::high_resolution_clock::now();
-    int frame_count = 0;
-
     auto resize_func = [&](mve::Vector2i new_size) {
-        renderer.resize(window);
-        world_renderer.resize();
-        ui_renderer.resize();
+        m_renderer.resize(m_window);
+        m_world_renderer.resize();
+        m_ui_renderer.resize();
     };
 
-    window.set_resize_callback(resize_func);
+    m_window.set_resize_callback(resize_func);
 
-    std::invoke(resize_func, window.size());
+    std::invoke(resize_func, m_window.size());
 
-    Camera camera;
+    m_world_renderer.set_view(m_camera.view_matrix(1.0f));
+}
 
-    world_renderer.set_view(camera.view_matrix(1.0f));
+void App::main_loop()
+{
+    while (!m_window.should_close()) {
+        m_window.poll_events();
 
-    util::FixedLoop fixed_loop(60.0f);
+        m_fixed_loop.update(20, [&]() { m_camera.fixed_update(m_window); });
 
-    bool cursor_captured = true;
-
-    const int mesh_updates_per_frame = 32;
-
-    bool printed = false;
-
-    while (!window.should_close()) {
-        window.poll_events();
-
-        fixed_loop.update(20, [&]() { camera.fixed_update(window); });
-
-        if (cursor_captured) {
-            camera.update(window);
+        if (m_cursor_captured) {
+            m_camera.update(m_window);
         }
 
         int count = 0;
-        while (!chunk_mesh_queue.empty()) {
-            if (world_data.chunk_in_bounds(chunk_mesh_queue.back())) {
-                world_renderer.add_data(world_data.chunk_data_at(chunk_mesh_queue.back()), world_data);
+        while (!m_chunk_mesh_queue.empty()) {
+            if (m_world_data.chunk_in_bounds(m_chunk_mesh_queue.back())) {
+                m_world_renderer.add_data(m_world_data.chunk_data_at(m_chunk_mesh_queue.back()), m_world_data);
             }
-            chunk_mesh_queue.pop_back();
+            m_chunk_mesh_queue.pop_back();
             count++;
-            if (count > mesh_updates_per_frame) {
+            if (count > m_mesh_updates_per_frame) {
                 break;
             }
         }
 
-        if (chunk_mesh_queue.empty() && !printed) {
+        if (m_chunk_mesh_queue.empty() && !m_printed) {
             LOG->info("Done loading chunks");
-            printed = true;
+            m_printed = true;
         }
 
-        mve::Matrix4 view = camera.view_matrix(fixed_loop.blend());
+        mve::Matrix4 view = m_camera.view_matrix(m_fixed_loop.blend());
 
-        world_renderer.set_view(view);
-        if (window.is_key_pressed(mve::Key::escape)) {
+        m_world_renderer.set_view(view);
+        if (m_window.is_key_pressed(mve::Key::escape)) {
             break;
         }
 
-        if (window.is_key_pressed(mve::Key::f)) {
-            if (!window.is_fullscreen()) {
-                window.fullscreen(true);
+        if (m_window.is_key_pressed(mve::Key::f)) {
+            if (!m_window.is_fullscreen()) {
+                m_window.fullscreen(true);
             }
             else {
-                window.windowed();
+                m_window.windowed();
             }
         }
 
-        if (window.is_key_pressed(mve::Key::c)) {
-            if (cursor_captured) {
-                window.enable_cursor();
-                cursor_captured = false;
+        if (m_window.is_key_pressed(mve::Key::c)) {
+            if (m_cursor_captured) {
+                m_window.enable_cursor();
+                m_cursor_captured = false;
             }
             else {
-                window.disable_cursor();
-                cursor_captured = true;
+                m_window.disable_cursor();
+                m_cursor_captured = true;
             }
         }
 
-        if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
-            trigger_break_block(camera, world_data, world_renderer);
+        if (m_window.is_mouse_button_pressed(mve::MouseButton::left)) {
+            trigger_break_block(m_camera, m_world_data, m_world_renderer);
         }
 
-        if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
-            trigger_place_block(camera, world_data, world_renderer);
+        if (m_window.is_mouse_button_pressed(mve::MouseButton::right)) {
+            trigger_place_block(m_camera, m_world_data, m_world_renderer);
         }
 
         std::vector<mve::Vector3i> blocks
-            = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
-        Ray ray { camera.position(), camera.direction().normalize() };
-        world_renderer.hide_selection();
+            = ray_blocks(m_camera.position(), m_camera.position() + (m_camera.direction() * 10.0f));
+        Ray ray { m_camera.position(), m_camera.direction().normalize() };
+        m_world_renderer.hide_selection();
         for (mve::Vector3i block_pos : blocks) {
-            std::optional<uint8_t> block = world_data.block_at(block_pos);
+            std::optional<uint8_t> block = m_world_data.block_at(block_pos);
             if (!block.has_value() || block.value() != 1) {
                 continue;
             }
@@ -314,37 +291,37 @@ void run()
                              { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
             RayCollision collision = ray_box_collision(ray, bb);
             if (collision.hit) {
-                world_renderer.show_selection();
-                world_renderer.set_selection_position(block_pos);
+                m_world_renderer.show_selection();
+                m_world_renderer.set_selection_position(block_pos);
                 break;
             }
         }
 
-        renderer.begin_frame(window);
+        m_renderer.begin_frame(m_window);
 
-        renderer.begin_render_pass_framebuffer(world_framebuffer);
+        m_renderer.begin_render_pass_framebuffer(m_world_framebuffer);
 
-        world_renderer.draw(camera);
+        m_world_renderer.draw(m_camera);
 
-        renderer.end_render_pass_framebuffer(world_framebuffer);
+        m_renderer.end_render_pass_framebuffer(m_world_framebuffer);
 
-        renderer.begin_render_pass_present();
+        m_renderer.begin_render_pass_present();
 
-        ui_renderer.draw();
+        m_ui_renderer.draw();
 
-        renderer.end_render_pass_present();
+        m_renderer.end_render_pass_present();
 
-        renderer.end_frame(window);
+        m_renderer.end_frame(m_window);
 
         std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
 
-        if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - begin_time).count() >= 1000000) {
-            begin_time = std::chrono::high_resolution_clock::now();
-            LOG->info("Framerate: {}", frame_count);
-            frame_count = 0;
+        if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - m_begin_time).count() >= 1000000) {
+            m_begin_time = std::chrono::high_resolution_clock::now();
+            LOG->info("Framerate: {}", m_frame_count);
+            m_frame_count = 0;
         }
 
-        frame_count++;
+        m_frame_count++;
     }
 }
 }

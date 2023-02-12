@@ -1,10 +1,3 @@
-
-#include "../math.hpp"
-
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Quaternion::Quaternion()
@@ -229,7 +222,7 @@ inline const float& Quaternion::operator[](int index) const
 {
     return data[index];
 }
-Quaternion Quaternion::from_direction(const Vector3& dir, const Vector3& up)
+inline Quaternion Quaternion::from_direction(const Vector3& dir, const Vector3& up)
 {
     Quaternion result;
     float angle = mve::atan2(dir.x, dir.z);
@@ -239,7 +232,7 @@ Quaternion Quaternion::from_direction(const Vector3& dir, const Vector3& up)
     result.w = mve::cos(angle / 2.0f);
     return result;
 }
-Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const Vector3& to)
+inline Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const Vector3& to)
 {
     Quaternion result;
 

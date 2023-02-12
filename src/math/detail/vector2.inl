@@ -1,10 +1,3 @@
-
-#include "../math.hpp"
-
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Vector2::Vector2()
@@ -292,7 +285,7 @@ inline Vector2::Vector2(const Vector2i& vector)
     , y(static_cast<float>(vector.y))
 {
 }
-Vector2 Vector2::rotate(float angle)
+inline Vector2 Vector2::rotate(float angle)
 {
     return mve::rotate(*this, angle);
 }

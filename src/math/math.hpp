@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef MVE_MATH_DEFS
-#define MVE_MATH_DEFS
-
 namespace mve {
 
 const float epsilon = 0.00001f;
@@ -1244,8 +1241,6 @@ public:
 
 }
 
-#endif
-
 #include "detail/functions.inl"
 #include "detail/matrix3.inl"
 #include "detail/matrix4.inl"
@@ -1256,7 +1251,3 @@ public:
 #include "detail/vector3i.inl"
 #include "detail/vector4.inl"
 #include "detail/vector4i.inl"
-
-namespace std {
-
-}

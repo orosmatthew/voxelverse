@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include <spdlog/spdlog.h>
-
 #include "app.hpp"
 #include "logger.hpp"
+
+#include <spdlog/spdlog.h>
 
 int main()
 {
@@ -18,7 +18,8 @@ int main()
     LOG->info("Starting");
 
     try {
-        app::run();
+        app::App instance;
+        instance.main_loop();
     }
     catch (const std::exception& e) {
         LOG->error(e.what());

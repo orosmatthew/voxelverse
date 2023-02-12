@@ -1,7 +1,3 @@
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Vector3 abs(Vector3 vector)
@@ -190,11 +186,11 @@ inline Vector3 rotate(Vector3 vector, Vector3 axis, float angle)
 
     return result;
 }
-Vector3 rotate(const Vector3& vector, const Matrix3& matrix)
+inline Vector3 rotate(const Vector3& vector, const Matrix3& matrix)
 {
     return matrix * vector;
 }
-Vector3 transform(const Vector3& position, const Matrix4& matrix)
+inline Vector3 transform(const Vector3& position, const Matrix4& matrix)
 {
     Vector4 result_4d = matrix * Vector4(position.x, position.y, position.z, 1.0f);
     return { result_4d.x, result_4d.y, result_4d.z };
@@ -530,11 +526,11 @@ inline Vector3::Vector3(Vector3i vector)
     , z(static_cast<float>(vector.z))
 {
 }
-Vector3 Vector3::rotate(const Matrix3& matrix) const
+inline Vector3 Vector3::rotate(const Matrix3& matrix) const
 {
     return mve::rotate(*this, matrix);
 }
-Vector3 Vector3::transform(const Matrix4& matrix) const
+inline Vector3 Vector3::transform(const Matrix4& matrix) const
 {
     return mve::transform(*this, matrix);
 }

@@ -2,7 +2,11 @@
 
 #include "math/math.hpp"
 
-WorldData::WorldData(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to)
+WorldData::WorldData()
+{
+}
+
+void WorldData::generate(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to)
 {
     for (int x = from.x; x < to.x; x++) {
         for (int y = from.y; y < to.y; y++) {

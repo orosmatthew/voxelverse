@@ -1,7 +1,3 @@
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Matrix4::Matrix4()
@@ -220,7 +216,7 @@ inline Vector3 Matrix4::euler() const
 {
     return mve::euler(*this);
 }
-Vector4 Matrix4::operator*(const Vector4& vector) const
+inline Vector4 Matrix4::operator*(const Vector4& vector) const
 {
     const Matrix4& m = *this;
     return { vector.x * m[0][0] + vector.y * m[1][0] + vector.z * m[2][0] + vector.w * m[3][0],
@@ -228,11 +224,11 @@ Vector4 Matrix4::operator*(const Vector4& vector) const
              vector.x * m[0][2] + vector.y * m[1][2] + vector.z * m[2][2] + vector.w * m[3][2],
              vector.x * m[0][3] + vector.y * m[1][3] + vector.z * m[2][3] + vector.w * m[3][3] };
 }
-Matrix4 Matrix4::rotate(const Matrix3& basis) const
+inline Matrix4 Matrix4::rotate(const Matrix3& basis) const
 {
     return mve::rotate(*this, basis);
 }
-Matrix4 Matrix4::rotate_local(const Matrix3& basis) const
+inline Matrix4 Matrix4::rotate_local(const Matrix3& basis) const
 {
     return mve::rotate_local(*this, basis);
 }
@@ -390,7 +386,7 @@ inline Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle)
     mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
     return mve::Matrix4::from_basis_translation(matrix.basis() * rotation_basis, matrix.translation());
 }
-Matrix4 rotate(const Matrix4& matrix, const Matrix3& basis)
+inline Matrix4 rotate(const Matrix4& matrix, const Matrix3& basis)
 {
     return mve::Matrix4::from_basis_translation(matrix.basis() * basis, matrix.translation());
 }
@@ -473,7 +469,7 @@ inline Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, float an
     mve::Matrix3 rotation_basis = mve::Matrix3::from_axis_angle(axis, angle);
     return mve::Matrix4::from_basis_translation(rotation_basis * matrix.basis(), matrix.translation());
 }
-Matrix4 rotate_local(const Matrix4& matrix, const Matrix3& basis)
+inline Matrix4 rotate_local(const Matrix4& matrix, const Matrix3& basis)
 {
     return mve::Matrix4::from_basis_translation(basis * matrix.basis(), matrix.translation());
 }

@@ -1,7 +1,3 @@
-#ifndef MVE_MATH_DEFS
-#include "../math.hpp"
-#endif
-
 namespace mve {
 
 inline Vector4i abs(Vector4i vector)
@@ -350,7 +346,7 @@ inline Vector4i::operator bool() const
 {
     return x != 0 && y != 0 && z != 0 && w != 0;
 }
-Vector4i::Vector4i(const Vector4& vector)
+inline Vector4i::Vector4i(const Vector4& vector)
     : x(static_cast<int>(vector.x))
     , y(static_cast<int>(vector.y))
     , z(static_cast<int>(vector.z))
