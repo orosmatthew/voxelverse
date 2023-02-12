@@ -17,7 +17,12 @@ class ChunkMesh {
 public:
     ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer);
 
-    void draw(mve::Renderer& renderer);
+    void draw(mve::Renderer& renderer) const;
+
+    inline mve::Vector3i chunk_position() const
+    {
+        return m_chunk_pos;
+    }
 
 private:
     struct MeshData {
@@ -75,5 +80,6 @@ private:
     static std::optional<MeshBuffers> create_buffers(
         mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);
 
+    mve::Vector3i m_chunk_pos;
     std::optional<MeshBuffers> m_mesh_buffers;
 };

@@ -7,6 +7,7 @@
 
 ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer)
     : m_mesh_buffers(create_buffers(chunk_pos, renderer, data))
+    , m_chunk_pos(chunk_pos)
 {
 }
 
@@ -125,11 +126,11 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
 
     return MeshBuffers { renderer.create_vertex_buffer(vertex_data), renderer.create_index_buffer(mesh.indices) };
 }
-void ChunkMesh::draw(mve::Renderer& renderer)
+void ChunkMesh::draw(mve::Renderer& renderer) const
 {
     if (m_mesh_buffers.has_value()) {
-        renderer.bind_vertex_buffer(m_mesh_buffers.value().vertex_buffer);
-        renderer.draw_index_buffer(m_mesh_buffers.value().index_buffer);
+        renderer.bind_vertex_buffer(m_mesh_buffers->vertex_buffer);
+        renderer.draw_index_buffer(m_mesh_buffers->index_buffer);
     }
 }
 

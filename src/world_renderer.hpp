@@ -5,8 +5,8 @@
 #include "camera.hpp"
 #include "chunk_mesh.hpp"
 #include "common.hpp"
-#include "math/math.hpp"
 #include "frustum.hpp"
+#include "math/math.hpp"
 
 class WorldRenderer {
 public:
@@ -30,6 +30,8 @@ public:
     }
 
 private:
+    void rebuild_mesh_lookup();
+
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
@@ -39,6 +41,7 @@ private:
     mve::DescriptorSet m_global_descriptor_set;
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
-    std::unordered_map<mve::Vector3i, ChunkMesh> m_chunk_meshes {};
+    std::unordered_map<mve::Vector3i, size_t> m_chunk_mesh_lookup {};
+    std::vector<ChunkMesh> m_chunk_meshes;
     Frustum m_frustum;
 };

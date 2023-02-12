@@ -4,11 +4,14 @@
 
 void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world_data)
 {
-    if (m_chunk_meshes.contains(chunk_data.position())) {
-        m_chunk_meshes.erase(chunk_data.position());
-    }
     ChunkMesh mesh(chunk_data.position(), world_data, *m_renderer);
-    m_chunk_meshes.insert({ chunk_data.position(), std::move(mesh) });
+    if (m_chunk_mesh_lookup.contains(chunk_data.position())) {
+        m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_data.position())] = std::move(mesh);
+    }
+    else {
+        m_chunk_mesh_lookup[mesh.chunk_position()] = m_chunk_meshes.size();
+        m_chunk_meshes.push_back(std::move(mesh));
+    }
 }
 
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
@@ -49,10 +52,17 @@ void WorldRenderer::draw(const Camera& camera)
 
     m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
 
-    for (auto& [pos, mesh] : m_chunk_meshes) {
-        if (m_frustum.contains_sphere(pos * 16.0f, 30.0f)) {
+    for (const ChunkMesh& mesh : m_chunk_meshes) {
+        if (m_frustum.contains_sphere(mesh.chunk_position() * 16.0f, 30.0f)) {
             m_renderer->bind_descriptor_set(m_global_descriptor_set);
             mesh.draw(*m_renderer);
         }
+    }
+}
+void WorldRenderer::rebuild_mesh_lookup()
+{
+    m_chunk_mesh_lookup.clear();
+    for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
+        m_chunk_mesh_lookup[m_chunk_meshes.at(i).chunk_position()] = i;
     }
 }

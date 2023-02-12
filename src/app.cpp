@@ -185,7 +185,7 @@ void trigger_break_block(const Camera& camera, WorldData& world_data, WorldRende
 
 void run()
 {
-    LOG->set_level(spdlog::level::warn);
+    LOG->set_level(spdlog::level::info);
     LOG->debug("Creating window");
 
     mve::Window window("Mini Vulkan Engine", mve::Vector2i(800, 600));
@@ -263,7 +263,7 @@ void run()
         }
 
         if (chunk_mesh_queue.empty() && !printed) {
-            LOG->warn("DONE!");
+            LOG->info("Done loading chunks");
             printed = true;
         }
 
