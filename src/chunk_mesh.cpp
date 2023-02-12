@@ -30,9 +30,14 @@ void ChunkMesh::calc_block_faces(
     const WorldData& world_data,
     const ChunkData& chunk_data,
     mve::Vector3i chunk_pos,
-    mve::Vector3i local_pos)
+    mve::Vector3i local_pos,
+    bool iterate_empty,
+    const std::array<bool, 6>& directions)
 {
     for (int f = 0; f < 6; f++) {
+        if (!directions[f]) {
+            continue;
+        }
         Direction dir = static_cast<Direction>(f);
         mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
         std::optional<uint8_t> adj_block;
@@ -46,43 +51,28 @@ void ChunkMesh::calc_block_faces(
         if (adj_block.has_value()) {
             adj_block_type = *adj_block;
         }
-        if (adj_block_type == 0) {
-            std::array<uint8_t, 4> face_lighting
-                = calc_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
-            FaceData face = create_face_mesh(local_pos, dir, face_lighting);
-            add_face_to_mesh(mesh, face);
+        if (iterate_empty) {
+            if (adj_block_type == 1 && WorldData::is_block_pos_local(adj_local_pos)) {
+                std::array<uint8_t, 4> face_lighting
+                    = calc_face_lighting(world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
+                FaceData face = create_face_mesh(adj_local_pos, opposite_direction(dir), face_lighting);
+                add_face_to_mesh(mesh, face);
+            }
+        }
+        else {
+            if (adj_block_type == 0) {
+                std::array<uint8_t, 4> face_lighting
+                    = calc_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
+                FaceData face = create_face_mesh(local_pos, dir, face_lighting);
+                add_face_to_mesh(mesh, face);
+            }
         }
     }
 }
 
-void ChunkMesh::calc_block_faces_em(
-    MeshData& mesh,
-    const WorldData& world_data,
-    const ChunkData& chunk_data,
-    mve::Vector3i chunk_pos,
-    mve::Vector3i local_pos)
+void thing()
 {
-    for (int f = 0; f < 6; f++) {
-        Direction dir = static_cast<Direction>(f);
-        mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
-        std::optional<uint8_t> adj_block;
-        if (WorldData::is_block_pos_local(adj_local_pos)) {
-            adj_block = chunk_data.get_block(adj_local_pos);
-        }
-        else {
-            adj_block = world_data.block_at(WorldData::block_local_to_world(chunk_pos, adj_local_pos));
-        }
-        uint8_t adj_block_type = 0;
-        if (adj_block.has_value()) {
-            adj_block_type = *adj_block;
-        }
-        if (adj_block_type == 1 && WorldData::is_block_pos_local(adj_local_pos)) {
-            std::array<uint8_t, 4> face_lighting
-                = calc_face_lighting(world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
-            FaceData face = create_face_mesh(adj_local_pos, opposite_direction(dir), face_lighting);
-            add_face_to_mesh(mesh, face);
-        }
-    }
+
 }
 
 std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
@@ -93,18 +83,35 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i local_pos) {
         uint8_t block = chunk_data.get_block(local_pos);
         if (chunk_data.block_count() > (8 * 8 * 8)) {
-            if (block == 1
-                && (local_pos.x == 0 || local_pos.y == 0 || local_pos.z == 0 || local_pos.x == 15 || local_pos.y == 15
-                    || local_pos.z == 15)) {
-                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos);
+            if (block == 1) {
+                std::array<bool, 6> directions {};
+                if (local_pos.x == 0) {
+                    directions[static_cast<size_t>(Direction::left)] = true;
+                }
+                if (local_pos.x == 15) {
+                    directions[static_cast<size_t>(Direction::right)] = true;
+                }
+                if (local_pos.y == 0) {
+                    directions[static_cast<size_t>(Direction::front)] = true;
+                }
+                if (local_pos.y == 15) {
+                    directions[static_cast<size_t>(Direction::back)] = true;
+                }
+                if (local_pos.z == 0) {
+                    directions[static_cast<size_t>(Direction::bottom)] = true;
+                }
+                if (local_pos.z == 15) {
+                    directions[static_cast<size_t>(Direction::top)] = true;
+                }
+                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, false, directions);
             }
             if (block == 0) {
-                calc_block_faces_em(mesh, world_data, chunk_data, chunk_pos, local_pos);
+                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, true);
             }
         }
         else {
             if (block == 1) {
-                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos);
+                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, false);
             }
         }
     });

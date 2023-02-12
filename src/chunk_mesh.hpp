@@ -61,14 +61,9 @@ private:
         const WorldData& world_data,
         const ChunkData& chunk_data,
         mve::Vector3i chunk_pos,
-        mve::Vector3i local_pos);
-
-    static void calc_block_faces_em(
-        MeshData& mesh,
-        const WorldData& world_data,
-        const ChunkData& chunk_data,
-        mve::Vector3i chunk_pos,
-        mve::Vector3i local_pos);
+        mve::Vector3i local_pos,
+        bool iterate_empty,
+        const std::array<bool, 6>& directions = { true, true, true, true, true, true });
 
     static std::array<uint8_t, 4> calc_face_lighting(
         const WorldData& data,
