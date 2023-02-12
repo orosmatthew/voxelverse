@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef MVE_MATH_DEFS
+#define MVE_MATH_DEFS
+
 namespace mve {
 
 const float epsilon = 0.00001f;
@@ -870,6 +873,8 @@ public:
     [[nodiscard]] inline Matrix4 operator*(const Matrix4& other) const;
 
     inline void operator*=(const Matrix4& other);
+
+    [[nodiscard]] inline Vector4 operator*(const Vector4& vector) const;
 };
 
 [[nodiscard]] inline float determinant(Matrix4 matrix);
@@ -982,6 +987,8 @@ public:
 
     [[nodiscard]] inline Vector3 rotate(const Matrix3& matrix);
 
+    [[nodiscard]] inline Vector3 transform(const Matrix4& matrix);
+
     [[nodiscard]] inline bool operator!=(Vector3 other) const;
 
     [[nodiscard]] inline Vector3 operator*(Vector3 other) const;
@@ -1086,6 +1093,8 @@ public:
 [[nodiscard]] inline Vector3 rotate(Vector3 vector, Vector3 axis, float angle);
 
 [[nodiscard]] inline Vector3 rotate(const Vector3& vector, const Matrix3& matrix);
+
+[[nodiscard]] inline Vector3 transform(const Vector3& position, const Matrix4& matrix);
 
 class Matrix3 {
 public:
@@ -1218,6 +1227,8 @@ public:
 [[nodiscard]] inline Matrix3 look_at(const Vector3& target, const Vector3& up);
 
 }
+
+#endif
 
 #include "detail/functions.inl"
 #include "detail/matrix3.inl"

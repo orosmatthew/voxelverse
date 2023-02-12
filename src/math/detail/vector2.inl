@@ -1,3 +1,7 @@
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
+
 namespace mve {
 
 inline Vector2::Vector2()

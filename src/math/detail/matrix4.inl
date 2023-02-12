@@ -1,3 +1,7 @@
+#ifndef MVE_MATH_DEFS
+#include "../math.hpp"
+#endif
+
 namespace mve {
 
 inline Matrix4::Matrix4()
@@ -215,6 +219,14 @@ inline Matrix4 Matrix4::translate_local(const Vector3& offset) const
 inline Vector3 Matrix4::euler() const
 {
     return mve::euler(*this);
+}
+Vector4 Matrix4::operator*(const Vector4& vector) const
+{
+    const Matrix4& m = *this;
+    return { vector.x * m[0][0] + vector.y * m[1][0] + vector.z * m[2][0] + vector.w * m[3][0],
+             vector.x * m[0][1] + vector.y * m[1][1] + vector.z * m[2][1] + vector.w * m[3][1],
+             vector.x * m[0][2] + vector.y * m[1][2] + vector.z * m[2][2] + vector.w * m[3][2],
+             vector.x * m[0][3] + vector.y * m[1][3] + vector.z * m[2][3] + vector.w * m[3][3] };
 }
 
 inline float determinant(Matrix4 matrix)
