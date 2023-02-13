@@ -26,9 +26,9 @@ void Camera::update(const mve::Window& window)
             head_euler.x = 180.0f;
         }
     }
-    if (head_euler.x < mve::radians(0.01f)) {
+    if (head_euler.x < mve::radians(0.1f)) {
         m_head_transform = mve::Matrix4::from_basis_translation(
-            mve::Matrix3::from_euler({ mve::radians(0.01f), 0, 0 }), m_head_transform.translation());
+            mve::Matrix3::from_euler({ mve::radians(0.1f), 0, 0 }), m_head_transform.translation());
     }
     if (head_euler.x > mve::radians(179.9f)) {
         m_head_transform = mve::Matrix4::from_basis_translation(
