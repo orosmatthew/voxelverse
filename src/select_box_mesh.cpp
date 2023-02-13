@@ -31,8 +31,8 @@ SelectBoxMesh::SelectBoxMesh(
     edges.push_back({ { 0.5f, -0.5f, 0.5f }, { 0.5f, 0.5f, 0.5f } }); // Right top
     edges.push_back({ { 0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, -0.5f } }); // Right bottom
 
-    const float z_offset = 0.0005f; // To prevent z-fighting
-    const float width = 0.02f;
+    const float z_offset = 0.005f; // To prevent z-fighting
+    const float width = 0.01f;
     mve::Matrix4 scale = mve::Matrix4::from_basis_translation(
         mve::Matrix3::from_scale(mve::Vector3(1.0f - width + z_offset)), { 0, 0, 0 });
 
