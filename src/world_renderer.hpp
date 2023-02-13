@@ -15,6 +15,10 @@ public:
 
     void add_data(const ChunkData& chunk_data, const WorldData& world_data);
 
+    bool contains_data(mve::Vector3i position);
+
+    void remove_data(mve::Vector3i position);
+
     void set_view(const mve::Matrix4& view);
 
     void resize();
@@ -62,7 +66,7 @@ private:
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
     std::unordered_map<mve::Vector3i, size_t> m_chunk_mesh_lookup {};
-    std::vector<ChunkMesh> m_chunk_meshes;
+    std::vector<std::optional<ChunkMesh>> m_chunk_meshes;
     Frustum m_frustum;
     SelectionBox m_selection_box;
 };

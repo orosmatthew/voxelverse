@@ -48,7 +48,7 @@ void WorldRenderer::resize()
     float angle = mve::radians(90.0f);
     float ratio = (float)(m_renderer->extent().x) / (float)(m_renderer->extent().y);
     float near = 0.01f;
-    float far = 1000.0f;
+    float far = 10000.0f;
 
     m_frustum.update_perspective(angle, ratio, near, far);
     mve::Matrix4 proj = mve::perspective(angle, ratio, near, far);
@@ -68,10 +68,10 @@ void WorldRenderer::draw(const Camera& camera)
         m_selection_box.mesh.draw(m_global_descriptor_set);
     }
 
-    for (const ChunkMesh& mesh : m_chunk_meshes) {
-        if (m_frustum.contains_sphere(mesh.chunk_position() * 16.0f, 30.0f)) {
+    for (const std::optional<ChunkMesh>& mesh : m_chunk_meshes) {
+        if (mesh.has_value() && m_frustum.contains_sphere(mesh->chunk_position() * 16.0f, 30.0f)) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
-            mesh.draw(*m_renderer);
+            mesh->draw(*m_renderer);
         }
     }
 }
@@ -79,10 +79,21 @@ void WorldRenderer::rebuild_mesh_lookup()
 {
     m_chunk_mesh_lookup.clear();
     for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
-        m_chunk_mesh_lookup[m_chunk_meshes.at(i).chunk_position()] = i;
+        if (m_chunk_meshes[i].has_value()) {
+            m_chunk_mesh_lookup[m_chunk_meshes.at(i)->chunk_position()] = i;
+        }
     }
 }
 void WorldRenderer::set_selection_position(mve::Vector3 position)
 {
     m_selection_box.mesh.set_position(position);
+}
+bool WorldRenderer::contains_data(mve::Vector3i position)
+{
+    return m_chunk_mesh_lookup.contains(position);
+}
+void WorldRenderer::remove_data(mve::Vector3i position)
+{
+    m_chunk_meshes[m_chunk_mesh_lookup.at(position)].reset();
+    m_chunk_mesh_lookup.erase(position);
 }

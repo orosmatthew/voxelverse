@@ -12,7 +12,14 @@ class WorldData {
 public:
     WorldData();
 
+    void generate(const WorldGenerator& generator, mve::Vector3i chunk_pos);
+
     void generate(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to);
+
+    inline void remove_chunk(mve::Vector3i chunk_pos)
+    {
+        m_chunks.erase(chunk_pos);
+    }
 
     inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
     {
@@ -64,7 +71,7 @@ public:
         return m_chunks.at(chunk_pos);
     }
 
-    inline bool chunk_in_bounds(mve::Vector3i chunk_pos) const
+    inline bool contains_chunk(mve::Vector3i chunk_pos) const
     {
         return m_chunks.contains(chunk_pos);
     }

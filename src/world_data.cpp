@@ -18,3 +18,9 @@ void WorldData::generate(const WorldGenerator& generator, mve::Vector3i from, mv
         }
     }
 }
+void WorldData::generate(const WorldGenerator& generator, mve::Vector3i chunk_pos)
+{
+    ChunkData chunk_data(chunk_pos);
+    chunk_data.generate(generator);
+    m_chunks.insert({ chunk_pos, std::move(chunk_data) });
+}

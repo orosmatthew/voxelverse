@@ -58,11 +58,20 @@ void Camera::fixed_update(const mve::Window& window)
     }
     m_velocity -= (m_velocity * m_friction);
     m_prev_pos = m_body_transform.translation();
-    if (dir != mve::Vector3(0.0f)) {
-        m_velocity += dir.normalize() * m_acceleration;
+
+    if (window.is_key_down(mve::Key::left_control)) {
+        if (dir != mve::Vector3(0.0f)) {
+            m_velocity += dir.normalize() * m_acceleration * 20.0f;
+        }
     }
-    if (m_velocity.length() > m_max_speed) {
-        m_velocity = m_velocity.normalize() * m_max_speed;
+    else {
+        if (dir != mve::Vector3(0.0f)) {
+            m_velocity += dir.normalize() * m_acceleration;
+        }
+        if (m_velocity.length() > m_max_speed) {
+            m_velocity = m_velocity * m_max_speed;
+        }
     }
+
     m_body_transform = m_body_transform.translate_local(m_velocity);
 }
