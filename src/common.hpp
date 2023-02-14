@@ -45,3 +45,99 @@ inline void for_3d(mve::Vector3i from, mve::Vector3i to, std::function<void(mve:
         }
     }
 }
+
+struct QuadUVs {
+    mve::Vector2 top_left;
+    mve::Vector2 top_right;
+    mve::Vector2 bottom_right;
+    mve::Vector2 bottom_left;
+};
+
+inline QuadUVs uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
+{
+    mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
+    //    mve::Vector2 padding = mve::Vector2(1.0f / texture_size.x, 1.0f / texture_size.y) / 4.0f;
+    // TODO: fix padding calculation
+    mve::Vector2 padding;
+
+    QuadUVs uvs;
+    uvs.top_left = mve::Vector2(pos.x * atlas_unit.x, pos.y * atlas_unit.y);
+    uvs.top_right = uvs.top_left + mve::Vector2(atlas_unit.x, 0.0f);
+    uvs.bottom_right = uvs.top_right + mve::Vector2(0.0f, atlas_unit.y);
+    uvs.bottom_left = uvs.bottom_right + mve::Vector2(-atlas_unit.x, 0.0f);
+
+    uvs.top_left += padding;
+    uvs.top_right += mve::Vector2(-padding.x, padding.y);
+    uvs.bottom_right += mve::Vector2(-padding.x, -padding.y);
+    uvs.bottom_left += mve::Vector2(padding.x, -padding.y);
+
+    return uvs;
+}
+
+inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
+{
+    switch (block_type) {
+    case 1:
+        switch (face) {
+        case Direction::front:
+            return { 0, 0 };
+        case Direction::back:
+            return { 0, 0 };
+        case Direction::left:
+            return { 0, 0 };
+        case Direction::right:
+            return { 0, 0 };
+        case Direction::top:
+            return { 1, 0 };
+        case Direction::bottom:
+            return { 0, 1 };
+        }
+    case 2:
+        switch (face) {
+        case Direction::front:
+            return { 1, 1 };
+        case Direction::back:
+            return { 1, 1 };
+        case Direction::left:
+            return { 1, 1 };
+        case Direction::right:
+            return { 1, 1 };
+        case Direction::top:
+            return { 1, 1 };
+        case Direction::bottom:
+            return { 1, 1 };
+        }
+    case 3:
+        switch (face) {
+        case Direction::front:
+            return { 2, 0 };
+        case Direction::back:
+            return { 2, 0 };
+        case Direction::left:
+            return { 2, 0 };
+        case Direction::right:
+            return { 2, 0 };
+        case Direction::top:
+            return { 2, 0 };
+        case Direction::bottom:
+            return { 2, 0 };
+        }
+    case 4:
+        switch (face) {
+        case Direction::front:
+            return { 0, 1 };
+        case Direction::back:
+            return { 0, 1 };
+        case Direction::left:
+            return { 0, 1 };
+        case Direction::right:
+            return { 0, 1 };
+        case Direction::top:
+            return { 0, 1 };
+        case Direction::bottom:
+            return { 0, 1 };
+        }
+    default:
+        return { 0, 0 };
+    }
+}

@@ -14,6 +14,8 @@ public:
 
     void set_hotbar_select(int pos);
 
+    void set_hotbar_block(int pos, uint8_t block_type);
+
 private:
     const mve::VertexLayout c_vertex_layout = {
         mve::VertexAttributeType::vec3, // Position
@@ -38,9 +40,18 @@ private:
         mve::UniformLocation model_location;
     };
 
+    struct MeshData {
+        std::vector<mve::Vector3> vertices;
+        std::vector<mve::Vector3> colors;
+        std::vector<mve::Vector2> uvs;
+        std::vector<uint32_t> indices;
+    };
+
     mve::VertexData create_hotbar_vertex_data() const;
 
     mve::VertexData create_hotbar_select_vertex_data() const;
+
+    MeshData create_block_face_data(uint8_t block_type) const;
 
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
@@ -55,5 +66,6 @@ private:
     std::optional<World> m_world;
     std::optional<UIMesh> m_hotbar;
     std::optional<UIMesh> m_hotbar_select;
+    std::unordered_map<int, std::optional<UIMesh>> m_hotbar_blocks;
     int m_current_hotbar_select = 0;
 };

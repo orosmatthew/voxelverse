@@ -11,6 +11,13 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     , m_mesh_updates_per_frame(16)
     , m_render_distance(render_distance)
 {
+    m_hotbar_blocks.insert({ 0, 1 });
+    m_hotbar_blocks.insert({ 1, 2 });
+    m_hotbar_blocks.insert({ 2, 3 });
+    m_hotbar_blocks.insert({ 3, 4 });
+    for (auto& [pos, block] : m_hotbar_blocks) {
+        m_ui_renderer->set_hotbar_block(pos, block);
+    }
 }
 
 void World::fixed_update()
@@ -112,7 +119,7 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     return collision;
 }
 
-void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRenderer& world_renderer)
+void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRenderer& world_renderer, uint8_t block_type)
 {
     std::set<mve::Vector3i> update_chunks;
     std::vector<mve::Vector3i> blocks = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
@@ -132,7 +139,7 @@ void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRende
             if (!world_data.block_at(place_pos).has_value() || world_data.block_at(place_pos).value() != 0) {
                 break;
             }
-            world_data.set_block(place_pos, 3);
+            world_data.set_block(place_pos, block_type);
             update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
             std::array<mve::Vector3i, 6> surrounding
                 = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
@@ -197,7 +204,9 @@ void World::update(bool mouse_captured, float blend)
     }
 
     if (m_window->is_mouse_button_pressed(mve::MouseButton::right)) {
-        trigger_place_block(m_camera, m_world_data, m_world_renderer);
+        if (m_hotbar_blocks.contains(m_current_hotbar_select)) {
+            trigger_place_block(m_camera, m_world_data, m_world_renderer, m_hotbar_blocks.at(m_current_hotbar_select));
+        }
     }
 
     mve::Vector2 scroll = m_window->mouse_scroll();

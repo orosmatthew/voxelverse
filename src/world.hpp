@@ -4,8 +4,7 @@
 #include "world_renderer.hpp"
 
 // TODO: Chunk unloading
-// TODO: Add hotbar scrolling
-// TODO: Make hotbar functional
+// TODO: Make hotbar blocks 3D
 
 class UIRenderer;
 
@@ -40,5 +39,6 @@ private:
     std::vector<mve::Vector3i> m_chunk_removal_queue;
     mve::Vector3i m_camera_chunk = { -1, -1, -1 };
     int m_render_distance;
-    int m_current_hotbar_select;
+    int m_current_hotbar_select = 0;
+    std::unordered_map<int, uint8_t> m_hotbar_blocks {};
 };

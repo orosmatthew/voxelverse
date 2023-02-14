@@ -137,79 +137,11 @@ void ChunkMesh::draw(mve::Renderer& renderer) const
     }
 }
 
-mve::Vector2i ChunkMesh::block_uv(uint8_t block_type, Direction face)
-{
-    switch (block_type) {
-    case 1:
-        switch (face) {
-        case Direction::front:
-            return { 0, 0 };
-        case Direction::back:
-            return { 0, 0 };
-        case Direction::left:
-            return { 0, 0 };
-        case Direction::right:
-            return { 0, 0 };
-        case Direction::top:
-            return { 1, 0 };
-        case Direction::bottom:
-            return { 0, 1 };
-        }
-    case 2:
-        switch (face) {
-        case Direction::front:
-            return { 1, 1 };
-        case Direction::back:
-            return { 1, 1 };
-        case Direction::left:
-            return { 1, 1 };
-        case Direction::right:
-            return { 1, 1 };
-        case Direction::top:
-            return { 1, 1 };
-        case Direction::bottom:
-            return { 1, 1 };
-        }
-    case 3:
-        switch (face) {
-        case Direction::front:
-            return { 2, 0 };
-        case Direction::back:
-            return { 2, 0 };
-        case Direction::left:
-            return { 2, 0 };
-        case Direction::right:
-            return { 2, 0 };
-        case Direction::top:
-            return { 2, 0 };
-        case Direction::bottom:
-            return { 2, 0 };
-        }
-    case 4:
-        switch (face) {
-        case Direction::front:
-            return { 0, 1 };
-        case Direction::back:
-            return { 0, 1 };
-        case Direction::left:
-            return { 0, 1 };
-        case Direction::right:
-            return { 0, 1 };
-        case Direction::top:
-            return { 0, 1 };
-        case Direction::bottom:
-            return { 0, 1 };
-        }
-    default:
-        return { 0, 0 };
-    }
-}
-
 ChunkMesh::FaceData ChunkMesh::create_face_mesh(
     uint8_t block_type, mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting)
 {
     FaceData data;
-    FaceUVs uvs;
+    QuadUVs uvs;
     switch (face) {
     case Direction::front:
         uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::front));
@@ -266,27 +198,6 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(
     data.colors[3] = { lighting[3] / 255.0f, lighting[3] / 255.0f, lighting[3] / 255.0f };
     data.indices = { 0, 3, 2, 0, 2, 1 };
     return data;
-}
-
-ChunkMesh::FaceUVs ChunkMesh::uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
-{
-    mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
-    //    mve::Vector2 padding = mve::Vector2(1.0f / texture_size.x, 1.0f / texture_size.y) / 4.0f;
-    // TODO: fix padding calculation
-    mve::Vector2 padding;
-
-    FaceUVs uvs;
-    uvs.top_left = mve::Vector2(pos.x * atlas_unit.x, pos.y * atlas_unit.y);
-    uvs.top_right = uvs.top_left + mve::Vector2(atlas_unit.x, 0.0f);
-    uvs.bottom_right = uvs.top_right + mve::Vector2(0.0f, atlas_unit.y);
-    uvs.bottom_left = uvs.bottom_right + mve::Vector2(-atlas_unit.x, 0.0f);
-
-    uvs.top_left += padding;
-    uvs.top_right += mve::Vector2(-padding.x, padding.y);
-    uvs.bottom_right += mve::Vector2(-padding.x, -padding.y);
-    uvs.bottom_left += mve::Vector2(padding.x, -padding.y);
-
-    return uvs;
 }
 
 void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::FaceData& face)

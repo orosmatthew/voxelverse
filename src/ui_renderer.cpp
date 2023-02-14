@@ -1,5 +1,7 @@
 #include "ui_renderer.hpp"
 
+#include "chunk_data.hpp"
+#include "common.hpp"
 #include "logger.hpp"
 #include "math/math.hpp"
 
@@ -98,6 +100,17 @@ void UIRenderer::resize()
             m_hotbar->model_location, mve::Matrix4::identity().scale(hotbar_scale).translate(hotbar_translation));
     }
     set_hotbar_select(m_current_hotbar_select);
+    for (auto& [pos, block] : m_hotbar_blocks) {
+        if (block.has_value()) {
+            int first_offset_x = -20 * 5 * 4;
+            block->uniform_buffer.update(
+                block->model_location,
+                mve::Matrix4::identity()
+                    .scale(hotbar_scale)
+                    .translate(
+                        hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), -5 * 4, 0) * hotbar_scale));
+        }
+    }
 }
 
 void UIRenderer::draw()
@@ -117,6 +130,11 @@ void UIRenderer::draw()
         m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_hotbar->descriptor_set);
         m_renderer->bind_vertex_buffer(m_hotbar->vertex_buffer);
         m_renderer->draw_index_buffer(m_hotbar->index_buffer);
+    }
+    for (const auto& [pos, block] : m_hotbar_blocks) {
+        m_renderer->bind_descriptor_sets(m_global_descriptor_set, block->descriptor_set);
+        m_renderer->bind_vertex_buffer(block->vertex_buffer);
+        m_renderer->draw_index_buffer(block->index_buffer);
     }
     if (m_hotbar_select) {
         m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_hotbar_select->descriptor_set);
@@ -219,4 +237,45 @@ void UIRenderer::set_hotbar_select(int pos)
                 .scale(hotbar_scale)
                 .translate(hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), 0, 0) * hotbar_scale));
     }
+}
+UIRenderer::MeshData UIRenderer::create_block_face_data(uint8_t block_type) const
+{
+    mve::Vector2 size(14 * 5);
+    MeshData data;
+    data.vertices.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
+    data.vertices.push_back(mve::Vector3(0.5f * size.x, -1.0f * size.y, 0.0f));
+    data.vertices.push_back(mve::Vector3(0.5f * size.x, 0.0f * size.y, 0.0f));
+    data.vertices.push_back(mve::Vector3(-0.5f * size.x, 0.0f * size.y, 0.0f));
+    QuadUVs quad_uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::front));
+    data.uvs.push_back(quad_uvs.top_left);
+    data.uvs.push_back(quad_uvs.top_right);
+    data.uvs.push_back(quad_uvs.bottom_right);
+    data.uvs.push_back(quad_uvs.bottom_left);
+    data.colors.push_back({ 1, 1, 1 });
+    data.colors.push_back({ 1, 1, 1 });
+    data.colors.push_back({ 1, 1, 1 });
+    data.colors.push_back({ 1, 1, 1 });
+    data.indices = { 0, 3, 2, 0, 2, 1 };
+    return data;
+}
+
+void UIRenderer::set_hotbar_block(int pos, uint8_t block_type)
+{
+    MeshData block_data = create_block_face_data(block_type);
+    mve::VertexData block_vertex_data(c_vertex_layout);
+    for (size_t i = 0; i < block_data.vertices.size(); i++) {
+        block_vertex_data.push_back(block_data.vertices[i]);
+        block_vertex_data.push_back(block_data.colors[i]);
+        block_vertex_data.push_back(block_data.uvs[i]);
+    }
+    UIMesh block { .vertex_buffer = m_renderer->create_vertex_buffer(block_vertex_data),
+                   .index_buffer = m_renderer->create_index_buffer(block_data.indices),
+                   .texture = m_renderer->create_texture("../res/atlas.png"),
+                   .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),
+                   .uniform_buffer = m_renderer->create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)),
+                   .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };
+    block.descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), block.uniform_buffer);
+    block.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), block.texture);
+    block.uniform_buffer.update(block.model_location, mve::Matrix4::identity());
+    m_hotbar_blocks[pos] = std::move(block);
 }

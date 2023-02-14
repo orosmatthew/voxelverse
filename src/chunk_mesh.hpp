@@ -41,14 +41,6 @@ private:
         mve::VertexBuffer vertex_buffer;
         mve::IndexBuffer index_buffer;
     };
-    struct FaceUVs {
-        mve::Vector2 top_left;
-        mve::Vector2 top_right;
-        mve::Vector2 bottom_right;
-        mve::Vector2 bottom_left;
-    };
-
-    static FaceUVs uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos);
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
@@ -72,8 +64,6 @@ private:
         mve::Vector3i chunk_pos,
         mve::Vector3i local_block_pos,
         Direction dir);
-
-    static mve::Vector2i block_uv(uint8_t block_type, Direction face);
 
     static std::optional<MeshBuffers> create_buffers(
         mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);
