@@ -594,11 +594,11 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
                   vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB
                   | vk::ColorComponentFlagBits::eA)
               .setBlendEnable(true)
-              .setSrcColorBlendFactor(vk::BlendFactor::eOne)
-              .setDstColorBlendFactor(vk::BlendFactor::eZero)
+              .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
+              .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
               .setColorBlendOp(vk::BlendOp::eAdd)
-              .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
-              .setDstAlphaBlendFactor(vk::BlendFactor::eZero)
+              .setSrcAlphaBlendFactor(vk::BlendFactor::eSrcAlpha)
+              .setDstAlphaBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
               .setAlphaBlendOp(vk::BlendOp::eAdd);
 
     auto color_blending_info

@@ -2,7 +2,8 @@
 
 #include "renderer.hpp"
 
-// TODO: Add hotbar
+// TODO: Add hotbar selecting
+// TODO: Resize hotbar to screen size
 
 class UIRenderer {
 public:
@@ -21,7 +22,7 @@ private:
         mve::VertexAttributeType::vec2 // UV
     };
 
-    struct Cross {
+    struct UIMesh {
         mve::VertexBuffer vertex_buffer;
         mve::IndexBuffer index_buffer;
         mve::Texture texture;
@@ -38,6 +39,8 @@ private:
         mve::UniformLocation model_location;
     };
 
+    mve::VertexData create_hotbar_vertex_data() const;
+
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
@@ -47,6 +50,7 @@ private:
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
 
-    std::optional<Cross> m_cross;
+    std::optional<UIMesh> m_cross;
     std::optional<World> m_world;
+    std::optional<UIMesh> m_hotbar;
 };
