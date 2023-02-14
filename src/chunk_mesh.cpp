@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 #include "logger.hpp"
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 #include "world_renderer.hpp"
 
 ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer)

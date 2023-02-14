@@ -2,8 +2,7 @@
 
 #include "chunk_data.hpp"
 #include "common.hpp"
-#include "logger.hpp"
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 UIRenderer::UIRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 #include "world_generator.hpp"
 
 enum class Direction { front = 0, back, left, right, top, bottom };

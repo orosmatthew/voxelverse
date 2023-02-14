@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-#include "vertex_data.hpp"
+#include "mve/vertex_data.hpp"
 
 namespace mve {
 

@@ -1,6 +1,6 @@
 #include <catch_amalgamated.hpp>
 
-#include "../src/vertex_data.hpp"
+#include "../src/mve/vertex_data.hpp"
 
 TEST_CASE("Test VertexData", "[VertexData]")
 {

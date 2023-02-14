@@ -5,7 +5,7 @@
 
 #include "FastNoiseLite.h"
 
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 class FastNoiseLite;
 

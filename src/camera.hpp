@@ -1,7 +1,7 @@
 #pragma once
 
-#include "math/math.hpp"
-#include "window.hpp"
+#include "mve/math/math.hpp"
+#include "mve/window.hpp"
 
 class Camera {
 public:

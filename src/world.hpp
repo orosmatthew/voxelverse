@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer.hpp"
+#include "mve/renderer.hpp"
 #include "world_renderer.hpp"
 
 // TODO: Chunk unloading

@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 
-#include "logger.hpp"
 #include "math/math.hpp"
 
 namespace mve {

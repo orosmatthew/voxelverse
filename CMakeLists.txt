@@ -41,18 +41,18 @@ set(LIB_SOURCE_FILES
 set(SOURCE_FILES
         src/app.cpp
         src/logger.cpp
-        src/renderer.cpp
-        src/window.cpp
-        src/vertex_data.cpp
-        src/shader.cpp
-        src/monitor.cpp
+        src/mve/renderer.cpp
+        src/mve/window.cpp
+        src/mve/vertex_data.cpp
+        src/mve/shader.cpp
+        src/mve/monitor.cpp
         src/util.cpp
-        src/vertex_buffer.cpp
-        src/index_buffer.cpp
-        src/graphics_pipeline.cpp
-        src/descriptor_set.cpp
-        src/uniform_buffer.cpp
-        src/texture.cpp
+        src/mve/vertex_buffer.cpp
+        src/mve/index_buffer.cpp
+        src/mve/graphics_pipeline.cpp
+        src/mve/descriptor_set.cpp
+        src/mve/uniform_buffer.cpp
+        src/mve/texture.cpp
         src/util/fixed_loop.cpp
         src/chunk_mesh.cpp
         src/chunk_data.cpp
@@ -61,7 +61,7 @@ set(SOURCE_FILES
         src/world_renderer.cpp
         src/camera.cpp
         src/ui_renderer.cpp
-        src/framebuffer.cpp
+        src/mve/framebuffer.cpp
         src/select_box_mesh.cpp
         src/world.cpp)
 

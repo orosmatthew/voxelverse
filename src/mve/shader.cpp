@@ -4,9 +4,9 @@
 #include <optional>
 #include <vector>
 
-#include <spirv_reflect.h>
+#include "spirv_reflect.h"
 
-#include "logger.hpp"
+#include "../logger.hpp"
 
 namespace mve {
 

@@ -1,6 +1,6 @@
 #include "world_renderer.hpp"
 
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world_data)
 {

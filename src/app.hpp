@@ -1,10 +1,10 @@
 #pragma once
 
 #include "camera.hpp"
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
+#include "mve/window.hpp"
 #include "ui_renderer.hpp"
 #include "util/fixed_loop.hpp"
-#include "window.hpp"
 #include "world.hpp"
 #include "world_data.hpp"
 #include "world_renderer.hpp"

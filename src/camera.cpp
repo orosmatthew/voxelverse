@@ -1,6 +1,6 @@
 #include "camera.hpp"
 
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 Camera::Camera()
     : m_body_transform(mve::Matrix4::identity())

@@ -1,6 +1,6 @@
 #include "world_data.hpp"
 
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 WorldData::WorldData()
 {

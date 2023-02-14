@@ -3,14 +3,14 @@
 #include <array>
 #include <memory>
 
-#include "descriptor_set.hpp"
-#include "graphics_pipeline.hpp"
-#include "index_buffer.hpp"
-#include "math/math.hpp"
-#include "renderer.hpp"
-#include "shader.hpp"
-#include "uniform_buffer.hpp"
-#include "vertex_buffer.hpp"
+#include "mve/math/math.hpp"
+#include "mve/descriptor_set.hpp"
+#include "mve/graphics_pipeline.hpp"
+#include "mve/index_buffer.hpp"
+#include "mve/renderer.hpp"
+#include "mve/shader.hpp"
+#include "mve/uniform_buffer.hpp"
+#include "mve/vertex_buffer.hpp"
 #include "world_data.hpp"
 
 class ChunkMesh {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 
 class Frustum {
 public:

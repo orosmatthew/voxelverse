@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "chunk_data.hpp"
-#include "math/math.hpp"
+#include "mve/math/math.hpp"
 #include "world_generator.hpp"
 
 class WorldData {

@@ -6,7 +6,7 @@
 #include <set>
 #include <string>
 
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 
 #include "math/math.hpp"
 #include "monitor.hpp"
