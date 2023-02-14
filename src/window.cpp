@@ -44,6 +44,7 @@ Window::Window(const std::string& title, mve::Vector2i size, bool resizable)
     glfwSetCursorEnterCallback(m_glfw_window.get(), glfw_cursor_enter_callback);
     glfwSetMouseButtonCallback(m_glfw_window.get(), glfw_mouse_button_callback);
     glfwSetCursorPosCallback(m_glfw_window.get(), glfw_cursor_pos_callback);
+    glfwSetScrollCallback(m_glfw_window.get(), glfw_scroll_callback);
     glfwSetKeyCallback(m_glfw_window.get(), glfw_key_callback);
 }
 
@@ -105,6 +106,14 @@ void Window::poll_events()
     m_mouse_buttons_released = m_current_mouse_buttons_released;
     m_current_mouse_buttons_released.clear();
     m_mouse_buttons_down = m_current_mouse_buttons_down;
+
+    m_scroll_offset = m_current_scroll_offset;
+    m_current_scroll_offset = mve::Vector2(0);
+}
+
+mve::Vector2 Window::mouse_scroll() const
+{
+    return m_scroll_offset;
 }
 
 void Window::wait_for_events() const
@@ -440,5 +449,11 @@ mve::Vector2 Window::mouse_pos() const
 mve::Vector2 Window::mouse_delta() const
 {
     return m_mouse_delta;
+}
+void Window::glfw_scroll_callback(GLFWwindow* window, double offset_x, double offset_y)
+{
+    auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    instance->m_current_scroll_offset.x += static_cast<float>(offset_x);
+    instance->m_current_scroll_offset.y += static_cast<float>(offset_y);
 }
 }

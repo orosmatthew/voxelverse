@@ -200,6 +200,30 @@ void World::update(bool mouse_captured, float blend)
         trigger_place_block(m_camera, m_world_data, m_world_renderer);
     }
 
+    mve::Vector2 scroll = m_window->mouse_scroll();
+    int scroll_y = static_cast<int>(scroll.y);
+    if (scroll_y != 0) {
+        for (int i = 0; i < mve::abs(scroll_y); i++) {
+            if (scroll_y > 0) {
+                if (m_current_hotbar_select + 1 > 8) {
+                    m_current_hotbar_select = 0;
+                }
+                else {
+                    m_current_hotbar_select++;
+                }
+            }
+            else {
+                if (m_current_hotbar_select - 1 < 0) {
+                    m_current_hotbar_select = 8;
+                }
+                else {
+                    m_current_hotbar_select--;
+                }
+            }
+        }
+        m_ui_renderer->set_hotbar_select(m_current_hotbar_select);
+    }
+
     if (m_window->is_key_pressed(mve::Key::one)) {
         m_current_hotbar_select = 0;
         m_ui_renderer->set_hotbar_select(0);

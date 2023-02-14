@@ -373,6 +373,8 @@ public:
 
     void disable_cursor();
 
+    mve::Vector2 mouse_scroll() const;
+
     [[nodiscard]] bool is_cursor_in_window() const;
 
     [[nodiscard]] bool is_cursor_hidden() const;
@@ -399,6 +401,8 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
+    mve::Vector2 m_current_scroll_offset {};
+    mve::Vector2 m_scroll_offset {};
     mve::Vector2i m_pos;
     mve::Vector2i m_size;
     mve::Vector2i m_windowed_size;
@@ -434,5 +438,7 @@ private:
     static void glfw_cursor_pos_callback(GLFWwindow* window, double pos_x, double pos_y);
 
     static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    static void glfw_scroll_callback(GLFWwindow* window, double offset_x, double offset_y);
 };
 }
