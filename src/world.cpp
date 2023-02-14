@@ -214,7 +214,7 @@ void World::update(bool mouse_captured, float blend)
     int scroll_y = static_cast<int>(scroll.y);
     if (scroll_y != 0) {
         for (int i = 0; i < mve::abs(scroll_y); i++) {
-            if (scroll_y > 0) {
+            if (scroll_y < 0) {
                 if (m_current_hotbar_select + 1 > 8) {
                     m_current_hotbar_select = 0;
                 }
