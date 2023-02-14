@@ -78,7 +78,9 @@ void UIRenderer::resize()
     if (m_hotbar.has_value()) {
         m_hotbar->uniform_buffer.update(
             m_hotbar->model_location,
-            mve::Matrix4::identity().translate({ 0, static_cast<float>(m_renderer->extent().y) * 0.5f - 50.0f, 0 }));
+            mve::Matrix4::identity()
+                .scale((mve::Vector3(m_renderer->extent().x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f)))
+                .translate({ 0, static_cast<float>(m_renderer->extent().y) * 0.5f, 0 }));
     }
 }
 
@@ -147,16 +149,16 @@ mve::VertexData UIRenderer::create_hotbar_vertex_data() const
 {
     mve::Vector2 size { 900, 100 };
     mve::VertexData data(c_vertex_layout);
-    data.push_back(mve::Vector3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+    data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     data.push_back({ 1, 1, 1 });
     data.push_back({ 0.0f, 0.0f });
-    data.push_back(mve::Vector3(0.5f * size.x, -0.5f * size.y, 0.0f));
+    data.push_back(mve::Vector3(0.5f * size.x, -1.0f * size.y, 0.0f));
     data.push_back({ 1, 1, 1 });
     data.push_back({ 1.0f, 0.0f });
-    data.push_back(mve::Vector3(0.5f * size.x, 0.5f * size.y, 0.0f));
+    data.push_back(mve::Vector3(0.5f * size.x, 0.0f * size.y, 0.0f));
     data.push_back({ 1, 1, 1 });
     data.push_back({ 1.0f, 1.0f });
-    data.push_back(mve::Vector3(-0.5f * size.x, 0.5f * size.y, 0.0f));
+    data.push_back(mve::Vector3(-0.5f * size.x, 0.0f * size.y, 0.0f));
     data.push_back({ 1, 1, 1 });
     data.push_back({ 0.0f, 1.0f });
 
