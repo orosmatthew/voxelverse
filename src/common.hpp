@@ -137,6 +137,21 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
         case Direction::bottom:
             return { 0, 1 };
         }
+    case 5:
+        switch (face) {
+        case Direction::front:
+            return { 2, 1 };
+        case Direction::back:
+            return { 2, 1 };
+        case Direction::left:
+            return { 2, 1 };
+        case Direction::right:
+            return { 2, 1 };
+        case Direction::top:
+            return { 3, 1 };
+        case Direction::bottom:
+            return { 3, 1 };
+        }
     default:
         return { 0, 0 };
     }
