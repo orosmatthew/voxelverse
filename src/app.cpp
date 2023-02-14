@@ -27,11 +27,31 @@ App::App()
         m_renderer.resize(m_window);
         m_world.resize();
         m_ui_renderer.resize();
+        draw();
     };
 
     m_window.set_resize_callback(resize_func);
 
     std::invoke(resize_func, m_window.size());
+}
+
+void App::draw()
+{
+    m_renderer.begin_frame(m_window);
+
+    m_renderer.begin_render_pass_framebuffer(m_world_framebuffer);
+
+    m_world.draw();
+
+    m_renderer.end_render_pass_framebuffer(m_world_framebuffer);
+
+    m_renderer.begin_render_pass_present();
+
+    m_ui_renderer.draw();
+
+    m_renderer.end_render_pass_present();
+
+    m_renderer.end_frame(m_window);
 }
 
 void App::main_loop()
@@ -67,21 +87,7 @@ void App::main_loop()
             }
         }
 
-        m_renderer.begin_frame(m_window);
-
-        m_renderer.begin_render_pass_framebuffer(m_world_framebuffer);
-
-        m_world.draw();
-
-        m_renderer.end_render_pass_framebuffer(m_world_framebuffer);
-
-        m_renderer.begin_render_pass_present();
-
-        m_ui_renderer.draw();
-
-        m_renderer.end_render_pass_present();
-
-        m_renderer.end_frame(m_window);
+        draw();
 
         std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
 

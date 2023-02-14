@@ -18,6 +18,9 @@ public:
     void main_loop();
 
 private:
+
+    void draw();
+
     mve::Window m_window;
     mve::Renderer m_renderer;
     UIRenderer m_ui_renderer;
