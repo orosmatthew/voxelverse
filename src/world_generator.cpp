@@ -11,6 +11,9 @@ uint8_t WorldGenerator::get_block(mve::Vector3i pos, bool terrain) const
         if (pos.z < height - 4) {
             return 2;
         }
+        else if (pos.z < height - 1) {
+            return 4;
+        }
         else if (pos.z < height) {
             return 1;
         }

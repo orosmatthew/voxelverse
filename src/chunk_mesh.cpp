@@ -185,6 +185,21 @@ mve::Vector2i ChunkMesh::block_uv(uint8_t block_type, Direction face)
         case Direction::bottom:
             return { 2, 0 };
         }
+    case 4:
+        switch (face) {
+        case Direction::front:
+            return { 0, 1 };
+        case Direction::back:
+            return { 0, 1 };
+        case Direction::left:
+            return { 0, 1 };
+        case Direction::right:
+            return { 0, 1 };
+        case Direction::top:
+            return { 0, 1 };
+        case Direction::bottom:
+            return { 0, 1 };
+        }
     default:
         return { 0, 0 };
     }
