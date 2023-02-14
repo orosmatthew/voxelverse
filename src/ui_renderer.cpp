@@ -63,6 +63,21 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
     hotbar.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), hotbar.texture);
     hotbar.uniform_buffer.update(hotbar.model_location, mve::Matrix4::identity());
     m_hotbar = std::move(hotbar);
+
+    mve::VertexData hotbar_select_data = create_hotbar_select_vertex_data();
+    UIMesh hotbar_select {
+        .vertex_buffer = m_renderer->create_vertex_buffer(hotbar_select_data),
+        .index_buffer = m_renderer->create_index_buffer({ 0, 3, 2, 0, 2, 1 }),
+        .texture = m_renderer->create_texture("../res/hotbar_select.png"),
+        .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),
+        .uniform_buffer = m_renderer->create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)),
+        .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location()
+    };
+    hotbar_select.descriptor_set.write_binding(
+        m_vertex_shader.descriptor_set(1).binding(0), hotbar_select.uniform_buffer);
+    hotbar_select.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), hotbar_select.texture);
+    hotbar_select.uniform_buffer.update(hotbar_select.model_location, mve::Matrix4::identity());
+    m_hotbar_select = std::move(hotbar_select);
 }
 
 void UIRenderer::resize()
@@ -74,14 +89,15 @@ void UIRenderer::resize()
         static_cast<float>(m_renderer->extent().y) / 2.0f,
         -1000.0f,
         1000.0f);
+    mve::Vector3 hotbar_scale(
+        (mve::Vector3(m_renderer->extent().x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f)));
+    mve::Vector3 hotbar_translation(0, static_cast<float>(m_renderer->extent().y) * 0.5f, 0);
     m_global_ubo.update(m_proj_location, proj);
     if (m_hotbar.has_value()) {
         m_hotbar->uniform_buffer.update(
-            m_hotbar->model_location,
-            mve::Matrix4::identity()
-                .scale((mve::Vector3(m_renderer->extent().x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f)))
-                .translate({ 0, static_cast<float>(m_renderer->extent().y) * 0.5f, 0 }));
+            m_hotbar->model_location, mve::Matrix4::identity().scale(hotbar_scale).translate(hotbar_translation));
     }
+    set_hotbar_select(m_current_hotbar_select);
 }
 
 void UIRenderer::draw()
@@ -101,6 +117,11 @@ void UIRenderer::draw()
         m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_hotbar->descriptor_set);
         m_renderer->bind_vertex_buffer(m_hotbar->vertex_buffer);
         m_renderer->draw_index_buffer(m_hotbar->index_buffer);
+    }
+    if (m_hotbar_select) {
+        m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_hotbar_select->descriptor_set);
+        m_renderer->bind_vertex_buffer(m_hotbar_select->vertex_buffer);
+        m_renderer->draw_index_buffer(m_hotbar_select->index_buffer);
     }
 }
 void UIRenderer::update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size)
@@ -147,7 +168,7 @@ void UIRenderer::update_framebuffer_texture(const mve::Texture& texture, mve::Ve
 
 mve::VertexData UIRenderer::create_hotbar_vertex_data() const
 {
-    mve::Vector2 size { 900, 100 };
+    mve::Vector2 size { 910, 110 };
     mve::VertexData data(c_vertex_layout);
     data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     data.push_back({ 1, 1, 1 });
@@ -163,4 +184,39 @@ mve::VertexData UIRenderer::create_hotbar_vertex_data() const
     data.push_back({ 0.0f, 1.0f });
 
     return data;
+}
+mve::VertexData UIRenderer::create_hotbar_select_vertex_data() const
+{
+    mve::Vector2 size { 24 * 5, 23 * 5 };
+    mve::VertexData data(c_vertex_layout);
+    data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
+    data.push_back({ 1, 1, 1 });
+    data.push_back({ 0.0f, 0.0f });
+    data.push_back(mve::Vector3(0.5f * size.x, -1.0f * size.y, 0.0f));
+    data.push_back({ 1, 1, 1 });
+    data.push_back({ 1.0f, 0.0f });
+    data.push_back(mve::Vector3(0.5f * size.x, 0.0f * size.y, 0.0f));
+    data.push_back({ 1, 1, 1 });
+    data.push_back({ 1.0f, 1.0f });
+    data.push_back(mve::Vector3(-0.5f * size.x, 0.0f * size.y, 0.0f));
+    data.push_back({ 1, 1, 1 });
+    data.push_back({ 0.0f, 1.0f });
+
+    return data;
+}
+
+void UIRenderer::set_hotbar_select(int pos)
+{
+    m_current_hotbar_select = pos;
+    mve::Vector3 hotbar_scale(
+        (mve::Vector3(m_renderer->extent().x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f)));
+    mve::Vector3 hotbar_translation(0, static_cast<float>(m_renderer->extent().y) * 0.5f, 0);
+    int first_offset_x = -20 * 5 * 4;
+    if (m_hotbar_select.has_value()) {
+        m_hotbar_select->uniform_buffer.update(
+            m_hotbar_select->model_location,
+            mve::Matrix4::identity()
+                .scale(hotbar_scale)
+                .translate(hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), 0, 0) * hotbar_scale));
+    }
 }

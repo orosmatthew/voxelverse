@@ -1,9 +1,11 @@
 #include "world.hpp"
 #include "logger.hpp"
+#include "ui_renderer.hpp"
 
-World::World(mve::Window& window, mve::Renderer& renderer, int render_distance)
+World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_renderer, int render_distance)
     : m_window(&window)
     , m_renderer(&renderer)
+    , m_ui_renderer(&ui_renderer)
     , m_world_renderer(renderer)
     , m_world_generator(1)
     , m_mesh_updates_per_frame(16)
@@ -196,6 +198,43 @@ void World::update(bool mouse_captured, float blend)
 
     if (m_window->is_mouse_button_pressed(mve::MouseButton::right)) {
         trigger_place_block(m_camera, m_world_data, m_world_renderer);
+    }
+
+    if (m_window->is_key_pressed(mve::Key::one)) {
+        m_current_hotbar_select = 0;
+        m_ui_renderer->set_hotbar_select(0);
+    }
+    if (m_window->is_key_pressed(mve::Key::two)) {
+        m_current_hotbar_select = 1;
+        m_ui_renderer->set_hotbar_select(1);
+    }
+    if (m_window->is_key_pressed(mve::Key::three)) {
+        m_current_hotbar_select = 2;
+        m_ui_renderer->set_hotbar_select(2);
+    }
+    if (m_window->is_key_pressed(mve::Key::four)) {
+        m_current_hotbar_select = 3;
+        m_ui_renderer->set_hotbar_select(3);
+    }
+    if (m_window->is_key_pressed(mve::Key::five)) {
+        m_current_hotbar_select = 4;
+        m_ui_renderer->set_hotbar_select(4);
+    }
+    if (m_window->is_key_pressed(mve::Key::six)) {
+        m_current_hotbar_select = 5;
+        m_ui_renderer->set_hotbar_select(5);
+    }
+    if (m_window->is_key_pressed(mve::Key::seven)) {
+        m_current_hotbar_select = 6;
+        m_ui_renderer->set_hotbar_select(6);
+    }
+    if (m_window->is_key_pressed(mve::Key::eight)) {
+        m_current_hotbar_select = 7;
+        m_ui_renderer->set_hotbar_select(7);
+    }
+    if (m_window->is_key_pressed(mve::Key::nine)) {
+        m_current_hotbar_select = 8;
+        m_ui_renderer->set_hotbar_select(8);
     }
 
     std::vector<mve::Vector3i> blocks

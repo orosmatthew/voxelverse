@@ -2,9 +2,6 @@
 
 #include "renderer.hpp"
 
-// TODO: Add hotbar selecting
-// TODO: Resize hotbar to screen size
-
 class UIRenderer {
 public:
     UIRenderer(mve::Renderer& renderer);
@@ -14,6 +11,8 @@ public:
     void update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size);
 
     void draw();
+
+    void set_hotbar_select(int pos);
 
 private:
     const mve::VertexLayout c_vertex_layout = {
@@ -41,6 +40,8 @@ private:
 
     mve::VertexData create_hotbar_vertex_data() const;
 
+    mve::VertexData create_hotbar_select_vertex_data() const;
+
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
@@ -53,4 +54,6 @@ private:
     std::optional<UIMesh> m_cross;
     std::optional<World> m_world;
     std::optional<UIMesh> m_hotbar;
+    std::optional<UIMesh> m_hotbar_select;
+    int m_current_hotbar_select = 0;
 };
