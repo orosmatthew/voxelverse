@@ -26,6 +26,7 @@ void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 }
 
 void ChunkMesh::calc_block_faces(
+    uint8_t block_type,
     MeshData& mesh,
     const WorldData& world_data,
     const ChunkData& chunk_data,
@@ -52,10 +53,10 @@ void ChunkMesh::calc_block_faces(
             adj_block_type = *adj_block;
         }
         if (iterate_empty) {
-            if (adj_block_type == 1 && WorldData::is_block_pos_local(adj_local_pos)) {
+            if (adj_block_type != 0 && WorldData::is_block_pos_local(adj_local_pos)) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_face_lighting(world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
-                FaceData face = create_face_mesh(adj_local_pos, opposite_direction(dir), face_lighting);
+                FaceData face = create_face_mesh(adj_block_type, adj_local_pos, opposite_direction(dir), face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -63,16 +64,11 @@ void ChunkMesh::calc_block_faces(
             if (adj_block_type == 0) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
-                FaceData face = create_face_mesh(local_pos, dir, face_lighting);
+                FaceData face = create_face_mesh(block_type, local_pos, dir, face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
     }
-}
-
-void thing()
-{
-
 }
 
 std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
@@ -83,7 +79,7 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i local_pos) {
         uint8_t block = chunk_data.get_block(local_pos);
         if (chunk_data.block_count() > (8 * 8 * 8)) {
-            if (block == 1) {
+            if (block != 0) {
                 std::array<bool, 6> directions {};
                 if (local_pos.x == 0) {
                     directions[static_cast<size_t>(Direction::left)] = true;
@@ -103,15 +99,15 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
                 if (local_pos.z == 15) {
                     directions[static_cast<size_t>(Direction::top)] = true;
                 }
-                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, false, directions);
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false, directions);
             }
             if (block == 0) {
-                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, true);
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, true);
             }
         }
         else {
-            if (block == 1) {
-                calc_block_faces(mesh, world_data, chunk_data, chunk_pos, local_pos, false);
+            if (block != 0) {
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false);
             }
         }
     });
@@ -141,49 +137,102 @@ void ChunkMesh::draw(mve::Renderer& renderer) const
     }
 }
 
+mve::Vector2i ChunkMesh::block_uv(uint8_t block_type, Direction face)
+{
+    switch (block_type) {
+    case 1:
+        switch (face) {
+        case Direction::front:
+            return { 0, 0 };
+        case Direction::back:
+            return { 0, 0 };
+        case Direction::left:
+            return { 0, 0 };
+        case Direction::right:
+            return { 0, 0 };
+        case Direction::top:
+            return { 1, 0 };
+        case Direction::bottom:
+            return { 0, 1 };
+        }
+    case 2:
+        switch (face) {
+        case Direction::front:
+            return { 1, 1 };
+        case Direction::back:
+            return { 1, 1 };
+        case Direction::left:
+            return { 1, 1 };
+        case Direction::right:
+            return { 1, 1 };
+        case Direction::top:
+            return { 1, 1 };
+        case Direction::bottom:
+            return { 1, 1 };
+        }
+    case 3:
+        switch (face) {
+        case Direction::front:
+            return { 2, 0 };
+        case Direction::back:
+            return { 2, 0 };
+        case Direction::left:
+            return { 2, 0 };
+        case Direction::right:
+            return { 2, 0 };
+        case Direction::top:
+            return { 2, 0 };
+        case Direction::bottom:
+            return { 2, 0 };
+        }
+    default:
+        return { 0, 0 };
+    }
+}
+
 ChunkMesh::FaceData ChunkMesh::create_face_mesh(
-    mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting)
+    uint8_t block_type, mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting)
 {
     FaceData data;
     FaceUVs uvs;
     switch (face) {
     case Direction::front:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::front));
         data.vertices[0] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::back:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::back));
         data.vertices[0] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::left:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::left));
         data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::right:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 0 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::right));
         data.vertices[0] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::top:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 1, 0 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::top));
         data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         break;
     case Direction::bottom:
-        uvs = uvs_from_atlas({ 32, 32 }, { 2, 2 }, { 0, 1 });
+        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::bottom));
         data.vertices[0] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
@@ -207,7 +256,9 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(
 ChunkMesh::FaceUVs ChunkMesh::uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
 {
     mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
-    mve::Vector2 padding = atlas_unit / (mve::Vector2(texture_size) / mve::Vector2(atlas_size));
+    //    mve::Vector2 padding = mve::Vector2(1.0f / texture_size.x, 1.0f / texture_size.y) / 4.0f;
+    // TODO: fix padding calculation
+    mve::Vector2 padding;
 
     FaceUVs uvs;
     uvs.top_left = mve::Vector2(pos.x * atlas_unit.x, pos.y * atlas_unit.y);

@@ -3,6 +3,8 @@
 #include "renderer.hpp"
 #include "world_renderer.hpp"
 
+// TODO: Chunk unloading
+
 class World {
 public:
     World(mve::Window& window, mve::Renderer& renderer, int render_distance);

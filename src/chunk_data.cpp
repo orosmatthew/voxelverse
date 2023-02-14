@@ -6,10 +6,10 @@ ChunkData::ChunkData(mve::Vector3i chunk_pos)
 }
 void ChunkData::set_block(mve::Vector3i pos, uint8_t type)
 {
-    if (m_block_data[pos.x][pos.y][pos.z] == 0 && type == 1) {
+    if (m_block_data[pos.x][pos.y][pos.z] == 0 && type != 0) {
         m_block_count++;
     }
-    else if (m_block_data[pos.x][pos.y][pos.z] == 1 && type == 0) {
+    else if (m_block_data[pos.x][pos.y][pos.z] != 0 && type == 0) {
         m_block_count--;
     }
     m_block_data[pos.x][pos.y][pos.z] = type;
@@ -23,7 +23,7 @@ void ChunkData::generate(const WorldGenerator& generator)
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                set_block({ x, y, z }, generator.get_block(mve::Vector3i(x, y, z) + m_pos * 16, true));
+                set_block({ x, y, z }, generator.get_block(mve::Vector3i(x, y, z) + m_pos * 16, false));
             }
         }
     }

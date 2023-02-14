@@ -117,7 +117,7 @@ void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRende
     Ray ray { camera.position(), camera.direction().normalize() };
     for (mve::Vector3i block_pos : blocks) {
         std::optional<uint8_t> block = world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() != 1) {
+        if (!block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
@@ -130,7 +130,7 @@ void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRende
             if (!world_data.block_at(place_pos).has_value() || world_data.block_at(place_pos).value() != 0) {
                 break;
             }
-            world_data.set_block(place_pos, 1);
+            world_data.set_block(place_pos, 3);
             update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
             std::array<mve::Vector3i, 6> surrounding
                 = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
@@ -155,7 +155,7 @@ void trigger_break_block(const Camera& camera, WorldData& world_data, WorldRende
     Ray ray { camera.position(), camera.direction().normalize() };
     for (mve::Vector3i block_pos : blocks) {
         std::optional<uint8_t> block = world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() != 1) {
+        if (!block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
@@ -204,7 +204,7 @@ void World::update(bool mouse_captured, float blend)
     m_world_renderer.hide_selection();
     for (mve::Vector3i block_pos : blocks) {
         std::optional<uint8_t> block = m_world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() != 1) {
+        if (!block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },

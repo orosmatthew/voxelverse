@@ -2,6 +2,8 @@
 
 #include "renderer.hpp"
 
+// TODO: Add hotbar
+
 class UIRenderer {
 public:
     UIRenderer(mve::Renderer& renderer);
