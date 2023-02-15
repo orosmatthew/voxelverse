@@ -245,7 +245,7 @@ UIRenderer::MeshData UIRenderer::create_block_face_data(uint8_t block_type) cons
     data.vertices.push_back(mve::Vector3(0.5f * size.x, -1.0f * size.y, 0.0f));
     data.vertices.push_back(mve::Vector3(0.5f * size.x, 0.0f * size.y, 0.0f));
     data.vertices.push_back(mve::Vector3(-0.5f * size.x, 0.0f * size.y, 0.0f));
-    QuadUVs quad_uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::front));
+    QuadUVs quad_uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
     data.uvs.push_back(quad_uvs.top_left);
     data.uvs.push_back(quad_uvs.top_right);
     data.uvs.push_back(quad_uvs.bottom_right);

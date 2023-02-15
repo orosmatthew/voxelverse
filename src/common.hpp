@@ -53,7 +53,7 @@ struct QuadUVs {
     mve::Vector2 bottom_left;
 };
 
-inline QuadUVs uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
+inline QuadUVs uvs_from_atlas(mve::Vector2i atlas_size, mve::Vector2i pos)
 {
     mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
 

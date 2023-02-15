@@ -144,42 +144,42 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(
     QuadUVs uvs;
     switch (face) {
     case Direction::front:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::front));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
         data.vertices[0] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::back:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::back));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::back));
         data.vertices[0] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::left:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::left));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::left));
         data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::right:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::right));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::right));
         data.vertices[0] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::top:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::top));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::top));
         data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
         data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
         data.vertices[2] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
         data.vertices[3] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         break;
     case Direction::bottom:
-        uvs = uvs_from_atlas({ 64, 64 }, { 4, 4 }, block_uv(block_type, Direction::bottom));
+        uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::bottom));
         data.vertices[0] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
         data.vertices[1] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
