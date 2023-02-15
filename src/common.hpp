@@ -56,8 +56,8 @@ struct QuadUVs {
 inline QuadUVs uvs_from_atlas(mve::Vector2i texture_size, mve::Vector2i atlas_size, mve::Vector2i pos)
 {
     mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
-    //    mve::Vector2 padding = mve::Vector2(1.0f / texture_size.x, 1.0f / texture_size.y) / 4.0f;
-    // TODO: fix padding calculation
+    //    mve::Vector2 padding = mve::Vector2(1.0f / texture_size.x, 1.0f / texture_size.y) / 10.0f;
+    // TODO: Understand why there are artifacts on edges only on AMD card
     mve::Vector2 padding;
 
     QuadUVs uvs;

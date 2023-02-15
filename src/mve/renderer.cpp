@@ -573,7 +573,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 
     auto multisampling_info
         = vk::PipelineMultisampleStateCreateInfo()
-              .setSampleShadingEnable(VK_TRUE)
+              .setSampleShadingEnable(VK_FALSE)
               .setMinSampleShading(0.2f) // Closer to 1.0f is smoother
               .setRasterizationSamples(samples)
               .setPSampleMask(nullptr)
