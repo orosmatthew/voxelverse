@@ -148,6 +148,8 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
         return { 0, 2 };
     case 7:
         return { 1, 2 };
+    case 8:
+        return { 2, 2 };
     default:
         return { 0, 0 };
     }
