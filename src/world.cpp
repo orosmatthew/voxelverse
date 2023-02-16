@@ -17,6 +17,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     m_hotbar_blocks.insert({ 3, 4 });
     m_hotbar_blocks.insert({ 4, 5 });
     m_hotbar_blocks.insert({ 5, 6 });
+    m_hotbar_blocks.insert({ 6, 7 });
     for (auto& [pos, block] : m_hotbar_blocks) {
         m_ui_renderer->set_hotbar_block(pos, block);
     }
