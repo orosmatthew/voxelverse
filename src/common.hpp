@@ -72,11 +72,8 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
     case 1:
         switch (face) {
         case Direction::front:
-            return { 0, 0 };
         case Direction::back:
-            return { 0, 0 };
         case Direction::left:
-            return { 0, 0 };
         case Direction::right:
             return { 0, 0 };
         case Direction::top:
@@ -85,62 +82,19 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
             return { 0, 1 };
         }
     case 2:
-        switch (face) {
-        case Direction::front:
-            return { 1, 1 };
-        case Direction::back:
-            return { 1, 1 };
-        case Direction::left:
-            return { 1, 1 };
-        case Direction::right:
-            return { 1, 1 };
-        case Direction::top:
-            return { 1, 1 };
-        case Direction::bottom:
-            return { 1, 1 };
-        }
+        return { 1, 1 };
     case 3:
-        switch (face) {
-        case Direction::front:
-            return { 2, 0 };
-        case Direction::back:
-            return { 2, 0 };
-        case Direction::left:
-            return { 2, 0 };
-        case Direction::right:
-            return { 2, 0 };
-        case Direction::top:
-            return { 2, 0 };
-        case Direction::bottom:
-            return { 2, 0 };
-        }
+        return { 2, 0 };
     case 4:
-        switch (face) {
-        case Direction::front:
-            return { 0, 1 };
-        case Direction::back:
-            return { 0, 1 };
-        case Direction::left:
-            return { 0, 1 };
-        case Direction::right:
-            return { 0, 1 };
-        case Direction::top:
-            return { 0, 1 };
-        case Direction::bottom:
-            return { 0, 1 };
-        }
+        return { 0, 1 };
     case 5:
         switch (face) {
         case Direction::front:
-            return { 2, 1 };
         case Direction::back:
-            return { 2, 1 };
         case Direction::left:
-            return { 2, 1 };
         case Direction::right:
             return { 2, 1 };
         case Direction::top:
-            return { 3, 1 };
         case Direction::bottom:
             return { 3, 1 };
         }
