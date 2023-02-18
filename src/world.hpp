@@ -26,9 +26,11 @@ public:
     void draw();
 
 private:
-    enum class ChunkState { none, gen, data, mesh, done };
-    struct ChunkStateData {
-        ChunkState state = ChunkState::none;
+    struct ChunkState {
+        bool has_mesh = false;
+        bool can_mesh = false;
+        bool has_data = false;
+        bool should_delete = false;
         int neighbors = 0;
     };
     mve::Window* m_window;
@@ -39,7 +41,7 @@ private:
     WorldData m_world_data;
     int m_mesh_updates_per_frame;
     Camera m_camera;
-    std::unordered_map<mve::Vector2i, ChunkStateData> m_chunk_states;
+    std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;
     std::vector<mve::Vector2i> m_sorted_chunks;
     mve::Vector2i m_camera_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;

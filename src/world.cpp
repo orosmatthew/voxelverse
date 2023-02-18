@@ -8,7 +8,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     , m_ui_renderer(&ui_renderer)
     , m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(2)
+    , m_mesh_updates_per_frame(1)
     , m_render_distance(render_distance)
 {
     m_hotbar_blocks.insert({ 0, 1 });
@@ -295,31 +295,34 @@ void World::update(bool mouse_captured, float blend)
 
     // Chunk updates
     mve::Vector3i current_camera_chunk_3d = WorldData::chunk_pos_from_block_pos(m_camera.position());
-    mve::Vector2i current_camera_chunk = {current_camera_chunk_3d.x, current_camera_chunk_3d.y};
+    mve::Vector2i current_camera_chunk = { current_camera_chunk_3d.x, current_camera_chunk_3d.y };
     if (current_camera_chunk != m_camera_chunk) {
         m_camera_chunk = current_camera_chunk;
         m_sorted_chunks.clear();
+        m_sorted_chunks.reserve(m_chunk_states.size());
+        for (auto& [pos, data] : m_chunk_states) {
+            if (mve::abs(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
+                > mve::squared(m_render_distance)) {
+                data.should_delete = true;
+            }
+        }
         for_2d(
             mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
             mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
             [&](mve::Vector2i pos) {
                 if (mve::abs(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
-                    < mve::squared(m_render_distance)) {
-                    m_sorted_chunks.push_back(pos);
-                    if (m_chunk_states.contains(pos)) {
-                        switch (m_chunk_states[pos].state) {
-                        case ChunkState::none:
-                            m_chunk_states[pos].state = ChunkState::gen;
-                            break;
-                        default:
-                            break;
-                        }
+                    <= mve::squared(m_render_distance)) {
+                    if (!m_chunk_states.contains(pos)) {
+                        m_chunk_states[pos] = {};
                     }
                     else {
-                        m_chunk_states[pos].state = ChunkState::gen;
+                        m_chunk_states[pos].should_delete = false;
                     }
                 }
             });
+        for (auto& [pos, data] : m_chunk_states) {
+            m_sorted_chunks.push_back(pos);
+        }
         std::sort(m_sorted_chunks.begin(), m_sorted_chunks.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
             return mve::distance_sqrd(a, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y))
                 < mve::distance_sqrd(b, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y));
@@ -328,37 +331,77 @@ void World::update(bool mouse_captured, float blend)
 
     int chunk_count = 0;
     for (mve::Vector2i pos : m_sorted_chunks) {
-        switch (m_chunk_states.at(pos).state) {
-        case ChunkState::gen:
+        if (!m_chunk_states.at(pos).has_data) {
             for (int h = -10; h < 10; h++) {
                 m_world_data.generate(m_world_generator, { pos.x, pos.y, h });
             }
             for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
                 if (neighbor != mve::Vector2i(0, 0)) {
                     m_chunk_states[pos + neighbor].neighbors++;
-                    if (m_chunk_states[pos + neighbor].state == ChunkState::data
-                        && m_chunk_states[pos + neighbor].neighbors == 8) {
-                        m_chunk_states[pos + neighbor].state = ChunkState::mesh;
+                    if (m_chunk_states[pos + neighbor].has_data && m_chunk_states[pos + neighbor].neighbors == 8) {
+                        m_chunk_states[pos + neighbor].can_mesh = true;
                     }
                 }
             });
+            m_chunk_states[pos].has_data = true;
             if (m_chunk_states[pos].neighbors == 8) {
-                m_chunk_states[pos].state = ChunkState::mesh;
-            }
-            else {
-                m_chunk_states[pos].state = ChunkState::data;
+                m_chunk_states[pos].can_mesh = true;
             }
             chunk_count++;
-            break;
-        case ChunkState::mesh:
+        }
+        if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
+
             for (int h = -10; h < 10; h++) {
                 m_world_renderer.add_data(m_world_data.chunk_data_at({ pos.x, pos.y, h }), m_world_data);
             }
-            m_chunk_states[pos].state = ChunkState::done;
+            m_chunk_states[pos].has_mesh = true;
             chunk_count++;
+        }
+        if (chunk_count > m_mesh_updates_per_frame) {
             break;
-        default:
-            break;
+        }
+    }
+
+    chunk_count = 0;
+    for (int i = m_sorted_chunks.size() - 1; i >= 0; i--) {
+        const mve::Vector2i pos = m_sorted_chunks[i];
+        if (!m_chunk_states.at(pos).should_delete) {
+            continue;
+        }
+        auto it = m_sorted_chunks.begin();
+        while (it != m_sorted_chunks.end()) {
+            if (*it == pos) {
+                it = m_sorted_chunks.erase(it);
+            }
+            else {
+                it++;
+            }
+        }
+        if (m_chunk_states.at(pos).has_data) {
+            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
+                if (neighbor == mve::Vector2i(0, 0)) {
+                    return;
+                }
+                m_chunk_states[pos + neighbor].neighbors--;
+            });
+        }
+        for (int h = -10; h < 10; h++) {
+            if (m_chunk_states.at(pos).has_data) {
+                m_world_data.remove_chunk({ pos.x, pos.y, h });
+            }
+            if (m_chunk_states.at(pos).has_mesh) {
+                m_world_renderer.remove_data({ pos.x, pos.y, h });
+            }
+        }
+        if (m_chunk_states.at(pos).has_mesh) {
+            chunk_count++;
+        }
+        m_chunk_states.at(pos).has_data = false;
+        m_chunk_states.at(pos).has_mesh = false;
+        m_chunk_states.at(pos).can_mesh = false;
+        m_chunk_states.at(pos).should_delete = true;
+        if (m_chunk_states.at(pos).neighbors == 0) {
+            m_chunk_states.erase(pos);
         }
         if (chunk_count > m_mesh_updates_per_frame) {
             break;
