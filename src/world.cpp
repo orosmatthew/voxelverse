@@ -8,7 +8,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     , m_ui_renderer(&ui_renderer)
     , m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(16)
+    , m_mesh_updates_per_frame(2)
     , m_render_distance(render_distance)
 {
     m_hotbar_blocks.insert({ 0, 1 });
@@ -294,75 +294,73 @@ void World::update(bool mouse_captured, float blend)
     }
 
     // Chunk updates
-    std::queue<mve::Vector3i> check_queue;
-    mve::Vector3i current_camera_chunk = WorldData::chunk_pos_from_block_pos(m_camera.position());
+    mve::Vector3i current_camera_chunk_3d = WorldData::chunk_pos_from_block_pos(m_camera.position());
+    mve::Vector2i current_camera_chunk = {current_camera_chunk_3d.x, current_camera_chunk_3d.y};
     if (current_camera_chunk != m_camera_chunk) {
         m_camera_chunk = current_camera_chunk;
-
-        m_chunk_data_queue.clear();
-        for_3d(
-            mve::Vector3i(-m_render_distance, -m_render_distance, -4)
-                + mve::Vector3i(m_camera_chunk.x, m_camera_chunk.y, 0),
-            mve::Vector3i(m_render_distance, m_render_distance, 4)
-                + mve::Vector3i(m_camera_chunk.x, m_camera_chunk.y, 0),
-            [&](mve::Vector3i pos) {
-                if (mve::sqrt(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
-                    < m_render_distance) {
-                    m_chunk_data_queue.push_back(pos);
-                    check_queue.push(pos);
+        m_sorted_chunks.clear();
+        for_2d(
+            mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
+            mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
+            [&](mve::Vector2i pos) {
+                if (mve::abs(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
+                    < mve::squared(m_render_distance)) {
+                    m_sorted_chunks.push_back(pos);
+                    if (m_chunk_states.contains(pos)) {
+                        switch (m_chunk_states[pos].state) {
+                        case ChunkState::none:
+                            m_chunk_states[pos].state = ChunkState::gen;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    else {
+                        m_chunk_states[pos].state = ChunkState::gen;
+                    }
                 }
             });
-        std::sort(
-            m_chunk_data_queue.begin(), m_chunk_data_queue.end(), [&](const mve::Vector3i& a, const mve::Vector3i& b) {
-                return mve::Vector3(a).distance_sqrd_to(m_camera_chunk)
-                    > mve::Vector3(b).distance_sqrd_to(m_camera_chunk);
-            });
-        m_chunk_mesh_queue.clear();
+        std::sort(m_sorted_chunks.begin(), m_sorted_chunks.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
+            return mve::distance_sqrd(a, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y))
+                < mve::distance_sqrd(b, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y));
+        });
     }
 
     int chunk_count = 0;
-    while (!m_chunk_data_queue.empty()) {
-        mve::Vector3i chunk = m_chunk_data_queue.back();
-        m_chunk_data_queue.pop_back();
-        if (m_world_data.contains_chunk(chunk)) {
-            continue;
-        }
-        m_world_data.generate(m_world_generator, chunk);
-        check_queue.push(chunk);
-        for (int f = 0; f < 6; f++) {
-            if (m_world_data.contains_chunk(chunk + direction_vector(static_cast<Direction>(f)))) {
-                check_queue.push(chunk + direction_vector(static_cast<Direction>(f)));
+    for (mve::Vector2i pos : m_sorted_chunks) {
+        switch (m_chunk_states.at(pos).state) {
+        case ChunkState::gen:
+            for (int h = -10; h < 10; h++) {
+                m_world_data.generate(m_world_generator, { pos.x, pos.y, h });
             }
-        }
-        chunk_count++;
-        if (chunk_count > m_mesh_updates_per_frame) {
+            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
+                if (neighbor != mve::Vector2i(0, 0)) {
+                    m_chunk_states[pos + neighbor].neighbors++;
+                    if (m_chunk_states[pos + neighbor].state == ChunkState::data
+                        && m_chunk_states[pos + neighbor].neighbors == 8) {
+                        m_chunk_states[pos + neighbor].state = ChunkState::mesh;
+                    }
+                }
+            });
+            if (m_chunk_states[pos].neighbors == 8) {
+                m_chunk_states[pos].state = ChunkState::mesh;
+            }
+            else {
+                m_chunk_states[pos].state = ChunkState::data;
+            }
+            chunk_count++;
+            break;
+        case ChunkState::mesh:
+            for (int h = -10; h < 10; h++) {
+                m_world_renderer.add_data(m_world_data.chunk_data_at({ pos.x, pos.y, h }), m_world_data);
+            }
+            m_chunk_states[pos].state = ChunkState::done;
+            chunk_count++;
+            break;
+        default:
             break;
         }
-    }
-
-    while (!check_queue.empty()) {
-        mve::Vector3i chunk = check_queue.front();
-        check_queue.pop();
-        bool can_mesh = true;
-        for (int f = 0; f < 6; f++) {
-            if (!m_world_data.contains_chunk(chunk + direction_vector(static_cast<Direction>(f)))) {
-                can_mesh = false;
-                break;
-            }
-        }
-        if (can_mesh) {
-            m_chunk_mesh_queue.push_back(chunk);
-        }
-    }
-
-    int mesh_count = 0;
-    while (!m_chunk_mesh_queue.empty()) {
-        if (!m_world_renderer.contains_data(m_chunk_mesh_queue.back())) {
-            m_world_renderer.add_data(m_world_data.chunk_data_at(m_chunk_mesh_queue.back()), m_world_data);
-        }
-        m_chunk_mesh_queue.pop_back();
-        mesh_count++;
-        if (mesh_count > m_mesh_updates_per_frame) {
+        if (chunk_count > m_mesh_updates_per_frame) {
             break;
         }
     }

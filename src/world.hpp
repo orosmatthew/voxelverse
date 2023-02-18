@@ -26,6 +26,11 @@ public:
     void draw();
 
 private:
+    enum class ChunkState { none, gen, data, mesh, done };
+    struct ChunkStateData {
+        ChunkState state = ChunkState::none;
+        int neighbors = 0;
+    };
     mve::Window* m_window;
     mve::Renderer* m_renderer;
     UIRenderer* m_ui_renderer;
@@ -34,10 +39,9 @@ private:
     WorldData m_world_data;
     int m_mesh_updates_per_frame;
     Camera m_camera;
-    std::vector<mve::Vector3i> m_chunk_data_queue;
-    std::vector<mve::Vector3i> m_chunk_mesh_queue;
-    std::vector<mve::Vector3i> m_chunk_removal_queue;
-    mve::Vector3i m_camera_chunk = { -1, -1, -1 };
+    std::unordered_map<mve::Vector2i, ChunkStateData> m_chunk_states;
+    std::vector<mve::Vector2i> m_sorted_chunks;
+    mve::Vector2i m_camera_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;
     int m_current_hotbar_select = 0;
     std::unordered_map<int, uint8_t> m_hotbar_blocks {};
