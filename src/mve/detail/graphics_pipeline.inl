@@ -1,16 +1,14 @@
-#include "graphics_pipeline.hpp"
-
-#include "renderer.hpp"
+#include "defs.hpp"
 
 namespace mve {
 
-GraphicsPipeline::GraphicsPipeline(
+inline GraphicsPipeline::GraphicsPipeline(
     Renderer& renderer, const Shader& vertex_shader, const Shader& fragment_shader, const VertexLayout& vertex_layout)
 {
     *this = std::move(renderer.create_graphics_pipeline(vertex_shader, fragment_shader, vertex_layout));
 }
 
-GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other)
+inline GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other)
 {
     if (m_valid) {
         m_renderer->destroy(*this);
@@ -24,41 +22,41 @@ GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other)
 
     return *this;
 }
-bool GraphicsPipeline::operator==(const GraphicsPipeline& other) const
+inline bool GraphicsPipeline::operator==(const GraphicsPipeline& other) const
 {
     return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
-bool GraphicsPipeline::operator<(const GraphicsPipeline& other) const
+inline bool GraphicsPipeline::operator<(const GraphicsPipeline& other) const
 {
     return m_handle < other.m_handle;
 }
-GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other)
+inline GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other)
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
     other.m_valid = false;
 }
-GraphicsPipeline::~GraphicsPipeline()
+inline GraphicsPipeline::~GraphicsPipeline()
 {
     if (m_valid) {
         m_renderer->destroy(*this);
     }
 }
-size_t GraphicsPipeline::handle() const
+inline size_t GraphicsPipeline::handle() const
 {
     return m_handle;
 }
-bool GraphicsPipeline::is_valid() const
+inline bool GraphicsPipeline::is_valid() const
 {
     return m_valid;
 }
 
-DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet& descriptor_set)
+inline DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet& descriptor_set)
 {
     return m_renderer->create_descriptor_set(*this, descriptor_set);
 }
-void GraphicsPipeline::invalidate()
+inline void GraphicsPipeline::invalidate()
 {
     m_valid = false;
 }
@@ -70,4 +68,14 @@ GraphicsPipeline::GraphicsPipeline(Renderer& renderer, size_t handle)
 {
 }
 
+}
+
+namespace std {
+template <>
+struct hash<mve::GraphicsPipeline> {
+    std::size_t operator()(const mve::GraphicsPipeline& graphics_pipeline) const
+    {
+        return hash<uint64_t>()(graphics_pipeline.handle());
+    }
+};
 }

@@ -47,12 +47,6 @@ set(SOURCE_FILES
         src/mve/shader.cpp
         src/mve/monitor.cpp
         src/util.cpp
-        src/mve/vertex_buffer.cpp
-        src/mve/index_buffer.cpp
-        src/mve/graphics_pipeline.cpp
-        src/mve/descriptor_set.cpp
-        src/mve/uniform_buffer.cpp
-        src/mve/texture.cpp
         src/util/fixed_loop.cpp
         src/chunk_mesh.cpp
         src/chunk_data.cpp
@@ -61,7 +55,6 @@ set(SOURCE_FILES
         src/world_renderer.cpp
         src/camera.cpp
         src/ui_renderer.cpp
-        src/mve/framebuffer.cpp
         src/select_box_mesh.cpp
         src/world.cpp)
 

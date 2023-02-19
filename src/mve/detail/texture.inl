@@ -1,28 +1,26 @@
-#include "texture.hpp"
-
-#include "renderer.hpp"
+#include "defs.hpp"
 
 namespace mve {
 
-Texture::Texture(Renderer& renderer, const std::filesystem::path& path)
+inline Texture::Texture(Renderer& renderer, const std::filesystem::path& path)
 {
     *this = std::move(renderer.create_texture(path));
 }
 
-Texture::Texture(Texture&& other)
+inline Texture::Texture(Texture&& other)
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
     other.m_valid = false;
 }
-Texture::~Texture()
+inline Texture::~Texture()
 {
     if (m_valid) {
         m_renderer->destroy(*this);
     }
 }
-Texture& Texture::operator=(Texture&& other)
+inline Texture& Texture::operator=(Texture&& other)
 {
     if (m_valid) {
         m_renderer->destroy(*this);
@@ -36,31 +34,41 @@ Texture& Texture::operator=(Texture&& other)
 
     return *this;
 }
-bool Texture::operator==(const Texture& other) const
+inline bool Texture::operator==(const Texture& other) const
 {
     return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
-bool Texture::operator<(const Texture& other) const
+inline bool Texture::operator<(const Texture& other) const
 {
     return m_handle < other.m_handle;
 }
-uint64_t Texture::handle() const
+inline uint64_t Texture::handle() const
 {
     return m_handle;
 }
-bool Texture::is_valid() const
+inline bool Texture::is_valid() const
 {
     return m_valid;
 }
 
-Texture::Texture(Renderer& renderer, uint64_t handle)
+inline Texture::Texture(Renderer& renderer, uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
 {
 }
-void Texture::invalidate()
+inline void Texture::invalidate()
 {
     m_valid = false;
 }
+}
+
+namespace std {
+template <>
+struct hash<mve::Texture> {
+    std::size_t operator()(const mve::Texture& texture) const
+    {
+        return hash<uint64_t>()(texture.handle());
+    }
+};
 }

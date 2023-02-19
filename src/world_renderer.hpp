@@ -6,6 +6,7 @@
 #include "chunk_mesh.hpp"
 #include "common.hpp"
 #include "frustum.hpp"
+#include "mve/detail/types.hpp"
 #include "mve/math/math.hpp"
 #include "select_box_mesh.hpp"
 

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "mve/math/math.hpp"
-#include "mve/index_buffer.hpp"
 #include "mve/renderer.hpp"
-#include "mve/vertex_buffer.hpp"
 
 class SelectBoxMesh {
 public:

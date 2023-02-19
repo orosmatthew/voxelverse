@@ -4,13 +4,8 @@
 #include <memory>
 
 #include "mve/math/math.hpp"
-#include "mve/descriptor_set.hpp"
-#include "mve/graphics_pipeline.hpp"
-#include "mve/index_buffer.hpp"
 #include "mve/renderer.hpp"
 #include "mve/shader.hpp"
-#include "mve/uniform_buffer.hpp"
-#include "mve/vertex_buffer.hpp"
 #include "world_data.hpp"
 
 class ChunkMesh {

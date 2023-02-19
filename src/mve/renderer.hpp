@@ -9,12 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "descriptor_set.hpp"
-#include "graphics_pipeline.hpp"
-#include "index_buffer.hpp"
-#include "texture.hpp"
-#include "uniform_buffer.hpp"
-#include "vertex_buffer.hpp"
+#include "detail/defs.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
@@ -23,7 +18,6 @@
 #define VULKAN_HPP_ASSERT_ON_RESULT
 #include <vulkan/vulkan.hpp>
 
-#include "framebuffer.hpp"
 #include "shader.hpp"
 #include "vertex_data.hpp"
 
@@ -704,3 +698,5 @@ private:
         vk::Device device, vk::DescriptorSetLayout layout, vk::DescriptorPool pool, int count);
 };
 }
+
+#include "detail/types.hpp"
