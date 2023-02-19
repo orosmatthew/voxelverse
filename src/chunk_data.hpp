@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "mve/math/math.hpp"
-#include "world_generator.hpp"
 
 enum class Direction { front = 0, back, left, right, top, bottom };
 
@@ -50,8 +49,6 @@ inline Direction opposite_direction(Direction dir)
 class ChunkData {
 public:
     ChunkData(mve::Vector3i chunk_pos);
-
-    void generate(const WorldGenerator& generator);
 
     mve::Vector3i position() const;
 

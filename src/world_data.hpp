@@ -6,19 +6,19 @@
 
 #include "chunk_data.hpp"
 #include "mve/math/math.hpp"
-#include "world_generator.hpp"
 
 class WorldData {
 public:
     WorldData();
 
-    void generate(const WorldGenerator& generator, mve::Vector3i chunk_pos);
-
-    void generate(const WorldGenerator& generator, mve::Vector3i from, mve::Vector3i to);
-
     inline void remove_chunk(mve::Vector3i chunk_pos)
     {
         m_chunks.erase(chunk_pos);
+    }
+
+    inline void create_chunk(mve::Vector3i chunk_pos)
+    {
+        m_chunks.insert({ chunk_pos, ChunkData(chunk_pos) });
     }
 
     inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
@@ -67,6 +67,11 @@ public:
     }
 
     inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
+    {
+        return m_chunks.at(chunk_pos);
+    }
+
+    inline ChunkData& chunk_data_at(mve::Vector3i chunk_pos)
     {
         return m_chunks.at(chunk_pos);
     }

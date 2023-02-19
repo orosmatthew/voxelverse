@@ -8,7 +8,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     , m_ui_renderer(&ui_renderer)
     , m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(1)
+    , m_mesh_updates_per_frame(2)
     , m_render_distance(render_distance)
 {
     m_hotbar_blocks.insert({ 0, 1 });
@@ -332,9 +332,12 @@ void World::update(bool mouse_captured, float blend)
     int chunk_count = 0;
     for (mve::Vector2i pos : m_sorted_chunks) {
         if (!m_chunk_states.at(pos).has_data) {
-            for (int h = -10; h <= 10; h++) {
-                m_world_data.generate(m_world_generator, { pos.x, pos.y, h });
+            std::array<ChunkData*, 20> chunk_datas;
+            for (int h = -10; h < 10; h++) {
+                m_world_data.create_chunk({ pos.x, pos.y, h });
+                chunk_datas[h + 10] = &(m_world_data.chunk_data_at({ pos.x, pos.y, h }));
             }
+            m_world_generator.generate_chunks(chunk_datas, pos);
             for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
                 if (neighbor != mve::Vector2i(0, 0)) {
                     m_chunk_states[pos + neighbor].neighbors++;
@@ -351,7 +354,7 @@ void World::update(bool mouse_captured, float blend)
         }
         if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
 
-            for (int h = -10; h <= 10; h++) {
+            for (int h = -10; h < 10; h++) {
                 m_world_renderer.add_data(m_world_data.chunk_data_at({ pos.x, pos.y, h }), m_world_data);
             }
             m_chunk_states[pos].has_mesh = true;
@@ -385,7 +388,7 @@ void World::update(bool mouse_captured, float blend)
                 m_chunk_states[pos + neighbor].neighbors--;
             });
         }
-        for (int h = -10; h <= 10; h++) {
+        for (int h = -10; h < 10; h++) {
             if (m_chunk_states.at(pos).has_data) {
                 m_world_data.remove_chunk({ pos.x, pos.y, h });
             }

@@ -7,11 +7,17 @@
 
 #include "mve/math/math.hpp"
 
+#include <array>
+
+#include "chunk_data.hpp"
+
 class FastNoiseLite;
 
 class WorldGenerator {
 public:
     WorldGenerator(int seed);
+
+    void generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Vector2i chunk_pos);
 
     uint8_t get_block(mve::Vector3i pos) const;
 

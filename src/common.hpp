@@ -1,6 +1,8 @@
 #pragma once
 
 #include "math.h"
+#include <vector>
+#include <functional>
 
 struct Quad {
     mve::Vector3 top_left;
