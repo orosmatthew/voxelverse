@@ -23,7 +23,7 @@ void ChunkData::generate(const WorldGenerator& generator)
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-                set_block({ x, y, z }, generator.get_block(mve::Vector3i(x, y, z) + m_pos * 16, true));
+                set_block({ x, y, z }, generator.get_block(mve::Vector3i(x, y, z) + m_pos * 16));
             }
         }
     }
