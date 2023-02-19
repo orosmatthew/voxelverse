@@ -332,7 +332,7 @@ void World::update(bool mouse_captured, float blend)
     int chunk_count = 0;
     for (mve::Vector2i pos : m_sorted_chunks) {
         if (!m_chunk_states.at(pos).has_data) {
-            for (int h = -10; h < 10; h++) {
+            for (int h = -10; h <= 10; h++) {
                 m_world_data.generate(m_world_generator, { pos.x, pos.y, h });
             }
             for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
@@ -351,7 +351,7 @@ void World::update(bool mouse_captured, float blend)
         }
         if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
 
-            for (int h = -10; h < 10; h++) {
+            for (int h = -10; h <= 10; h++) {
                 m_world_renderer.add_data(m_world_data.chunk_data_at({ pos.x, pos.y, h }), m_world_data);
             }
             m_chunk_states[pos].has_mesh = true;
@@ -385,7 +385,7 @@ void World::update(bool mouse_captured, float blend)
                 m_chunk_states[pos + neighbor].neighbors--;
             });
         }
-        for (int h = -10; h < 10; h++) {
+        for (int h = -10; h <= 10; h++) {
             if (m_chunk_states.at(pos).has_data) {
                 m_world_data.remove_chunk({ pos.x, pos.y, h });
             }
