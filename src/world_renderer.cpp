@@ -38,9 +38,17 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
     m_chunk_ubo.update(
         m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4::identity());
+    m_chunk_ubo.update(
+        m_vertex_shader.descriptor_set(1).binding(0).member("fog_influence").location(), 1.0f);
     m_chunk_descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), m_chunk_ubo);
     m_frustum = {};
     m_selection_box.mesh.set_position({ 0, 0, 0 });
+
+    m_global_ubo.update(
+        m_vertex_shader.descriptor_set(0).binding(0).member("fog_color").location(),
+        mve::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 255.0f / 255.0f, 1.0f));
+    m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_near").location(), 250.0f);
+    m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_far").location(), 400.0f);
 }
 
 void WorldRenderer::resize()

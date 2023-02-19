@@ -15,6 +15,8 @@ SelectBoxMesh::SelectBoxMesh(
 {
     m_descriptor_set.write_binding(uniform_buffer_binding, m_uniform_buffer);
 
+    m_uniform_buffer.update(uniform_buffer_binding.member("fog_influence").location(), 0.0f);
+
     mve::VertexData data(WorldRenderer::vertex_layout());
 
     std::vector<std::pair<mve::Vector3, mve::Vector3>> edges;
