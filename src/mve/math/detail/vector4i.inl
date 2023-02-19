@@ -14,11 +14,11 @@ inline Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max)
 }
 inline float length(Vector4i vector)
 {
-    return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w));
+    return sqrt(sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w));
 }
 inline float length_sqrd(Vector4i vector)
 {
-    return squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w);
+    return sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w);
 }
 inline Vector4iAxis max_axis(Vector4i vector)
 {

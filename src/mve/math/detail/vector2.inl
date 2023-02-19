@@ -332,14 +332,14 @@ inline float distance_sqrd(const Vector2& from, const Vector2& to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
-    return squared(diff_x) + squared(diff_y);
+    return sqrd(diff_x) + sqrd(diff_y);
 }
 
 inline float distance(const Vector2& from, const Vector2& to)
 {
     float diff_x = to.x - from.x;
     float diff_y = to.y - from.y;
-    return sqrt(squared(diff_x) + squared(diff_y));
+    return sqrt(sqrd(diff_x) + sqrd(diff_y));
 }
 
 inline Vector2 floor(const Vector2& vector)
@@ -349,11 +349,11 @@ inline Vector2 floor(const Vector2& vector)
 
 inline float length(const Vector2& vector)
 {
-    return sqrt(squared(vector.x) + squared(vector.y));
+    return sqrt(sqrd(vector.x) + sqrd(vector.y));
 }
 inline float length_sqrd(const Vector2& vector)
 {
-    return squared(vector.x) + squared(vector.y);
+    return sqrd(vector.x) + sqrd(vector.y);
 }
 inline Vector2 linear_interpolate(const Vector2& from, const Vector2& to, float weight)
 {

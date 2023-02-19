@@ -262,11 +262,11 @@ inline Vector2i clamp(const Vector2i& vector, const Vector2i& min, const Vector2
 }
 inline float length(const Vector2i& vector)
 {
-    return sqrt(squared(vector.x) + squared(vector.y));
+    return sqrt(sqrd(vector.x) + sqrd(vector.y));
 }
 inline float length_sqrd(const Vector2i& vector)
 {
-    return squared(vector.x) + squared(vector.y);
+    return sqrd(vector.x) + sqrd(vector.y);
 }
 inline Vector2iAxis max_axis(const Vector2i& vector)
 {

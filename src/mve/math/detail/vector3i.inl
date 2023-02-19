@@ -10,11 +10,11 @@ inline Vector3i clamp(Vector3i vector, Vector3i min, Vector3i max)
 }
 inline float length(Vector3i vector)
 {
-    return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z));
+    return sqrt(sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z));
 }
 inline float length_sqrd(Vector3i vector)
 {
-    return squared(vector.x) + squared(vector.y) + squared(vector.z);
+    return sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z);
 }
 inline Vector3iAxis max_axis(Vector3i vector)
 {

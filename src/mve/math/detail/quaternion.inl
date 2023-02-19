@@ -262,7 +262,7 @@ inline Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const
 inline float angle(const Quaternion& from, const Quaternion& to)
 {
     float dot = mve::dot(from, to);
-    return acos(clamp(squared(dot) * 2.0f - 1.0f, -1.0f, 1.0f));
+    return acos(clamp(sqrd(dot) * 2.0f - 1.0f, -1.0f, 1.0f));
 }
 inline float dot(const Quaternion& a, const Quaternion& b)
 {

@@ -301,8 +301,8 @@ void World::update(bool mouse_captured, float blend)
         m_sorted_chunks.clear();
         m_sorted_chunks.reserve(m_chunk_states.size());
         for (auto& [pos, data] : m_chunk_states) {
-            if (mve::abs(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
-                > mve::squared(m_render_distance)) {
+            if (mve::abs(mve::sqrd(pos.x - m_camera_chunk.x) + mve::sqrd(pos.y - m_camera_chunk.y))
+                > mve::sqrd(m_render_distance)) {
                 data.should_delete = true;
             }
         }
@@ -310,8 +310,8 @@ void World::update(bool mouse_captured, float blend)
             mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
             mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
             [&](mve::Vector2i pos) {
-                if (mve::abs(mve::squared(pos.x - m_camera_chunk.x) + mve::squared(pos.y - m_camera_chunk.y))
-                    <= mve::squared(m_render_distance)) {
+                if (mve::abs(mve::sqrd(pos.x - m_camera_chunk.x) + mve::sqrd(pos.y - m_camera_chunk.y))
+                    <= mve::sqrd(m_render_distance)) {
                     if (!m_chunk_states.contains(pos)) {
                         m_chunk_states[pos] = {};
                     }

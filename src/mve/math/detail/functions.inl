@@ -4,7 +4,7 @@ namespace mve {
 
 inline bool is_zero_approx(float val)
 {
-    return std::fabsf(val) < epsilon;
+    return mve::abs(val) < mve::epsilon;
 }
 
 inline bool is_equal_approx(float a, float b)
@@ -12,7 +12,11 @@ inline bool is_equal_approx(float a, float b)
     if (a == b) {
         return true;
     }
-    return is_zero_approx(a - b);
+    float tolerance = mve::epsilon * mve::abs(a);
+    if (tolerance < mve::epsilon) {
+        tolerance = mve::epsilon;
+    }
+    return mve::abs(a - b) < tolerance;
 }
 inline float abs(float val)
 {
@@ -40,7 +44,7 @@ inline float pow(float val, float power)
 {
     return std::powf(val, power);
 }
-inline float squared(float val)
+inline float sqrd(float val)
 {
     return val * val;
 }
@@ -79,7 +83,7 @@ inline int clamp(int val, int min, int max)
     }
     return val;
 }
-inline int squared(int val)
+inline int sqrd(int val)
 {
     return val * val;
 }

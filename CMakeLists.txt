@@ -97,7 +97,8 @@ set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)
 
 set(TEST_SOURCE_FILES
-        tests/vertex_data.cpp)
+        tests/vertex_data.cpp
+        tests/mve/math/functions.cpp)
 
 set(TEST_LIB_INCLUDES
         lib/catch2-3.2.1/include)

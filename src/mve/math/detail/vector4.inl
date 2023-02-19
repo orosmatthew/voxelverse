@@ -26,7 +26,7 @@ inline float distance_sqrd(Vector4 from, Vector4 to)
     float diff_y = to.y - from.y;
     float diff_z = to.z - from.z;
     float diff_w = to.w - from.w;
-    return squared(diff_x) + squared(diff_y) + squared(diff_z) + squared(diff_w);
+    return sqrd(diff_x) + sqrd(diff_y) + sqrd(diff_z) + sqrd(diff_w);
 }
 inline float distance(Vector4 from, Vector4 to)
 {
@@ -34,7 +34,7 @@ inline float distance(Vector4 from, Vector4 to)
     float diff_y = to.y - from.y;
     float diff_z = to.z - from.z;
     float diff_w = to.w - from.w;
-    return sqrt(squared(diff_x) + squared(diff_y) + squared(diff_z) + squared(diff_w));
+    return sqrt(sqrd(diff_x) + sqrd(diff_y) + sqrd(diff_z) + sqrd(diff_w));
 }
 inline Vector4 normalize(Vector4 vector)
 {
@@ -54,11 +54,11 @@ inline Vector4 floor(Vector4 vector)
 }
 inline float length(Vector4 vector)
 {
-    return sqrt(squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w));
+    return sqrt(sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w));
 }
 inline float length_sqrd(Vector4 vector)
 {
-    return squared(vector.x) + squared(vector.y) + squared(vector.z) + squared(vector.w);
+    return sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w);
 }
 inline Vector4 linear_interpolate(Vector4 from, Vector4 to, float weight)
 {

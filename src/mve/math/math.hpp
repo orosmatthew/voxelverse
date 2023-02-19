@@ -24,7 +24,7 @@ const float pi = 3.14159265358979323846264338327950288f;
 
 [[nodiscard]] inline float pow(float val, float power);
 
-[[nodiscard]] inline float squared(float val);
+[[nodiscard]] inline float sqrd(float val);
 
 [[nodiscard]] inline int squared(int val);
 
