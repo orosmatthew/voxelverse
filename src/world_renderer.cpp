@@ -47,7 +47,7 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     m_global_ubo.update(
         m_vertex_shader.descriptor_set(0).binding(0).member("fog_color").location(),
         mve::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 255.0f / 255.0f, 1.0f));
-    m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_near").location(), 250.0f);
+    m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_near").location(), 325.0f);
     m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_far").location(), 400.0f);
 }
 
