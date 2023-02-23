@@ -26,7 +26,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
 
 void World::fixed_update()
 {
-    m_camera.fixed_update(*m_window);
+    m_camera.fixed_update(*m_window, m_world_data);
 }
 
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
@@ -64,11 +64,6 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
 struct Ray {
     mve::Vector3 position;
     mve::Vector3 direction;
-};
-
-struct BoundingBox {
-    mve::Vector3 min;
-    mve::Vector3 max;
 };
 
 struct RayCollision {

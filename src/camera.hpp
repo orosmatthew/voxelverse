@@ -3,12 +3,14 @@
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
 
+class WorldData;
+
 class Camera {
 public:
     Camera();
 
     void update(const mve::Window& window);
-    void fixed_update(const mve::Window& window);
+    void fixed_update(const mve::Window& window, const WorldData& data);
 
     inline mve::Vector3 position() const
     {
@@ -45,6 +47,9 @@ public:
     }
 
 private:
+
+    void handle_collision(const WorldData& data);
+
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;
     mve::Vector3 m_prev_pos;

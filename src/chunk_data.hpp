@@ -3,8 +3,7 @@
 #include <stdint.h>
 
 #include "mve/math/math.hpp"
-
-enum class Direction { front = 0, back, left, right, top, bottom };
+#include "common.hpp"
 
 inline mve::Vector3i direction_vector(Direction dir)
 {

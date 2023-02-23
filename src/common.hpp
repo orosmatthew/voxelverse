@@ -1,8 +1,8 @@
 #pragma once
 
 #include "math.h"
-#include <vector>
 #include <functional>
+#include <vector>
 
 struct Quad {
     mve::Vector3 top_left;
@@ -10,6 +10,32 @@ struct Quad {
     mve::Vector3 bottom_right;
     mve::Vector3 bottom_left;
 };
+
+struct BoundingBox {
+    mve::Vector3 min;
+    mve::Vector3 max;
+};
+
+enum class Direction { front = 0, back, left, right, top, bottom };
+
+inline bool collides(const BoundingBox& a, const BoundingBox& b)
+{
+    bool collision = true;
+
+    if ((a.max.x >= b.min.x) && (a.min.x <= b.max.x)) {
+        if ((a.max.y < b.min.y) || (a.min.y > b.max.y)) {
+            collision = false;
+        }
+        if ((a.max.z < b.min.z) || (a.min.z > b.max.z)) {
+            collision = false;
+        }
+    }
+    else {
+        collision = false;
+    }
+
+    return collision;
+}
 
 inline Quad transform(const Quad& quad, const mve::Matrix4& matrix)
 {
