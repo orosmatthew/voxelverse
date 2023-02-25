@@ -134,23 +134,22 @@ mve::Vector2 Window::get_cursor_pos(bool clamped_to_window)
 {
     double glfw_cursor_pos[2];
     glfwGetCursorPos(m_glfw_window.get(), &(glfw_cursor_pos[0]), &(glfw_cursor_pos[1]));
-    mve::Vector2 mouse_pos;
+    mve::Vector2 mouse_pos_val;
     if (clamped_to_window) {
         mve::Vector2i window_size = size();
-        mouse_pos.x = mve::clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
-        mouse_pos.y = mve::clamp(static_cast<float>(glfw_cursor_pos[1]), 0.0f, static_cast<float>(window_size.y));
+        mouse_pos_val.x = mve::clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
+        mouse_pos_val.y = mve::clamp(static_cast<float>(glfw_cursor_pos[1]), 0.0f, static_cast<float>(window_size.y));
     }
-    return { mouse_pos };
+    return { mouse_pos_val };
 }
 
 Monitor Window::current_monitor() const
 {
     int monitor_count;
     GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
-    GLFWmonitor* monitor;
 
     if (m_fullscreen) {
-        return (glfwGetWindowMonitor(m_glfw_window.get()));
+        return Monitor(glfwGetWindowMonitor(m_glfw_window.get()));
     }
     else {
         mve::Vector2i pos;
@@ -160,7 +159,7 @@ Monitor Window::current_monitor() const
             mve::Vector2i workarea_pos;
             mve::Vector2i workarea_size;
 
-            monitor = monitors[i];
+            GLFWmonitor* monitor = monitors[i];
             glfwGetMonitorWorkarea(
                 monitor, &(workarea_pos.x), &(workarea_pos.y), &(workarea_size.x), &(workarea_size.y));
             if (pos.x >= workarea_pos.x && pos.x <= (workarea_pos.x + workarea_size.x) && pos.y >= workarea_pos.y
@@ -258,14 +257,15 @@ void Window::move_to(mve::Vector2i pos)
 
 void Window::fullscreen_to(Monitor monitor, bool use_native)
 {
-    mve::Vector2i size;
+    mve::Vector2i monitor_size;
     if (m_resizable && use_native) {
-        size = monitor.size();
+        monitor_size = monitor.size();
     }
     else {
-        size = m_size;
+        monitor_size = m_size;
     }
-    glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
+    glfwSetWindowMonitor(
+        m_glfw_window.get(), monitor.glfw_handle(), 0, 0, monitor_size.x, monitor_size.y, GLFW_DONT_CARE);
 }
 
 void Window::set_min_size(mve::Vector2i size)
@@ -391,24 +391,26 @@ void Window::windowed()
 
 void Window::fullscreen(bool use_native)
 {
-    mve::Vector2i size;
+    mve::Vector2i monitor_size;
     if (!m_fullscreen) {
         m_windowed_size = m_size;
         glfwGetWindowPos(m_glfw_window.get(), &(m_pos.x), &(m_pos.y));
         Monitor monitor = current_monitor();
         if (m_resizable && use_native) {
-            size = monitor.size();
+            monitor_size = monitor.size();
         }
         else {
-            size = m_size;
+            monitor_size = m_size;
         }
-        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(
+            m_glfw_window.get(), monitor.glfw_handle(), 0, 0, monitor_size.x, monitor_size.y, GLFW_DONT_CARE);
         m_fullscreen = true;
     }
     else if (m_resizable && use_native && m_size != current_monitor().size()) {
         Monitor monitor = current_monitor();
-        size = monitor.size();
-        glfwSetWindowMonitor(m_glfw_window.get(), monitor.glfw_handle(), 0, 0, size.x, size.y, GLFW_DONT_CARE);
+        monitor_size = monitor.size();
+        glfwSetWindowMonitor(
+            m_glfw_window.get(), monitor.glfw_handle(), 0, 0, monitor_size.x, monitor_size.y, GLFW_DONT_CARE);
     }
 }
 

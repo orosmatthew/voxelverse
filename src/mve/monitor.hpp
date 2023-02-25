@@ -10,7 +10,7 @@ namespace mve {
 
 class Monitor {
 public:
-    Monitor(GLFWmonitor* monitor);
+    explicit Monitor(GLFWmonitor* monitor);
 
     [[nodiscard]] mve::Vector2i size() const;
 

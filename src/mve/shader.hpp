@@ -20,7 +20,7 @@ class UniformLocation {
 public:
     UniformLocation();
 
-    UniformLocation(uint32_t value);
+    explicit UniformLocation(uint32_t value);
 
     void set(uint32_t value);
 
@@ -38,7 +38,10 @@ private:
 class ShaderBindingBlock {
 public:
     ShaderBindingBlock(
-        std::string name, uint32_t size, uint32_t offset, std::unordered_map<std::string, ShaderBindingBlock> members);
+        const std::string& name,
+        uint32_t size,
+        uint32_t offset,
+        std::unordered_map<std::string, ShaderBindingBlock> members);
 
     [[nodiscard]] std::string name() const;
 
@@ -100,7 +103,6 @@ private:
     const std::unordered_map<uint32_t, ShaderDescriptorBinding> m_bindings;
 };
 
-
 // TODO: Move shader reflection data to its own class
 /**
  * @brief Shader for use in renderer
@@ -110,10 +112,9 @@ public:
     /**
      * @brief Construct Shader from file
      * @param file_path - file path of shader file
-     * @param shader_type - type of shader
      * @throws std::runtime_error - When file path is invalid
      */
-    Shader(const std::filesystem::path& file_path, ShaderType shader_type);
+    explicit Shader(const std::filesystem::path& file_path);
 
     /**
      * @brief Obtain SPIR-V code from shader

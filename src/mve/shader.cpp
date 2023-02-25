@@ -10,7 +10,7 @@
 
 namespace mve {
 
-Shader::Shader(const std::filesystem::path& file_path, ShaderType shader_type)
+Shader::Shader(const std::filesystem::path& file_path)
 {
     LOG->debug("Loading shader: " + file_path.string());
 
@@ -192,7 +192,10 @@ const std::unordered_map<std::string, ShaderBindingBlock>& ShaderDescriptorBindi
 }
 
 ShaderBindingBlock::ShaderBindingBlock(
-    std::string name, uint32_t size, uint32_t offset, std::unordered_map<std::string, ShaderBindingBlock> members)
+    const std::string& name,
+    uint32_t size,
+    uint32_t offset,
+    std::unordered_map<std::string, ShaderBindingBlock> members)
     : m_name(name)
     , m_size(size)
     , m_offset(offset)
@@ -228,6 +231,7 @@ UniformLocation ShaderBindingBlock::location() const
 
 UniformLocation::UniformLocation()
     : m_initialized(false)
+    , m_value()
 {
 }
 UniformLocation::UniformLocation(uint32_t value)

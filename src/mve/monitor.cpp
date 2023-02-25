@@ -25,9 +25,9 @@ mve::Vector2i mve::Monitor::position() const
 }
 mve::Vector2i mve::Monitor::physical_size() const
 {
-    mve::Vector2i size;
-    glfwGetMonitorPhysicalSize(m_monitor, &(size.x), &(size.y));
-    return size;
+    mve::Vector2i physical_size;
+    glfwGetMonitorPhysicalSize(m_monitor, &(physical_size.x), &(physical_size.y));
+    return physical_size;
 }
 
 GLFWmonitor* mve::Monitor::glfw_handle()
