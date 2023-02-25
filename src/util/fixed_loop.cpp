@@ -1,14 +1,12 @@
 #include "fixed_loop.hpp"
 
 #include <chrono>
-#include <iostream>
 
 namespace util {
 
 FixedLoop::FixedLoop(float rate)
+    : m_end(std::chrono::steady_clock::now())
 {
-    m_start = std::chrono::steady_clock::now();
-    m_end = std::chrono::steady_clock::now();
     m_delta = 0;
     m_is_ready = false;
     m_rate = static_cast<int64_t>((static_cast<double>(1.0 / rate)) * static_cast<int64_t>(1000000000));
@@ -43,7 +41,6 @@ float FixedLoop::blend() const
 
 void FixedLoop::reset()
 {
-    m_start = std::chrono::steady_clock::now();
     m_end = std::chrono::steady_clock::now();
     m_delta = 0;
     m_is_ready = false;
