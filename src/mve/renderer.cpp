@@ -22,10 +22,10 @@ Renderer::Renderer(
     int app_version_minor,
     int app_version_patch)
     : c_frames_in_flight(2)
+    , m_vk_instance(create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch))
     , m_resource_handle_count(0)
     , m_deferred_function_id_count(0)
 {
-    m_vk_instance = create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch);
 #ifdef MVE_ENABLE_VALIDATION_LAYERS
     m_vk_debug_utils_messenger = create_vk_debug_messenger(m_vk_instance);
 #endif
@@ -111,13 +111,10 @@ bool Renderer::has_validation_layer_support()
     const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
 
     for (const std::string& validation_layer : validation_layers) {
-        bool layer_found = false;
-        for (vk::LayerProperties available_layer : available_layers) {
-            if (validation_layer == available_layer.layerName) {
-                layer_found = true;
-                break;
-            }
-        }
+        bool layer_found = std::any_of(
+            available_layers.cbegin(), available_layers.cend(), [&](const vk::LayerProperties& available_layer) {
+                return available_layer.layerName == validation_layer;
+            });
         if (!layer_found) {
             return false;
         }
@@ -194,7 +191,11 @@ vk::PhysicalDevice Renderer::pick_vk_physical_device(vk::Instance instance, vk::
     }
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
-        if (is_vk_physical_device_suitable(physical_device, surface)) {
+        auto it
+            = std::find_if(physical_devices.cbegin(), physical_devices.cend(), [&](vk::PhysicalDevice physical_device) {
+                  return is_vk_physical_device_suitable(physical_device, surface);
+              });
+        if (it != physical_devices.end()) {
             LOG->info("[Renderer] Using GPU: {0}", physical_device.getProperties().deviceName);
             return physical_device;
         }
@@ -218,13 +219,10 @@ bool Renderer::is_vk_physical_device_suitable(vk::PhysicalDevice physical_device
     std::vector<const char*> required_exts = get_vk_device_required_exts();
 
     for (const std::string& required_ext : required_exts) {
-        bool is_available = false;
-        for (const vk::ExtensionProperties& ext_props : available_exts) {
-            if (required_ext == ext_props.extensionName) {
-                is_available = true;
-                break;
-            }
-        }
+        bool is_available = std::any_of(
+            available_exts.cbegin(), available_exts.cend(), [&](const vk::ExtensionProperties& ext_props) {
+                return required_ext == ext_props.extensionName;
+            });
         if (!is_available) {
             return false;
         }
@@ -372,21 +370,27 @@ Renderer::SwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
 vk::SurfaceFormatKHR Renderer::choose_vk_swapchain_surface_format(
     const std::vector<vk::SurfaceFormatKHR>& available_formats)
 {
-    for (const vk::SurfaceFormatKHR& available_format : available_formats) {
-        if (available_format.format == vk::Format::eB8G8R8A8Unorm
-            && available_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-            return available_format;
-        }
+    auto it = std::find_if(
+        available_formats.cbegin(), available_formats.cend(), [](const vk::SurfaceFormatKHR& available_format) {
+            return available_format.format == vk::Format::eB8G8R8A8Unorm
+                && available_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
+        });
+    if (it != available_formats.end()) {
+        return *it;
     }
     return available_formats[0];
 }
 vk::PresentModeKHR Renderer::choose_vk_swapchain_present_mode(
     const std::vector<vk::PresentModeKHR>& available_present_modes)
 {
-    for (const vk::PresentModeKHR& available_present_mode : available_present_modes) {
-        if (available_present_mode == vk::PresentModeKHR::eMailbox) {
-            return available_present_mode;
-        }
+    auto it = std::find_if(
+        available_present_modes.cbegin(),
+        available_present_modes.cend(),
+        [](const vk::PresentModeKHR& available_present_mode) {
+            return available_present_mode == vk::PresentModeKHR::eMailbox;
+        });
+    if (it != available_present_modes.end()) {
+        return *it;
     }
     return vk::PresentModeKHR::eFifo;
 }
@@ -430,9 +434,6 @@ vk::SwapchainKHR Renderer::create_vk_swapchain(
 
     assert(queue_family_indices.is_complete());
 
-    uint32_t indices_arr[]
-        = { queue_family_indices.graphics_family.value(), queue_family_indices.present_family.value() };
-
     auto swapchain_create_info
         = vk::SwapchainCreateInfoKHR()
               .setSurface(surface)
@@ -449,6 +450,8 @@ vk::SwapchainKHR Renderer::create_vk_swapchain(
               .setOldSwapchain(nullptr);
 
     if (queue_family_indices.graphics_family != queue_family_indices.present_family) {
+        uint32_t indices_arr[]
+            = { queue_family_indices.graphics_family.value(), queue_family_indices.present_family.value() };
         swapchain_create_info.setImageSharingMode(vk::SharingMode::eConcurrent)
             .setQueueFamilyIndexCount(2)
             .setPQueueFamilyIndices(indices_arr);
@@ -480,10 +483,13 @@ std::vector<vk::ImageView> Renderer::create_vk_swapchain_image_views(
 {
     std::vector<vk::ImageView> image_views;
 
-    for (vk::Image swapchain_image : swapchain_images) {
-        image_views.push_back(
-            create_image_view(device, swapchain_image, image_format, vk::ImageAspectFlagBits::eColor, 1));
-    }
+    std::transform(
+        swapchain_images.cbegin(),
+        swapchain_images.cend(),
+        std::back_inserter(image_views),
+        [&](vk::Image swapchain_image) {
+            return create_image_view(device, swapchain_image, image_format, vk::ImageAspectFlagBits::eColor, 1);
+        });
 
     return image_views;
 }
@@ -642,9 +648,10 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
 vk::PipelineLayout Renderer::create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandleImpl>& layouts)
 {
     std::vector<vk::DescriptorSetLayout> vk_layouts;
-    for (DescriptorSetLayoutHandleImpl handle : layouts) {
-        vk_layouts.push_back(m_descriptor_set_layouts.at(handle));
-    }
+    std::transform(
+        layouts.cbegin(), layouts.cend(), std::back_inserter(vk_layouts), [&](DescriptorSetLayoutHandleImpl handle) {
+            return m_descriptor_set_layouts.at(handle);
+        });
 
     auto pipeline_layout_info
         = vk::PipelineLayoutCreateInfo()
@@ -2129,7 +2136,7 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
 }
 
 void Renderer::write_descriptor_binding(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
+    const DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
     uint32_t binding_num = descriptor_binding.binding();
     uint64_t texture_handle = texture.handle();
@@ -2346,7 +2353,7 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
 }
 
 DescriptorSet Renderer::create_descriptor_set(
-    GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
+    const GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
 {
     std::vector<DescriptorSetImpl> descriptor_sets;
     descriptor_sets.reserve(c_frames_in_flight);
@@ -2384,7 +2391,7 @@ DescriptorSet Renderer::create_descriptor_set(
     return DescriptorSet(*this, *id);
 }
 
-void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
+void Renderer::bind_graphics_pipeline(const GraphicsPipeline& graphics_pipeline)
 {
     m_current_draw_state.command_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics, m_graphics_pipelines_new.at(graphics_pipeline.handle())->pipeline);
@@ -2392,7 +2399,9 @@ void Renderer::bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline)
 }
 
 void Renderer::write_descriptor_binding(
-    DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
+    const DescriptorSet& descriptor_set,
+    const ShaderDescriptorBinding& descriptor_binding,
+    const UniformBuffer& uniform_buffer)
 {
     uint32_t binding_num = descriptor_binding.binding();
     size_t uniform_buffer_handle = uniform_buffer.handle();
@@ -2666,7 +2675,7 @@ Texture Renderer::create_texture(Image image, vk::ImageView image_view, vk::Samp
     return Texture(*this, handle);
 }
 
-void Renderer::draw_vertex_buffer(VertexBuffer& vertex_buffer)
+void Renderer::draw_vertex_buffer(const VertexBuffer& vertex_buffer)
 {
     VertexBufferImpl& vertex_buffer_impl = *m_vertex_buffers_new.at(vertex_buffer.handle());
     m_current_draw_state.command_buffer.bindVertexBuffers(0, vertex_buffer_impl.buffer.vk_handle, { 0 });
@@ -2683,9 +2692,11 @@ void Renderer::destroy(DescriptorSet& descriptor_set)
     descriptor_set.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         std::vector<DescriptorSetImpl> sets_to_delete;
-        for (const FrameInFlight& frame : m_frames_in_flight) {
-            sets_to_delete.push_back(*frame.descriptor_sets.at(handle));
-        }
+        std::transform(
+            m_frames_in_flight.cbegin(),
+            m_frames_in_flight.cend(),
+            std::back_inserter(sets_to_delete),
+            [&](const FrameInFlight& frame) { return *frame.descriptor_sets.at(handle); });
         for (FrameInFlight& frame : m_frames_in_flight) {
             frame.descriptor_sets[handle].reset();
         }
@@ -2960,9 +2971,10 @@ vk::DescriptorPool Renderer::DescriptorSetAllocator::create_pool(vk::Device devi
     std::vector<vk::DescriptorPoolSize> sizes;
     sizes.reserve(m_sizes.size());
 
-    for (std::pair<vk::DescriptorType, float> s : m_sizes) {
-        sizes.push_back({ s.first, uint32_t(s.second * m_max_sets_per_pool) });
-    }
+    std::transform(
+        m_sizes.cbegin(), m_sizes.cend(), std::back_inserter(sizes), [&](std::pair<vk::DescriptorType, float> s) {
+            return vk::DescriptorPoolSize(s.first, static_cast<uint32_t>(s.second * m_max_sets_per_pool));
+        });
 
     auto pool_info = vk::DescriptorPoolCreateInfo()
                          .setFlags(flags)

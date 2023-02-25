@@ -68,7 +68,7 @@ public:
      * @brief Bind and draw vertex buffer
      * @param vertex_buffer
      */
-    void draw_vertex_buffer(VertexBuffer& vertex_buffer);
+    void draw_vertex_buffer(const VertexBuffer& vertex_buffer);
 
     /**
      * @brief Bind vertex buffer
@@ -80,7 +80,7 @@ public:
      * @brief Bind graphics pipeline
      * @param graphics_pipeline
      */
-    void bind_graphics_pipeline(GraphicsPipeline& graphics_pipeline);
+    void bind_graphics_pipeline(const GraphicsPipeline& graphics_pipeline);
 
     /**
      * @brief Bind and draw index buffer
@@ -124,7 +124,8 @@ public:
      * @param descriptor_set
      * @return Returns descriptor set object
      */
-    DescriptorSet create_descriptor_set(GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
+    DescriptorSet create_descriptor_set(
+        const GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
     /**
      * @brief Create a uniform buffer from a shader binding
@@ -140,9 +141,9 @@ public:
      * @param uniform_buffer
      */
     void write_descriptor_binding(
-        DescriptorSet& descriptor_set,
+        const DescriptorSet& descriptor_set,
         const ShaderDescriptorBinding& descriptor_binding,
-        UniformBuffer& uniform_buffer);
+        const UniformBuffer& uniform_buffer);
 
     /**
      * @brief Write a texture to a descriptor set binding
@@ -151,7 +152,7 @@ public:
      * @param texture
      */
     void write_descriptor_binding(
-        DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture);
+        const DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture);
 
     /**
      * @brief Create texture from image file-path
