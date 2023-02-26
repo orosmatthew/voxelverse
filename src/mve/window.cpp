@@ -340,7 +340,7 @@ void Window::glfw_cursor_enter_callback(GLFWwindow* window, int entered)
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     instance->m_cursor_in_window = static_cast<bool>(entered);
 }
-bool Window::is_key_pressed(Key key)
+bool Window::is_key_pressed(Key key) const
 {
     return m_keys_pressed.contains(key);
 }

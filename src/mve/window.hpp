@@ -307,7 +307,7 @@ public:
      * @param key - Keyboard key
      * @return - Returns true if pressed
      */
-    bool is_key_pressed(Key key);
+    bool is_key_pressed(Key key) const;
 
     [[nodiscard]] bool is_key_down(Key key) const;
 

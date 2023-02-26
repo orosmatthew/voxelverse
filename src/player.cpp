@@ -13,6 +13,9 @@ Player::Player()
     , m_friction(0.3f)
     , m_acceleration(0.035f)
     , m_max_speed(0.72f)
+    , m_last_jump_time(std::chrono::steady_clock::now())
+    , m_last_space_time(std::chrono::steady_clock::now())
+    , m_is_flying(false)
 {
 }
 
@@ -38,6 +41,20 @@ void Player::update(const mve::Window& window)
         m_head_transform = mve::Matrix4::from_basis_translation(
             mve::Matrix3::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
     }
+    if (window.is_key_pressed(mve::Key::space)) {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_space_time).count() <= 250) {
+            if (m_is_flying) {
+                m_is_flying = false;
+            }
+            else {
+                m_is_flying = true;
+            }
+        }
+        else {
+            m_last_space_time = now;
+        }
+    }
 }
 void Player::fixed_update(const mve::Window& window, const WorldData& data)
 {
@@ -56,15 +73,28 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
     if (window.is_key_down(mve::Key::d)) {
         dir.x += 1.0f;
     }
+    if (m_is_flying && window.is_key_down(mve::Key::space)) {
+        dir.z += 1.0f;
+    }
+    if (m_is_flying && window.is_key_down(mve::Key::left_shift)) {
+        dir.z -= 1.0f;
+    }
     dir = dir.rotate(m_body_transform.basis().transpose());
-    if (on_ground) {
-        m_velocity -= (m_velocity * m_friction);
+    if (!m_is_flying) {
+        if (on_ground) {
+            m_velocity -= (m_velocity * m_friction) * 0.9f;
+        }
+        else {
+            m_velocity.x -= (m_velocity.x * m_friction * 0.1f);
+            m_velocity.y -= (m_velocity.y * m_friction * 0.1f);
+        }
+        m_velocity.z -= 0.014f;
     }
     else {
-        m_velocity -= (m_velocity * m_friction * 0.1f);
+        m_velocity -= (m_velocity * m_friction) * 0.35f;
     }
-    m_velocity.z -= 0.014f;
-    if (on_ground) {
+
+    if (!m_is_flying && on_ground) {
         if (window.is_key_down(mve::Key::space)
             && std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::steady_clock::now() - m_last_jump_time)
@@ -74,12 +104,7 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
             m_last_jump_time = std::chrono::steady_clock::now();
         }
     }
-    if (window.is_key_down(mve::Key::left_control)) {
-        if (dir != mve::Vector3(0.0f)) {
-            m_velocity += dir.normalize() * m_acceleration * 20.0f;
-        }
-    }
-    else {
+    if (!m_is_flying) {
         if (on_ground && dir != mve::Vector3(0.0f)) {
             m_velocity += dir.normalize() * m_acceleration
                 * mve::clamp((m_max_speed - mve::Vector2(m_velocity.x, m_velocity.y).length()), 0.0f, 1.0f);
@@ -88,11 +113,17 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
             m_velocity += dir.normalize() * m_acceleration * 0.1f
                 * mve::clamp((m_max_speed - m_velocity.length()), 0.0f, 1.0f);
         }
-        //        if (m_velocity.length() > m_max_speed) {
-        //            m_velocity = m_velocity * m_max_speed;
-        //        }
     }
+    else {
+        m_velocity
+            += dir.normalize() * m_acceleration * mve::clamp((m_max_speed - m_velocity.length()), 0.0f, 1.0f) * 1.5f;
+    }
+
     m_velocity = move_and_slide(bounding_box(), m_body_transform, m_velocity, data);
+
+    if (m_is_flying && is_on_ground(data)) {
+        m_is_flying = false;
+    }
 }
 
 mve::Vector3 Player::move_and_slide(

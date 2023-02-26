@@ -65,6 +65,8 @@ private:
     float m_max_speed;
     mve::Vector3 m_velocity;
     std::chrono::time_point<std::chrono::steady_clock> m_last_jump_time;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_space_time;
+    bool m_is_flying;
 
     static mve::Vector3 move_and_slide(
         BoundingBox box, mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);
