@@ -6,8 +6,8 @@
 
 UIRenderer::UIRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
-    , m_vertex_shader(mve::Shader("../res/bin/shader/ui.vert.spv", mve::ShaderType::vertex))
-    , m_fragment_shader(mve::Shader("../res/bin/shader/ui.frag.spv", mve::ShaderType::fragment))
+    , m_vertex_shader(mve::Shader("../res/bin/shader/ui.vert.spv"))
+    , m_fragment_shader(mve::Shader("../res/bin/shader/ui.frag.spv"))
     , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, c_vertex_layout, false))
     , m_global_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
     , m_global_descriptor_set(renderer.create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))

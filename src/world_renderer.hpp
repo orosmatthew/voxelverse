@@ -8,11 +8,11 @@
 #include "frustum.hpp"
 #include "mve/detail/types.hpp"
 #include "mve/math/math.hpp"
-#include "select_box_mesh.hpp"
+#include "wire_box_mesh.hpp"
 
 class WorldRenderer {
 public:
-    WorldRenderer(mve::Renderer& renderer);
+    explicit WorldRenderer(mve::Renderer& renderer);
 
     void add_data(const ChunkData& chunk_data, const WorldData& world_data);
 
@@ -47,10 +47,25 @@ public:
         };
     }
 
+    uint64_t create_debug_box(const BoundingBox& box, float width, mve::Vector3 color);
+
+    void hide_debug_box(uint64_t id);
+
+    void show_debug_box(uint64_t id);
+
+    void delete_debug_box(uint64_t id);
+
+    void delete_all_debug_boxes();
+
 private:
     struct SelectionBox {
         bool is_shown;
-        SelectBoxMesh mesh;
+        WireBoxMesh mesh;
+    };
+
+    struct DebugBox {
+        bool is_shown;
+        WireBoxMesh mesh;
     };
 
     void rebuild_mesh_lookup();
@@ -70,4 +85,5 @@ private:
     std::vector<std::optional<ChunkMesh>> m_chunk_meshes;
     Frustum m_frustum;
     SelectionBox m_selection_box;
+    std::unordered_map<uint64_t, DebugBox> m_debug_boxes {};
 };

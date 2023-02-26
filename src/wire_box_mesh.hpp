@@ -1,19 +1,23 @@
 #pragma once
 
+#include "common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/renderer.hpp"
 
-class SelectBoxMesh {
+class WireBoxMesh {
 public:
-    SelectBoxMesh(
+    WireBoxMesh(
         mve::Renderer& renderer,
         mve::GraphicsPipeline& pipeline,
         const mve::ShaderDescriptorSet& set,
-        const mve::ShaderDescriptorBinding& uniform_buffer_binding);
+        const mve::ShaderDescriptorBinding& uniform_buffer_binding,
+        const BoundingBox& box,
+        float width,
+        mve::Vector3 color);
 
     void set_position(mve::Vector3 position);
 
-    void draw(const mve::DescriptorSet& global_set);
+    void draw(const mve::DescriptorSet& global_set) const;
 
 private:
     struct MeshBuffers {

@@ -1,5 +1,4 @@
 #include "world.hpp"
-#include "logger.hpp"
 #include "ui_renderer.hpp"
 
 World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_renderer, int render_distance)
@@ -52,9 +51,7 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
     }
     std::vector<mve::Vector3i> blocks;
     blocks.reserve(blocks.size());
-    for (mve::Vector3i block : blocks_set) {
-        blocks.push_back(block);
-    }
+    std::copy(blocks_set.cbegin(), blocks_set.cend(), std::back_inserter(blocks));
     std::sort(blocks.begin(), blocks.end(), [start](const mve::Vector3i& a, const mve::Vector3i& b) {
         return start.distance_sqrd_to(mve::Vector3(a)) < start.distance_sqrd_to(mve::Vector3(b));
     });
@@ -111,7 +108,6 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     collision.normal = collision.normal.normalize();
 
     if (inside) {
-        ray.direction = -ray.direction;
         collision.distance *= -1.0f;
         collision.normal = -collision.normal;
     }

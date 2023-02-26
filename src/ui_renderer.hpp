@@ -4,7 +4,7 @@
 
 class UIRenderer {
 public:
-    UIRenderer(mve::Renderer& renderer);
+    explicit UIRenderer(mve::Renderer& renderer);
 
     void resize();
 

@@ -1,7 +1,8 @@
 #include "camera.hpp"
 
+#include <limits>
+
 #include "common.hpp"
-#include "logger.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 
@@ -76,30 +77,57 @@ void Camera::fixed_update(const mve::Window& window, const WorldData& data)
         }
     }
 
-    m_body_transform = m_body_transform.translate_local(m_velocity);
+    mve::Matrix4 new_transform = m_body_transform.translate_local(m_velocity);
+    mve::Vector3 vel = new_transform.translation() - m_body_transform.translation();
+    //    m_body_transform = m_body_transform.translate(vel);
 
-    handle_collision(data);
-}
+    auto detect_collision = [](mve::Vector3 vel, const BoundingBox& box, const WorldData& data) {
+        BoundingBox broadphase_box = swept_broadphase_box(vel, box);
+        SweptBoundingBoxCollision min_collision { .time = 1.0f };
+        mve::Vector3i min_neighbor = mve::Vector3i(broadphase_box.min.round());
+        mve::Vector3i max_neighbor = mve::Vector3i(broadphase_box.max.round()) + mve::Vector3i(1, 1, 1);
+        for_3d(min_neighbor, max_neighbor, [&](mve::Vector3i neighbor) {
+            mve::Vector3i block_pos = neighbor;
+            std::optional<uint8_t> block = data.block_at(block_pos);
+            BoundingBox block_bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f) },
+                                   { mve::Vector3(block_pos) + mve::Vector3(0.5f) } };
+            if (block.has_value() && block.value() != 0 && collides(block_bb, broadphase_box)) {
+                SweptBoundingBoxCollision collision = swept_bounding_box(vel, box, block_bb);
+                if (collision.time < min_collision.time) {
+                    min_collision = collision;
+                }
+            }
+        });
+        return min_collision;
+    };
 
-void Camera::handle_collision(const WorldData& data)
-{
-    for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](mve::Vector3 neighbor) {
-        mve::Vector3 pos = m_body_transform.translation();
-        mve::Vector3i block_pos = pos.floor();
-        BoundingBox cam_bb { { mve::Vector3(pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
-                             { mve::Vector3(pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
-        std::optional<uint8_t> block = data.block_at(block_pos);
-        BoundingBox block_bb { { mve::Vector3(neighbor + block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
-                               { mve::Vector3(neighbor + block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
-        if (block.has_value() && block.value() != 0 && collides(cam_bb, block_bb)) {
-            mve::Vector3 diff = pos - block_pos;
-            mve::Vector3Axis max_axis = diff.abs().max_axis();
-            float axis_diff = mve::Vector3(block_pos)[max_axis] - pos[max_axis];
-            mve::Vector3 offset = mve::Vector3(0.0f);
-            offset[max_axis] = axis_diff;
-            mve::Vector3 new_pos = m_body_transform.translation() - offset;
+    mve::Vector3 cam_pos = m_body_transform.translation();
+    BoundingBox cam_bb { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) },
+                         { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
 
-            m_body_transform = mve::Matrix4::from_basis_translation(m_body_transform.basis(), new_pos);
-        }
-    });
+    SweptBoundingBoxCollision collision = detect_collision(vel, cam_bb, data);
+
+    const float collision_padding = 0.001f;
+
+    m_body_transform = m_body_transform.translate(vel * (collision.time - collision_padding));
+
+    float remaining_time = 1.0f - collision.time;
+    mve::Vector3 slide_vel = vel * (mve::Vector3(1.0f, 1.0f, 1.0f) - collision.normal.abs()) * remaining_time;
+
+    cam_pos = m_body_transform.translation();
+    cam_bb = { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) }, { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
+
+    collision = detect_collision(slide_vel, cam_bb, data);
+
+    m_body_transform = m_body_transform.translate(slide_vel * (collision.time - collision_padding));
+
+    remaining_time = 1.0f - collision.time;
+    slide_vel = slide_vel * (mve::Vector3(1.0f, 1.0f, 1.0f) - collision.normal.abs()) * remaining_time;
+
+    cam_pos = m_body_transform.translation();
+    cam_bb = { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) }, { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
+
+    collision = detect_collision(slide_vel, cam_bb, data);
+
+    m_body_transform = m_body_transform.translate(slide_vel * (collision.time - collision_padding));
 }

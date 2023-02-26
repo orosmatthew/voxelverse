@@ -16,8 +16,8 @@ void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world
 
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
-    , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv", mve::ShaderType::vertex))
-    , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv", mve::ShaderType::fragment))
+    , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv"))
+    , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv"))
     , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
     , m_block_texture(std::make_shared<mve::Texture>(renderer, "../res/atlas.png"))
     , m_global_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
@@ -28,18 +28,20 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     , m_proj_location(m_vertex_shader.descriptor_set(0).binding(0).member("proj").location())
     , m_selection_box(SelectionBox {
           .is_shown = true,
-          .mesh = SelectBoxMesh(
+          .mesh = WireBoxMesh(
               renderer,
               m_graphics_pipeline,
               m_vertex_shader.descriptor_set(1),
-              m_vertex_shader.descriptor_set(1).binding(0)) })
+              m_vertex_shader.descriptor_set(1).binding(0),
+              BoundingBox { .min = { -0.5f, -0.5f, -0.5f }, .max = { 0.5f, 0.5f, 0.5f } },
+              0.01f,
+              { 0.0f, 0.0f, 0.0f }) })
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
     m_chunk_ubo.update(
         m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4::identity());
-    m_chunk_ubo.update(
-        m_vertex_shader.descriptor_set(1).binding(0).member("fog_influence").location(), 1.0f);
+    m_chunk_ubo.update(m_vertex_shader.descriptor_set(1).binding(0).member("fog_influence").location(), 1.0f);
     m_chunk_descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), m_chunk_ubo);
     m_frustum = {};
     m_selection_box.mesh.set_position({ 0, 0, 0 });
@@ -82,6 +84,12 @@ void WorldRenderer::draw(const Camera& camera)
             mesh->draw(*m_renderer);
         }
     }
+
+    for (const auto& [id, box] : m_debug_boxes) {
+        if (box.is_shown) {
+            box.mesh.draw(m_global_descriptor_set);
+        }
+    }
 }
 void WorldRenderer::rebuild_mesh_lookup()
 {
@@ -104,4 +112,43 @@ void WorldRenderer::remove_data(mve::Vector3i position)
 {
     m_chunk_meshes[m_chunk_mesh_lookup.at(position)].reset();
     m_chunk_mesh_lookup.erase(position);
+}
+
+uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, float width, mve::Vector3 color)
+{
+    WireBoxMesh box_mesh(
+        *m_renderer,
+        m_graphics_pipeline,
+        m_vertex_shader.descriptor_set(1),
+        m_vertex_shader.descriptor_set(1).binding(0),
+        box,
+        width,
+        color);
+    DebugBox debug_box { .is_shown = true, .mesh = std::move(box_mesh) };
+    uint64_t count = 0;
+    while (true) {
+        if (!m_debug_boxes.contains(count)) {
+            m_debug_boxes.insert({ count, std::move(debug_box) });
+            break;
+        }
+        count++;
+    }
+    return count;
+}
+
+void WorldRenderer::hide_debug_box(uint64_t id)
+{
+    m_debug_boxes.at(id).is_shown = false;
+}
+void WorldRenderer::show_debug_box(uint64_t id)
+{
+    m_debug_boxes.at(id).is_shown = true;
+}
+void WorldRenderer::delete_debug_box(uint64_t id)
+{
+    m_debug_boxes.erase(id);
+}
+void WorldRenderer::delete_all_debug_boxes()
+{
+    m_debug_boxes.clear();
 }

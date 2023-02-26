@@ -28,7 +28,6 @@ private:
     mve::Framebuffer m_world_framebuffer;
     util::FixedLoop m_fixed_loop;
     bool m_cursor_captured;
-    bool m_printed;
     std::chrono::high_resolution_clock::time_point m_begin_time;
     int m_frame_count;
 };

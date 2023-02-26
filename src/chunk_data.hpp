@@ -47,7 +47,7 @@ inline Direction opposite_direction(Direction dir)
 
 class ChunkData {
 public:
-    ChunkData(mve::Vector3i chunk_pos);
+    explicit ChunkData(mve::Vector3i chunk_pos);
 
     mve::Vector3i position() const;
 

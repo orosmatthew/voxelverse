@@ -15,11 +15,9 @@ class FastNoiseLite;
 
 class WorldGenerator {
 public:
-    WorldGenerator(int seed);
+    explicit WorldGenerator(int seed);
 
     void generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Vector2i chunk_pos);
-
-    uint8_t get_block(mve::Vector3i pos) const;
 
 private:
     std::unique_ptr<FastNoiseLite> m_noise_oct1;

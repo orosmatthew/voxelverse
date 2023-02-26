@@ -47,9 +47,6 @@ public:
     }
 
 private:
-
-    void handle_collision(const WorldData& data);
-
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;
     mve::Vector3 m_prev_pos;

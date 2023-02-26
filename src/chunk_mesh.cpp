@@ -1,7 +1,6 @@
 #include "chunk_mesh.hpp"
 
 #include "common.hpp"
-#include "logger.hpp"
 #include "mve/math/math.hpp"
 #include "world_renderer.hpp"
 

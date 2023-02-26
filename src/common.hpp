@@ -1,6 +1,7 @@
 #pragma once
 
-#include "math.h"
+#include "mve/math/math.hpp"
+#include <algorithm>
 #include <functional>
 #include <vector>
 
@@ -15,6 +16,134 @@ struct BoundingBox {
     mve::Vector3 min;
     mve::Vector3 max;
 };
+
+struct Rect3 {
+    mve::Vector3 pos;
+    mve::Vector3 size;
+};
+
+inline std::vector<std::pair<mve::Vector3, mve::Vector3>> rect3_to_edges(const Rect3& rect)
+{
+    std::vector<std::pair<mve::Vector3, mve::Vector3>> edges;
+    edges.reserve(12);
+
+    // Extract position and size of rectangle
+    const mve::Vector3& p = rect.pos;
+    const mve::Vector3& s = rect.size;
+
+    // Define corners of rectangle
+    const std::array<mve::Vector3, 8> corners
+        = { mve::Vector3(p.x, p.y, p.z),
+            mve::Vector3(p.x, p.y, p.z + s.z),
+            mve::Vector3(p.x, p.y + s.y, p.z),
+            mve::Vector3(p.x, p.y + s.y, p.z + s.z),
+            mve::Vector3(p.x + s.x, p.y, p.z),
+            mve::Vector3(p.x + s.x, p.y, p.z + s.z),
+            mve::Vector3(p.x + s.x, p.y + s.y, p.z),
+            mve::Vector3(p.x + s.x, p.y + s.y, p.z + s.z) };
+
+    // Define edges of rectangle
+    edges.emplace_back(corners[0], corners[1]);
+    edges.emplace_back(corners[0], corners[2]);
+    edges.emplace_back(corners[0], corners[4]);
+    edges.emplace_back(corners[1], corners[3]);
+    edges.emplace_back(corners[1], corners[5]);
+    edges.emplace_back(corners[2], corners[3]);
+    edges.emplace_back(corners[2], corners[6]);
+    edges.emplace_back(corners[3], corners[7]);
+    edges.emplace_back(corners[4], corners[5]);
+    edges.emplace_back(corners[4], corners[6]);
+    edges.emplace_back(corners[5], corners[7]);
+    edges.emplace_back(corners[6], corners[7]);
+
+    return edges;
+}
+
+inline Rect3 bounding_box_to_rect3(const BoundingBox& box)
+{
+    mve::Vector3 bottom_left_back(box.min.x, box.min.y, box.min.z);
+    float width = box.max.x - box.min.x;
+    float height = box.max.y - box.min.y;
+    float depth = box.max.z - box.min.z;
+    return { bottom_left_back, { width, height, depth } };
+}
+
+inline BoundingBox rect3_to_bounding_box(const Rect3& rect)
+{
+    mve::Vector3 min(rect.pos.x, rect.pos.y, rect.pos.z);
+    mve::Vector3 max(min.x + rect.size.x, min.y + rect.size.y, min.z + rect.size.z);
+    return { min, max };
+}
+
+inline BoundingBox swept_broadphase_box(mve::Vector3 vel, const BoundingBox& box)
+{
+    BoundingBox broadphase_box;
+    broadphase_box.min.x = vel.x > 0.0f ? box.min.x : box.min.x + vel.x;
+    broadphase_box.min.y = vel.y > 0.0f ? box.min.y : box.min.y + vel.y;
+    broadphase_box.min.z = vel.z > 0.0f ? box.min.z : box.min.z + vel.z;
+    broadphase_box.max.x = vel.x > 0.0f ? vel.x + box.max.x : box.max.x - vel.x;
+    broadphase_box.max.y = vel.y > 0.0f ? vel.y + box.max.y : box.max.y - vel.y;
+    broadphase_box.max.z = vel.z > 0.0f ? vel.z + box.max.z : box.max.z - vel.z;
+    return broadphase_box;
+}
+
+struct SweptBoundingBoxCollision {
+    float time;
+    mve::Vector3 normal;
+};
+
+inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3 vel, const BoundingBox& b1, const BoundingBox& b2)
+{
+    mve::Vector3 inv_entry;
+    mve::Vector3 inv_exit;
+
+    Rect3 r1 = bounding_box_to_rect3(b1);
+    Rect3 r2 = bounding_box_to_rect3(b2);
+
+    for (int i = 0; i < 3; i++) {
+        if (vel[i] > 0.0f) {
+            inv_entry[i] = r2.pos[i] - (r1.pos[i] + r1.size[i]);
+            inv_exit[i] = (r2.pos[i] + r2.size[i]) - r1.pos[i];
+        }
+        else {
+            inv_entry[i] = (r2.pos[i] + r2.size[i]) - r1.pos[i];
+            inv_exit[i] = r2.pos[i] - (r1.pos[i] + r1.size[i]);
+        }
+    }
+
+    mve::Vector3 entry;
+    mve::Vector3 exit;
+
+    for (int i = 0; i < 3; i++) {
+        if (vel[i] == 0.0f) {
+            entry[i] = -std::numeric_limits<float>::infinity();
+            exit[i] = std::numeric_limits<float>::infinity();
+        }
+        else {
+            entry[i] = inv_entry[i] / vel[i];
+            exit[i] = inv_exit[i] / vel[i];
+        }
+    }
+
+    float entry_time = mve::max(entry.x, mve::max(entry.y, entry.z));
+    float exit_time = mve::min(exit.x, mve::min(exit.y, exit.z));
+
+    // If no collision
+    SweptBoundingBoxCollision collision;
+    if (entry_time > exit_time || entry.x < 0.0f && entry.y < 0.0f && entry.z < 0.0f || entry.x > 1.0f || entry.y > 1.0f
+        || entry.z > 1.0f) {
+        collision.normal = mve::Vector3(0.0f);
+        collision.time = 1.0f;
+        return collision;
+    }
+    else { // If collision
+        collision.normal = mve::Vector3(0.0f);
+        mve::Vector3Axis max_axis = entry.max_axis();
+        collision.normal[max_axis] = inv_entry[max_axis] < 0.0f ? 1.0f : -1.0f;
+        collision.time = entry_time;
+        return collision;
+    }
+}
 
 enum class Direction { front = 0, back, left, right, top, bottom };
 
@@ -49,9 +178,9 @@ inline Quad transform(const Quad& quad, const mve::Matrix4& matrix)
 
 inline void transform_vertices(std::vector<mve::Vector3>& vertices, const mve::Matrix4& matrix)
 {
-    for (mve::Vector3& vertex : vertices) {
-        vertex = vertex.transform(matrix);
-    }
+    std::transform(vertices.cbegin(), vertices.cend(), vertices.begin(), [&](const mve::Vector3& vertex) {
+        return vertex.transform(matrix);
+    });
 }
 
 inline void for_2d(mve::Vector2i from, mve::Vector2i to, std::function<void(mve::Vector2i)> func)

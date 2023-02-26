@@ -15,7 +15,6 @@ App::App()
     }))
     , m_fixed_loop(60.0f)
     , m_cursor_captured(true)
-    , m_printed(false)
     , m_begin_time(std::chrono::high_resolution_clock::now())
     , m_frame_count(0)
 {
