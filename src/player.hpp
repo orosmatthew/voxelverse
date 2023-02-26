@@ -5,9 +5,9 @@
 
 class WorldData;
 
-class Camera {
+class Player {
 public:
-    Camera();
+    Player();
 
     void update(const mve::Window& window);
     void fixed_update(const mve::Window& window, const WorldData& data);

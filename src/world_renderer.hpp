@@ -2,12 +2,12 @@
 
 #include <unordered_map>
 
-#include "camera.hpp"
 #include "chunk_mesh.hpp"
 #include "common.hpp"
 #include "frustum.hpp"
 #include "mve/detail/types.hpp"
 #include "mve/math/math.hpp"
+#include "player.hpp"
 #include "wire_box_mesh.hpp"
 
 class WorldRenderer {
@@ -36,7 +36,7 @@ public:
         m_selection_box.is_shown = true;
     }
 
-    void draw(const Camera& camera);
+    void draw(const Player& camera);
 
     inline static mve::VertexLayout vertex_layout()
     {

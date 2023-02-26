@@ -114,7 +114,7 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     return collision;
 }
 
-void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRenderer& world_renderer, uint8_t block_type)
+void trigger_place_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer, uint8_t block_type)
 {
     std::set<mve::Vector3i> update_chunks;
     std::vector<mve::Vector3i> blocks = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
@@ -152,7 +152,7 @@ void trigger_place_block(const Camera& camera, WorldData& world_data, WorldRende
     }
 }
 
-void trigger_break_block(const Camera& camera, WorldData& world_data, WorldRenderer& world_renderer)
+void trigger_break_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer)
 {
     std::set<mve::Vector3i> update_chunks;
     std::vector<mve::Vector3i> blocks = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));

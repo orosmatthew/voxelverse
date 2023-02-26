@@ -1,4 +1,4 @@
-#include "camera.hpp"
+#include "player.hpp"
 
 #include <limits>
 
@@ -6,7 +6,7 @@
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 
-Camera::Camera()
+Player::Player()
     : m_body_transform(mve::Matrix4::identity())
     , m_head_transform(mve::Matrix4::identity())
     , m_prev_pos(mve::Vector3(0, 0, 0))
@@ -16,7 +16,7 @@ Camera::Camera()
 {
 }
 
-void Camera::update(const mve::Window& window)
+void Player::update(const mve::Window& window)
 {
     mve::Vector2 mouse_delta = window.mouse_delta();
     m_body_transform = m_body_transform.rotate_local({ 0, 0, 1 }, -mouse_delta.x * 0.001f);
@@ -39,7 +39,7 @@ void Camera::update(const mve::Window& window)
             mve::Matrix3::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
     }
 }
-void Camera::fixed_update(const mve::Window& window, const WorldData& data)
+void Player::fixed_update(const mve::Window& window, const WorldData& data)
 {
     mve::Vector3 dir(0.0f);
     if (window.is_key_down(mve::Key::w)) {

@@ -68,7 +68,7 @@ void WorldRenderer::set_view(const mve::Matrix4& view)
 {
     m_global_ubo.update(m_view_location, view);
 }
-void WorldRenderer::draw(const Camera& camera)
+void WorldRenderer::draw(const Player& camera)
 {
     m_frustum.update_camera(camera);
 

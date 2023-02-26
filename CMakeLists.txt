@@ -53,7 +53,7 @@ set(SOURCE_FILES
         src/world_generator.cpp
         src/world_data.cpp
         src/world_renderer.cpp
-        src/camera.cpp
+        src/player.cpp
         src/ui_renderer.cpp
         src/wire_box_mesh.cpp
         src/world.cpp)

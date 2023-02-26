@@ -41,7 +41,7 @@ private:
     WorldGenerator m_world_generator;
     WorldData m_world_data;
     int m_mesh_updates_per_frame;
-    Camera m_camera;
+    Player m_camera;
     std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;
     std::vector<mve::Vector2i> m_sorted_chunks;
     mve::Vector2i m_camera_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };

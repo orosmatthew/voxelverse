@@ -1,7 +1,7 @@
 #pragma once
 
-#include "camera.hpp"
 #include "mve/math/math.hpp"
+#include "player.hpp"
 
 class Frustum {
 public:
@@ -24,7 +24,7 @@ public:
         m_far_size.x = m_far_size.y * ratio;
     }
 
-    inline void update_camera(const Camera& camera)
+    inline void update_camera(const Player& camera)
     {
         m_camera_pos = camera.position();
         // compute the Z axis of camera

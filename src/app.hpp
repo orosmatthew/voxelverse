@@ -1,8 +1,8 @@
 #pragma once
 
-#include "camera.hpp"
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
+#include "player.hpp"
 #include "ui_renderer.hpp"
 #include "util/fixed_loop.hpp"
 #include "world.hpp"
