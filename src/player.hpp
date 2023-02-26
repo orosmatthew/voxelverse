@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
 
@@ -47,7 +48,14 @@ public:
     }
 
 private:
-    static mve::Vector3 move_and_slide(mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);
+    inline BoundingBox bounding_box() const
+    {
+        mve::Vector3 pos = m_body_transform.translation();
+        return { { mve::Vector3(pos) - mve::Vector3(0.3f, 0.3f, 1.62f) },
+                 { mve::Vector3(pos) + mve::Vector3(0.3f, 0.3f, 0.18f) } };
+    }
+
+    bool is_on_ground(const WorldData& data) const;
 
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;
@@ -56,4 +64,8 @@ private:
     float m_acceleration;
     float m_max_speed;
     mve::Vector3 m_velocity;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_jump_time;
+
+    static mve::Vector3 move_and_slide(
+        BoundingBox box, mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);
 };
