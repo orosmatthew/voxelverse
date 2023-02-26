@@ -47,11 +47,13 @@ public:
     }
 
 private:
+    static mve::Vector3 move_and_slide(mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);
+
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;
     mve::Vector3 m_prev_pos;
     float m_friction;
     float m_acceleration;
     float m_max_speed;
-    mve::Vector3 m_velocity {};
+    mve::Vector3 m_velocity;
 };

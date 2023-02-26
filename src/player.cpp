@@ -60,6 +60,7 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
     if (window.is_key_down(mve::Key::left_shift)) {
         dir.z -= 1.0f;
     }
+    dir = dir.rotate(m_body_transform.basis().transpose());
     m_velocity -= (m_velocity * m_friction);
     m_prev_pos = m_body_transform.translation();
 
@@ -76,14 +77,14 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
             m_velocity = m_velocity * m_max_speed;
         }
     }
+    m_velocity = move_and_slide(m_body_transform, m_velocity, data);
+}
 
-    mve::Matrix4 new_transform = m_body_transform.translate_local(m_velocity);
-    mve::Vector3 vel = new_transform.translation() - m_body_transform.translation();
-    //    m_body_transform = m_body_transform.translate(vel);
-
+mve::Vector3 Player::move_and_slide(mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data)
+{
     auto detect_collision = [](mve::Vector3 vel, const BoundingBox& box, const WorldData& data) {
         BoundingBox broadphase_box = swept_broadphase_box(vel, box);
-        SweptBoundingBoxCollision min_collision { .time = 1.0f };
+        SweptBoundingBoxCollision min_collision { .time = 1.0f, .normal = mve::Vector3(0.0f) };
         mve::Vector3i min_neighbor = mve::Vector3i(broadphase_box.min.round());
         mve::Vector3i max_neighbor = mve::Vector3i(broadphase_box.max.round()) + mve::Vector3i(1, 1, 1);
         for_3d(min_neighbor, max_neighbor, [&](mve::Vector3i neighbor) {
@@ -101,33 +102,41 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
         return min_collision;
     };
 
-    mve::Vector3 cam_pos = m_body_transform.translation();
+    mve::Vector3 cam_pos = transform.translation();
     BoundingBox cam_bb { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) },
                          { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
 
-    SweptBoundingBoxCollision collision = detect_collision(vel, cam_bb, data);
+    SweptBoundingBoxCollision collision = detect_collision(velocity, cam_bb, data);
 
     const float collision_padding = 0.001f;
 
-    m_body_transform = m_body_transform.translate(vel * (collision.time - collision_padding));
+    transform = transform.translate(velocity * (collision.time - collision_padding));
 
     float remaining_time = 1.0f - collision.time;
-    mve::Vector3 slide_vel = vel * (mve::Vector3(1.0f, 1.0f, 1.0f) - collision.normal.abs()) * remaining_time;
+    if (remaining_time == 0.0f) {
+        return velocity;
+    }
+    mve::Vector3 slide_vel = velocity * (mve::Vector3(1.0f, 1.0f, 1.0f) - collision.normal.abs()) * remaining_time;
 
-    cam_pos = m_body_transform.translation();
+    cam_pos = transform.translation();
     cam_bb = { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) }, { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
 
     collision = detect_collision(slide_vel, cam_bb, data);
 
-    m_body_transform = m_body_transform.translate(slide_vel * (collision.time - collision_padding));
+    transform = transform.translate(slide_vel * (collision.time - collision_padding));
 
     remaining_time = 1.0f - collision.time;
+    if (remaining_time == 0.0f) {
+        return slide_vel;
+    }
     slide_vel = slide_vel * (mve::Vector3(1.0f, 1.0f, 1.0f) - collision.normal.abs()) * remaining_time;
 
-    cam_pos = m_body_transform.translation();
+    cam_pos = transform.translation();
     cam_bb = { { mve::Vector3(cam_pos) - mve::Vector3(0.25f) }, { mve::Vector3(cam_pos) + mve::Vector3(0.25f) } };
 
     collision = detect_collision(slide_vel, cam_bb, data);
 
-    m_body_transform = m_body_transform.translate(slide_vel * (collision.time - collision_padding));
+    transform = transform.translate(slide_vel * (collision.time - collision_padding));
+
+    return slide_vel;
 }
