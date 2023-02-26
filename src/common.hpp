@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <array>
+#include <cstdint>
 
 struct Quad {
     mve::Vector3 top_left;
