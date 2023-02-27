@@ -3,15 +3,20 @@
 #include "common.hpp"
 
 #include "FastNoiseLite.h"
+#include "logger.hpp"
+#include "world_data.hpp"
 
 WorldGenerator::WorldGenerator(int seed)
     : m_noise_oct1(std::make_unique<FastNoiseLite>(seed))
     , m_noise_oct2(std::make_unique<FastNoiseLite>(seed + 1))
     , m_noise_oct3(std::make_unique<FastNoiseLite>(seed + 2))
+    , m_struct_noise(std::make_unique<FastNoiseLite>(seed + 3))
 {
     m_noise_oct1->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
     m_noise_oct2->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
     m_noise_oct3->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+    m_struct_noise->SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+    m_struct_noise->SetFrequency(1.0f);
 }
 
 void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Vector2i chunk_pos)
@@ -50,4 +55,31 @@ void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Ve
             }
         });
     }
+
+    for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
+        mve::Vector2i world_col_pos
+            = WorldData::block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
+        float rand = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
+        if (rand <= 0.8f) {
+            return;
+        }
+        int height = std::floor(heights[pos.x][pos.y]);
+        for_3d({ 0, 0, 0 }, { 5, 5, 7 }, [&](mve::Vector3i struct_pos) {
+            if (c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x] == 0) {
+                return;
+            }
+            if (!WorldData::is_block_height_world_valid(struct_pos.z + height + 1)) {
+                return;
+            }
+            if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2))) {
+                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z + height + 1));
+                chunks.at(chunk_height + 10)
+                    ->set_block(
+                        { pos.x + struct_pos.x - 2,
+                          pos.y + struct_pos.y - 2,
+                          WorldData::block_height_world_to_local(struct_pos.z + height + 1) },
+                        c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
+            }
+        });
+    });
 }

@@ -115,8 +115,14 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
         }
     }
     else {
-        m_velocity
-            += dir.normalize() * m_acceleration * mve::clamp((m_max_speed - m_velocity.length()), 0.0f, 1.0f) * 1.5f;
+        if (window.is_key_down(mve::Key::left_control)) {
+            m_velocity
+                += dir.normalize() * m_acceleration * mve::clamp((30.0f - m_velocity.length()), 0.0f, 1.0f) * 10.0f;
+        }
+        else {
+            m_velocity += dir.normalize() * m_acceleration * mve::clamp((m_max_speed - m_velocity.length()), 0.0f, 1.0f)
+                * 1.5f;
+        }
     }
 
     m_velocity = move_and_slide(bounding_box(), m_body_transform, m_velocity, data);

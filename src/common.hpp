@@ -2,10 +2,10 @@
 
 #include "mve/math/math.hpp"
 #include <algorithm>
-#include <functional>
-#include <vector>
 #include <array>
 #include <cstdint>
+#include <functional>
+#include <vector>
 
 struct Quad {
     mve::Vector3 top_left;
@@ -257,6 +257,8 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
         return { 1, 2 };
     case 8:
         return { 2, 2 };
+    case 9:
+        return { 3, 2 };
     default:
         return { 0, 0 };
     }

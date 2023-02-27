@@ -1,5 +1,4 @@
 #include "world_renderer.hpp"
-
 #include "mve/math/math.hpp"
 
 void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world_data)
@@ -9,7 +8,7 @@ void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world
         m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_data.position())] = std::move(mesh);
     }
     else {
-        m_chunk_mesh_lookup[mesh.chunk_position()] = m_chunk_meshes.size();
+        m_chunk_mesh_lookup.insert({ mesh.chunk_position(), m_chunk_meshes.size() });
         m_chunk_meshes.push_back(std::move(mesh));
     }
 }

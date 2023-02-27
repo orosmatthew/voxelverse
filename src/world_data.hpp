@@ -88,11 +88,21 @@ public:
                  static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
     }
 
+    static inline int chunk_height_from_block_height(int block_height)
+    {
+        return static_cast<int>(mve::floor(block_height / 16.0f));
+    }
+
     static inline mve::Vector3i block_local_to_world(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos)
     {
         return { chunk_pos.x * 16 + local_block_pos.x,
                  chunk_pos.y * 16 + local_block_pos.y,
                  chunk_pos.z * 16 + local_block_pos.z };
+    }
+
+    static inline mve::Vector2i block_local_to_world_col(mve::Vector2i chunk_pos, mve::Vector2i local_block_pos)
+    {
+        return { chunk_pos.x * 16 + local_block_pos.x, chunk_pos.y * 16 + local_block_pos.y };
     }
 
     static inline mve::Vector3i block_world_to_local(mve::Vector3i world_block_pos)
@@ -110,10 +120,29 @@ public:
         return mod;
     }
 
+    static inline int block_height_world_to_local(int world_block_height)
+    {
+        int mod = world_block_height % 16;
+        if (mod < 0) {
+            mod = 16 + mod;
+        }
+        return mod;
+    }
+
     static inline bool is_block_pos_local(mve::Vector3i block_pos)
     {
         return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16 && block_pos.z >= 0
             && block_pos.z < 16;
+    }
+
+    static inline bool is_block_pos_local_col(mve::Vector2i block_pos)
+    {
+        return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16;
+    }
+
+    static inline bool is_block_height_world_valid(int height)
+    {
+        return height >= -160 && height < 160;
     }
 
 private:

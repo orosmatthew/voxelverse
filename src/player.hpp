@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include "common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
