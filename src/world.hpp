@@ -4,7 +4,6 @@
 #include "world_renderer.hpp"
 #include "world_generator.hpp"
 
-// TODO: Chunk unloading
 // TODO: Make hotbar blocks 3D
 
 class UIRenderer;
