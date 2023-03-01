@@ -15,6 +15,9 @@ layout (location = 0) out vec4 out_color;
 
 void main() {
     vec4 color = texture(tex_sampler, frag_tex_coord) * vec4(frag_color, 1.0);
+    if (color.a < 0.001) {
+        discard;
+    }
 
     float fog_distance = length(frag_position);
     float fog_amount = smoothstep(frag_fog_near, frag_fog_far, fog_distance) * frag_fog_influence;

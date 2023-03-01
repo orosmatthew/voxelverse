@@ -263,3 +263,13 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
         return { 0, 0 };
     }
 }
+
+inline bool is_transparent(uint8_t block_type)
+{
+    switch (block_type) {
+    case 9:
+        return true;
+    default:
+        return false;
+    }
+}
