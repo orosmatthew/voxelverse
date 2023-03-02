@@ -33,6 +33,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(lib/glfw-3.3.8)
+add_subdirectory(lib/freetype-2.13.0)
 
 set(LIB_SOURCE_FILES
         lib/whereami-ba364cd/src/whereami.c
@@ -60,7 +61,8 @@ set(SOURCE_FILES
 
 set(LIBS
         Vulkan::Vulkan
-        glfw)
+        glfw
+        freetype)
 
 set(LIB_INCLUDES
         lib/spdlog-1.11.0/include

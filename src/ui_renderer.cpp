@@ -79,6 +79,26 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
     hotbar_select.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), hotbar_select.texture);
     hotbar_select.uniform_buffer.update(hotbar_select.model_location, mve::Matrix4::identity());
     m_hotbar_select = std::move(hotbar_select);
+
+    // Font stuff
+    FT_Library ft;
+    auto ft_init_result = FT_Init_FreeType(&ft);
+    if (ft_init_result != 0) {
+        throw std::runtime_error("[UI Renderer] Failed to init FreeType");
+    }
+    FT_Face font_face;
+    auto new_face_result = FT_New_Face(ft, "../res/arial.ttf", 0, &font_face);
+    if (new_face_result != 0) {
+        throw std::runtime_error("[UI Renderer] Failed to load font");
+    }
+    FT_Set_Pixel_Sizes(font_face, 0, 48);
+
+    for (unsigned char c = 0; c < 128; c++) {
+        auto load_char_result = FT_Load_Char(font_face, c, FT_LOAD_RENDER);
+        if (load_char_result != 0) {
+            throw std::runtime_error("[UI Renderer] Failed to load glyph");
+        }
+    }
 }
 
 void UIRenderer::resize()

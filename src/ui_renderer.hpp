@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include "mve/renderer.hpp"
 
 class UIRenderer {
@@ -47,6 +50,13 @@ private:
         std::vector<uint32_t> indices;
     };
 
+    struct FontChar {
+        mve::Texture texture;
+        mve::Vector2i size;
+        mve::Vector2i bearing;
+        uint32_t advance;
+    };
+
     mve::VertexData create_hotbar_vertex_data() const;
 
     mve::VertexData create_hotbar_select_vertex_data() const;
@@ -68,4 +78,6 @@ private:
     std::optional<UIMesh> m_hotbar_select;
     std::unordered_map<int, std::optional<UIMesh>> m_hotbar_blocks;
     int m_current_hotbar_select = 0;
+
+    std::unordered_map<char, FontChar> m_font_chars {};
 };
