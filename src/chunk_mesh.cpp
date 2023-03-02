@@ -77,40 +77,38 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
     const ChunkData& chunk_data = world_data.chunk_data_at(chunk_pos);
     for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i local_pos) {
         uint8_t block = chunk_data.get_block(local_pos);
-        // TODO: Benchmark if this is necessary
-        //        if (chunk_data.block_count() > (8 * 8 * 8)) {
-        //            if (block != 0) {
-        //                std::array<bool, 6> directions {};
-        //                if (local_pos.x == 0) {
-        //                    directions[static_cast<size_t>(Direction::left)] = true;
-        //                }
-        //                if (local_pos.x == 15) {
-        //                    directions[static_cast<size_t>(Direction::right)] = true;
-        //                }
-        //                if (local_pos.y == 0) {
-        //                    directions[static_cast<size_t>(Direction::front)] = true;
-        //                }
-        //                if (local_pos.y == 15) {
-        //                    directions[static_cast<size_t>(Direction::back)] = true;
-        //                }
-        //                if (local_pos.z == 0) {
-        //                    directions[static_cast<size_t>(Direction::bottom)] = true;
-        //                }
-        //                if (local_pos.z == 15) {
-        //                    directions[static_cast<size_t>(Direction::top)] = true;
-        //                }
-        //                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false,
-        //                directions);
-        //            }
-        //            if (block == 0) {
-        //                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, true);
-        //            }
-        //        }
-        //        else {
-        if (block != 0) {
-            calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false);
+        if (chunk_data.block_count() > (8 * 8 * 8)) {
+            if (block != 0) {
+                std::array<bool, 6> directions {};
+                if (local_pos.x == 0) {
+                    directions[static_cast<size_t>(Direction::left)] = true;
+                }
+                if (local_pos.x == 15) {
+                    directions[static_cast<size_t>(Direction::right)] = true;
+                }
+                if (local_pos.y == 0) {
+                    directions[static_cast<size_t>(Direction::front)] = true;
+                }
+                if (local_pos.y == 15) {
+                    directions[static_cast<size_t>(Direction::back)] = true;
+                }
+                if (local_pos.z == 0) {
+                    directions[static_cast<size_t>(Direction::bottom)] = true;
+                }
+                if (local_pos.z == 15) {
+                    directions[static_cast<size_t>(Direction::top)] = true;
+                }
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false, directions);
+            }
+            if (block == 0 || is_transparent(block)) {
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, true);
+            }
         }
-        //        }
+        else {
+            if (block != 0) {
+                calc_block_faces(block, mesh, world_data, chunk_data, chunk_pos, local_pos, false);
+            }
+        }
     });
     //
     //    if (empty) {
