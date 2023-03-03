@@ -16,6 +16,7 @@
 #include "vk_mem_alloc.h"
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_ASSERT_ON_RESULT
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 
 #include "shader.hpp"
@@ -416,11 +417,12 @@ private:
     public:
         DescriptorSetAllocator();
 
-        void cleanup(vk::Device device);
+        void cleanup(const vk::DispatchLoaderDynamic& loader, vk::Device device);
 
-        void free(vk::Device device, DescriptorSetImpl descriptor_set);
+        void free(const vk::DispatchLoaderDynamic& loader, vk::Device device, DescriptorSetImpl descriptor_set);
 
-        DescriptorSetImpl create(vk::Device device, vk::DescriptorSetLayout layout);
+        DescriptorSetImpl create(
+            const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::DescriptorSetLayout layout);
 
     private:
         std::vector<std::pair<vk::DescriptorType, float>> m_sizes;
@@ -432,14 +434,20 @@ private:
         size_t m_current_pool_index;
 
         static std::optional<vk::DescriptorSet> try_create(
-            vk::DescriptorPool pool, vk::Device device, vk::DescriptorSetLayout layout);
+            const vk::DispatchLoaderDynamic& loader,
+            vk::DescriptorPool pool,
+            vk::Device device,
+            vk::DescriptorSetLayout layout);
 
         vk::DescriptorPool create_pool(
-            vk::Device device, vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags());
+            const vk::DispatchLoaderDynamic& loader,
+            vk::Device device,
+            vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags());
     };
 
     const int c_frames_in_flight;
     vk::Instance m_vk_instance;
+    vk::DispatchLoaderDynamic m_vk_loader;
     vk::DebugUtilsMessengerEXT m_vk_debug_utils_messenger;
     vk::SurfaceKHR m_vk_surface;
     vk::PhysicalDevice m_vk_physical_device;
@@ -503,18 +511,25 @@ private:
 
     Texture create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
 
-    FramebufferImpl create_framebuffer_impl(std::optional<std::function<void(void)>> callback);
+    FramebufferImpl create_framebuffer_impl(
+        const vk::DispatchLoaderDynamic& loader, std::optional<std::function<void(void)>> callback);
 
     void wait_ready();
 
     DescriptorSetLayoutHandleImpl create_descriptor_set_layout(
-        uint32_t set, const Shader& vertex_shader, const Shader& fragment_shader);
+        const vk::DispatchLoaderDynamic& loader,
+        uint32_t set,
+        const Shader& vertex_shader,
+        const Shader& fragment_shader);
 
-    size_t create_graphics_pipeline_layout(const mve::Shader& vertex_shader, const mve::Shader& fragment_shader);
+    size_t create_graphics_pipeline_layout(
+        const vk::DispatchLoaderDynamic& loader, const Shader& vertex_shader, const Shader& fragment_shader);
 
-    static vk::SampleCountFlagBits get_max_sample_count(vk::PhysicalDevice physical_device);
+    static vk::SampleCountFlagBits get_max_sample_count(
+        const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device);
 
     static DepthImage create_depth_image(
+        const vk::DispatchLoaderDynamic& loader,
         vk::PhysicalDevice physical_device,
         vk::Device device,
         vk::CommandPool pool,
@@ -524,12 +539,13 @@ private:
         vk::SampleCountFlagBits samples);
 
     static vk::Format find_supported_format(
+        const vk::DispatchLoaderDynamic& loader,
         vk::PhysicalDevice physical_device,
         const std::vector<vk::Format>& formats,
         vk::ImageTiling tiling,
         vk::FormatFeatureFlags features);
 
-    static vk::Format find_depth_format(vk::PhysicalDevice physical_device);
+    static vk::Format find_depth_format(const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device);
 
     void update_uniform(size_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
 
@@ -555,6 +571,7 @@ private:
     void defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func);
 
     static RenderImage create_color_image(
+        const vk::DispatchLoaderDynamic& loader,
         vk::Device device,
         VmaAllocator allocator,
         vk::Extent2D swapchain_extent,
@@ -562,6 +579,7 @@ private:
         vk::SampleCountFlagBits samples);
 
     static void cmd_generate_mipmaps(
+        const vk::DispatchLoaderDynamic& loader,
         vk::PhysicalDevice physical_device,
         vk::CommandBuffer command_buffer,
         vk::Image image,
@@ -570,12 +588,18 @@ private:
         uint32_t height,
         uint32_t mip_levels);
 
-    static vk::CommandBuffer begin_single_submit(vk::Device device, vk::CommandPool pool);
+    static vk::CommandBuffer begin_single_submit(
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::CommandPool pool);
 
     static void end_single_submit(
-        vk::Device device, vk::CommandPool pool, vk::CommandBuffer command_buffer, vk::Queue queue);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        vk::CommandPool pool,
+        vk::CommandBuffer command_buffer,
+        vk::Queue queue);
 
     static void cmd_transition_image_layout(
+        const vk::DispatchLoaderDynamic& loader,
         vk::CommandBuffer command_buffer,
         vk::Image image,
         vk::Format format,
@@ -584,13 +608,26 @@ private:
         uint32_t mip_levels);
 
     static void cmd_copy_buffer_to_image(
-        vk::CommandBuffer command_buffer, vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::CommandBuffer command_buffer,
+        vk::Buffer buffer,
+        vk::Image image,
+        uint32_t width,
+        uint32_t height);
 
     static vk::Sampler create_texture_sampler(
-        vk::PhysicalDevice physical_device, vk::Device device, uint32_t mip_levels);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::PhysicalDevice physical_device,
+        vk::Device device,
+        uint32_t mip_levels);
 
     static vk::ImageView create_image_view(
-        vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspect_flags, uint32_t mip_levels);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        vk::Image image,
+        vk::Format format,
+        vk::ImageAspectFlags aspect_flags,
+        uint32_t mip_levels);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(
         VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
@@ -598,7 +635,7 @@ private:
         const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
         void* user_data);
 
-    static bool has_validation_layer_support();
+    static bool has_validation_layer_support(const vk::DispatchLoaderDynamic& loader);
 
     static vk::Instance create_vk_instance(
         const std::string& app_name, int app_version_major, int app_version_minor, int app_version_patch);
@@ -611,19 +648,24 @@ private:
 
     static std::vector<const char*> get_vk_instance_required_exts();
 
-    static vk::PhysicalDevice pick_vk_physical_device(vk::Instance instance, vk::SurfaceKHR surface);
+    static vk::PhysicalDevice pick_vk_physical_device(
+        vk::Instance instance, const vk::DispatchLoaderDynamic& loader, vk::SurfaceKHR surface);
 
-    static bool is_vk_physical_device_suitable(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
+    static bool is_vk_physical_device_suitable(
+        const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
     static vk::Device create_vk_logical_device(
-        vk::PhysicalDevice physical_device, QueueFamilyIndices queue_family_indices);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::PhysicalDevice physical_device,
+        QueueFamilyIndices queue_family_indices);
 
-    static QueueFamilyIndices get_vk_queue_family_indices(vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
+    static QueueFamilyIndices get_vk_queue_family_indices(
+        const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
     static vk::SurfaceKHR create_vk_surface(vk::Instance instance, GLFWwindow* window);
 
     static SwapchainSupportDetails get_vk_swapchain_support_details(
-        vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
+        const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device, vk::SurfaceKHR surface);
 
     static vk::SurfaceFormatKHR choose_vk_swapchain_surface_format(
         const std::vector<vk::SurfaceFormatKHR>& available_formats);
@@ -634,6 +676,7 @@ private:
     static vk::Extent2D get_vk_swapchain_extent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
 
     static vk::SwapchainKHR create_vk_swapchain(
+        const vk::DispatchLoaderDynamic& loader,
         vk::PhysicalDevice physical_device,
         vk::Device device,
         vk::SurfaceKHR surface,
@@ -641,12 +684,17 @@ private:
         vk::Extent2D surface_extent,
         QueueFamilyIndices queue_family_indices);
 
-    static std::vector<vk::Image> get_vk_swapchain_images(vk::Device device, vk::SwapchainKHR swapchain);
+    static std::vector<vk::Image> get_vk_swapchain_images(
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::SwapchainKHR swapchain);
 
     static std::vector<vk::ImageView> create_vk_swapchain_image_views(
-        vk::Device device, const std::vector<vk::Image>& swapchain_images, vk::Format image_format);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        const std::vector<vk::Image>& swapchain_images,
+        vk::Format image_format);
 
     static vk::Pipeline create_vk_graphics_pipeline(
+        const vk::DispatchLoaderDynamic& loader,
         vk::Device device,
         const Shader& vertex_shader,
         const Shader& fragment_shader,
@@ -656,15 +704,25 @@ private:
         vk::SampleCountFlagBits samples,
         bool depth_test);
 
-    vk::PipelineLayout create_vk_pipeline_layout(const std::vector<DescriptorSetLayoutHandleImpl>& layouts);
+    vk::PipelineLayout create_vk_pipeline_layout(
+        const vk::DispatchLoaderDynamic& loader, const std::vector<DescriptorSetLayoutHandleImpl>& layouts);
 
     static vk::RenderPass create_vk_render_pass(
-        vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        vk::Format swapchain_format,
+        vk::Format depth_format,
+        vk::SampleCountFlagBits samples);
 
     static vk::RenderPass create_vk_render_pass_framebuffer(
-        vk::Device device, vk::Format swapchain_format, vk::Format depth_format, vk::SampleCountFlagBits samples);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        vk::Format swapchain_format,
+        vk::Format depth_format,
+        vk::SampleCountFlagBits samples);
 
     static std::vector<vk::Framebuffer> create_vk_framebuffers(
+        const vk::DispatchLoaderDynamic& loader,
         vk::Device device,
         const std::vector<vk::ImageView>& swapchain_image_views,
         vk::RenderPass render_pass,
@@ -672,10 +730,11 @@ private:
         vk::ImageView color_image_view,
         vk::ImageView depth_image_view);
 
-    static vk::CommandPool create_vk_command_pool(vk::Device device, QueueFamilyIndices queue_family_indices);
+    static vk::CommandPool create_vk_command_pool(
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, QueueFamilyIndices queue_family_indices);
 
     static std::vector<vk::CommandBuffer> create_vk_command_buffers(
-        vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::CommandPool command_pool, int frames_in_flight);
 
     static Buffer create_buffer(
         VmaAllocator allocator,
@@ -685,7 +744,11 @@ private:
         VmaAllocationCreateFlags flags = 0);
 
     static void cmd_copy_buffer(
-        vk::CommandBuffer command_buffer, vk::Buffer src_buffer, vk::Buffer dst_buffer, vk::DeviceSize size);
+        vk::DispatchLoaderDynamic& loader,
+        vk::CommandBuffer command_buffer,
+        vk::Buffer src_buffer,
+        vk::Buffer dst_buffer,
+        vk::DeviceSize size);
 
     static vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout& layout);
 
@@ -693,14 +756,20 @@ private:
         const VertexLayout& layout);
 
     static std::vector<FrameInFlight> create_frames_in_flight(
-        vk::Device device, vk::CommandPool command_pool, int frame_count);
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::CommandPool command_pool, int frame_count);
 
-    static vk::DescriptorSetLayout create_vk_descriptor_set_layout(vk::Device device);
+    static vk::DescriptorSetLayout create_vk_descriptor_set_layout(
+        const vk::DispatchLoaderDynamic& loader, vk::Device device);
 
-    static vk::DescriptorPool create_vk_descriptor_pool(vk::Device, int frames_in_flight);
+    static vk::DescriptorPool create_vk_descriptor_pool(
+        const vk::DispatchLoaderDynamic& loader, vk::Device device, int frames_in_flight);
 
     static std::vector<vk::DescriptorSet> create_vk_descriptor_sets(
-        vk::Device device, vk::DescriptorSetLayout layout, vk::DescriptorPool pool, int count);
+        const vk::DispatchLoaderDynamic& loader,
+        vk::Device device,
+        vk::DescriptorSetLayout layout,
+        vk::DescriptorPool pool,
+        int count);
 };
 }
 
