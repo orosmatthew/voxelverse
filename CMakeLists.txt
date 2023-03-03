@@ -4,27 +4,29 @@ project(vulkan_testing)
 
 set(CMAKE_CXX_STANDARD 20)
 
-function(add_shader TARGET SHADER)
+function(add_shaders TARGET)
     find_program(GLSLANGVALIDATOR glslangvalidator)
+    foreach (SHADER ${ARGN})
+        set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
+        set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
 
-    set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
-    set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
+        # Add a custom command to compile GLSL to SPIR-V using glslangvalidator.
+        get_filename_component(current-output-dir ${current-output-path} DIRECTORY)
+        file(MAKE_DIRECTORY ${current-output-dir})
 
-    # Add a custom command to compile GLSL to SPIR-V using glslangvalidator.
-    get_filename_component(current-output-dir ${current-output-path} DIRECTORY)
-    file(MAKE_DIRECTORY ${current-output-dir})
+        add_custom_command(
+                OUTPUT ${current-output-path}
+                COMMAND ${GLSLANGVALIDATOR} -V -o ${current-output-path} ${current-shader-path}
+                DEPENDS ${current-shader-path}
+                IMPLICIT_DEPENDS CXX ${current-shader-path}
+                VERBATIM)
 
-    add_custom_command(
-            OUTPUT ${current-output-path}
-            COMMAND ${GLSLANGVALIDATOR} -V -o ${current-output-path} ${current-shader-path}
-            DEPENDS ${current-shader-path}
-            IMPLICIT_DEPENDS CXX ${current-shader-path}
-            VERBATIM)
-
-    # Make sure our build depends on this output.
-    set_source_files_properties(${current-output-path} PROPERTIES GENERATED TRUE)
-    target_sources(${TARGET} PRIVATE ${current-output-path})
+        # Make sure our build depends on this output.
+        set_source_files_properties(${current-output-path} PROPERTIES GENERATED TRUE)
+        target_sources(${TARGET} PRIVATE ${current-output-path})
+    endforeach ()
 endfunction()
+
 
 find_package(Vulkan REQUIRED)
 
@@ -94,14 +96,15 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIB_INCLUDES})
 
-add_shader(vulkan_testing simple.frag)
-add_shader(vulkan_testing simple.vert)
-add_shader(vulkan_testing color.frag)
-add_shader(vulkan_testing color.vert)
-add_shader(vulkan_testing ui.frag)
-add_shader(vulkan_testing ui.vert)
-add_shader(vulkan_testing text.vert)
-add_shader(vulkan_testing text.frag)
+add_shaders(vulkan_testing
+        simple.frag
+        simple.vert
+        color.frag
+        color.vert
+        ui.frag
+        ui.vert
+        text.vert
+        text.frag)
 
 set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)
