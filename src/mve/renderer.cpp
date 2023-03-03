@@ -2492,20 +2492,28 @@ void Renderer::destroy(Texture& texture)
 // TODO: mip-mapping
 Texture Renderer::create_texture(TextureFormat format, uint32_t width, uint32_t height, const std::byte* data)
 {
-    //    int width;
-    //    int height;
-    //    int channels;
-    //    stbi_uc* pixels = stbi_load(path_string.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-    //    vk::DeviceSize size = width * height * 4;
-    //    if (!pixels) {
-    //        throw std::runtime_error("[Renderer] Failed to load texture image");
-    //    }
-
-    //    uint32_t mip_levels = static_cast<uint32_t>(mve::floor(mve::log2(static_cast<float>(mve::max(width,
-    //    height))))) + 1;
+    MVE_VAL_ASSERT(width != 0 && height != 0, "[Renderer] Attempt to create texture with 0 width or height");
     uint32_t mip_levels = 1;
 
+    vk::Format vk_format;
     size_t size = width * height * sizeof(std::byte);
+    switch (format) {
+    case TextureFormat::r:
+        vk_format = vk::Format::eR8Unorm;
+        break;
+    case TextureFormat::rg:
+        vk_format = vk::Format::eR8G8Unorm;
+        size *= 2;
+        break;
+    case TextureFormat::rgb:
+        vk_format = vk::Format::eR8G8B8Unorm;
+        size *= 3;
+        break;
+    case TextureFormat::rgba:
+        vk_format = vk::Format::eR8G8B8A8Unorm;
+        size *= 4;
+        break;
+    }
 
     Buffer staging_buffer = create_buffer(
         m_vma_allocator,
@@ -2518,22 +2526,6 @@ Texture Renderer::create_texture(TextureFormat format, uint32_t width, uint32_t 
     vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data_ptr);
     memcpy(data_ptr, data, static_cast<size_t>(size));
     vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    vk::Format vk_format;
-    switch (format) {
-    case TextureFormat::r:
-        vk_format = vk::Format::eR8Unorm;
-        break;
-    case TextureFormat::rg:
-        vk_format = vk::Format::eR8G8Unorm;
-        break;
-    case TextureFormat::rgb:
-        vk_format = vk::Format::eR8G8B8Unorm;
-        break;
-    case TextureFormat::rgba:
-        vk_format = vk::Format::eR8G8B8A8Unorm;
-        break;
-    }
 
     Image image = create_image(
         m_vma_allocator,
@@ -2594,82 +2586,11 @@ Texture Renderer::create_texture(const std::filesystem::path& path)
     vk::DeviceSize size = width * height * 4;
     MVE_ASSERT(pixels != nullptr, "[Renderer] Failed to load texture image")
 
-    //    uint32_t mip_levels = static_cast<uint32_t>(mve::floor(mve::log2(static_cast<float>(mve::max(width,
-    //    height))))) + 1;
-    uint32_t mip_levels = 1;
-
-    Buffer staging_buffer = create_buffer(
-        m_vma_allocator,
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_MEMORY_USAGE_AUTO,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-
-    void* data;
-    vmaMapMemory(m_vma_allocator, staging_buffer.vma_allocation, &data);
-    memcpy(data, pixels, static_cast<size_t>(size));
-    vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
-
-    stbi_image_free(pixels);
-
-    Image image = create_image(
-        m_vma_allocator,
+    return create_texture(
+        TextureFormat::rgba,
         static_cast<uint32_t>(width),
         static_cast<uint32_t>(height),
-        mip_levels,
-        vk::SampleCountFlagBits::e1,
-        vk::Format::eR8G8B8A8Unorm,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        false);
-
-    defer_to_command_buffer_front(
-        [this, image, mip_levels, staging_buffer, width, height](vk::CommandBuffer command_buffer) {
-            cmd_transition_image_layout(
-                command_buffer,
-                image.vk_handle,
-                vk::Format::eR8G8B8A8Unorm,
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal,
-                mip_levels);
-
-            cmd_copy_buffer_to_image(
-                command_buffer,
-                staging_buffer.vk_handle,
-                image.vk_handle,
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height));
-
-            cmd_generate_mipmaps(
-                m_vk_physical_device,
-                command_buffer,
-                image.vk_handle,
-                vk::Format::eR8G8B8A8Unorm,
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height),
-                mip_levels);
-
-            defer_to_next_frame([this, staging_buffer](uint32_t) {
-                vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-            });
-        });
-
-    vk::ImageView image_view = create_image_view(
-        m_vk_device, image.vk_handle, vk::Format::eR8G8B8A8Unorm, vk::ImageAspectFlagBits::eColor, mip_levels);
-
-    vk::Sampler sampler = create_texture_sampler(m_vk_physical_device, m_vk_device, mip_levels);
-
-    TextureImpl texture {
-        .image = image, .vk_image_view = image_view, .vk_sampler = sampler, .mip_levels = mip_levels
-    };
-
-    auto handle = m_resource_handle_count;
-    m_resource_handle_count++;
-    m_textures.insert({ handle, texture });
-
-    LOG->debug("[Renderer] Texture created with ID: {}", handle);
-
-    return Texture(*this, handle);
+        reinterpret_cast<const std::byte*>(pixels));
 }
 
 Texture Renderer::create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels)
