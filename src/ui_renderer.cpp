@@ -244,12 +244,12 @@ void UIRenderer::draw()
         m_renderer->bind_vertex_buffer(m_hotbar_select->vertex_buffer);
         m_renderer->draw_index_buffer(m_hotbar_select->index_buffer);
     }
-    m_renderer->bind_graphics_pipeline(m_text_pipeline);
-    m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
-    for (const RenderGlyph& glyph : m_render_glyphs) {
-        m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
-        m_renderer->draw_index_buffer(m_text_index_buffer);
-    }
+    //    m_renderer->bind_graphics_pipeline(m_text_pipeline);
+    //    m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
+    //    for (const RenderGlyph& glyph : m_render_glyphs) {
+    //        m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
+    //        m_renderer->draw_index_buffer(m_text_index_buffer);
+    //    }
 }
 void UIRenderer::update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size)
 {
