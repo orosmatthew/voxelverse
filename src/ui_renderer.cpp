@@ -42,6 +42,7 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
     camera = camera.translate({ 0.0f, 0.0f, 0.0f });
     mve::Matrix4 view = camera.inverse().transpose();
     m_global_ubo.update(m_view_location, view);
+    m_text_ubo.update(m_text_vert_shader.descriptor_set(0).binding(0).member("view").location(), view);
 
     mve::VertexData cross_data(c_vertex_layout);
 
@@ -214,6 +215,9 @@ void UIRenderer::resize()
                         hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), -5 * 4, 0) * hotbar_scale));
         }
     }
+    if (m_is_drawing_fps) {
+        update_fps_glyphs();
+    }
 }
 
 void UIRenderer::draw()
@@ -244,12 +248,14 @@ void UIRenderer::draw()
         m_renderer->bind_vertex_buffer(m_hotbar_select->vertex_buffer);
         m_renderer->draw_index_buffer(m_hotbar_select->index_buffer);
     }
-    //    m_renderer->bind_graphics_pipeline(m_text_pipeline);
-    //    m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
-    //    for (const RenderGlyph& glyph : m_render_glyphs) {
-    //        m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
-    //        m_renderer->draw_index_buffer(m_text_index_buffer);
-    //    }
+    m_renderer->bind_graphics_pipeline(m_text_pipeline);
+    m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
+    if (m_is_drawing_fps) {
+        for (const RenderGlyph& glyph : m_fps_glyphs) {
+            m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
+            m_renderer->draw_index_buffer(m_text_index_buffer);
+        }
+    }
 }
 void UIRenderer::update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size)
 {
@@ -387,4 +393,57 @@ void UIRenderer::set_hotbar_block(int pos, uint8_t block_type)
     block.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), block.texture);
     block.uniform_buffer.update(block.model_location, mve::Matrix4::identity());
     m_hotbar_blocks[pos] = std::move(block);
+}
+
+void UIRenderer::draw_fps(bool enable)
+{
+    m_is_drawing_fps = enable;
+}
+void UIRenderer::update_fps(int value)
+{
+    m_fps_value = value;
+    update_fps_glyphs();
+}
+
+void UIRenderer::update_fps_glyphs()
+{
+    m_fps_glyphs.clear();
+    std::string text = std::to_string(m_fps_value);
+    mve::Vector2i extent = m_renderer->extent();
+    float x = -extent.x / 2.0f + 8.0f;
+    float y = extent.y / 2.0f - 35.0f;
+    float scale = 1.0f;
+    for (auto c = text.begin(); c != text.end(); c++) {
+        if (!m_font_chars.contains(*c)) {
+            LOG->info("INVALID CHAR: {}", static_cast<uint32_t>(*c));
+            continue;
+        }
+        const FontChar& font_char = m_font_chars.at(*c);
+        float x_pos = x + font_char.bearing.x * scale;
+        float y_pos = y - (font_char.size.y - font_char.bearing.y) * scale;
+
+        float w = font_char.size.x * scale;
+        float h = font_char.size.y * scale;
+
+        mve::Matrix4 model = mve::Matrix4::identity();
+        model = model.scale({ w, h, 1.0f });
+        model = model.translate({ x_pos, -y_pos, 0.0f });
+
+        mve::UniformBuffer glyph_ubo
+            = m_renderer->create_uniform_buffer(m_text_vert_shader.descriptor_set(1).binding(0));
+        mve::DescriptorSet glyph_descriptor_set
+            = m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(1));
+        glyph_descriptor_set.write_binding(m_text_vert_shader.descriptor_set(1).binding(0), glyph_ubo);
+        RenderGlyph render_glyph { .ubo = std::move(glyph_ubo), .descriptor_set = std::move(glyph_descriptor_set) };
+
+        render_glyph.ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
+        render_glyph.ubo.update(
+            m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
+            mve::Vector3(0.0f, 0.0f, 0.0f));
+        render_glyph.descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
+
+        m_fps_glyphs.push_back(std::move(render_glyph));
+
+        x += mve::floor(font_char.advance / 64.0f) * scale;
+    }
 }

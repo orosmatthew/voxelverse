@@ -16,6 +16,15 @@ public:
 
     void set_hotbar_block(int pos, uint8_t block_type);
 
+    void draw_fps(bool enable);
+
+    [[nodiscard]] bool is_drawing_fps() const
+    {
+        return m_is_drawing_fps;
+    }
+
+    void update_fps(int value);
+
 private:
     const mve::VertexLayout c_vertex_layout = {
         mve::VertexAttributeType::vec3, // Position
@@ -70,6 +79,8 @@ private:
 
     MeshData create_block_face_data(uint8_t block_type) const;
 
+    void update_fps_glyphs();
+
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
@@ -96,4 +107,8 @@ private:
 
     std::unordered_map<char, FontChar> m_font_chars {};
     std::vector<RenderGlyph> m_render_glyphs;
+    std::vector<RenderGlyph> m_fps_glyphs {};
+
+    bool m_is_drawing_fps = false;
+    int m_fps_value = 0;
 };

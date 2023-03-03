@@ -16,7 +16,7 @@ App::App()
     , m_fixed_loop(60.0f)
     , m_cursor_captured(true)
     , m_begin_time(std::chrono::high_resolution_clock::now())
-    , m_frame_count(0)
+    , m_current_frame_count(0)
 {
     LOG->set_level(spdlog::level::info);
     m_window.set_min_size({ 800, 600 });
@@ -86,17 +86,24 @@ void App::main_loop()
             }
         }
 
+        if (m_window.is_key_pressed(mve::Key::f3)) {
+            m_ui_renderer.draw_fps(!m_ui_renderer.is_drawing_fps());
+        }
+
+        m_ui_renderer.update_fps(m_frame_count);
+
         draw();
 
         std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
 
         if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - m_begin_time).count() >= 1000000) {
             m_begin_time = std::chrono::high_resolution_clock::now();
-            LOG->info("Framerate: {}", m_frame_count);
-            m_frame_count = 0;
+            LOG->info("Framerate: {}", m_current_frame_count);
+            m_frame_count = m_current_frame_count;
+            m_current_frame_count = 0;
         }
 
-        m_frame_count++;
+        m_current_frame_count++;
     }
 }
 }

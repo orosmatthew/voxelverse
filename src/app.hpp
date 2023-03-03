@@ -18,7 +18,6 @@ public:
     void main_loop();
 
 private:
-
     void draw();
 
     mve::Window m_window;
@@ -29,7 +28,8 @@ private:
     util::FixedLoop m_fixed_loop;
     bool m_cursor_captured;
     std::chrono::high_resolution_clock::time_point m_begin_time;
-    int m_frame_count;
+    int m_frame_count = 0;
+    int m_current_frame_count = 0;
 };
 
 }
