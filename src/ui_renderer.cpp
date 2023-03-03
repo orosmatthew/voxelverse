@@ -98,6 +98,20 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
         if (load_char_result != 0) {
             throw std::runtime_error("[UI Renderer] Failed to load glyph");
         }
+        if (font_face->glyph->bitmap.width == 0 || font_face->glyph->bitmap.rows == 0) {
+            continue;
+        }
+        mve::Texture texture = renderer.create_texture(
+            mve::TextureFormat::r,
+            font_face->glyph->bitmap.width,
+            font_face->glyph->bitmap.rows,
+            reinterpret_cast<const std::byte*>(font_face->glyph->bitmap.buffer));
+        FontChar font_char { .texture = std::move(texture),
+                             .size = { static_cast<int>(font_face->glyph->bitmap.width),
+                                       static_cast<int>(font_face->glyph->bitmap.rows) },
+                             .bearing = { font_face->glyph->bitmap_left, font_face->glyph->bitmap_top },
+                             .advance = static_cast<uint32_t>(font_face->glyph->advance.x) };
+        m_font_chars.insert({ c, std::move(font_char) });
     }
 }
 

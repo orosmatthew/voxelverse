@@ -33,6 +33,8 @@ namespace mve {
 class Window;
 class ShaderDescriptorSet;
 
+enum class TextureFormat { r, rg, rgb, rgba };
+
 /**
  * @brief Vulkan renderer class
  */
@@ -160,6 +162,8 @@ public:
      * @return Returns a texture object
      */
     Texture create_texture(const std::filesystem::path& path);
+
+    Texture create_texture(TextureFormat format, uint32_t width, uint32_t height, const std::byte* data);
 
     /**
      * @brief Create graphics pipeline from shaders and vertex layout
