@@ -1,8 +1,5 @@
 #pragma once
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
 #include "mve/renderer.hpp"
 
 class UIRenderer {
@@ -23,6 +20,11 @@ private:
     const mve::VertexLayout c_vertex_layout = {
         mve::VertexAttributeType::vec3, // Position
         mve::VertexAttributeType::vec3, // Color
+        mve::VertexAttributeType::vec2 // UV
+    };
+
+    const mve::VertexLayout c_text_vertex_layout = {
+        mve::VertexAttributeType::vec3, // Position
         mve::VertexAttributeType::vec2 // UV
     };
 
@@ -57,6 +59,11 @@ private:
         uint32_t advance;
     };
 
+    struct RenderGlyph {
+        mve::UniformBuffer ubo;
+        mve::DescriptorSet descriptor_set;
+    };
+
     mve::VertexData create_hotbar_vertex_data() const;
 
     mve::VertexData create_hotbar_select_vertex_data() const;
@@ -72,6 +79,14 @@ private:
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
 
+    mve::Shader m_text_vert_shader;
+    mve::Shader m_text_frag_shader;
+    mve::GraphicsPipeline m_text_pipeline;
+    mve::UniformBuffer m_text_ubo;
+    mve::DescriptorSet m_text_descriptor_set;
+    mve::VertexBuffer m_text_vertex_buffer;
+    mve::IndexBuffer m_text_index_buffer;
+
     std::optional<UIMesh> m_cross;
     std::optional<World> m_world;
     std::optional<UIMesh> m_hotbar;
@@ -80,4 +95,5 @@ private:
     int m_current_hotbar_select = 0;
 
     std::unordered_map<char, FontChar> m_font_chars {};
+    std::vector<RenderGlyph> m_render_glyphs;
 };

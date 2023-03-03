@@ -94,6 +94,8 @@ add_shader(vulkan_testing color.frag)
 add_shader(vulkan_testing color.vert)
 add_shader(vulkan_testing ui.frag)
 add_shader(vulkan_testing ui.vert)
+add_shader(vulkan_testing text.vert)
+add_shader(vulkan_testing text.frag)
 
 set(TEST_LIB_SOURCE_FILES
         lib/catch2-3.2.1/src/catch_amalgamated.cpp)

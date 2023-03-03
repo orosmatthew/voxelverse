@@ -61,6 +61,10 @@ inline void Texture::invalidate()
 {
     m_valid = false;
 }
+inline Texture::Texture()
+    : m_valid(false)
+{
+}
 }
 
 namespace std {

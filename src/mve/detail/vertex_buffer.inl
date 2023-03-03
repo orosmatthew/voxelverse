@@ -63,6 +63,10 @@ inline void VertexBuffer::invalidate()
 {
     m_valid = false;
 }
+inline VertexBuffer::VertexBuffer()
+    : m_valid(false)
+{
+}
 }
 
 namespace std {

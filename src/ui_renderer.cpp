@@ -1,7 +1,11 @@
 #include "ui_renderer.hpp"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include "chunk_data.hpp"
 #include "common.hpp"
+#include "logger.hpp"
 #include "mve/math/math.hpp"
 
 UIRenderer::UIRenderer(mve::Renderer& renderer)
@@ -13,8 +17,26 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
     , m_global_descriptor_set(renderer.create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))
     , m_view_location(m_vertex_shader.descriptor_set(0).binding(0).member("view").location())
     , m_proj_location(m_vertex_shader.descriptor_set(0).binding(0).member("proj").location())
+    , m_text_vert_shader("../res/bin/shader/text.vert.spv")
+    , m_text_frag_shader("../res/bin/shader/text.frag.spv")
+    , m_text_pipeline(renderer.create_graphics_pipeline(m_text_vert_shader, m_text_frag_shader, c_text_vertex_layout))
+    , m_text_ubo(renderer.create_uniform_buffer(m_text_vert_shader.descriptor_set(0).binding(0)))
+    , m_text_descriptor_set(m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(0)))
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
+    m_text_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_text_ubo);
+
+    mve::VertexData text_data(c_text_vertex_layout);
+    text_data.push_back({ 0.0f, -1.0f, 0.0f });
+    text_data.push_back({ 0.0f, 0.0f });
+    text_data.push_back({ 1.0f, -1.0f, 0.0f });
+    text_data.push_back({ 1.0f, 0.0f });
+    text_data.push_back({ 1.0f, 0.0f, 0.0f });
+    text_data.push_back({ 1.0f, 1.0f });
+    text_data.push_back({ 0.0f, 0.0f, 0.0f });
+    text_data.push_back({ 0.0f, 1.0f });
+    m_text_vertex_buffer = renderer.create_vertex_buffer(text_data);
+    m_text_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
 
     mve::Matrix4 camera;
     camera = camera.translate({ 0.0f, 0.0f, 0.0f });
@@ -87,7 +109,8 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
         throw std::runtime_error("[UI Renderer] Failed to init FreeType");
     }
     FT_Face font_face;
-    auto new_face_result = FT_New_Face(ft, "../res/arial.ttf", 0, &font_face);
+    auto new_face_result = FT_New_Face(ft, "../res/epilepsy_sans.ttf", 0, &font_face);
+    //    auto new_face_result = FT_New_Face(ft, "../res/arial.ttf", 0, &font_face);
     if (new_face_result != 0) {
         throw std::runtime_error("[UI Renderer] Failed to load font");
     }
@@ -98,20 +121,66 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
         if (load_char_result != 0) {
             throw std::runtime_error("[UI Renderer] Failed to load glyph");
         }
-        if (font_face->glyph->bitmap.width == 0 || font_face->glyph->bitmap.rows == 0) {
-            continue;
+
+        mve::Texture texture;
+        if (font_face->glyph->bitmap.width != 0 && font_face->glyph->bitmap.rows != 0) {
+            texture = renderer.create_texture(
+                mve::TextureFormat::r,
+                font_face->glyph->bitmap.width,
+                font_face->glyph->bitmap.rows,
+                reinterpret_cast<const std::byte*>(font_face->glyph->bitmap.buffer));
         }
-        mve::Texture texture = renderer.create_texture(
-            mve::TextureFormat::r,
-            font_face->glyph->bitmap.width,
-            font_face->glyph->bitmap.rows,
-            reinterpret_cast<const std::byte*>(font_face->glyph->bitmap.buffer));
+        else {
+            std::byte val {};
+            texture = renderer.create_texture(mve::TextureFormat::r, 1, 1, &val);
+        }
+
         FontChar font_char { .texture = std::move(texture),
                              .size = { static_cast<int>(font_face->glyph->bitmap.width),
                                        static_cast<int>(font_face->glyph->bitmap.rows) },
                              .bearing = { font_face->glyph->bitmap_left, font_face->glyph->bitmap_top },
                              .advance = static_cast<uint32_t>(font_face->glyph->advance.x) };
         m_font_chars.insert({ c, std::move(font_char) });
+    }
+
+    FT_Done_Face(font_face);
+    FT_Done_FreeType(ft);
+
+    std::string text = "/gamemode creative";
+    float x = 20.0f;
+    float y = 0.0f;
+    float scale = 1.0f;
+    for (auto c = text.begin(); c != text.end(); c++) {
+        if (!m_font_chars.contains(*c)) {
+            LOG->info("INVALID CHAR: {}", static_cast<uint32_t>(*c));
+            continue;
+        }
+        const FontChar& font_char = m_font_chars.at(*c);
+        float x_pos = x + font_char.bearing.x * scale;
+        float y_pos = y - (font_char.size.y - font_char.bearing.y) * scale;
+
+        float w = font_char.size.x * scale;
+        float h = font_char.size.y * scale;
+
+        mve::Matrix4 model = mve::Matrix4::identity();
+        model = model.scale({ w, h, 1.0f });
+        model = model.translate({ x_pos, -y_pos, 0.0f });
+
+        mve::UniformBuffer glyph_ubo = renderer.create_uniform_buffer(m_text_vert_shader.descriptor_set(1).binding(0));
+        mve::DescriptorSet glyph_descriptor_set
+            = m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(1));
+        glyph_descriptor_set.write_binding(m_text_vert_shader.descriptor_set(1).binding(0), glyph_ubo);
+        RenderGlyph render_glyph { .ubo = std::move(glyph_ubo), .descriptor_set = std::move(glyph_descriptor_set) };
+
+        render_glyph.ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
+        render_glyph.ubo.update(
+            m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
+            mve::Vector3(0.0f, 0.0f, 0.0f));
+        render_glyph.descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
+
+        m_render_glyphs.push_back(std::move(render_glyph));
+
+        x += mve::floor(font_char.advance / 64.0f) * scale;
     }
 }
 
@@ -128,6 +197,7 @@ void UIRenderer::resize()
         (mve::Vector3(m_renderer->extent().x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f)));
     mve::Vector3 hotbar_translation(0, static_cast<float>(m_renderer->extent().y) * 0.5f, 0);
     m_global_ubo.update(m_proj_location, proj);
+    m_text_ubo.update(m_text_vert_shader.descriptor_set(0).binding(0).member("proj").location(), proj);
     if (m_hotbar.has_value()) {
         m_hotbar->uniform_buffer.update(
             m_hotbar->model_location, mve::Matrix4::identity().scale(hotbar_scale).translate(hotbar_translation));
@@ -173,6 +243,12 @@ void UIRenderer::draw()
         m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_hotbar_select->descriptor_set);
         m_renderer->bind_vertex_buffer(m_hotbar_select->vertex_buffer);
         m_renderer->draw_index_buffer(m_hotbar_select->index_buffer);
+    }
+    m_renderer->bind_graphics_pipeline(m_text_pipeline);
+    m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
+    for (const RenderGlyph& glyph : m_render_glyphs) {
+        m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
+        m_renderer->draw_index_buffer(m_text_index_buffer);
     }
 }
 void UIRenderer::update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size)

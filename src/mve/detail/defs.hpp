@@ -143,6 +143,8 @@ class IndexBuffer {
     friend Renderer;
 
 public:
+    inline IndexBuffer();
+
     inline IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices);
 
     inline IndexBuffer(Renderer& renderer, size_t handle);
@@ -178,6 +180,8 @@ class Texture {
     friend Renderer;
 
 public:
+    inline Texture();
+
     inline Texture(Renderer& renderer, const std::filesystem::path& path);
 
     inline Texture(Renderer& renderer, uint64_t handle);
@@ -257,6 +261,8 @@ class VertexBuffer {
     friend Renderer;
 
 public:
+    inline VertexBuffer();
+
     inline VertexBuffer(Renderer& renderer, const VertexData& vertex_data);
 
     inline VertexBuffer(Renderer& renderer, size_t handle);

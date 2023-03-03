@@ -65,6 +65,10 @@ inline void IndexBuffer::invalidate()
 {
     m_valid = false;
 }
+IndexBuffer::IndexBuffer()
+    : m_valid(false)
+{
+}
 }
 
 namespace std {
