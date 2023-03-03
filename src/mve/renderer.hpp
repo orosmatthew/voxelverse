@@ -22,10 +22,10 @@
 #include "vertex_data.hpp"
 
 #ifndef NDEBUG
-#define MVE_ENABLE_VALIDATION_LAYERS
+#define MVE_ENABLE_VALIDATION
 #endif
 
-// #define MVE_ENABLE_VALIDATION_LAYERS
+// #define MVE_ENABLE_VALIDATION
 
 namespace mve {
 

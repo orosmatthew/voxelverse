@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "math/math.hpp"
+#include "common.hpp"
 
 namespace mve {
 
@@ -168,7 +169,7 @@ Monitor Window::current_monitor() const
             }
         }
     }
-    throw std::runtime_error("[Window] Failed to get current monitor.");
+    MVE_ASSERT(false, "[Window] Failed to get current monitor")
 }
 
 bool Window::is_fullscreen() const

@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "common.hpp"
+
 namespace mve {
 
 int get_vertex_layout_bytes(const VertexLayout& vertex_layout)
@@ -29,16 +31,12 @@ int get_vertex_layout_bytes(const VertexLayout& vertex_layout)
 VertexData::VertexData(VertexLayout layout)
     : m_layout(std::move(layout))
 {
-    if (m_layout.empty()) {
-        throw std::runtime_error("[VertexData] Empty vertex layout");
-    }
+    MVE_ASSERT(!m_layout.empty(), "[VertexData] Empty vertex layout")
 }
 
 void VertexData::push_back(float value)
 {
-    if (next_type() != VertexAttributeType::scalar) {
-        throw std::runtime_error("[VertexData] Invalid type: float");
-    }
+    MVE_VAL_ASSERT(next_type() == VertexAttributeType::scalar, "[VertexData] Invalid type: scalar")
 
     m_data.push_back(value);
 
@@ -47,9 +45,7 @@ void VertexData::push_back(float value)
 
 void VertexData::push_back(mve::Vector2 value)
 {
-    if (next_type() != VertexAttributeType::vec2) {
-        throw std::runtime_error("[VertexData] Invalid type: vec2");
-    }
+    MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec2, "[VertexData] Invalid type: vec2")
 
     m_data.push_back(value[0]);
     m_data.push_back(value[1]);
@@ -59,9 +55,7 @@ void VertexData::push_back(mve::Vector2 value)
 
 void VertexData::push_back(mve::Vector3 value)
 {
-    if (next_type() != VertexAttributeType::vec3) {
-        throw std::runtime_error("[VertexData] Invalid type: vec3");
-    }
+    MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec3, "[VertexData] Invalid type: vec3")
 
     m_data.push_back(value[0]);
     m_data.push_back(value[1]);
@@ -72,9 +66,7 @@ void VertexData::push_back(mve::Vector3 value)
 
 void VertexData::push_back(mve::Vector4 value)
 {
-    if (next_type() != VertexAttributeType::vec4) {
-        throw std::runtime_error("[VertexData] Invalid type: vec4");
-    }
+    MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec4, "[VertexData] Invalid type: vec4")
 
     m_data.push_back(value[0]);
     m_data.push_back(value[1]);

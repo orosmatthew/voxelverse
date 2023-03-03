@@ -7,6 +7,7 @@
 #include "spirv_reflect.h"
 
 #include "../logger.hpp"
+#include "common.hpp"
 
 namespace mve {
 
@@ -16,9 +17,7 @@ Shader::Shader(const std::filesystem::path& file_path)
 
     std::ifstream file(file_path, std::ios::binary);
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open shader file: " + file_path.string());
-    }
+    MVE_ASSERT(file.is_open(), "[Shader] Failed to open shader file: " + file_path.string())
 
     std::vector<uint32_t> contents;
     uint32_t data;
@@ -45,7 +44,7 @@ static ShaderDescriptorType convert_descriptor_type(SpvReflectDescriptorType typ
     case (SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER):
         return ShaderDescriptorType::combined_image_sampler;
     default:
-        throw std::runtime_error("[Shader] Failed to convert descriptor type");
+        MVE_ASSERT(false, "[Shader] Failed to convert descriptor type")
     }
 }
 
@@ -67,30 +66,22 @@ void Shader::create_reflection_data()
     SpvReflectShaderModule shader_module;
     SpvReflectResult shader_module_result
         = spvReflectCreateShaderModule(m_spv_code.size() * 4, m_spv_code.data(), &shader_module);
-    if (shader_module_result != SPV_REFLECT_RESULT_SUCCESS) {
-        throw std::runtime_error("[Shader] Failed to generate reflection data");
-    }
+    MVE_ASSERT(shader_module_result == SPV_REFLECT_RESULT_SUCCESS, "[Shader] Failed to generate reflection data")
 
     uint32_t var_count = 0;
     SpvReflectResult input_enum_result = spvReflectEnumerateInputVariables(&shader_module, &var_count, nullptr);
-    if (input_enum_result != SPV_REFLECT_RESULT_SUCCESS) {
-        throw std::runtime_error("[Shader] Failed to enumerate input variables");
-    }
+    MVE_ASSERT(input_enum_result == SPV_REFLECT_RESULT_SUCCESS, "[Shader] Failed to enumerate input variables")
 
     std::vector<SpvReflectInterfaceVariable*> input_vars(var_count);
     input_enum_result = spvReflectEnumerateInputVariables(&shader_module, &var_count, input_vars.data());
 
     uint32_t set_count = 0;
     SpvReflectResult descriptor_set_result = spvReflectEnumerateDescriptorSets(&shader_module, &set_count, nullptr);
-    if (descriptor_set_result != SPV_REFLECT_RESULT_SUCCESS) {
-        throw std::runtime_error("[Shader] Failed to enumerate descriptor sets");
-    }
+    MVE_ASSERT(descriptor_set_result == SPV_REFLECT_RESULT_SUCCESS, "[Shader] Failed to enumerate descriptor sets")
 
     std::vector<SpvReflectDescriptorSet*> descriptor_sets(set_count);
     descriptor_set_result = spvReflectEnumerateDescriptorSets(&shader_module, &set_count, descriptor_sets.data());
-    if (descriptor_set_result != SPV_REFLECT_RESULT_SUCCESS) {
-        throw std::runtime_error("[Shader] Failed to enumerate descriptor sets");
-    }
+    MVE_ASSERT(descriptor_set_result == SPV_REFLECT_RESULT_SUCCESS, "[Shader] Failed to enumerate descriptor sets")
 
     std::unordered_map<uint32_t, ShaderDescriptorSet> sets;
     for (SpvReflectDescriptorSet* set : descriptor_sets) {
@@ -114,9 +105,7 @@ void Shader::create_reflection_data()
         sets.insert({ set_num, std::move(descriptor_set) });
     }
 
-    if (input_enum_result != SPV_REFLECT_RESULT_SUCCESS) {
-        throw std::runtime_error("[Shader] Failed to enumerate input variables");
-    }
+    MVE_ASSERT(input_enum_result == SPV_REFLECT_RESULT_SUCCESS, "[Shader] Failed to enumerate input variables")
 
     m_reflection_data.sets = std::move(sets);
 }
