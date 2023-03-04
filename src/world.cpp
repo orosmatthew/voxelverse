@@ -412,3 +412,11 @@ void World::draw()
 {
     m_world_renderer.draw(m_camera);
 }
+mve::Vector3i World::player_block_pos() const
+{
+    return m_camera.position().round();
+}
+mve::Vector3i World::player_chunk_pos() const
+{
+    return WorldData::chunk_pos_from_block_pos(m_camera.position().round());
+}

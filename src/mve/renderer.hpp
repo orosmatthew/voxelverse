@@ -305,6 +305,8 @@ public:
 
     const Texture& framebuffer_texture(const Framebuffer& framebuffer);
 
+    [[nodiscard]] std::string gpu_name() const;
+
 private:
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphics_family;

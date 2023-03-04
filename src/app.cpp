@@ -32,6 +32,8 @@ App::App()
     m_window.set_resize_callback(resize_func);
 
     std::invoke(resize_func, m_window.size());
+
+    m_ui_renderer.update_gpu_name(m_renderer.gpu_name());
 }
 
 void App::draw()
@@ -87,10 +89,12 @@ void App::main_loop()
         }
 
         if (m_window.is_key_pressed(mve::Key::f3)) {
-            m_ui_renderer.draw_fps(!m_ui_renderer.is_drawing_fps());
+            m_ui_renderer.is_debug_enabled() ? m_ui_renderer.disable_debug() : m_ui_renderer.enable_debug();
         }
 
         m_ui_renderer.update_fps(m_frame_count);
+        m_ui_renderer.update_player_block_pos(m_world.player_block_pos());
+        m_ui_renderer.update_player_chunk_pos(m_world.player_chunk_pos());
 
         draw();
 

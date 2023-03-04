@@ -2996,6 +2996,10 @@ Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer)
 {
     return m_framebuffers[framebuffer.m_handle]->size;
 }
+std::string Renderer::gpu_name() const
+{
+    return m_vk_physical_device.getProperties(m_vk_loader).deviceName;
+}
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()
     : m_sizes({ { vk::DescriptorType::eSampler, 0.5f },

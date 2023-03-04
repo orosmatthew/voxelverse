@@ -25,6 +25,10 @@ public:
 
     void draw();
 
+    [[nodiscard]] mve::Vector3i player_block_pos() const;
+
+    [[nodiscard]] mve::Vector3i player_chunk_pos() const;
+
 private:
     struct ChunkState {
         bool has_mesh = false;

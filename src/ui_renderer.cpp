@@ -110,19 +110,19 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
         throw std::runtime_error("[UI Renderer] Failed to init FreeType");
     }
     FT_Face font_face;
-    auto new_face_result = FT_New_Face(ft, "../res/epilepsy_sans.ttf", 0, &font_face);
+    auto new_face_result = FT_New_Face(ft, "../res/karma_suture.otf", 0, &font_face);
+    //    auto new_face_result = FT_New_Face(ft, "../res/epilepsy_sans.ttf", 0, &font_face);
     //    auto new_face_result = FT_New_Face(ft, "../res/arial.ttf", 0, &font_face);
     if (new_face_result != 0) {
         throw std::runtime_error("[UI Renderer] Failed to load font");
     }
-    FT_Set_Pixel_Sizes(font_face, 0, 48);
+    FT_Set_Pixel_Sizes(font_face, 0, 36);
 
     for (unsigned char c = 0; c < 128; c++) {
         auto load_char_result = FT_Load_Char(font_face, c, FT_LOAD_RENDER);
         if (load_char_result != 0) {
             throw std::runtime_error("[UI Renderer] Failed to load glyph");
         }
-
         mve::Texture texture;
         if (font_face->glyph->bitmap.width != 0 && font_face->glyph->bitmap.rows != 0) {
             texture = renderer.create_texture(
@@ -215,8 +215,8 @@ void UIRenderer::resize()
                         hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), -5 * 4, 0) * hotbar_scale));
         }
     }
-    if (m_is_drawing_fps) {
-        update_fps_glyphs();
+    if (show_debug) {
+        update_debug_glyphs();
     }
 }
 
@@ -250,8 +250,8 @@ void UIRenderer::draw()
     }
     m_renderer->bind_graphics_pipeline(m_text_pipeline);
     m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
-    if (m_is_drawing_fps) {
-        for (const RenderGlyph& glyph : m_fps_glyphs) {
+    if (show_debug) {
+        for (const RenderGlyph& glyph : m_debug_glyphs) {
             m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
             m_renderer->draw_index_buffer(m_text_index_buffer);
         }
@@ -395,24 +395,58 @@ void UIRenderer::set_hotbar_block(int pos, uint8_t block_type)
     m_hotbar_blocks[pos] = std::move(block);
 }
 
-void UIRenderer::draw_fps(bool enable)
-{
-    m_is_drawing_fps = enable;
-}
 void UIRenderer::update_fps(int value)
 {
     m_fps_value = value;
-    update_fps_glyphs();
+    update_debug_glyphs();
 }
 
-void UIRenderer::update_fps_glyphs()
+void UIRenderer::update_debug_glyphs()
 {
-    m_fps_glyphs.clear();
-    std::string text = std::to_string(m_fps_value);
+    m_debug_glyphs.clear();
+    char buffer[100];
+    std::snprintf(buffer, sizeof(buffer), "fps: %d", m_fps_value);
     mve::Vector2i extent = m_renderer->extent();
-    float x = -extent.x / 2.0f + 8.0f;
-    float y = extent.y / 2.0f - 35.0f;
-    float scale = 1.0f;
+    float scale = 0.8f;
+    float x = -extent.x / 2.0f + 8.0f * scale;
+    float y = extent.y / 2.0f - 35.0f * scale;
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
+    y -= 42.0f * scale;
+    std::snprintf(buffer, sizeof(buffer), "ms: %.1f", 1000.0f / m_fps_value);
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
+    y -= 42.0f * scale;
+    std::snprintf(buffer, sizeof(buffer), "gpu: %s", m_gpu_name.c_str());
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
+    y-= 42.0f * scale;
+#ifdef NDEBUG
+    std::snprintf(buffer, sizeof(buffer), "build: optimized");
+#else
+    std::snprintf(buffer, sizeof(buffer), "build: debug");
+#endif
+    add_glyphs(m_debug_glyphs, std::string(buffer), {x, y}, scale);
+    y -= 42.0f * scale;
+    std::snprintf(
+        buffer,
+        sizeof(buffer),
+        "block: [%d, %d, %d]",
+        m_player_block_pos.x,
+        m_player_block_pos.y,
+        m_player_block_pos.z);
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
+    y -= 42.0f * scale;
+    std::snprintf(
+        buffer,
+        sizeof(buffer),
+        "chunk: [%d, %d, %d]",
+        m_player_chunk_pos.x,
+        m_player_chunk_pos.y,
+        m_player_chunk_pos.z);
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
+}
+void UIRenderer::add_glyphs(std::vector<RenderGlyph>& glyphs, const std::string& text, mve::Vector2 pos, float scale)
+{
+    float x = pos.x;
+    float y = pos.y;
     for (auto c = text.begin(); c != text.end(); c++) {
         if (!m_font_chars.contains(*c)) {
             LOG->info("INVALID CHAR: {}", static_cast<uint32_t>(*c));
@@ -442,7 +476,7 @@ void UIRenderer::update_fps_glyphs()
             mve::Vector3(0.0f, 0.0f, 0.0f));
         render_glyph.descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
 
-        m_fps_glyphs.push_back(std::move(render_glyph));
+        glyphs.push_back(std::move(render_glyph));
 
         x += mve::floor(font_char.advance / 64.0f) * scale;
     }

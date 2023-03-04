@@ -16,14 +16,37 @@ public:
 
     void set_hotbar_block(int pos, uint8_t block_type);
 
-    void draw_fps(bool enable);
-
-    [[nodiscard]] bool is_drawing_fps() const
+    inline void enable_debug()
     {
-        return m_is_drawing_fps;
+        show_debug = true;
+    }
+
+    inline void disable_debug()
+    {
+        show_debug = false;
+    }
+
+    [[nodiscard]] inline bool is_debug_enabled() const
+    {
+        return show_debug;
     }
 
     void update_fps(int value);
+
+    inline void update_player_block_pos(mve::Vector3i block_pos)
+    {
+        m_player_block_pos = block_pos;
+    }
+
+    inline void update_player_chunk_pos(mve::Vector3i chunk_pos)
+    {
+        m_player_chunk_pos = chunk_pos;
+    }
+
+    inline void update_gpu_name(const std::string& name)
+    {
+        m_gpu_name = name;
+    }
 
 private:
     const mve::VertexLayout c_vertex_layout = {
@@ -79,7 +102,9 @@ private:
 
     MeshData create_block_face_data(uint8_t block_type) const;
 
-    void update_fps_glyphs();
+    void add_glyphs(std::vector<RenderGlyph>& glyphs, const std::string& text, mve::Vector2 pos, float scale);
+
+    void update_debug_glyphs();
 
     mve::Renderer* m_renderer;
     mve::Shader m_vertex_shader;
@@ -107,8 +132,11 @@ private:
 
     std::unordered_map<char, FontChar> m_font_chars {};
     std::vector<RenderGlyph> m_render_glyphs;
-    std::vector<RenderGlyph> m_fps_glyphs {};
+    std::vector<RenderGlyph> m_debug_glyphs {};
 
-    bool m_is_drawing_fps = false;
+    bool show_debug = false;
     int m_fps_value = 0;
+    mve::Vector3i m_player_block_pos {};
+    mve::Vector3i m_player_chunk_pos {};
+    std::string m_gpu_name {};
 };
