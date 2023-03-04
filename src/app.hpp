@@ -9,11 +9,17 @@
 #include "world_data.hpp"
 #include "world_renderer.hpp"
 
+namespace leveldb {
+class DB;
+}
+
 namespace app {
 
 class App {
 public:
     App();
+
+    ~App();
 
     void main_loop();
 
@@ -32,6 +38,7 @@ private:
     std::chrono::high_resolution_clock::time_point m_begin_time;
     int m_frame_count = 0;
     int m_current_frame_count = 0;
+    leveldb::DB* save_db;
 };
 
 }

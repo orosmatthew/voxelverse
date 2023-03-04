@@ -61,7 +61,8 @@ public:
         m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
     }
 
-    void for_all_chunk_data(const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const
+    inline void for_all_chunk_data(
+        const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const
     {
         for (const auto& [pos, data] : m_chunks) {
             std::invoke(func, pos, data);
