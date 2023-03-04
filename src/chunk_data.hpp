@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <functional>
+#include <optional>
 #include <stdint.h>
 
 #include <cereal/types/array.hpp>
@@ -52,6 +54,16 @@ class ChunkData {
 public:
     explicit ChunkData(mve::Vector3i chunk_pos);
 
+    inline void set_modified_callback(std::function<void(mve::Vector3i, const ChunkData&)> func)
+    {
+        m_modified_callback = func;
+    }
+
+    inline void remove_modified_callback()
+    {
+        m_modified_callback.reset();
+    }
+
     mve::Vector3i position() const;
 
     void set_block(mve::Vector3i pos, uint8_t type);
@@ -92,4 +104,5 @@ private:
     mve::Vector3i m_pos;
     std::array<uint8_t, sc_chunk_size* sc_chunk_size* sc_chunk_size> m_block_data = { 0 };
     int m_block_count = 0;
+    std::optional<std::function<void(mve::Vector3i, const ChunkData&)>> m_modified_callback;
 };

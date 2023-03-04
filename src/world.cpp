@@ -1,4 +1,12 @@
 #include "world.hpp"
+
+#include <cereal/archives/portable_binary.hpp>
+#include <leveldb/db.h>
+#include <leveldb/write_batch.h>
+#include <lz4hc.h>
+
+#include "mve/common.hpp"
+
 #include "ui_renderer.hpp"
 
 World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_renderer, int render_distance)

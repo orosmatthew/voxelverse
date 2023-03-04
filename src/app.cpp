@@ -1,14 +1,8 @@
 #include "app.hpp"
 
 #include <fstream>
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
-
-#include <cereal/archives/portable_binary.hpp>
-#include <lz4hc.h>
 
 #include "logger.hpp"
-#include "mve/common.hpp"
 
 namespace app {
 
@@ -42,12 +36,6 @@ App::App()
     std::invoke(resize_func, m_window.size());
 
     m_ui_renderer.update_gpu_name(m_renderer.gpu_name());
-
-    leveldb::Options db_options;
-    db_options.create_if_missing = true;
-    db_options.compression = leveldb::kNoCompression;
-    leveldb::Status db_status = leveldb::DB::Open(db_options, "save", &save_db);
-    MVE_ASSERT(db_status.ok(), "[App] Leveldb open not ok")
 }
 
 void App::draw()
@@ -67,38 +55,6 @@ void App::draw()
     m_renderer.end_render_pass_present();
 
     m_renderer.end_frame(m_window);
-}
-
-void App::save_world()
-{
-    const WorldData& world_data = m_world.world_data();
-    leveldb::WriteBatch batch;
-    world_data.for_all_chunk_data([&](mve::Vector3i pos, const ChunkData& chunk_data) {
-        std::stringstream serial_stream;
-        {
-            cereal::PortableBinaryOutputArchive archive_out(serial_stream);
-            archive_out(chunk_data);
-        }
-        std::string serial_data = serial_stream.str();
-        std::vector<char> compressed_data(LZ4_compressBound(serial_data.size()));
-        //        int compressed_size = LZ4_compress_HC(
-        //            serial_data.data(), compressed_data.data(), serial_data.size(), compressed_data.size(), 8);
-        int compressed_size = LZ4_compress_default(
-            serial_data.data(), compressed_data.data(), serial_data.size(), compressed_data.size());
-        MVE_ASSERT(compressed_size > 0, "[App] LZ4 compression error")
-        compressed_data.resize(compressed_size);
-        std::stringstream key_stream;
-        {
-            cereal::PortableBinaryOutputArchive archive_out(key_stream);
-            archive_out(pos);
-        }
-        std::string key_data = key_stream.str();
-        batch.Put(key_data, leveldb::Slice(compressed_data.data(), compressed_data.size()));
-    });
-    leveldb::WriteOptions write_options;
-    write_options.sync = false;
-    leveldb::Status db_status = save_db->Write(write_options, &batch);
-    MVE_ASSERT(db_status.ok(), "[App] Leveldb write not ok")
 }
 
 void App::main_loop()
@@ -138,10 +94,6 @@ void App::main_loop()
             m_ui_renderer.is_debug_enabled() ? m_ui_renderer.disable_debug() : m_ui_renderer.enable_debug();
         }
 
-        if (m_window.is_key_pressed(mve::Key::o)) {
-            save_world();
-        }
-
         m_ui_renderer.update_fps(m_frame_count);
         m_ui_renderer.update_player_block_pos(m_world.player_block_pos());
         m_ui_renderer.update_player_chunk_pos(m_world.player_chunk_pos());
@@ -160,8 +112,5 @@ void App::main_loop()
         m_current_frame_count++;
     }
 }
-App::~App()
-{
-    delete save_db;
-}
+
 }

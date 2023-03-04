@@ -2,16 +2,21 @@
 
 #include <functional>
 #include <optional>
+#include <set>
 #include <unordered_map>
-
-#include <cereal/types/unordered_map.hpp>
 
 #include "chunk_data.hpp"
 #include "mve/math/math.hpp"
 
+namespace leveldb {
+class DB;
+}
+
 class WorldData {
 public:
     WorldData();
+
+    ~WorldData();
 
     inline void remove_chunk(mve::Vector3i chunk_pos)
     {
@@ -21,6 +26,10 @@ public:
     inline void create_chunk(mve::Vector3i chunk_pos)
     {
         m_chunks.insert({ chunk_pos, ChunkData(chunk_pos) });
+        m_chunks.at(chunk_pos).set_modified_callback([this](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
+            queue_save_chunk(chunk_pos);
+        });
+        queue_save_chunk(chunk_pos);
     }
 
     inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
@@ -54,11 +63,13 @@ public:
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
         m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+        queue_save_chunk(chunk_pos);
     }
 
     inline void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type)
     {
         m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
+        queue_save_chunk(chunk_pos);
     }
 
     inline void for_all_chunk_data(
@@ -148,12 +159,12 @@ public:
         return height >= -160 && height < 160;
     }
 
-    template <class Archive>
-    void serialize(Archive& archive)
-    {
-        archive(m_chunks);
-    }
-
 private:
+    void queue_save_chunk(mve::Vector3i pos);
+
+    void process_save_queue();
+
+    std::set<mve::Vector3i> m_save_queue;
+    leveldb::DB* m_save_db;
     std::unordered_map<mve::Vector3i, ChunkData> m_chunks {};
 };
