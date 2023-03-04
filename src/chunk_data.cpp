@@ -6,13 +6,13 @@ ChunkData::ChunkData(mve::Vector3i chunk_pos)
 }
 void ChunkData::set_block(mve::Vector3i pos, uint8_t type)
 {
-    if (m_block_data[pos.x][pos.y][pos.z] == 0 && type != 0) {
+    if (m_block_data[index(pos)] == 0 && type != 0) {
         m_block_count++;
     }
-    else if (m_block_data[pos.x][pos.y][pos.z] != 0 && type == 0) {
+    else if (m_block_data[index(pos)] != 0 && type == 0) {
         m_block_count--;
     }
-    m_block_data[pos.x][pos.y][pos.z] = type;
+    m_block_data[index(pos)] = type;
 }
 bool ChunkData::in_bounds(mve::Vector3i pos) const
 {

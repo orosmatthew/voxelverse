@@ -420,3 +420,12 @@ mve::Vector3i World::player_chunk_pos() const
 {
     return WorldData::chunk_pos_from_block_pos(m_camera.position().round());
 }
+std::optional<const ChunkData*> World::chunk_data_at(mve::Vector3i chunk_pos) const
+{
+    if (m_world_data.contains_chunk(chunk_pos)) {
+        return &m_world_data.chunk_data_at(chunk_pos);
+    }
+    else {
+        return {};
+    }
+}

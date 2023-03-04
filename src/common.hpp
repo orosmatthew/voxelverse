@@ -7,6 +7,14 @@
 #include <functional>
 #include <vector>
 
+namespace mve {
+template <class Archive>
+inline void serialize(Archive& archive, mve::Vector3i& m)
+{
+    archive(m.x, m.y, m.z);
+}
+}
+
 struct Quad {
     mve::Vector3 top_left;
     mve::Vector3 top_right;

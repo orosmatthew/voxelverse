@@ -1,6 +1,13 @@
 #include "app.hpp"
 
+#include <fstream>
+// #include <leveldb/db.h>
+
+#include <cereal/archives/portable_binary.hpp>
+#include <lz4hc.h>
+
 #include "logger.hpp"
+#include "mve/common.hpp"
 
 namespace app {
 
@@ -55,6 +62,29 @@ void App::draw()
     m_renderer.end_frame(m_window);
 }
 
+void App::save_world()
+{
+    const WorldData& world_data = m_world.world_data();
+    std::stringstream serial_stream;
+    {
+        cereal::PortableBinaryOutputArchive archive_out(serial_stream);
+        archive_out(world_data);
+    }
+    std::string serial_data = serial_stream.str();
+    std::vector<char> compressed_data(LZ4_compressBound(serial_data.size()));
+    int compressed_size
+        = LZ4_compress_HC(serial_data.data(), compressed_data.data(), serial_data.size(), compressed_data.size(), 8);
+    //    int compressed_size
+    //        = LZ4_compress_default(serial_data.data(), compressed_data.data(), serial_data.size(),
+    //        compressed_data.size());
+    MVE_ASSERT(compressed_size > 0, "[App] LZ4 compression error")
+    compressed_data.resize(compressed_size);
+    std::ofstream save_file("save.bin", std::ios::out | std::ios::binary);
+    save_file.write(compressed_data.data(), compressed_data.size());
+    //            save_file.write(serial_data.c_str(), serial_data.size());
+    save_file.close();
+}
+
 void App::main_loop()
 {
     while (!m_window.should_close()) {
@@ -90,6 +120,10 @@ void App::main_loop()
 
         if (m_window.is_key_pressed(mve::Key::f3)) {
             m_ui_renderer.is_debug_enabled() ? m_ui_renderer.disable_debug() : m_ui_renderer.enable_debug();
+        }
+
+        if (m_window.is_key_pressed(mve::Key::o)) {
+            save_world();
         }
 
         m_ui_renderer.update_fps(m_frame_count);

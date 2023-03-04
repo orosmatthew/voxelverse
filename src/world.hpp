@@ -1,8 +1,8 @@
 #pragma once
 
 #include "mve/renderer.hpp"
-#include "world_renderer.hpp"
 #include "world_generator.hpp"
+#include "world_renderer.hpp"
 
 // TODO: Make hotbar blocks 3D
 
@@ -28,6 +28,13 @@ public:
     [[nodiscard]] mve::Vector3i player_block_pos() const;
 
     [[nodiscard]] mve::Vector3i player_chunk_pos() const;
+
+    [[nodiscard]] std::optional<const ChunkData*> chunk_data_at(mve::Vector3i chunk_pos) const;
+
+    [[nodiscard]] inline const WorldData& world_data() const
+    {
+        return m_world_data;
+    }
 
 private:
     struct ChunkState {

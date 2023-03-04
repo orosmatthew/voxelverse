@@ -4,6 +4,8 @@
 #include <optional>
 #include <unordered_map>
 
+#include <cereal/types/unordered_map.hpp>
+
 #include "chunk_data.hpp"
 #include "mve/math/math.hpp"
 
@@ -143,6 +145,12 @@ public:
     static inline bool is_block_height_world_valid(int height)
     {
         return height >= -160 && height < 160;
+    }
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(m_chunks);
     }
 
 private:

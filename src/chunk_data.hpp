@@ -1,9 +1,12 @@
 #pragma once
 
+#include <array>
 #include <stdint.h>
 
-#include "mve/math/math.hpp"
+#include <cereal/types/array.hpp>
+
 #include "common.hpp"
+#include "mve/math/math.hpp"
 
 inline mve::Vector3i direction_vector(Direction dir)
 {
@@ -54,7 +57,7 @@ public:
     void set_block(mve::Vector3i pos, uint8_t type);
     inline uint8_t get_block(mve::Vector3i pos) const
     {
-        return m_block_data[pos.x][pos.y][pos.z];
+        return m_block_data[index(pos)];
     }
 
     inline int block_count() const
@@ -64,9 +67,29 @@ public:
 
     bool in_bounds(mve::Vector3i pos) const;
 
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(m_pos, m_block_data, m_block_count);
+    }
+
 private:
+    static inline size_t index(mve::Vector3i pos)
+    {
+        return pos.x + pos.y * sc_chunk_size + pos.z * sc_chunk_size * sc_chunk_size;
+    }
+
+    static inline mve::Vector3i pos(size_t index)
+    {
+        mve::Vector3i vector;
+        vector.x = index % sc_chunk_size;
+        vector.y = (index / sc_chunk_size) % sc_chunk_size;
+        vector.z = index / (sc_chunk_size * sc_chunk_size);
+        return vector;
+    }
+
     static const int sc_chunk_size = 16;
     mve::Vector3i m_pos;
-    uint8_t m_block_data[sc_chunk_size][sc_chunk_size][sc_chunk_size] = { 0 };
+    std::array<uint8_t, sc_chunk_size* sc_chunk_size* sc_chunk_size> m_block_data = { 0 };
     int m_block_count = 0;
 };

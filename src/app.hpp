@@ -20,6 +20,8 @@ public:
 private:
     void draw();
 
+    void save_world();
+
     mve::Window m_window;
     mve::Renderer m_renderer;
     UIRenderer m_ui_renderer;
