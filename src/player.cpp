@@ -2,12 +2,11 @@
 
 #include <limits>
 
-#include "logger.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 
 Player::Player()
-    : m_body_transform(mve::Matrix4::identity())
+    : m_body_transform(mve::Matrix4::identity().translate({ 0, 0, 2 }))
     , m_head_transform(mve::Matrix4::identity())
     , m_prev_pos(mve::Vector3(0, 0, 0))
     , m_friction(0.3f)

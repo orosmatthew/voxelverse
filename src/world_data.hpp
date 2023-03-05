@@ -20,6 +20,9 @@ public:
 
     inline void remove_chunk(mve::Vector3i chunk_pos)
     {
+        if (m_save_queue.contains(chunk_pos)) {
+            process_save_queue();
+        }
         m_chunks.erase(chunk_pos);
     }
 
@@ -94,6 +97,8 @@ public:
     {
         return m_chunks.contains(chunk_pos);
     }
+
+    bool try_load_chunk_from_save(mve::Vector3i chunk_pos);
 
     static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
     {
