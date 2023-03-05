@@ -2,15 +2,27 @@
 
 #include <chrono>
 
+#include <cereal/cereal.hpp>
+
 #include "common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
+#include "util/fixed_loop.hpp"
+
+namespace leveldb {
+class DB;
+}
 
 class WorldData;
 
 class Player {
+
+    friend cereal::access;
+
 public:
-    Player();
+    explicit Player();
+
+    ~Player();
 
     void update(const mve::Window& window);
     void fixed_update(const mve::Window& window, const WorldData& data);
@@ -57,7 +69,15 @@ private:
                  { mve::Vector3(pos) + mve::Vector3(0.3f, 0.3f, 0.18f) } };
     }
 
+    void save_pos();
+
     bool is_on_ground(const WorldData& data) const;
+
+    template <class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(m_body_transform, m_head_transform, m_prev_pos, m_velocity, m_is_flying);
+    }
 
     mve::Matrix4 m_body_transform;
     mve::Matrix4 m_head_transform;
@@ -69,6 +89,8 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_last_jump_time;
     std::chrono::time_point<std::chrono::steady_clock> m_last_space_time;
     bool m_is_flying;
+    util::FixedLoop m_save_loop;
+    leveldb::DB* m_save_db;
 
     static mve::Vector3 move_and_slide(
         BoundingBox box, mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);

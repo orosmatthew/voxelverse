@@ -1,7 +1,12 @@
 #include "player.hpp"
 
+#include <filesystem>
 #include <limits>
 
+#include <cereal/archives/portable_binary.hpp>
+#include <leveldb/db.h>
+
+#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 
@@ -15,7 +20,26 @@ Player::Player()
     , m_last_jump_time(std::chrono::steady_clock::now())
     , m_last_space_time(std::chrono::steady_clock::now())
     , m_is_flying(false)
+    , m_save_loop(1.0f)
 {
+    // TODO: Abstract leveldb management in its own class
+    MVE_ASSERT(std::filesystem::exists("save"), "[Player] save dir does not exit")
+    leveldb::Options db_options;
+    db_options.create_if_missing = true;
+    db_options.compression = leveldb::kNoCompression;
+    db_options.max_file_size = 1024 * 1024; // 1 MB
+    leveldb::Status db_status = leveldb::DB::Open(db_options, "save/player", &m_save_db);
+    MVE_ASSERT(db_status.ok(), "[Player] Leveldb open not ok")
+
+    std::string pos_data;
+    db_status = m_save_db->Get(leveldb::ReadOptions(), "pos", &pos_data);
+    if (!db_status.IsNotFound()) {
+        std::stringstream data_stream(pos_data);
+        cereal::PortableBinaryInputArchive archive_in(data_stream);
+        archive_in(*this);
+        m_body_transform = m_body_transform.translate({ 0, 0, 0.5 });
+    }
+    MVE_ASSERT(db_status.ok(), "[Player] Failed to get pos data")
 }
 
 void Player::update(const mve::Window& window)
@@ -54,6 +78,7 @@ void Player::update(const mve::Window& window)
             m_last_space_time = now;
         }
     }
+    m_save_loop.update(1, [this]() { save_pos(); });
 }
 void Player::fixed_update(const mve::Window& window, const WorldData& data)
 {
@@ -205,4 +230,18 @@ bool Player::is_on_ground(const WorldData& data) const
         }
     });
     return is_on_ground;
+}
+Player::~Player()
+{
+    save_pos();
+    delete m_save_db;
+}
+void Player::save_pos()
+{
+    std::stringstream data;
+    {
+        cereal::PortableBinaryOutputArchive archive_out(data);
+        archive_out(*this);
+    }
+    m_save_db->Put(leveldb::WriteOptions(), "pos", data.str());
 }

@@ -1,5 +1,7 @@
 #include "world_data.hpp"
 
+#include <filesystem>
+
 #include <cereal/archives/portable_binary.hpp>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
@@ -9,11 +11,12 @@
 
 WorldData::WorldData()
 {
+    MVE_ASSERT(std::filesystem::exists("save"), "[WorldData] save dir does not exist")
     leveldb::Options db_options;
     db_options.create_if_missing = true;
     db_options.compression = leveldb::kNoCompression;
     db_options.max_file_size = 16 * 1024 * 1024; // 16 MB
-    leveldb::Status db_status = leveldb::DB::Open(db_options, "save", &m_save_db);
+    leveldb::Status db_status = leveldb::DB::Open(db_options, "save/world_data", &m_save_db);
     MVE_ASSERT(db_status.ok(), "[App] Leveldb open not ok")
 }
 

@@ -9,9 +9,27 @@
 
 namespace mve {
 template <class Archive>
-inline void serialize(Archive& archive, mve::Vector3i& m)
+inline void serialize(Archive& archive, Vector3i& v)
 {
-    archive(m.x, m.y, m.z);
+    archive(v.x, v.y, v.z);
+}
+
+template <class Archive>
+inline void serialize(Archive& archive, Matrix4& m)
+{
+    archive(m.col0, m.col1, m.col2, m.col3);
+}
+
+template <class Archive>
+inline void serialize(Archive& archive, Vector4& v)
+{
+    archive(v.x, v.y, v.z, v.w);
+}
+
+template <class Archive>
+inline void serialize(Archive& archive, Vector3& v)
+{
+    archive(v.x, v.y, v.z);
 }
 }
 
