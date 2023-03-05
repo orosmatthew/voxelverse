@@ -55,10 +55,10 @@ private:
     WorldGenerator m_world_generator;
     WorldData m_world_data;
     int m_mesh_updates_per_frame;
-    Player m_camera;
+    Player m_player;
     std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;
     std::vector<mve::Vector2i> m_sorted_chunks;
-    mve::Vector2i m_camera_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
+    mve::Vector2i m_player_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;
     int m_current_hotbar_select = 0;
     std::unordered_map<int, uint8_t> m_hotbar_blocks {};

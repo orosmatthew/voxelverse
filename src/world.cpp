@@ -1,12 +1,11 @@
 #include "world.hpp"
 
-#include <cereal/archives/portable_binary.hpp>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 #include <lz4hc.h>
 
-#include "mve/common.hpp"
-
+#include "common.hpp"
+#include "logger.hpp"
 #include "ui_renderer.hpp"
 
 World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_renderer, int render_distance)
@@ -34,7 +33,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
 
 void World::fixed_update()
 {
-    m_camera.fixed_update(*m_window, m_world_data);
+    m_player.fixed_update(*m_window, m_world_data);
 }
 
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
@@ -140,6 +139,13 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
             mve::Vector3i place_pos { static_cast<int>(mve::round(block_pos.x + collision.normal.x)),
                                       static_cast<int>(mve::round(block_pos.y + collision.normal.y)),
                                       static_cast<int>(mve::round(block_pos.z + collision.normal.z)) };
+            BoundingBox player_box = camera.bounding_box();
+            BoundingBox broadphase_box = swept_broadphase_box(camera.velocity(), player_box);
+            BoundingBox place_bb = { { mve::Vector3(place_pos) - mve::Vector3(0.5f) },
+                                     { mve::Vector3(place_pos) + mve::Vector3(0.5f) } };
+            if (collides(broadphase_box, place_bb)) {
+                break;
+            }
             if (!world_data.block_at(place_pos).has_value() || world_data.block_at(place_pos).value() != 0) {
                 break;
             }
@@ -198,18 +204,18 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
 void World::update(bool mouse_captured, float blend)
 {
     if (mouse_captured) {
-        m_camera.update(*m_window);
+        m_player.update(*m_window);
     }
 
-    m_world_renderer.set_view(m_camera.view_matrix(blend));
+    m_world_renderer.set_view(m_player.view_matrix(blend));
 
     if (m_window->is_mouse_button_pressed(mve::MouseButton::left)) {
-        trigger_break_block(m_camera, m_world_data, m_world_renderer);
+        trigger_break_block(m_player, m_world_data, m_world_renderer);
     }
 
     if (m_window->is_mouse_button_pressed(mve::MouseButton::right)) {
         if (m_hotbar_blocks.contains(m_current_hotbar_select)) {
-            trigger_place_block(m_camera, m_world_data, m_world_renderer, m_hotbar_blocks.at(m_current_hotbar_select));
+            trigger_place_block(m_player, m_world_data, m_world_renderer, m_hotbar_blocks.at(m_current_hotbar_select));
         }
     }
 
@@ -275,8 +281,8 @@ void World::update(bool mouse_captured, float blend)
     }
 
     std::vector<mve::Vector3i> blocks
-        = ray_blocks(m_camera.position(), m_camera.position() + (m_camera.direction() * 10.0f));
-    Ray ray { m_camera.position(), m_camera.direction().normalize() };
+        = ray_blocks(m_player.position(), m_player.position() + (m_player.direction() * 10.0f));
+    Ray ray { m_player.position(), m_player.direction().normalize() };
     m_world_renderer.hide_selection();
     for (mve::Vector3i block_pos : blocks) {
         std::optional<uint8_t> block = m_world_data.block_at(block_pos);
@@ -294,23 +300,23 @@ void World::update(bool mouse_captured, float blend)
     }
 
     // Chunk updates
-    mve::Vector3i current_camera_chunk_3d = WorldData::chunk_pos_from_block_pos(m_camera.position());
-    mve::Vector2i current_camera_chunk = { current_camera_chunk_3d.x, current_camera_chunk_3d.y };
-    if (current_camera_chunk != m_camera_chunk) {
-        m_camera_chunk = current_camera_chunk;
+    mve::Vector3i current_player_chunk_3d = WorldData::chunk_pos_from_block_pos(m_player.block_position());
+    mve::Vector2i current_player_chunk = { current_player_chunk_3d.x, current_player_chunk_3d.y };
+    if (current_player_chunk != m_player_chunk) {
+        m_player_chunk = current_player_chunk;
         m_sorted_chunks.clear();
         m_sorted_chunks.reserve(m_chunk_states.size());
         for (auto& [pos, data] : m_chunk_states) {
-            if (mve::abs(mve::sqrd(pos.x - m_camera_chunk.x) + mve::sqrd(pos.y - m_camera_chunk.y))
+            if (mve::abs(mve::sqrd(pos.x - m_player_chunk.x) + mve::sqrd(pos.y - m_player_chunk.y))
                 > mve::sqrd(m_render_distance)) {
                 data.should_delete = true;
             }
         }
         for_2d(
-            mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
-            mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y),
+            mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_player_chunk.x, m_player_chunk.y),
+            mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_player_chunk.x, m_player_chunk.y),
             [&](mve::Vector2i pos) {
-                if (mve::abs(mve::sqrd(pos.x - m_camera_chunk.x) + mve::sqrd(pos.y - m_camera_chunk.y))
+                if (mve::abs(mve::sqrd(pos.x - m_player_chunk.x) + mve::sqrd(pos.y - m_player_chunk.y))
                     <= mve::sqrd(m_render_distance)) {
                     if (!m_chunk_states.contains(pos)) {
                         m_chunk_states[pos] = {};
@@ -324,8 +330,8 @@ void World::update(bool mouse_captured, float blend)
             m_sorted_chunks.push_back(pos);
         }
         std::sort(m_sorted_chunks.begin(), m_sorted_chunks.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-            return mve::distance_sqrd(a, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y))
-                < mve::distance_sqrd(b, mve::Vector2i(m_camera_chunk.x, m_camera_chunk.y));
+            return mve::distance_sqrd(a, mve::Vector2i(m_player_chunk.x, m_player_chunk.y))
+                < mve::distance_sqrd(b, mve::Vector2i(m_player_chunk.x, m_player_chunk.y));
         });
     }
 
@@ -426,15 +432,15 @@ void World::resize()
 }
 void World::draw()
 {
-    m_world_renderer.draw(m_camera);
+    m_world_renderer.draw(m_player);
 }
 mve::Vector3i World::player_block_pos() const
 {
-    return m_camera.position().round();
+    return m_player.block_position();
 }
 mve::Vector3i World::player_chunk_pos() const
 {
-    return WorldData::chunk_pos_from_block_pos(m_camera.position().round());
+    return WorldData::chunk_pos_from_block_pos(m_player.block_position());
 }
 std::optional<const ChunkData*> World::chunk_data_at(mve::Vector3i chunk_pos) const
 {

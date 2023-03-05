@@ -39,7 +39,6 @@ Player::Player()
         archive_in(*this);
         m_body_transform = m_body_transform.translate({ 0, 0, 0.5 });
     }
-    MVE_ASSERT(db_status.ok(), "[Player] Failed to get pos data")
 }
 
 void Player::update(const mve::Window& window)
@@ -217,7 +216,7 @@ bool Player::is_on_ground(const WorldData& data) const
     BoundingBox bb = bounding_box();
     bb.min += mve::Vector3(0.001f, 0.001f, -0.001f);
     bb.max += mve::Vector3(-0.001f, -0.001f, -0.001f);
-    mve::Vector3i block_pos = (m_body_transform.translation() - mve::Vector3(0.0f, 0.0f, 1.5f)).round();
+    mve::Vector3i block_pos = block_position();
     bool is_on_ground = false;
     for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
         BoundingBox block_bb {

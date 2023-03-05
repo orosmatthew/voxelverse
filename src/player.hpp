@@ -32,6 +32,11 @@ public:
         return m_body_transform.translation();
     }
 
+    inline mve::Vector3i block_position() const
+    {
+        return m_body_transform.translate({ 0.0f, 0.0f, -1.62f }).translation().round();
+    }
+
     inline mve::Matrix4 view_matrix(float interpolation_weight) const
     {
         mve::Matrix4 transform = m_head_transform * m_body_transform;
@@ -61,7 +66,6 @@ public:
         return { 0, 0, 1 };
     }
 
-private:
     inline BoundingBox bounding_box() const
     {
         mve::Vector3 pos = m_body_transform.translation();
@@ -69,6 +73,12 @@ private:
                  { mve::Vector3(pos) + mve::Vector3(0.3f, 0.3f, 0.18f) } };
     }
 
+    inline mve::Vector3 velocity() const
+    {
+        return m_velocity;
+    }
+
+private:
     void save_pos();
 
     bool is_on_ground(const WorldData& data) const;
