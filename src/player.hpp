@@ -17,7 +17,7 @@ class Player {
     friend cereal::access;
 
 public:
-    explicit Player();
+    Player();
 
     ~Player();
 

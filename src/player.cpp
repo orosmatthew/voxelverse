@@ -1,11 +1,9 @@
 #include "player.hpp"
 
 #include <filesystem>
-#include <limits>
 
 #include <cereal/archives/portable_binary.hpp>
 
-#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 
@@ -22,12 +20,12 @@ Player::Player()
     , m_save_loop(1.0f)
     , m_save(1024 * 1024, "player")
 {
-    std::optional<std::string> pos_data = m_save.at("pos");
-    if (pos_data.has_value()) {
-        std::stringstream data_stream(*pos_data);
+    std::optional<std::string> player_data = m_save.at<std::string>("pos");
+    if (player_data.has_value()) {
+        std::stringstream data_stream(*player_data);
         cereal::PortableBinaryInputArchive archive_in(data_stream);
         archive_in(*this);
-        m_body_transform = m_body_transform.translate({ 0, 0, 0.5 });
+        m_body_transform = m_body_transform.translate({ 0, 0, 1 });
     }
 }
 
@@ -226,10 +224,5 @@ Player::~Player()
 }
 void Player::save_pos()
 {
-    std::stringstream data;
-    {
-        cereal::PortableBinaryOutputArchive archive_out(data);
-        archive_out(*this);
-    }
-    m_save.insert("pos", data.str());
+    m_save.insert<std::string, Player>("pos", *this);
 }

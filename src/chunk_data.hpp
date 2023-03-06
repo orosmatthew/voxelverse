@@ -52,6 +52,8 @@ inline Direction opposite_direction(Direction dir)
 
 class ChunkData {
 public:
+    ChunkData();
+
     explicit ChunkData(mve::Vector3i chunk_pos);
 
     inline void set_modified_callback(std::function<void(mve::Vector3i, const ChunkData&)> func)

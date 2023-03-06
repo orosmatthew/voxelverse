@@ -1,5 +1,10 @@
 #include "chunk_data.hpp"
 
+ChunkData::ChunkData()
+    : m_pos(mve::Vector3i(0.0f))
+{
+}
+
 ChunkData::ChunkData(mve::Vector3i chunk_pos)
     : m_pos(chunk_pos)
 {

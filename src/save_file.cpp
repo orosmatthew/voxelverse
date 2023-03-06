@@ -2,6 +2,9 @@
 
 #include <filesystem>
 
+#include <cereal/archives/portable_binary.hpp>
+#include <lz4.h>
+
 #include "mve/common.hpp"
 
 SaveFile::SaveFile(size_t max_file_size, const std::string& name)
@@ -28,16 +31,45 @@ std::optional<std::string> SaveFile::at(const std::string& key)
         return {};
     }
     MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to get key: " + key)
-    return data;
+    ValueData value_data;
+    std::stringstream data_stream(data);
+    {
+        cereal::PortableBinaryInputArchive archive_in(data_stream);
+        archive_in(value_data);
+    }
+
+    std::vector<char> decompressed_data;
+    decompressed_data.resize(value_data.decompressed_size);
+    int result_size = LZ4_decompress_safe(
+        value_data.data.data(), decompressed_data.data(), value_data.data.size(), decompressed_data.size());
+    MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key);
+    decompressed_data.resize(result_size);
+
+    return std::string(decompressed_data.begin(), decompressed_data.end());
 }
 
 void SaveFile::insert(const std::string& key, const std::string& value)
 {
+
+    std::vector<char> compressed_data(LZ4_compressBound(value.size()));
+    int compressed_size
+        = LZ4_compress_default(value.data(), compressed_data.data(), value.size(), compressed_data.size());
+    MVE_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
+    compressed_data.resize(compressed_size);
+
+    ValueData value_data = ValueData { .decompressed_size = value.size(),
+                                       .data = std::string(compressed_data.begin(), compressed_data.end()) };
+
+    std::stringstream data_stream;
+    {
+        cereal::PortableBinaryOutputArchive archive_out(data_stream);
+        archive_out(value_data);
+    }
     if (m_writing_batch) {
-        m_batch.Put(key, value);
+        m_batch.Put(key, data_stream.str());
     }
     else {
-        leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, value);
+        leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, data_stream.str());
         MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key);
     }
 }

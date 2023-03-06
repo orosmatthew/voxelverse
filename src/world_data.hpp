@@ -26,9 +26,7 @@ public:
     inline void create_chunk(mve::Vector3i chunk_pos)
     {
         m_chunks.insert({ chunk_pos, ChunkData(chunk_pos) });
-        m_chunks.at(chunk_pos).set_modified_callback([this](mve::Vector3i chunk_pos, const ChunkData& chunk_data) {
-            queue_save_chunk(chunk_pos);
-        });
+        m_chunks.at(chunk_pos).set_modified_callback(m_modified_callback);
         queue_save_chunk(chunk_pos);
     }
 
@@ -165,6 +163,9 @@ private:
     void queue_save_chunk(mve::Vector3i pos);
 
     void process_save_queue();
+
+    std::function<void(mve::Vector3i, const ChunkData&)> m_modified_callback
+        = [this](mve::Vector3i chunk_pos, const ChunkData& chunk_data) { queue_save_chunk(chunk_pos); };
 
     std::set<mve::Vector3i> m_save_queue;
     SaveFile m_save;
