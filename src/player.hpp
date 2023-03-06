@@ -7,11 +7,8 @@
 #include "common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
+#include "save_file.hpp"
 #include "util/fixed_loop.hpp"
-
-namespace leveldb {
-class DB;
-}
 
 class WorldData;
 
@@ -100,7 +97,7 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> m_last_space_time;
     bool m_is_flying;
     util::FixedLoop m_save_loop;
-    leveldb::DB* m_save_db;
+    SaveFile m_save;
 
     static mve::Vector3 move_and_slide(
         BoundingBox box, mve::Matrix4& transform, mve::Vector3 velocity, const WorldData& data);

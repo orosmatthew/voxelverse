@@ -3,21 +3,13 @@
 #include <filesystem>
 
 #include <cereal/archives/portable_binary.hpp>
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
 #include <lz4.h>
 
 #include "mve/common.hpp"
 
 WorldData::WorldData()
+    : m_save(16 * 1024 * 1024, "world_data")
 {
-    MVE_ASSERT(std::filesystem::exists("save"), "[WorldData] save dir does not exist")
-    leveldb::Options db_options;
-    db_options.create_if_missing = true;
-    db_options.compression = leveldb::kNoCompression;
-    db_options.max_file_size = 16 * 1024 * 1024; // 16 MB
-    leveldb::Status db_status = leveldb::DB::Open(db_options, "save/world_data", &m_save_db);
-    MVE_ASSERT(db_status.ok(), "[App] Leveldb open not ok")
 }
 
 void WorldData::queue_save_chunk(mve::Vector3i pos)
@@ -31,11 +23,10 @@ void WorldData::queue_save_chunk(mve::Vector3i pos)
 WorldData::~WorldData()
 {
     process_save_queue();
-    delete m_save_db;
 }
 void WorldData::process_save_queue()
 {
-    leveldb::WriteBatch batch;
+    m_save.begin_batch();
     for (mve::Vector3i pos : m_save_queue) {
         const ChunkData& data = m_chunks.at(pos);
         std::stringstream serial_stream;
@@ -55,10 +46,10 @@ void WorldData::process_save_queue()
             archive_out(pos);
         }
         std::string key_data = key_stream.str();
-        batch.Put(key_data, leveldb::Slice(compressed_data.data(), compressed_data.size()));
+        std::string compressed_str = std::string(compressed_data.begin(), compressed_data.end());
+        m_save.insert(key_data, compressed_str);
     }
-    leveldb::Status db_status = m_save_db->Write(leveldb::WriteOptions(), &batch);
-    MVE_ASSERT(db_status.ok(), "[App] Leveldb write not ok")
+    m_save.submit_batch();
     m_save_queue.clear();
 }
 bool WorldData::try_load_chunk_from_save(mve::Vector3i chunk_pos)
@@ -69,16 +60,14 @@ bool WorldData::try_load_chunk_from_save(mve::Vector3i chunk_pos)
         archive_out(chunk_pos);
     }
     std::string key = key_stream.str();
-    std::string compressed_data;
-    leveldb::Status status = m_save_db->Get(leveldb::ReadOptions(), key, &compressed_data);
-    if (status.IsNotFound()) {
+    std::optional<std::string> compressed_data = m_save.at(key);
+    if (!compressed_data.has_value()) {
         return false;
     }
-    MVE_ASSERT(status.ok(), "[WorldData] Failed to load chunk from save")
     std::vector<char> decompressed_data;
     decompressed_data.resize(5000); // TODO: Do this programmatically
     int result_size = LZ4_decompress_safe(
-        compressed_data.data(), decompressed_data.data(), compressed_data.size(), decompressed_data.size());
+        compressed_data->data(), decompressed_data.data(), compressed_data->size(), decompressed_data.size());
     MVE_ASSERT(result_size >= 0, "[WorldData] Failed to decompress chunk data from save")
     decompressed_data.resize(result_size);
     std::stringstream data(std::string(decompressed_data.begin(), decompressed_data.end()));

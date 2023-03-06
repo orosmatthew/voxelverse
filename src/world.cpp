@@ -1,7 +1,5 @@
 #include "world.hpp"
 
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
 #include <lz4hc.h>
 
 #include "common.hpp"

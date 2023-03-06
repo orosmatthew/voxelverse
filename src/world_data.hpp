@@ -7,10 +7,7 @@
 
 #include "chunk_data.hpp"
 #include "mve/math/math.hpp"
-
-namespace leveldb {
-class DB;
-}
+#include "save_file.hpp"
 
 class WorldData {
 public:
@@ -170,6 +167,6 @@ private:
     void process_save_queue();
 
     std::set<mve::Vector3i> m_save_queue;
-    leveldb::DB* m_save_db;
+    SaveFile m_save;
     std::unordered_map<mve::Vector3i, ChunkData> m_chunks {};
 };

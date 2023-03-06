@@ -6,10 +6,6 @@
 
 // TODO: Make hotbar blocks 3D
 
-namespace leveldb {
-class DB;
-}
-
 class UIRenderer;
 
 class World {

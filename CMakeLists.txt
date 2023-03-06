@@ -72,7 +72,8 @@ set(SOURCE_FILES
         src/player.cpp
         src/ui_renderer.cpp
         src/wire_box_mesh.cpp
-        src/world.cpp)
+        src/world.cpp
+        src/save_file.cpp)
 
 set(LIBS
         Vulkan::Vulkan
