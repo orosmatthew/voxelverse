@@ -1,11 +1,11 @@
 #include "player.hpp"
 
-#include <filesystem>
-
 #include <cereal/archives/portable_binary.hpp>
 
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
+
+// TODO: Place/break while holding mouse button
 
 Player::Player()
     : m_body_transform(mve::Matrix4::identity().translate({ 0, 0, 2 }))

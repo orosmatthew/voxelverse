@@ -18,17 +18,18 @@ public:
 
     inline void enable_debug()
     {
-        show_debug = true;
+        m_show_debug = true;
+        update_debug_glyphs();
     }
 
     inline void disable_debug()
     {
-        show_debug = false;
+        m_show_debug = false;
     }
 
     [[nodiscard]] inline bool is_debug_enabled() const
     {
-        return show_debug;
+        return m_show_debug;
     }
 
     void update_fps(int value);
@@ -92,6 +93,7 @@ private:
     };
 
     struct RenderGlyph {
+        bool is_valid;
         mve::UniformBuffer ubo;
         mve::DescriptorSet descriptor_set;
     };
@@ -131,10 +133,9 @@ private:
     int m_current_hotbar_select = 0;
 
     std::unordered_map<char, FontChar> m_font_chars {};
-    std::vector<RenderGlyph> m_render_glyphs;
     std::vector<RenderGlyph> m_debug_glyphs {};
 
-    bool show_debug = false;
+    bool m_show_debug = false;
     int m_fps_value = 0;
     mve::Vector3i m_player_block_pos {};
     mve::Vector3i m_player_chunk_pos {};

@@ -3,7 +3,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "chunk_data.hpp"
 #include "common.hpp"
 #include "logger.hpp"
 #include "mve/math/math.hpp"
@@ -46,7 +45,6 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
 
     mve::VertexData cross_data(c_vertex_layout);
 
-    //    const float cross_scale = 300.0f;
     const float cross_scale = 25.0f;
 
     const mve::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
@@ -146,43 +144,6 @@ UIRenderer::UIRenderer(mve::Renderer& renderer)
 
     FT_Done_Face(font_face);
     FT_Done_FreeType(ft);
-
-    std::string text = "/gamemode creative";
-    float x = 20.0f;
-    float y = 0.0f;
-    float scale = 1.0f;
-    for (auto c = text.begin(); c != text.end(); c++) {
-        if (!m_font_chars.contains(*c)) {
-            LOG->info("INVALID CHAR: {}", static_cast<uint32_t>(*c));
-            continue;
-        }
-        const FontChar& font_char = m_font_chars.at(*c);
-        float x_pos = x + font_char.bearing.x * scale;
-        float y_pos = y - (font_char.size.y - font_char.bearing.y) * scale;
-
-        float w = font_char.size.x * scale;
-        float h = font_char.size.y * scale;
-
-        mve::Matrix4 model = mve::Matrix4::identity();
-        model = model.scale({ w, h, 1.0f });
-        model = model.translate({ x_pos, -y_pos, 0.0f });
-
-        mve::UniformBuffer glyph_ubo = renderer.create_uniform_buffer(m_text_vert_shader.descriptor_set(1).binding(0));
-        mve::DescriptorSet glyph_descriptor_set
-            = m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(1));
-        glyph_descriptor_set.write_binding(m_text_vert_shader.descriptor_set(1).binding(0), glyph_ubo);
-        RenderGlyph render_glyph { .ubo = std::move(glyph_ubo), .descriptor_set = std::move(glyph_descriptor_set) };
-
-        render_glyph.ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
-        render_glyph.ubo.update(
-            m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
-            mve::Vector3(0.0f, 0.0f, 0.0f));
-        render_glyph.descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
-
-        m_render_glyphs.push_back(std::move(render_glyph));
-
-        x += mve::floor(font_char.advance / 64.0f) * scale;
-    }
 }
 
 void UIRenderer::resize()
@@ -215,7 +176,7 @@ void UIRenderer::resize()
                         hotbar_translation + mve::Vector3(first_offset_x + (pos * 20 * 5), -5 * 4, 0) * hotbar_scale));
         }
     }
-    if (show_debug) {
+    if (m_show_debug) {
         update_debug_glyphs();
     }
 }
@@ -250,10 +211,12 @@ void UIRenderer::draw()
     }
     m_renderer->bind_graphics_pipeline(m_text_pipeline);
     m_renderer->bind_vertex_buffer(m_text_vertex_buffer);
-    if (show_debug) {
+    if (m_show_debug) {
         for (const RenderGlyph& glyph : m_debug_glyphs) {
-            m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
-            m_renderer->draw_index_buffer(m_text_index_buffer);
+            if (glyph.is_valid) {
+                m_renderer->bind_descriptor_sets(m_text_descriptor_set, glyph.descriptor_set);
+                m_renderer->draw_index_buffer(m_text_index_buffer);
+            }
         }
     }
 }
@@ -403,7 +366,12 @@ void UIRenderer::update_fps(int value)
 
 void UIRenderer::update_debug_glyphs()
 {
-    m_debug_glyphs.clear();
+    if (!m_show_debug) {
+        return;
+    }
+    for (RenderGlyph& glyph : m_debug_glyphs) {
+        glyph.is_valid = false;
+    }
     char buffer[100];
     std::snprintf(buffer, sizeof(buffer), "fps: %d", m_fps_value);
     mve::Vector2i extent = m_renderer->extent();
@@ -417,13 +385,13 @@ void UIRenderer::update_debug_glyphs()
     y -= 42.0f * scale;
     std::snprintf(buffer, sizeof(buffer), "gpu: %s", m_gpu_name.c_str());
     add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
-    y-= 42.0f * scale;
+    y -= 42.0f * scale;
 #ifdef NDEBUG
     std::snprintf(buffer, sizeof(buffer), "build: optimized");
 #else
     std::snprintf(buffer, sizeof(buffer), "build: debug");
 #endif
-    add_glyphs(m_debug_glyphs, std::string(buffer), {x, y}, scale);
+    add_glyphs(m_debug_glyphs, std::string(buffer), { x, y }, scale);
     y -= 42.0f * scale;
     std::snprintf(
         buffer,
@@ -463,20 +431,36 @@ void UIRenderer::add_glyphs(std::vector<RenderGlyph>& glyphs, const std::string&
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, -y_pos, 0.0f });
 
-        mve::UniformBuffer glyph_ubo
-            = m_renderer->create_uniform_buffer(m_text_vert_shader.descriptor_set(1).binding(0));
-        mve::DescriptorSet glyph_descriptor_set
-            = m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(1));
-        glyph_descriptor_set.write_binding(m_text_vert_shader.descriptor_set(1).binding(0), glyph_ubo);
-        RenderGlyph render_glyph { .ubo = std::move(glyph_ubo), .descriptor_set = std::move(glyph_descriptor_set) };
+        auto it = std::find_if(m_debug_glyphs.begin(), m_debug_glyphs.end(), [](const RenderGlyph& glyph) {
+            return !glyph.is_valid;
+        });
+        if (it != m_debug_glyphs.end()) {
+            it->ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
+            it->ubo.update(
+                m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
+                mve::Vector3(0.0f, 0.0f, 0.0f));
+            it->descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
+            it->is_valid = true;
+        }
+        else {
+            mve::UniformBuffer glyph_ubo
+                = m_renderer->create_uniform_buffer(m_text_vert_shader.descriptor_set(1).binding(0));
+            mve::DescriptorSet glyph_descriptor_set
+                = m_text_pipeline.create_descriptor_set(m_text_vert_shader.descriptor_set(1));
+            glyph_descriptor_set.write_binding(m_text_vert_shader.descriptor_set(1).binding(0), glyph_ubo);
+            RenderGlyph render_glyph {
+                .is_valid = true, .ubo = std::move(glyph_ubo), .descriptor_set = std::move(glyph_descriptor_set)
+            };
 
-        render_glyph.ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
-        render_glyph.ubo.update(
-            m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
-            mve::Vector3(0.0f, 0.0f, 0.0f));
-        render_glyph.descriptor_set.write_binding(m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
+            render_glyph.ubo.update(m_text_vert_shader.descriptor_set(1).binding(0).member("model").location(), model);
+            render_glyph.ubo.update(
+                m_text_vert_shader.descriptor_set(1).binding(0).member("text_color").location(),
+                mve::Vector3(0.0f, 0.0f, 0.0f));
+            render_glyph.descriptor_set.write_binding(
+                m_text_frag_shader.descriptor_set(1).binding(1), font_char.texture);
 
-        glyphs.push_back(std::move(render_glyph));
+            glyphs.push_back(std::move(render_glyph));
+        }
 
         x += mve::floor(font_char.advance / 64.0f) * scale;
     }
