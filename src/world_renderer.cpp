@@ -168,7 +168,6 @@ void WorldRenderer::process_updates(const WorldData& world_data)
                 }
             })
         .wait();
-    m_thread_pool.wait_for_tasks();
     for (const mve::Vector3i& chunk_pos : m_chunk_update_queue) {
         m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*m_renderer);
     }
