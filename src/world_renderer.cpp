@@ -1,20 +1,22 @@
 #include "world_renderer.hpp"
 #include "mve/math/math.hpp"
 
-void WorldRenderer::add_data(const ChunkData& chunk_data, const WorldData& world_data)
+void WorldRenderer::queue_update(mve::Vector3i chunk_pos)
 {
-    ChunkMesh mesh(chunk_data.position(), world_data, *m_renderer);
-    if (m_chunk_mesh_lookup.contains(chunk_data.position())) {
-        m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_data.position())] = std::move(mesh);
+    ChunkMesh mesh;
+    if (m_chunk_mesh_lookup.contains(chunk_pos)) {
+        m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_pos)] = std::move(mesh);
     }
     else {
-        m_chunk_mesh_lookup.insert({ mesh.chunk_position(), m_chunk_meshes.size() });
+        m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_meshes.size() });
         m_chunk_meshes.push_back(std::move(mesh));
     }
+    m_chunk_update_queue.push_back(chunk_pos);
 }
 
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
+    , m_thread_pool()
     , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv"))
     , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv"))
     , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
@@ -150,4 +152,25 @@ void WorldRenderer::delete_debug_box(uint64_t id)
 void WorldRenderer::delete_all_debug_boxes()
 {
     m_debug_boxes.clear();
+}
+void WorldRenderer::process_updates(const WorldData& world_data)
+{
+    std::erase_if(m_chunk_update_queue, [&](const mve::Vector3i& chunk_pos) {
+        return !m_chunk_mesh_lookup.contains(chunk_pos);
+    });
+    m_thread_pool
+        .parallelize_loop(
+            m_chunk_update_queue.size(),
+            [&](const size_t& a, const size_t& b) {
+                for (size_t i = a; i < b; i++) {
+                    ChunkMesh& mesh = *m_chunk_meshes[m_chunk_mesh_lookup[m_chunk_update_queue[i]]];
+                    mesh.create_mesh_data(m_chunk_update_queue[i], world_data);
+                }
+            })
+        .wait();
+    m_thread_pool.wait_for_tasks();
+    for (const mve::Vector3i& chunk_pos : m_chunk_update_queue) {
+        m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*m_renderer);
+    }
+    m_chunk_update_queue.clear();
 }

@@ -90,7 +90,8 @@ set(LIB_INCLUDES
         lib/spirv-reflect-1.3.236/include
         lib/fast-noise-lite-1.0.3/include
         lib/cereal-1.3.2/include
-        lib/lz4-1.9.4/include)
+        lib/lz4-1.9.4/include
+        lib/thread-pool-3.3.0/include)
 
 add_executable(${PROJECT_NAME})
 

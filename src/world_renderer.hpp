@@ -2,6 +2,8 @@
 
 #include <unordered_map>
 
+#include "BS_thread_pool.hpp"
+
 #include "chunk_mesh.hpp"
 #include "common.hpp"
 #include "frustum.hpp"
@@ -14,7 +16,9 @@ class WorldRenderer {
 public:
     explicit WorldRenderer(mve::Renderer& renderer);
 
-    void add_data(const ChunkData& chunk_data, const WorldData& world_data);
+    void queue_update(mve::Vector3i chunk_pos);
+
+    void process_updates(const WorldData& world_data);
 
     bool contains_data(mve::Vector3i position);
 
@@ -71,6 +75,7 @@ private:
     void rebuild_mesh_lookup();
 
     mve::Renderer* m_renderer;
+    BS::thread_pool m_thread_pool;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
     mve::GraphicsPipeline m_graphics_pipeline;
@@ -86,4 +91,5 @@ private:
     Frustum m_frustum;
     SelectionBox m_selection_box;
     std::unordered_map<uint64_t, DebugBox> m_debug_boxes {};
+    std::vector<mve::Vector3i> m_chunk_update_queue {};
 };

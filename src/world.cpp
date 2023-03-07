@@ -12,7 +12,7 @@ World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_render
     , m_ui_renderer(&ui_renderer)
     , m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(2)
+    , m_mesh_updates_per_frame(4)
     , m_render_distance(render_distance)
 {
     m_hotbar_blocks.insert({ 0, 1 });
@@ -161,8 +161,9 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
         }
     }
     for (mve::Vector3i chunk_pos : update_chunks) {
-        world_renderer.add_data(world_data.chunk_data_at(chunk_pos), world_data);
+        world_renderer.queue_update(chunk_pos);
     }
+    world_renderer.process_updates(world_data);
 }
 
 void trigger_break_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer)
@@ -195,8 +196,9 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
         }
     }
     for (mve::Vector3i chunk_pos : update_chunks) {
-        world_renderer.add_data(world_data.chunk_data_at(chunk_pos), world_data);
+        world_renderer.queue_update(chunk_pos);
     }
+    world_renderer.process_updates(world_data);
 }
 
 void World::update(bool mouse_captured, float blend)
@@ -365,9 +367,8 @@ void World::update(bool mouse_captured, float blend)
             chunk_count++;
         }
         if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
-
             for (int h = -10; h < 10; h++) {
-                m_world_renderer.add_data(m_world_data.chunk_data_at({ pos.x, pos.y, h }), m_world_data);
+                m_world_renderer.queue_update({ pos.x, pos.y, h });
             }
             m_chunk_states[pos].has_mesh = true;
             chunk_count++;
@@ -376,6 +377,7 @@ void World::update(bool mouse_captured, float blend)
             break;
         }
     }
+    m_world_renderer.process_updates(m_world_data);
 
     chunk_count = 0;
     for (int i = m_sorted_chunks.size() - 1; i >= 0; i--) {

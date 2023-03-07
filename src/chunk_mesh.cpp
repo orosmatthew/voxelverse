@@ -4,10 +4,10 @@
 #include "mve/math/math.hpp"
 #include "world_renderer.hpp"
 
-ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer)
-    : m_mesh_buffers(create_buffers(chunk_pos, renderer, data))
-    , m_chunk_pos(chunk_pos)
+ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data)
+    : m_chunk_pos(chunk_pos)
 {
+    //    create_mesh_data(chunk_pos, data);
 }
 
 void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
@@ -70,9 +70,9 @@ void ChunkMesh::calc_block_faces(
     }
 }
 
-std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
-    mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data)
+void ChunkMesh::create_mesh_data(mve::Vector3i chunk_pos, const WorldData& world_data)
 {
+    m_chunk_pos = chunk_pos;
     MeshData mesh;
     const ChunkData& chunk_data = world_data.chunk_data_at(chunk_pos);
     for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i local_pos) {
@@ -110,23 +110,19 @@ std::optional<ChunkMesh::MeshBuffers> ChunkMesh::create_buffers(
             }
         }
     });
-    //
-    //    if (empty) {
-    //        return {};
-    //    }
+
+    if (mesh.vertices.empty()) {
+        return;
+    }
 
     mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i) + chunk_pos * 16.0f);
+        vertex_data.push_back(mesh.vertices.at(i) + m_chunk_pos * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
     }
 
-    if (vertex_data.vertex_count() == 0) {
-        return {};
-    }
-
-    return MeshBuffers { renderer.create_vertex_buffer(vertex_data), renderer.create_index_buffer(mesh.indices) };
+    m_vertex_data = { std::move(vertex_data), std::move(mesh.indices) };
 }
 void ChunkMesh::draw(mve::Renderer& renderer) const
 {
@@ -333,4 +329,16 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
     }
 
     return lighting;
+}
+void ChunkMesh::create_buffers(mve::Renderer& renderer)
+{
+    if (!m_vertex_data.has_value()) {
+        return;
+    }
+    m_mesh_buffers
+        = { renderer.create_vertex_buffer(m_vertex_data->first), renderer.create_index_buffer(m_vertex_data->second) };
+    m_vertex_data.reset();
+}
+ChunkMesh::ChunkMesh()
+{
 }

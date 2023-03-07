@@ -10,7 +10,9 @@
 
 class ChunkMesh {
 public:
-    ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data, mve::Renderer& renderer);
+    ChunkMesh();
+
+    ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data);
 
     void draw(mve::Renderer& renderer) const;
 
@@ -18,6 +20,10 @@ public:
     {
         return m_chunk_pos;
     }
+
+    void create_mesh_data(mve::Vector3i chunk_pos, const WorldData& world_data);
+
+    void create_buffers(mve::Renderer& renderer);
 
 private:
     struct MeshData {
@@ -41,7 +47,8 @@ private:
 
     static void add_face_to_mesh(MeshData& data, const FaceData& face);
 
-    static FaceData create_face_mesh(uint8_t block_type, mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting);
+    static FaceData create_face_mesh(
+        uint8_t block_type, mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting);
 
     static void calc_block_faces(
         uint8_t block_type,
@@ -60,9 +67,7 @@ private:
         mve::Vector3i local_block_pos,
         Direction dir);
 
-    static std::optional<MeshBuffers> create_buffers(
-        mve::Vector3i chunk_pos, mve::Renderer& renderer, const WorldData& world_data);
-
-    mve::Vector3i m_chunk_pos;
-    std::optional<MeshBuffers> m_mesh_buffers;
+    mve::Vector3i m_chunk_pos {};
+    std::optional<std::pair<mve::VertexData, std::vector<uint32_t>>> m_vertex_data {};
+    std::optional<MeshBuffers> m_mesh_buffers {};
 };
