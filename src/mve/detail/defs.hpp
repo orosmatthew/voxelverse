@@ -213,6 +213,9 @@ private:
 };
 
 class UniformBuffer {
+
+    friend mve::Renderer;
+
 public:
     inline UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding);
 

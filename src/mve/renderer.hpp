@@ -447,6 +447,13 @@ private:
             vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags());
     };
 
+    static constexpr const size_t c_max_uniform_value_size = std::max(
+        { sizeof(float),
+          sizeof(mve::Vector2),
+          sizeof(mve::Vector3),
+          sizeof(mve::Vector4),
+          sizeof(mve::Matrix3),
+          sizeof(mve::Matrix4) });
     const int c_frames_in_flight;
     vk::Instance m_vk_instance;
     vk::DispatchLoaderDynamic m_vk_loader;
@@ -502,6 +509,43 @@ private:
     std::map<uint32_t, DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
     std::queue<std::function<void(vk::CommandBuffer)>> m_command_buffer_deferred_functions {};
+
+    template <typename T>
+    inline void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, T value, bool persist)
+    {
+        static_assert(sizeof(T) <= c_max_uniform_value_size);
+        uint64_t handle = uniform_buffer.handle();
+        DeferredUniformUpdateData update_data {
+            .counter = persist ? c_frames_in_flight : 1,
+            .handle = handle,
+            .location = location,
+            .data = {},
+            .data_size = sizeof(T)
+        };
+        memcpy(update_data.data.data(), &value, sizeof(T));
+        m_deferred_uniform_updates.push_back(std::move(update_data));
+    }
+
+    struct DeferredUniformUpdateData {
+        int counter;
+        uint64_t handle;
+        UniformLocation location;
+        std::array<std::byte, c_max_uniform_value_size> data;
+        size_t data_size;
+    };
+
+    enum class DescriptorBindingType { uniform_buffer, texture };
+
+    struct DeferredDescriptorWriteData {
+        int counter;
+        DescriptorBindingType data_type;
+        uint64_t data_handle;
+        uint64_t descriptor_handle;
+        uint32_t binding;
+    };
+
+    std::vector<DeferredUniformUpdateData> m_deferred_uniform_updates {};
+    std::vector<DeferredDescriptorWriteData> m_deferred_descriptor_writes {};
 
     void cleanup_vk_swapchain();
 

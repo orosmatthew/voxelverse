@@ -1397,6 +1397,77 @@ void Renderer::begin_frame(const Window& window)
     }
     m_wait_frames_deferred_functions = std::move(continue_defer);
 
+    for (size_t i = 0; i < m_deferred_descriptor_writes.size(); i++) {
+        DeferredDescriptorWriteData& write_data = m_deferred_descriptor_writes[i];
+        vk::DescriptorBufferInfo buffer_info;
+        vk::DescriptorImageInfo image_info;
+        vk::WriteDescriptorSet descriptor_write;
+        switch (write_data.data_type) {
+        case DescriptorBindingType::uniform_buffer:
+            buffer_info
+                = vk::DescriptorBufferInfo()
+                      .setBuffer(m_frames_in_flight[m_current_draw_state.frame_index]
+                                     .uniform_buffers[write_data.data_handle]
+                                     ->buffer.vk_handle)
+                      .setOffset(0)
+                      .setRange(m_frames_in_flight[m_current_draw_state.frame_index]
+                                    .uniform_buffers[write_data.data_handle]
+                                    ->size);
+
+            descriptor_write
+                = vk::WriteDescriptorSet()
+                      .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
+                                     .descriptor_sets[write_data.descriptor_handle]
+                                     ->vk_handle)
+                      .setDstBinding(write_data.binding)
+                      .setDstArrayElement(0)
+                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                      .setDescriptorCount(1)
+                      .setPBufferInfo(&buffer_info);
+
+            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
+            break;
+        case DescriptorBindingType::texture:
+            image_info = vk::DescriptorImageInfo()
+                             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                             .setImageView(m_textures[write_data.data_handle].vk_image_view)
+                             .setSampler(m_textures[write_data.data_handle].vk_sampler);
+
+            descriptor_write
+                = vk::WriteDescriptorSet()
+                      .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
+                                     .descriptor_sets[write_data.descriptor_handle]
+                                     ->vk_handle)
+                      .setDstBinding(write_data.binding)
+                      .setDstArrayElement(0)
+                      .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                      .setDescriptorCount(1)
+                      .setPImageInfo(&image_info);
+
+            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
+            break;
+        }
+        write_data.counter--;
+        if (write_data.counter <= 0) {
+            m_deferred_descriptor_writes.erase(m_deferred_descriptor_writes.begin() + i);
+            i--;
+        }
+    }
+    for (size_t i = 0; i < m_deferred_uniform_updates.size(); i++) {
+        DeferredUniformUpdateData& update_data = m_deferred_uniform_updates[i];
+        update_uniform(
+            update_data.handle,
+            update_data.location,
+            update_data.data.data(),
+            update_data.data_size,
+            m_current_draw_state.frame_index);
+        update_data.counter--;
+        if (update_data.counter <= 0) {
+            m_deferred_uniform_updates.erase(m_deferred_uniform_updates.begin() + i);
+            i--;
+        }
+    }
+
     m_current_draw_state.command_buffer = m_frames_in_flight[m_current_draw_state.frame_index].command_buffer;
 
     auto buffer_begin_info = vk::CommandBufferBeginInfo();
@@ -2176,27 +2247,14 @@ void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffe
 void Renderer::write_descriptor_binding(
     const DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
-    uint32_t binding_num = descriptor_binding.binding();
-    uint64_t texture_handle = texture.handle();
-    uint64_t descriptor_set_handle = descriptor_set.handle();
-    defer_to_all_frames([this, texture_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
-        auto image_info = vk::DescriptorImageInfo()
-                              .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                              .setImageView(m_textures.at(texture_handle).vk_image_view)
-                              .setSampler(m_textures.at(texture_handle).vk_sampler);
-
-        auto descriptor_write
-            = vk::WriteDescriptorSet()
-                  .setDstSet(
-                      this->m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle)->vk_handle)
-                  .setDstBinding(binding_num)
-                  .setDstArrayElement(0)
-                  .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                  .setDescriptorCount(1)
-                  .setPImageInfo(&image_info);
-
-        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
-    });
+    DeferredDescriptorWriteData write_data {
+        .counter = c_frames_in_flight,
+        .data_type = DescriptorBindingType::texture,
+        .data_handle = texture.m_handle,
+        .descriptor_handle = descriptor_set.m_handle,
+        .binding = descriptor_binding.binding()
+    };
+    m_deferred_descriptor_writes.push_back(std::move(write_data));
 }
 
 VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
@@ -2444,28 +2502,14 @@ void Renderer::write_descriptor_binding(
     const ShaderDescriptorBinding& descriptor_binding,
     const UniformBuffer& uniform_buffer)
 {
-    uint32_t binding_num = descriptor_binding.binding();
-    size_t uniform_buffer_handle = uniform_buffer.handle();
-    size_t descriptor_set_handle = descriptor_set.handle();
-    defer_to_all_frames([this, uniform_buffer_handle, descriptor_set_handle, binding_num](uint32_t frame_index) {
-        auto buffer_info
-            = vk::DescriptorBufferInfo()
-                  .setBuffer(
-                      m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle)->buffer.vk_handle)
-                  .setOffset(0)
-                  .setRange(m_frames_in_flight.at(frame_index).uniform_buffers.at(uniform_buffer_handle)->size);
-
-        auto descriptor_write
-            = vk::WriteDescriptorSet()
-                  .setDstSet(m_frames_in_flight.at(frame_index).descriptor_sets.at(descriptor_set_handle)->vk_handle)
-                  .setDstBinding(binding_num)
-                  .setDstArrayElement(0)
-                  .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                  .setDescriptorCount(1)
-                  .setPBufferInfo(&buffer_info);
-
-        this->m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
-    });
+    DeferredDescriptorWriteData write_data {
+        .counter = c_frames_in_flight,
+        .data_type = DescriptorBindingType::uniform_buffer,
+        .data_handle = uniform_buffer.m_handle,
+        .descriptor_handle = descriptor_set.m_handle,
+        .binding = descriptor_binding.binding()
+    };
+    m_deferred_descriptor_writes.push_back(std::move(write_data));
 }
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
@@ -2517,81 +2561,27 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
 
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(float), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<float>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector2 value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector2), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<mve::Vector2>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector3 value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector3), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<mve::Vector3>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector4 value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Vector4), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<mve::Vector4>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Matrix3), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<mve::Matrix3>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix4 value, bool persist)
 {
-    uint64_t handle = uniform_buffer.handle();
-    auto func = [this, handle, location, value](uint32_t frame_index) {
-        this->update_uniform(handle, location, (void*)(&value), sizeof(mve::Matrix4), frame_index);
-    };
-    if (persist) {
-        defer_to_all_frames(func);
-    }
-    else {
-        defer_to_next_frame(func);
-    }
+    update_uniform<mve::Matrix4>(uniform_buffer, location, value, persist);
 }
 
 void Renderer::destroy(Texture& texture)
