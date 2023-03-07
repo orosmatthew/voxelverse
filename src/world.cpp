@@ -149,14 +149,12 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
             }
             world_data.set_block(place_pos, block_type);
             update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
-            std::array<mve::Vector3i, 6> surrounding
-                = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
-                    mve::Vector3i(0, -1, 0), mve::Vector3i(0, 0, 1),  mve::Vector3i(0, 0, -1) };
-            for (mve::Vector3i surround_pos : surrounding) {
+            // TODO: Check chunks only on edges
+            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
                 if (world_data.contains_chunk(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
                     update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
                 }
-            }
+            });
             break;
         }
     }
@@ -184,14 +182,11 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
             world_data.set_block_local(chunk_pos, local_pos, 0);
             update_chunks.insert(chunk_pos);
-            std::array<mve::Vector3i, 6> surrounding
-                = { mve::Vector3i(1, 0, 0),  mve::Vector3i(-1, 0, 0), mve::Vector3i(0, 1, 0),
-                    mve::Vector3i(0, -1, 0), mve::Vector3i(0, 0, 1),  mve::Vector3i(0, 0, -1) };
-            for (mve::Vector3i surround_pos : surrounding) {
-                if (world_data.contains_chunk(chunk_pos + surround_pos)) {
-                    update_chunks.insert(chunk_pos + surround_pos);
+            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
+                if (world_data.contains_chunk(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
+                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
                 }
-            }
+            });
             break;
         }
     }
