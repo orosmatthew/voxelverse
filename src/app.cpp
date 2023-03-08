@@ -70,7 +70,7 @@ void App::main_loop()
             break;
         }
 
-        if (m_window.is_key_pressed(mve::Key::f)) {
+        if (m_window.is_key_pressed(mve::Key::enter) && m_window.is_key_down(mve::Key::left_alt)) {
             if (!m_window.is_fullscreen()) {
                 m_window.fullscreen(true);
             }
