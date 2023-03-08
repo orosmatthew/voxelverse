@@ -373,6 +373,8 @@ public:
 
     void disable_cursor();
 
+    void set_cursor_pos(mve::Vector2 pos);
+
     mve::Vector2 mouse_scroll() const;
 
     [[nodiscard]] bool is_cursor_in_window() const;

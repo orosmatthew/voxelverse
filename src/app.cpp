@@ -85,6 +85,7 @@ void App::main_loop()
                 m_cursor_captured = false;
             }
             else {
+                m_window.set_cursor_pos({ m_window.size().x / 2.0f, m_window.size().y / 2.0f });
                 m_window.disable_cursor();
                 m_cursor_captured = true;
             }

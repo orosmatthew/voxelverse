@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-#include "math/math.hpp"
 #include "common.hpp"
+#include "math/math.hpp"
 
 namespace mve {
 
@@ -457,5 +457,9 @@ void Window::glfw_scroll_callback(GLFWwindow* window, double offset_x, double of
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     instance->m_current_scroll_offset.x += static_cast<float>(offset_x);
     instance->m_current_scroll_offset.y += static_cast<float>(offset_y);
+}
+void Window::set_cursor_pos(mve::Vector2 pos)
+{
+    glfwSetCursorPos(m_glfw_window.get(), static_cast<float>(pos.x), static_cast<float>(pos.y));
 }
 }
