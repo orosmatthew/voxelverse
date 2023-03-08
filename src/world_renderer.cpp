@@ -8,8 +8,21 @@ void WorldRenderer::queue_update(mve::Vector3i chunk_pos)
         m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_pos)] = std::move(mesh);
     }
     else {
-        m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_meshes.size() });
-        m_chunk_meshes.push_back(std::move(mesh));
+        std::optional<size_t> free_index;
+        for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
+            if (!m_chunk_meshes[i].has_value()) {
+                free_index = i;
+                break;
+            }
+        }
+        if (free_index.has_value()) {
+            m_chunk_meshes[*free_index] = std::move(mesh);
+            m_chunk_mesh_lookup.insert({ chunk_pos, *free_index });
+        }
+        else {
+            m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_meshes.size() });
+            m_chunk_meshes.push_back(std::move(mesh));
+        }
     }
     m_chunk_update_queue.push_back(chunk_pos);
 }
