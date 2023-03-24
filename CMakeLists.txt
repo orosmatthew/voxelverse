@@ -70,10 +70,13 @@ set(SOURCE_FILES
         src/world_data.cpp
         src/world_renderer.cpp
         src/player.cpp
-        src/ui_renderer.cpp
+        src/ui_pipeline.cpp
         src/wire_box_mesh.cpp
         src/world.cpp
-        src/save_file.cpp)
+        src/save_file.cpp
+        src/nine_patch.cpp
+        src/ui/hotbar.cpp
+        src/ui/crosshair.cpp)
 
 set(LIBS
         Vulkan::Vulkan

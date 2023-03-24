@@ -3,7 +3,7 @@
 #include "mve/math/math.hpp"
 #include "mve/window.hpp"
 #include "player.hpp"
-#include "ui_renderer.hpp"
+#include "ui_pipeline.hpp"
 #include "util/fixed_loop.hpp"
 #include "world.hpp"
 #include "world_data.hpp"
@@ -22,7 +22,7 @@ private:
 
     mve::Window m_window;
     mve::Renderer m_renderer;
-    UIRenderer m_ui_renderer;
+    UIPipeline m_ui_pipeline;
     World m_world;
     mve::Framebuffer m_world_framebuffer;
     util::FixedLoop m_fixed_loop;

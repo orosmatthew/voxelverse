@@ -2490,6 +2490,9 @@ DescriptorSet Renderer::create_descriptor_set(
 
 void Renderer::bind_graphics_pipeline(const GraphicsPipeline& graphics_pipeline)
 {
+    if (m_current_draw_state.current_pipeline == graphics_pipeline.handle()) {
+        return;
+    }
     m_current_draw_state.command_buffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         m_graphics_pipelines_new.at(graphics_pipeline.handle())->pipeline,

@@ -2,9 +2,14 @@
 
 #include "mve/renderer.hpp"
 
-class UIRenderer {
+struct UIUniformData {
+    mve::DescriptorSet descriptor_set;
+    mve::UniformBuffer buffer;
+};
+
+class UIPipeline {
 public:
-    explicit UIRenderer(mve::Renderer& renderer);
+    explicit UIPipeline(mve::Renderer& renderer);
 
     void resize();
 
@@ -12,9 +17,22 @@ public:
 
     void draw();
 
-    void set_hotbar_select(int pos);
+    void draw_world() const;
 
-    void set_hotbar_block(int pos, uint8_t block_type);
+    void draw(
+        const mve::DescriptorSet& descriptor_set,
+        const mve::VertexBuffer& vertex_buffer,
+        const mve::IndexBuffer& index_buffer) const;
+
+    inline mve::UniformLocation model_location() const
+    {
+        return m_vertex_shader.descriptor_set(1).binding(0).member("model").location();
+    }
+
+    inline const mve::ShaderDescriptorBinding& texture_binding() const
+    {
+        return m_fragment_shader.descriptor_set(1).binding(1);
+    }
 
     inline void enable_debug()
     {
@@ -49,25 +67,33 @@ public:
         m_gpu_name = name;
     }
 
-private:
-    const mve::VertexLayout c_vertex_layout = {
-        mve::VertexAttributeType::vec3, // Position
-        mve::VertexAttributeType::vec3, // Color
-        mve::VertexAttributeType::vec2 // UV
-    };
+    inline const mve::DescriptorSet& global_descriptor_set() const
+    {
+        return m_global_descriptor_set;
+    }
 
+    UIUniformData create_uniform_data();
+
+    void bind() const;
+
+    inline mve::Renderer& renderer()
+    {
+        return *m_renderer;
+    }
+
+    static inline const mve::VertexLayout vertex_layout()
+    {
+        return {
+            mve::VertexAttributeType::vec3, // Position
+            mve::VertexAttributeType::vec3, // Color
+            mve::VertexAttributeType::vec2 // UV
+        };
+    }
+
+private:
     const mve::VertexLayout c_text_vertex_layout = {
         mve::VertexAttributeType::vec3, // Position
         mve::VertexAttributeType::vec2 // UV
-    };
-
-    struct UIMesh {
-        mve::VertexBuffer vertex_buffer;
-        mve::IndexBuffer index_buffer;
-        mve::Texture texture;
-        mve::DescriptorSet descriptor_set;
-        mve::UniformBuffer uniform_buffer;
-        mve::UniformLocation model_location;
     };
 
     struct World {
@@ -76,13 +102,6 @@ private:
         mve::DescriptorSet descriptor_set;
         mve::UniformBuffer uniform_buffer;
         mve::UniformLocation model_location;
-    };
-
-    struct MeshData {
-        std::vector<mve::Vector3> vertices;
-        std::vector<mve::Vector3> colors;
-        std::vector<mve::Vector2> uvs;
-        std::vector<uint32_t> indices;
     };
 
     struct FontChar {
@@ -97,12 +116,6 @@ private:
         mve::UniformBuffer ubo;
         mve::DescriptorSet descriptor_set;
     };
-
-    mve::VertexData create_hotbar_vertex_data() const;
-
-    mve::VertexData create_hotbar_select_vertex_data() const;
-
-    MeshData create_block_face_data(uint8_t block_type) const;
 
     void add_glyphs(std::vector<RenderGlyph>& glyphs, const std::string& text, mve::Vector2 pos, float scale);
 
@@ -125,12 +138,7 @@ private:
     mve::VertexBuffer m_text_vertex_buffer;
     mve::IndexBuffer m_text_index_buffer;
 
-    std::optional<UIMesh> m_cross;
     std::optional<World> m_world;
-    std::optional<UIMesh> m_hotbar;
-    std::optional<UIMesh> m_hotbar_select;
-    std::unordered_map<int, std::optional<UIMesh>> m_hotbar_blocks;
-    int m_current_hotbar_select = 0;
 
     std::unordered_map<char, FontChar> m_font_chars {};
     std::vector<RenderGlyph> m_debug_glyphs {};

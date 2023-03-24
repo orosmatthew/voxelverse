@@ -4,34 +4,30 @@
 
 #include "common.hpp"
 #include "logger.hpp"
-#include "ui_renderer.hpp"
+#include "ui_pipeline.hpp"
 
-World::World(mve::Window& window, mve::Renderer& renderer, UIRenderer& ui_renderer, int render_distance)
-    : m_window(&window)
-    , m_renderer(&renderer)
-    , m_ui_renderer(&ui_renderer)
-    , m_world_renderer(renderer)
+World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, int render_distance)
+    : m_world_renderer(renderer)
     , m_world_generator(1)
     , m_mesh_updates_per_frame(4)
     , m_render_distance(render_distance)
+    , m_hotbar(ui_pipeline)
+    , m_crosshair(ui_pipeline)
 {
-    m_hotbar_blocks.insert({ 0, 1 });
-    m_hotbar_blocks.insert({ 1, 2 });
-    m_hotbar_blocks.insert({ 2, 3 });
-    m_hotbar_blocks.insert({ 3, 4 });
-    m_hotbar_blocks.insert({ 4, 5 });
-    m_hotbar_blocks.insert({ 5, 6 });
-    m_hotbar_blocks.insert({ 6, 7 });
-    m_hotbar_blocks.insert({ 7, 8 });
-    m_hotbar_blocks.insert({ 8, 9 });
-    for (auto& [pos, block] : m_hotbar_blocks) {
-        m_ui_renderer->set_hotbar_block(pos, block);
-    }
+    m_hotbar.set_item(0, 1);
+    m_hotbar.set_item(1, 2);
+    m_hotbar.set_item(2, 3);
+    m_hotbar.set_item(3, 4);
+    m_hotbar.set_item(4, 5);
+    m_hotbar.set_item(5, 6);
+    m_hotbar.set_item(6, 7);
+    m_hotbar.set_item(7, 8);
+    m_hotbar.set_item(8, 9);
 }
 
-void World::fixed_update()
+void World::fixed_update(const mve::Window& window)
 {
-    m_player.fixed_update(*m_window, m_world_data);
+    m_player.fixed_update(window, m_world_data);
 }
 
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
@@ -196,83 +192,73 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
     world_renderer.process_updates(world_data);
 }
 
-void World::update(bool mouse_captured, float blend)
+void World::update(const mve::Window& window, bool mouse_captured, float blend)
 {
     if (mouse_captured) {
-        m_player.update(*m_window);
+        m_player.update(window);
     }
 
     m_world_renderer.set_view(m_player.view_matrix(blend));
 
-    if (m_window->is_mouse_button_pressed(mve::MouseButton::left)) {
+    if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
         trigger_break_block(m_player, m_world_data, m_world_renderer);
     }
 
-    if (m_window->is_mouse_button_pressed(mve::MouseButton::right)) {
-        if (m_hotbar_blocks.contains(m_current_hotbar_select)) {
-            trigger_place_block(m_player, m_world_data, m_world_renderer, m_hotbar_blocks.at(m_current_hotbar_select));
+    if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
+        if (m_hotbar.item_at(m_hotbar.select_pos()).has_value()) {
+            trigger_place_block(m_player, m_world_data, m_world_renderer, *m_hotbar.item_at(m_hotbar.select_pos()));
         }
     }
 
-    mve::Vector2 scroll = m_window->mouse_scroll();
+    mve::Vector2 scroll = window.mouse_scroll();
     int scroll_y = static_cast<int>(scroll.y);
     if (scroll_y != 0) {
         for (int i = 0; i < mve::abs(scroll_y); i++) {
             if (scroll_y < 0) {
-                if (m_current_hotbar_select + 1 > 8) {
-                    m_current_hotbar_select = 0;
+                if (m_hotbar.select_pos() + 1 > 8) {
+                    m_hotbar.update_hotbar_select(0);
                 }
                 else {
-                    m_current_hotbar_select++;
+                    m_hotbar.update_hotbar_select(m_hotbar.select_pos() + 1);
                 }
             }
             else {
-                if (m_current_hotbar_select - 1 < 0) {
-                    m_current_hotbar_select = 8;
+                if (m_hotbar.select_pos() - 1 < 0) {
+                    m_hotbar.update_hotbar_select(8);
                 }
                 else {
-                    m_current_hotbar_select--;
+                    m_hotbar.update_hotbar_select(m_hotbar.select_pos() - 1);
                 }
             }
         }
-        m_ui_renderer->set_hotbar_select(m_current_hotbar_select);
     }
 
-    if (m_window->is_key_pressed(mve::Key::one)) {
-        m_current_hotbar_select = 0;
-        m_ui_renderer->set_hotbar_select(0);
+    if (window.is_key_pressed(mve::Key::one)) {
+        m_hotbar.update_hotbar_select(0);
     }
-    if (m_window->is_key_pressed(mve::Key::two)) {
-        m_current_hotbar_select = 1;
-        m_ui_renderer->set_hotbar_select(1);
+    if (window.is_key_pressed(mve::Key::two)) {
+        m_hotbar.update_hotbar_select(1);
     }
-    if (m_window->is_key_pressed(mve::Key::three)) {
-        m_current_hotbar_select = 2;
-        m_ui_renderer->set_hotbar_select(2);
+    if (window.is_key_pressed(mve::Key::three)) {
+        m_hotbar.update_hotbar_select(2);
     }
-    if (m_window->is_key_pressed(mve::Key::four)) {
-        m_current_hotbar_select = 3;
-        m_ui_renderer->set_hotbar_select(3);
+    if (window.is_key_pressed(mve::Key::four)) {
+        m_hotbar.update_hotbar_select(3);
     }
-    if (m_window->is_key_pressed(mve::Key::five)) {
-        m_current_hotbar_select = 4;
-        m_ui_renderer->set_hotbar_select(4);
+    if (window.is_key_pressed(mve::Key::five)) {
+        m_hotbar.update_hotbar_select(4);
     }
-    if (m_window->is_key_pressed(mve::Key::six)) {
-        m_current_hotbar_select = 5;
-        m_ui_renderer->set_hotbar_select(5);
+    if (window.is_key_pressed(mve::Key::six)) {
+        m_hotbar.update_hotbar_select(5);
     }
-    if (m_window->is_key_pressed(mve::Key::seven)) {
-        m_current_hotbar_select = 6;
-        m_ui_renderer->set_hotbar_select(6);
+    if (window.is_key_pressed(mve::Key::seven)) {
+        m_hotbar.update_hotbar_select(6);
     }
-    if (m_window->is_key_pressed(mve::Key::eight)) {
-        m_current_hotbar_select = 7;
-        m_ui_renderer->set_hotbar_select(7);
+    if (window.is_key_pressed(mve::Key::eight)) {
+        m_hotbar.update_hotbar_select(7);
     }
-    if (m_window->is_key_pressed(mve::Key::nine)) {
-        m_current_hotbar_select = 8;
-        m_ui_renderer->set_hotbar_select(8);
+    if (window.is_key_pressed(mve::Key::nine)) {
+        m_hotbar.update_hotbar_select(8);
     }
 
     std::vector<mve::Vector3i> blocks
@@ -421,13 +407,16 @@ void World::update(bool mouse_captured, float blend)
     }
 }
 
-void World::resize()
+void World::resize(mve::Vector2i extent)
 {
     m_world_renderer.resize();
+    m_hotbar.resize(extent);
 }
 void World::draw()
 {
     m_world_renderer.draw(m_player);
+    m_crosshair.draw();
+    m_hotbar.draw();
 }
 mve::Vector3i World::player_block_pos() const
 {
