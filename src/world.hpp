@@ -2,8 +2,11 @@
 
 #include "mve/renderer.hpp"
 #include "nine_patch.hpp"
+#include "text_pipeline.hpp"
 #include "ui/crosshair.hpp"
+#include "ui/debug_overlay.hpp"
 #include "ui/hotbar.hpp"
+#include "ui/hud.hpp"
 #include "world_generator.hpp"
 #include "world_renderer.hpp"
 
@@ -13,7 +16,7 @@ class UIPipeline;
 
 class World {
 public:
-    World(mve::Renderer& renderer, UIPipeline& ui_pipeline, int render_distance);
+    World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance);
 
     inline void set_render_distance(int distance)
     {
@@ -27,6 +30,11 @@ public:
     void resize(mve::Vector2i extent);
 
     void draw();
+
+    inline void update_debug_fps(int fps)
+    {
+        m_hud.update_debug_fps(fps);
+    }
 
     [[nodiscard]] mve::Vector3i player_block_pos() const;
 
@@ -56,6 +64,5 @@ private:
     std::vector<mve::Vector2i> m_sorted_chunks;
     mve::Vector2i m_player_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;
-    Hotbar m_hotbar;
-    Crosshair m_crosshair;
+    HUD m_hud;
 };

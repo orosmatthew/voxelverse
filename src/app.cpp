@@ -10,7 +10,8 @@ App::App()
     : m_window("Mini Vulkan Engine", mve::Vector2i(800, 600))
     , m_renderer(m_window, "Vulkan Testing", 0, 0, 1)
     , m_ui_pipeline(m_renderer)
-    , m_world(m_renderer, m_ui_pipeline, 32)
+    , m_text_pipeline(m_renderer)
+    , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
     , m_world_framebuffer(m_renderer.create_framebuffer([this]() {
         m_ui_pipeline.update_framebuffer_texture(
             m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
@@ -28,14 +29,13 @@ App::App()
         m_renderer.resize(m_window);
         m_world.resize(m_renderer.extent());
         m_ui_pipeline.resize();
+        m_text_pipeline.resize();
         draw();
     };
 
     m_window.set_resize_callback(resize_func);
 
     std::invoke(resize_func, m_window.size());
-
-    m_ui_pipeline.update_gpu_name(m_renderer.gpu_name());
 }
 
 void App::draw()
@@ -51,8 +51,6 @@ void App::draw()
     m_renderer.begin_render_pass_present();
 
     m_ui_pipeline.draw_world();
-
-    m_ui_pipeline.draw();
 
     m_renderer.end_render_pass_present();
 
@@ -93,13 +91,7 @@ void App::main_loop()
             }
         }
 
-        if (m_window.is_key_pressed(mve::Key::f3)) {
-            m_ui_pipeline.is_debug_enabled() ? m_ui_pipeline.disable_debug() : m_ui_pipeline.enable_debug();
-        }
-
-        m_ui_pipeline.update_fps(m_frame_count);
-        m_ui_pipeline.update_player_block_pos(m_world.player_block_pos());
-        m_ui_pipeline.update_player_chunk_pos(m_world.player_chunk_pos());
+        m_world.update_debug_fps(m_frame_count);
 
         draw();
 

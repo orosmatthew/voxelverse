@@ -6,23 +6,14 @@
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
 
-World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, int render_distance)
+World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
     , m_mesh_updates_per_frame(4)
     , m_render_distance(render_distance)
-    , m_hotbar(ui_pipeline)
-    , m_crosshair(ui_pipeline)
+    , m_hud(ui_pipeline, text_pipeline)
 {
-    m_hotbar.set_item(0, 1);
-    m_hotbar.set_item(1, 2);
-    m_hotbar.set_item(2, 3);
-    m_hotbar.set_item(3, 4);
-    m_hotbar.set_item(4, 5);
-    m_hotbar.set_item(5, 6);
-    m_hotbar.set_item(6, 7);
-    m_hotbar.set_item(7, 8);
-    m_hotbar.set_item(8, 9);
+    m_hud.update_debug_gpu_name(renderer.gpu_name());
 }
 
 void World::fixed_update(const mve::Window& window)
@@ -194,6 +185,7 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
 
 void World::update(const mve::Window& window, bool mouse_captured, float blend)
 {
+    m_hud.update_debug_player_block_pos(m_player.block_position());
     if (mouse_captured) {
         m_player.update(window);
     }
@@ -205,8 +197,9 @@ void World::update(const mve::Window& window, bool mouse_captured, float blend)
     }
 
     if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
-        if (m_hotbar.item_at(m_hotbar.select_pos()).has_value()) {
-            trigger_place_block(m_player, m_world_data, m_world_renderer, *m_hotbar.item_at(m_hotbar.select_pos()));
+        if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
+            trigger_place_block(
+                m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
         }
     }
 
@@ -215,50 +208,54 @@ void World::update(const mve::Window& window, bool mouse_captured, float blend)
     if (scroll_y != 0) {
         for (int i = 0; i < mve::abs(scroll_y); i++) {
             if (scroll_y < 0) {
-                if (m_hotbar.select_pos() + 1 > 8) {
-                    m_hotbar.update_hotbar_select(0);
+                if (m_hud.hotbar().select_pos() + 1 > 8) {
+                    m_hud.hotbar().update_hotbar_select(0);
                 }
                 else {
-                    m_hotbar.update_hotbar_select(m_hotbar.select_pos() + 1);
+                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() + 1);
                 }
             }
             else {
-                if (m_hotbar.select_pos() - 1 < 0) {
-                    m_hotbar.update_hotbar_select(8);
+                if (m_hud.hotbar().select_pos() - 1 < 0) {
+                    m_hud.hotbar().update_hotbar_select(8);
                 }
                 else {
-                    m_hotbar.update_hotbar_select(m_hotbar.select_pos() - 1);
+                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() - 1);
                 }
             }
         }
     }
 
     if (window.is_key_pressed(mve::Key::one)) {
-        m_hotbar.update_hotbar_select(0);
+        m_hud.hotbar().update_hotbar_select(0);
     }
     if (window.is_key_pressed(mve::Key::two)) {
-        m_hotbar.update_hotbar_select(1);
+        m_hud.hotbar().update_hotbar_select(1);
     }
     if (window.is_key_pressed(mve::Key::three)) {
-        m_hotbar.update_hotbar_select(2);
+        m_hud.hotbar().update_hotbar_select(2);
     }
     if (window.is_key_pressed(mve::Key::four)) {
-        m_hotbar.update_hotbar_select(3);
+        m_hud.hotbar().update_hotbar_select(3);
     }
     if (window.is_key_pressed(mve::Key::five)) {
-        m_hotbar.update_hotbar_select(4);
+        m_hud.hotbar().update_hotbar_select(4);
     }
     if (window.is_key_pressed(mve::Key::six)) {
-        m_hotbar.update_hotbar_select(5);
+        m_hud.hotbar().update_hotbar_select(5);
     }
     if (window.is_key_pressed(mve::Key::seven)) {
-        m_hotbar.update_hotbar_select(6);
+        m_hud.hotbar().update_hotbar_select(6);
     }
     if (window.is_key_pressed(mve::Key::eight)) {
-        m_hotbar.update_hotbar_select(7);
+        m_hud.hotbar().update_hotbar_select(7);
     }
     if (window.is_key_pressed(mve::Key::nine)) {
-        m_hotbar.update_hotbar_select(8);
+        m_hud.hotbar().update_hotbar_select(8);
+    }
+
+    if (window.is_key_pressed(mve::Key::f3)) {
+        m_hud.toggle_debug();
     }
 
     std::vector<mve::Vector3i> blocks
@@ -410,13 +407,12 @@ void World::update(const mve::Window& window, bool mouse_captured, float blend)
 void World::resize(mve::Vector2i extent)
 {
     m_world_renderer.resize();
-    m_hotbar.resize(extent);
+    m_hud.resize(extent);
 }
 void World::draw()
 {
     m_world_renderer.draw(m_player);
-    m_crosshair.draw();
-    m_hotbar.draw();
+    m_hud.draw();
 }
 mve::Vector3i World::player_block_pos() const
 {

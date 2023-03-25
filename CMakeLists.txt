@@ -76,7 +76,10 @@ set(SOURCE_FILES
         src/save_file.cpp
         src/nine_patch.cpp
         src/ui/hotbar.cpp
-        src/ui/crosshair.cpp)
+        src/ui/crosshair.cpp
+        src/text_pipeline.cpp
+        src/ui/debug_overlay.cpp
+        src/ui/hud.cpp)
 
 set(LIBS
         Vulkan::Vulkan
