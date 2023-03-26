@@ -9,6 +9,9 @@ layout (location = 0) out vec4 out_color;
 
 void main() {
     vec4 sampled = vec4(1.0, 1.0, 1.0, texture(tex_sampler, frag_tex_coord).r);
+    if (sampled.a < 0.0001) {
+        discard;
+    }
     out_color = vec4(frag_text_color, 1.0) * sampled;
     //    out_color = vec4(frag_tex_coord.x, frag_tex_coord.y, 0.0, 1.0);
 }

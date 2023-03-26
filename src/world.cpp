@@ -12,13 +12,14 @@ World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& tex
     , m_mesh_updates_per_frame(4)
     , m_render_distance(render_distance)
     , m_hud(ui_pipeline, text_pipeline)
+    , m_console_enabled(false)
 {
     m_hud.update_debug_gpu_name(renderer.gpu_name());
 }
 
 void World::fixed_update(const mve::Window& window)
 {
-    m_player.fixed_update(window, m_world_data);
+    m_player.fixed_update(window, m_world_data, !m_console_enabled);
 }
 
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
@@ -183,75 +184,91 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
     world_renderer.process_updates(world_data);
 }
 
-void World::update(const mve::Window& window, bool mouse_captured, float blend)
+void World::update(mve::Window& window, float blend)
 {
     m_hud.update_debug_player_block_pos(m_player.block_position());
-    if (mouse_captured) {
+
+    if (!m_console_enabled) {
         m_player.update(window);
     }
 
     m_world_renderer.set_view(m_player.view_matrix(blend));
 
-    if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
-        trigger_break_block(m_player, m_world_data, m_world_renderer);
-    }
-
-    if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
-        if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
-            trigger_place_block(
-                m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+    if (!m_console_enabled) {
+        if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
+            trigger_break_block(m_player, m_world_data, m_world_renderer);
         }
-    }
 
-    mve::Vector2 scroll = window.mouse_scroll();
-    int scroll_y = static_cast<int>(scroll.y);
-    if (scroll_y != 0) {
-        for (int i = 0; i < mve::abs(scroll_y); i++) {
-            if (scroll_y < 0) {
-                if (m_hud.hotbar().select_pos() + 1 > 8) {
-                    m_hud.hotbar().update_hotbar_select(0);
-                }
-                else {
-                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() + 1);
-                }
-            }
-            else {
-                if (m_hud.hotbar().select_pos() - 1 < 0) {
-                    m_hud.hotbar().update_hotbar_select(8);
-                }
-                else {
-                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() - 1);
-                }
+        if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
+            if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
+                trigger_place_block(
+                    m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
             }
         }
+
+        mve::Vector2 scroll = window.mouse_scroll();
+        int scroll_y = static_cast<int>(scroll.y);
+        if (scroll_y != 0) {
+            for (int i = 0; i < mve::abs(scroll_y); i++) {
+                if (scroll_y < 0) {
+                    if (m_hud.hotbar().select_pos() + 1 > 8) {
+                        m_hud.hotbar().update_hotbar_select(0);
+                    }
+                    else {
+                        m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() + 1);
+                    }
+                }
+                else {
+                    if (m_hud.hotbar().select_pos() - 1 < 0) {
+                        m_hud.hotbar().update_hotbar_select(8);
+                    }
+                    else {
+                        m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() - 1);
+                    }
+                }
+            }
+        }
+
+        if (window.is_key_pressed(mve::Key::one)) {
+            m_hud.hotbar().update_hotbar_select(0);
+        }
+        if (window.is_key_pressed(mve::Key::two)) {
+            m_hud.hotbar().update_hotbar_select(1);
+        }
+        if (window.is_key_pressed(mve::Key::three)) {
+            m_hud.hotbar().update_hotbar_select(2);
+        }
+        if (window.is_key_pressed(mve::Key::four)) {
+            m_hud.hotbar().update_hotbar_select(3);
+        }
+        if (window.is_key_pressed(mve::Key::five)) {
+            m_hud.hotbar().update_hotbar_select(4);
+        }
+        if (window.is_key_pressed(mve::Key::six)) {
+            m_hud.hotbar().update_hotbar_select(5);
+        }
+        if (window.is_key_pressed(mve::Key::seven)) {
+            m_hud.hotbar().update_hotbar_select(6);
+        }
+        if (window.is_key_pressed(mve::Key::eight)) {
+            m_hud.hotbar().update_hotbar_select(7);
+        }
+        if (window.is_key_pressed(mve::Key::nine)) {
+            m_hud.hotbar().update_hotbar_select(8);
+        }
+    }
+    else {
+        m_hud.update_console(window);
     }
 
-    if (window.is_key_pressed(mve::Key::one)) {
-        m_hud.hotbar().update_hotbar_select(0);
+    if (!m_console_enabled && window.is_key_pressed(mve::Key::t)) {
+        m_console_enabled = true;
+        window.enable_cursor();
     }
-    if (window.is_key_pressed(mve::Key::two)) {
-        m_hud.hotbar().update_hotbar_select(1);
-    }
-    if (window.is_key_pressed(mve::Key::three)) {
-        m_hud.hotbar().update_hotbar_select(2);
-    }
-    if (window.is_key_pressed(mve::Key::four)) {
-        m_hud.hotbar().update_hotbar_select(3);
-    }
-    if (window.is_key_pressed(mve::Key::five)) {
-        m_hud.hotbar().update_hotbar_select(4);
-    }
-    if (window.is_key_pressed(mve::Key::six)) {
-        m_hud.hotbar().update_hotbar_select(5);
-    }
-    if (window.is_key_pressed(mve::Key::seven)) {
-        m_hud.hotbar().update_hotbar_select(6);
-    }
-    if (window.is_key_pressed(mve::Key::eight)) {
-        m_hud.hotbar().update_hotbar_select(7);
-    }
-    if (window.is_key_pressed(mve::Key::nine)) {
-        m_hud.hotbar().update_hotbar_select(8);
+    else if (m_console_enabled && window.is_key_pressed(mve::Key::escape)) {
+        m_console_enabled = false;
+        window.set_cursor_pos({ window.size().x / 2.0f, window.size().y / 2.0f });
+        window.disable_cursor();
     }
 
     if (window.is_key_pressed(mve::Key::f3)) {

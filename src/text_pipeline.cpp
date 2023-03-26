@@ -35,6 +35,18 @@ TextPipeline::TextPipeline(mve::Renderer& renderer)
 
     m_global_ubo.update(m_vert_shader.descriptor_set(0).binding(0).member("view").location(), mve::Matrix4::identity());
 
+    mve::VertexData cursor_data(c_vertex_layout);
+    cursor_data.push_back({ -0.05f, -1.0f, 0.0f });
+    cursor_data.push_back({ 0.0f, 0.0f });
+    cursor_data.push_back({ 0.05f, -1.0f, 0.0f });
+    cursor_data.push_back({ 1.0f, 0.0f });
+    cursor_data.push_back({ 0.05f, 0.0f, 0.0f });
+    cursor_data.push_back({ 1.0f, 1.0f });
+    cursor_data.push_back({ -0.05f, 0.0f, 0.0f });
+    cursor_data.push_back({ 0.0f, 1.0f });
+    m_cursor_vertex_buffer = renderer.create_vertex_buffer(cursor_data);
+    m_cursor_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+
     FT_Error result;
     FT_Library font_lib;
     result = FT_Init_FreeType(&font_lib);
@@ -74,6 +86,9 @@ TextPipeline::TextPipeline(mve::Renderer& renderer)
     }
     FT_Done_Face(font_face);
     FT_Done_FreeType(font_lib);
+
+    std::byte cursor_texture_data { 255 };
+    m_cursor_texture = renderer.create_texture(mve::TextureFormat::r, 1, 1, &cursor_texture_data);
 }
 
 void TextPipeline::resize()
@@ -96,13 +111,15 @@ TextBuffer TextPipeline::create_text_buffer()
     TextBuffer buffer;
     buffer.m_valid = true;
     buffer.m_pipeline = this;
+    TextBufferImpl buffer_impl
+        = { .render_glyphs = {}, .cursor = {}, .translation = { 0.0f, 0.0f }, .scale = 1.0f, .text_length = 0 };
     if (it != m_text_buffers.end()) {
         buffer.m_handle = it - m_text_buffers.begin();
-        *it = TextBufferImpl {};
+        *it = std::move(buffer_impl);
     }
     else {
         buffer.m_handle = m_text_buffers.size();
-        m_text_buffers.push_back(TextBufferImpl {});
+        m_text_buffers.push_back(std::move(buffer_impl));
     }
     return buffer;
 }
@@ -119,9 +136,14 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Text buffer invalid")
     // TODO: Find a better way to do this
-    for (RenderGlyph& glyph : *m_text_buffers[buffer.m_handle]) {
+    for (RenderGlyph& glyph : m_text_buffers[buffer.m_handle]->render_glyphs) {
         glyph.is_valid = false;
     }
+    MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    buffer_impl.translation = pos;
+    buffer_impl.scale = scale;
+    buffer_impl.text_length = text.length();
     for (auto c = text.begin(); c != text.end(); c++) {
         if (!m_font_chars.contains(*c)) {
             LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(*c));
@@ -137,13 +159,11 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, -y_pos, 0.0f });
 
-        MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
-        TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-
-        auto it = std::find_if(buffer_impl.begin(), buffer_impl.end(), [](const RenderGlyph& glyph) {
-            return !glyph.is_valid;
-        });
-        if (it != buffer_impl.end()) {
+        auto it = std::find_if(
+            buffer_impl.render_glyphs.begin(), buffer_impl.render_glyphs.end(), [](const RenderGlyph& glyph) {
+                return !glyph.is_valid;
+            });
+        if (it != buffer_impl.render_glyphs.end()) {
             it->ubo.update(m_model_location, model);
             it->ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO: Ability to change color
             it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
@@ -165,9 +185,12 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             render_glyph.ubo.update(m_model_location, model);
             render_glyph.ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO
             render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
-            buffer_impl.push_back(std::move(render_glyph));
+            buffer_impl.render_glyphs.push_back(std::move(render_glyph));
         }
         pos.x += mve::floor(font_char.advance / 64.0f) * scale;
+    }
+    if (buffer_impl.cursor.has_value()) {
+        set_cursor_pos(buffer, buffer_impl.cursor_pos);
     }
 }
 
@@ -179,11 +202,16 @@ void TextPipeline::draw(const TextBuffer& buffer) const
     MVE_VAL_ASSERT(
         m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Attempt to draw invalid text buffer")
     const TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-    for (const RenderGlyph& glyph : buffer_impl) {
+    for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         if (glyph.is_valid) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, glyph.descriptor_set);
             m_renderer->draw_index_buffer(m_index_buffer);
         }
+    }
+    if (buffer_impl.cursor.has_value()) {
+        m_renderer->bind_descriptor_sets(m_global_descriptor_set, buffer_impl.cursor->descriptor_set);
+        m_renderer->bind_vertex_buffer(m_cursor_vertex_buffer);
+        m_renderer->draw_index_buffer(m_cursor_index_buffer);
     }
 }
 
@@ -191,8 +219,8 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set translation on invalid text buffer")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-
-    for (RenderGlyph& glyph : buffer_impl) {
+    buffer_impl.translation = pos;
+    for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
         float x_pos = pos.x + font_char.bearing.x * glyph.scale;
@@ -206,4 +234,115 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
         glyph.translation = pos;
         pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
     }
+}
+void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer");
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    buffer_impl.cursor_pos = pos;
+    buffer_impl.cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
+                           .descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1)),
+                           .translation = buffer_impl.translation };
+    buffer_impl.cursor->ubo.update(m_text_color_location, mve::Vector3(0.0f));
+    buffer_impl.cursor->descriptor_set.write_binding(m_glyph_ubo_binding, buffer_impl.cursor->ubo);
+    buffer_impl.cursor->descriptor_set.write_binding(m_texture_binding, m_cursor_texture);
+    set_cursor_pos(buffer, pos);
+}
+void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set cursor position on invalid text buffer");
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    pos = std::clamp(pos, 0, buffer_impl.text_length);
+    buffer_impl.cursor_pos = pos;
+    float x = buffer_impl.translation.x;
+    for (int i = 0; i < buffer_impl.render_glyphs.size() && i < pos; i++) {
+        x += mve::floor(m_font_chars[buffer_impl.render_glyphs[i].character].advance / 64.0f) * buffer_impl.scale;
+    }
+    mve::Matrix4 model = mve::Matrix4::identity()
+                             .scale(mve::Vector3(buffer_impl.scale * 36.0f))
+                             .translate({ x, -buffer_impl.translation.y, 0.0f });
+    buffer_impl.cursor->ubo.update(m_model_location, model);
+}
+void TextPipeline::remove_cursor(const TextBuffer& buffer)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to remove cursor on invalid text buffer");
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    buffer_impl.cursor.reset();
+}
+int TextPipeline::cursor_pos(const TextBuffer& buffer)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to get cursor position on invalid text buffer")
+    return m_text_buffers[buffer.m_handle]->cursor_pos;
+}
+
+void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view text)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Text buffer invalid")
+    // TODO: Find a better way to do this
+    for (RenderGlyph& glyph : m_text_buffers[buffer.m_handle]->render_glyphs) {
+        glyph.is_valid = false;
+    }
+    MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    mve::Vector2 pos = buffer_impl.translation;
+    buffer_impl.text_length = text.length();
+    float scale = buffer_impl.scale;
+    for (auto c = text.begin(); c != text.end(); c++) {
+        if (!m_font_chars.contains(*c)) {
+            LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(*c));
+            continue;
+        }
+        const FontChar& font_char = m_font_chars.at(*c);
+        float x_pos = pos.x + font_char.bearing.x * scale;
+        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * scale;
+        float w = font_char.size.x * scale;
+        float h = font_char.size.y * scale;
+
+        mve::Matrix4 model = mve::Matrix4::identity();
+        model = model.scale({ w, h, 1.0f });
+        model = model.translate({ x_pos, -y_pos, 0.0f });
+
+        auto it = std::find_if(
+            buffer_impl.render_glyphs.begin(), buffer_impl.render_glyphs.end(), [](const RenderGlyph& glyph) {
+                return !glyph.is_valid;
+            });
+        if (it != buffer_impl.render_glyphs.end()) {
+            it->ubo.update(m_model_location, model);
+            it->ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO: Ability to change color
+            it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
+            it->character = *c;
+            it->translation = pos;
+            it->scale = scale;
+            it->is_valid = true;
+        }
+        else {
+            mve::UniformBuffer glyph_ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding);
+            mve::DescriptorSet glyph_descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1));
+            glyph_descriptor_set.write_binding(m_glyph_ubo_binding, glyph_ubo);
+            RenderGlyph render_glyph { .is_valid = true,
+                                       .ubo = std::move(glyph_ubo),
+                                       .descriptor_set = std::move(glyph_descriptor_set),
+                                       .character = *c,
+                                       .translation = pos,
+                                       .scale = scale };
+            render_glyph.ubo.update(m_model_location, model);
+            render_glyph.ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO
+            render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
+            buffer_impl.render_glyphs.push_back(std::move(render_glyph));
+        }
+        pos.x += mve::floor(font_char.advance / 64.0f) * scale;
+    }
+    if (buffer_impl.cursor.has_value()) {
+        set_cursor_pos(buffer, buffer_impl.cursor_pos);
+    }
+}
+
+void TextPipeline::cursor_left(const TextBuffer& buffer)
+{
+    set_cursor_pos(buffer, cursor_pos(buffer) - 1);
+}
+
+void TextPipeline::cursor_right(const TextBuffer& buffer)
+{
+    set_cursor_pos(buffer, cursor_pos(buffer) + 1);
 }

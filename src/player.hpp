@@ -22,7 +22,7 @@ public:
     ~Player();
 
     void update(const mve::Window& window);
-    void fixed_update(const mve::Window& window, const WorldData& data);
+    void fixed_update(const mve::Window& window, const WorldData& data, bool capture_input);
 
     inline mve::Vector3 position() const
     {

@@ -14,6 +14,20 @@ public:
 
     void update_text_buffer(const TextBuffer& buffer, std::string_view text, mve::Vector2 pos, float scale);
 
+    void update_text_buffer(const TextBuffer& buffer, std::string_view text);
+
+    void add_cursor(const TextBuffer& buffer, int pos);
+
+    void set_cursor_pos(const TextBuffer& buffer, int pos);
+
+    void cursor_right(const TextBuffer& buffer);
+
+    void cursor_left(const TextBuffer& buffer);
+
+    int cursor_pos(const TextBuffer& buffer);
+
+    void remove_cursor(const TextBuffer& buffer);
+
     void set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos);
 
     void draw(const TextBuffer& buffer) const;
@@ -37,7 +51,21 @@ private:
         float scale;
     };
 
-    using TextBufferImpl = std::vector<RenderGlyph>;
+    struct Cursor {
+        mve::UniformBuffer ubo;
+        mve::DescriptorSet descriptor_set;
+        mve::Vector2 translation;
+        float scale;
+    };
+
+    struct TextBufferImpl {
+        std::vector<RenderGlyph> render_glyphs;
+        std::optional<Cursor> cursor;
+        int cursor_pos;
+        mve::Vector2 translation;
+        float scale;
+        int text_length;
+    };
 
     const mve::VertexLayout c_vertex_layout = {
         mve::VertexAttributeType::vec3, // Position
@@ -52,6 +80,9 @@ private:
     mve::DescriptorSet m_global_descriptor_set;
     mve::VertexBuffer m_vertex_buffer;
     mve::IndexBuffer m_index_buffer;
+    mve::VertexBuffer m_cursor_vertex_buffer;
+    mve::IndexBuffer m_cursor_index_buffer;
+    mve::Texture m_cursor_texture;
 
     mve::UniformLocation m_model_location;
     mve::UniformLocation m_text_color_location;

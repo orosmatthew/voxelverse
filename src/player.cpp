@@ -67,28 +67,30 @@ void Player::update(const mve::Window& window)
     }
     m_save_loop.update(1, [this]() { save_pos(); });
 }
-void Player::fixed_update(const mve::Window& window, const WorldData& data)
+void Player::fixed_update(const mve::Window& window, const WorldData& data, bool capture_input)
 {
     m_prev_pos = m_body_transform.translation();
     bool on_ground = is_on_ground(data);
     mve::Vector3 dir(0.0f);
-    if (window.is_key_down(mve::Key::w)) {
-        dir.y += 1.0f;
-    }
-    if (window.is_key_down(mve::Key::s)) {
-        dir.y -= 1.0f;
-    }
-    if (window.is_key_down(mve::Key::a)) {
-        dir.x -= 1.0f;
-    }
-    if (window.is_key_down(mve::Key::d)) {
-        dir.x += 1.0f;
-    }
-    if (m_is_flying && window.is_key_down(mve::Key::space)) {
-        dir.z += 1.0f;
-    }
-    if (m_is_flying && window.is_key_down(mve::Key::left_shift)) {
-        dir.z -= 1.0f;
+    if (capture_input) {
+        if (window.is_key_down(mve::Key::w)) {
+            dir.y += 1.0f;
+        }
+        if (window.is_key_down(mve::Key::s)) {
+            dir.y -= 1.0f;
+        }
+        if (window.is_key_down(mve::Key::a)) {
+            dir.x -= 1.0f;
+        }
+        if (window.is_key_down(mve::Key::d)) {
+            dir.x += 1.0f;
+        }
+        if (m_is_flying && window.is_key_down(mve::Key::space)) {
+            dir.z += 1.0f;
+        }
+        if (m_is_flying && window.is_key_down(mve::Key::left_shift)) {
+            dir.z -= 1.0f;
+        }
     }
     dir = dir.rotate(m_body_transform.basis().transpose());
     if (!m_is_flying) {
@@ -106,7 +108,7 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
     }
 
     if (!m_is_flying && on_ground) {
-        if (window.is_key_down(mve::Key::space)
+        if (capture_input && window.is_key_down(mve::Key::space)
             && std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::steady_clock::now() - m_last_jump_time)
                     .count()
@@ -126,7 +128,7 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data)
         }
     }
     else {
-        if (window.is_key_down(mve::Key::left_control)) {
+        if (capture_input && window.is_key_down(mve::Key::left_control)) {
             m_velocity
                 += dir.normalize() * m_acceleration * mve::clamp((30.0f - m_velocity.length()), 0.0f, 1.0f) * 10.0f;
         }

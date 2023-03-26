@@ -25,7 +25,7 @@ public:
 
     void fixed_update(const mve::Window& window);
 
-    void update(const mve::Window& window, bool mouse_captured, float blend);
+    void update(mve::Window& window, float blend);
 
     void resize(mve::Vector2i extent);
 
@@ -34,11 +34,6 @@ public:
     inline void update_debug_fps(int fps)
     {
         m_hud.update_debug_fps(fps);
-    }
-
-    inline void update_console(const mve::Window& window)
-    {
-        m_hud.update_console(window);
     }
 
     [[nodiscard]] mve::Vector3i player_block_pos() const;
@@ -70,4 +65,5 @@ private:
     mve::Vector2i m_player_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;
     HUD m_hud;
+    bool m_console_enabled;
 };

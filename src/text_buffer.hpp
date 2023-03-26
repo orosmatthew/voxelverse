@@ -49,9 +49,44 @@ public:
         m_pipeline->update_text_buffer(*this, text, pos, scale);
     }
 
+    inline void update(std::string_view text) const
+    {
+        m_pipeline->update_text_buffer(*this, text);
+    }
+
     inline void set_translation(mve::Vector2 pos) const
     {
         m_pipeline->set_text_buffer_translation(*this, pos);
+    }
+
+    inline void add_cursor(int pos)
+    {
+        m_pipeline->add_cursor(*this, pos);
+    }
+
+    inline void set_cursor_pos(int pos)
+    {
+        m_pipeline->set_cursor_pos(*this, pos);
+    }
+
+    inline void cursor_left() const
+    {
+        m_pipeline->cursor_left(*this);
+    }
+
+    inline void cursor_right() const
+    {
+        m_pipeline->cursor_right(*this);
+    }
+
+    inline void remove_cursor()
+    {
+        m_pipeline->remove_cursor(*this);
+    }
+
+    inline int cursor_pos() const
+    {
+        return m_pipeline->cursor_pos(*this);
     }
 
     inline void draw() const

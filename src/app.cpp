@@ -17,7 +17,6 @@ App::App()
             m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
     }))
     , m_fixed_loop(60.0f)
-    , m_cursor_captured(true)
     , m_begin_time(std::chrono::high_resolution_clock::now())
     , m_current_frame_count(0)
 {
@@ -62,15 +61,9 @@ void App::main_loop()
     while (!m_window.should_close()) {
         m_window.poll_events();
 
-        m_world.update_console(m_window);
-
         m_fixed_loop.update(20, [&]() { m_world.fixed_update(m_window); });
 
-        m_world.update(m_window, m_cursor_captured, m_fixed_loop.blend());
-
-        if (m_window.is_key_pressed(mve::Key::escape)) {
-            break;
-        }
+        m_world.update(m_window, m_fixed_loop.blend());
 
         if (m_window.is_key_pressed(mve::Key::enter) && m_window.is_key_down(mve::Key::left_alt)) {
             if (!m_window.is_fullscreen()) {
@@ -78,18 +71,6 @@ void App::main_loop()
             }
             else {
                 m_window.windowed();
-            }
-        }
-
-        if (m_window.is_key_pressed(mve::Key::c)) {
-            if (m_cursor_captured) {
-                m_window.enable_cursor();
-                m_cursor_captured = false;
-            }
-            else {
-                m_window.set_cursor_pos({ m_window.size().x / 2.0f, m_window.size().y / 2.0f });
-                m_window.disable_cursor();
-                m_cursor_captured = true;
             }
         }
 
@@ -101,11 +82,9 @@ void App::main_loop()
 
         if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - m_begin_time).count() >= 1000000) {
             m_begin_time = std::chrono::high_resolution_clock::now();
-            LOG->info("Framerate: {}", m_current_frame_count);
             m_frame_count = m_current_frame_count;
             m_current_frame_count = 0;
         }
-
         m_current_frame_count++;
     }
 }
