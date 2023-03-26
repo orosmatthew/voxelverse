@@ -104,24 +104,7 @@ void TextPipeline::resize()
 }
 TextBuffer TextPipeline::create_text_buffer()
 {
-    auto it
-        = std::find_if(m_text_buffers.begin(), m_text_buffers.end(), [](const std::optional<TextBufferImpl>& buffer) {
-              return !buffer.has_value();
-          });
-    TextBuffer buffer;
-    buffer.m_valid = true;
-    buffer.m_pipeline = this;
-    TextBufferImpl buffer_impl
-        = { .render_glyphs = {}, .cursor = {}, .translation = { 0.0f, 0.0f }, .scale = 1.0f, .text_length = 0 };
-    if (it != m_text_buffers.end()) {
-        buffer.m_handle = it - m_text_buffers.begin();
-        *it = std::move(buffer_impl);
-    }
-    else {
-        buffer.m_handle = m_text_buffers.size();
-        m_text_buffers.push_back(std::move(buffer_impl));
-    }
-    return buffer;
+    return create_text_buffer("", { 0.0f, 0.0f }, 1.0f);
 }
 void TextPipeline::destroy(TextBuffer& buffer)
 {
@@ -130,68 +113,6 @@ void TextPipeline::destroy(TextBuffer& buffer)
     }
     m_text_buffers[buffer.m_handle].reset();
     buffer.m_valid = false;
-}
-
-void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view text, mve::Vector2 pos, float scale)
-{
-    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Text buffer invalid")
-    // TODO: Find a better way to do this
-    for (RenderGlyph& glyph : m_text_buffers[buffer.m_handle]->render_glyphs) {
-        glyph.is_valid = false;
-    }
-    MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
-    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-    buffer_impl.translation = pos;
-    buffer_impl.scale = scale;
-    buffer_impl.text_length = text.length();
-    for (auto c = text.begin(); c != text.end(); c++) {
-        if (!m_font_chars.contains(*c)) {
-            LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(*c));
-            continue;
-        }
-        const FontChar& font_char = m_font_chars.at(*c);
-        float x_pos = pos.x + font_char.bearing.x * scale;
-        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * scale;
-        float w = font_char.size.x * scale;
-        float h = font_char.size.y * scale;
-
-        mve::Matrix4 model = mve::Matrix4::identity();
-        model = model.scale({ w, h, 1.0f });
-        model = model.translate({ x_pos, -y_pos, 0.0f });
-
-        auto it = std::find_if(
-            buffer_impl.render_glyphs.begin(), buffer_impl.render_glyphs.end(), [](const RenderGlyph& glyph) {
-                return !glyph.is_valid;
-            });
-        if (it != buffer_impl.render_glyphs.end()) {
-            it->ubo.update(m_model_location, model);
-            it->ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO: Ability to change color
-            it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
-            it->character = *c;
-            it->translation = pos;
-            it->scale = scale;
-            it->is_valid = true;
-        }
-        else {
-            mve::UniformBuffer glyph_ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding);
-            mve::DescriptorSet glyph_descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1));
-            glyph_descriptor_set.write_binding(m_glyph_ubo_binding, glyph_ubo);
-            RenderGlyph render_glyph { .is_valid = true,
-                                       .ubo = std::move(glyph_ubo),
-                                       .descriptor_set = std::move(glyph_descriptor_set),
-                                       .character = *c,
-                                       .translation = pos,
-                                       .scale = scale };
-            render_glyph.ubo.update(m_model_location, model);
-            render_glyph.ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO
-            render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
-            buffer_impl.render_glyphs.push_back(std::move(render_glyph));
-        }
-        pos.x += mve::floor(font_char.advance / 64.0f) * scale;
-    }
-    if (buffer_impl.cursor.has_value()) {
-        set_cursor_pos(buffer, buffer_impl.cursor_pos);
-    }
 }
 
 void TextPipeline::draw(const TextBuffer& buffer) const
@@ -345,4 +266,51 @@ void TextPipeline::cursor_left(const TextBuffer& buffer)
 void TextPipeline::cursor_right(const TextBuffer& buffer)
 {
     set_cursor_pos(buffer, cursor_pos(buffer) + 1);
+}
+
+void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set translation on invalid text buffer")
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    buffer_impl.scale = scale;
+    mve::Vector2 pos = buffer_impl.translation;
+    for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
+        MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
+        const FontChar& font_char = m_font_chars.at(glyph.character);
+        float x_pos = pos.x + font_char.bearing.x * glyph.scale;
+        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * glyph.scale;
+        float w = font_char.size.x * glyph.scale;
+        float h = font_char.size.y * glyph.scale;
+        mve::Matrix4 model = mve::Matrix4::identity();
+        model = model.scale({ w, h, 1.0f });
+        model = model.translate({ x_pos, -y_pos, 0.0f });
+        glyph.ubo.update(m_model_location, model);
+        glyph.translation = pos;
+        pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
+    }
+}
+
+TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 pos, float scale)
+{
+    auto it
+        = std::find_if(m_text_buffers.begin(), m_text_buffers.end(), [](const std::optional<TextBufferImpl>& buffer) {
+              return !buffer.has_value();
+          });
+    TextBuffer buffer;
+    buffer.m_valid = true;
+    buffer.m_pipeline = this;
+    TextBufferImpl buffer_impl
+        = { .render_glyphs = {}, .cursor = {}, .translation = { 0.0f, 0.0f }, .scale = 1.0f, .text_length = 0 };
+    if (it != m_text_buffers.end()) {
+        buffer.m_handle = it - m_text_buffers.begin();
+        *it = std::move(buffer_impl);
+    }
+    else {
+        buffer.m_handle = m_text_buffers.size();
+        m_text_buffers.push_back(std::move(buffer_impl));
+    }
+    set_text_buffer_scale(buffer, scale);
+    set_text_buffer_translation(buffer, pos);
+    update_text_buffer(buffer, text);
+    return buffer;
 }

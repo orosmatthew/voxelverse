@@ -12,7 +12,7 @@ public:
 
     TextBuffer create_text_buffer();
 
-    void update_text_buffer(const TextBuffer& buffer, std::string_view text, mve::Vector2 pos, float scale);
+    TextBuffer create_text_buffer(std::string_view text, mve::Vector2 pos, float scale);
 
     void update_text_buffer(const TextBuffer& buffer, std::string_view text);
 
@@ -29,6 +29,8 @@ public:
     void remove_cursor(const TextBuffer& buffer);
 
     void set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos);
+
+    void set_text_buffer_scale(const TextBuffer& buffer, float scale);
 
     void draw(const TextBuffer& buffer) const;
 

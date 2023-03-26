@@ -5,7 +5,6 @@
 Console::Console(TextPipeline& pipeline)
     : m_input_text(pipeline)
 {
-    m_input_text.update("", { 0.0f, 0.0f }, 1.0f);
     m_input_text.add_cursor(0);
 }
 

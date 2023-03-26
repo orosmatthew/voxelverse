@@ -4,12 +4,12 @@
 #include "../world_data.hpp"
 
 DebugOverlay::DebugOverlay(TextPipeline& text_pipeline)
-    : m_fps_text(text_pipeline)
-    , m_ms_text(text_pipeline)
-    , m_gpu_text(text_pipeline)
-    , m_build_text(text_pipeline)
-    , m_player_block_text(text_pipeline)
-    , m_player_chunk_text(text_pipeline)
+    : m_fps_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    , m_ms_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    , m_gpu_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    , m_build_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    , m_player_block_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    , m_player_chunk_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
 {
     m_left_column.push_back(&m_fps_text);
     m_left_column.push_back(&m_ms_text);
@@ -23,8 +23,8 @@ DebugOverlay::DebugOverlay(TextPipeline& text_pipeline)
 #else
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "build: debug");
 #endif
-    m_build_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
-    resize(m_extent);
+    m_build_text.update(m_str_buffer.data());
+    m_build_text.set_scale(0.8f);
 }
 
 void DebugOverlay::draw() const
@@ -34,15 +34,13 @@ void DebugOverlay::draw() const
     }
 }
 
-
 void DebugOverlay::update_fps(int value)
 {
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "fps: %d", value);
-    m_fps_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
+    m_fps_text.update(m_str_buffer.data());
 
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "ms: %.1f", 1000.0f / value);
-    m_ms_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
-    resize(m_extent);
+    m_ms_text.update(m_str_buffer.data());
 }
 
 void DebugOverlay::resize(mve::Vector2i extent)
@@ -58,18 +56,15 @@ void DebugOverlay::resize(mve::Vector2i extent)
 void DebugOverlay::update_gpu_name(const std::string& gpu)
 {
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "gpu: %s", gpu.data());
-    m_gpu_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
-    resize(m_extent);
+    m_gpu_text.update(m_str_buffer.data());
 }
 void DebugOverlay::update_player_block_pos(mve::Vector3i pos)
 {
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "block: [%d, %d, %d]", pos.x, pos.y, pos.z);
-    m_player_block_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
+    m_player_block_text.update(m_str_buffer.data());
 
     mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(pos);
     std::snprintf(
         m_str_buffer.data(), m_str_buffer.size(), "chunk: [%d, %d, %d]", chunk_pos.x, chunk_pos.y, chunk_pos.z);
-    m_player_chunk_text.update(m_str_buffer.data(), { 0.0f, 0.0f }, 0.8f);
-
-    resize(m_extent);
+    m_player_chunk_text.update(m_str_buffer.data());
 }

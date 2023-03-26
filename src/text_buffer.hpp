@@ -19,6 +19,11 @@ public:
         *this = std::move(pipeline.create_text_buffer());
     }
 
+    inline TextBuffer(TextPipeline& pipeline, std::string_view text, mve::Vector2 pos, float scale)
+    {
+        *this = std::move(pipeline.create_text_buffer(text, pos, scale));
+    }
+
     inline TextBuffer(TextBuffer&& other)
         : m_valid(other.m_valid)
         , m_pipeline(other.m_pipeline)
@@ -44,11 +49,6 @@ public:
         return m_valid;
     }
 
-    inline void update(std::string_view text, mve::Vector2 pos, float scale) const
-    {
-        m_pipeline->update_text_buffer(*this, text, pos, scale);
-    }
-
     inline void update(std::string_view text) const
     {
         m_pipeline->update_text_buffer(*this, text);
@@ -57,6 +57,11 @@ public:
     inline void set_translation(mve::Vector2 pos) const
     {
         m_pipeline->set_text_buffer_translation(*this, pos);
+    }
+
+    inline void set_scale(float scale) const
+    {
+        m_pipeline->set_text_buffer_scale(*this, scale);
     }
 
     inline void add_cursor(int pos)
