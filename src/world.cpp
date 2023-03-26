@@ -13,6 +13,8 @@ World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& tex
     , m_render_distance(render_distance)
     , m_hud(ui_pipeline, text_pipeline)
     , m_console_enabled(false)
+    , m_last_place_time(std::chrono::steady_clock::now())
+    , m_last_break_time(std::chrono::steady_clock::now())
 {
     m_hud.update_debug_gpu_name(renderer.gpu_name());
 }
@@ -195,14 +197,32 @@ void World::update(mve::Window& window, float blend)
     m_world_renderer.set_view(m_player.view_matrix(blend));
 
     if (!m_console_enabled) {
+        auto now = std::chrono::steady_clock::now();
         if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
             trigger_break_block(m_player, m_world_data, m_world_renderer);
+            m_last_break_time = now;
+        }
+        if (window.is_mouse_button_down(mve::MouseButton::left)) {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_break_time).count() > 200) {
+                trigger_break_block(m_player, m_world_data, m_world_renderer);
+                m_last_break_time = now;
+            }
         }
 
         if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
             if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
                 trigger_place_block(
                     m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+                m_last_place_time = now;
+            }
+        }
+        if (window.is_mouse_button_down(mve::MouseButton::right)) {
+            if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_place_time).count() > 200) {
+                    trigger_place_block(
+                        m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+                    m_last_place_time = now;
+                }
             }
         }
 

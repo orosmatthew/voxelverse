@@ -66,4 +66,6 @@ private:
     int m_render_distance;
     HUD m_hud;
     bool m_console_enabled;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_place_time;
+    std::chrono::time_point<std::chrono::steady_clock> m_last_break_time;
 };
