@@ -36,6 +36,11 @@ public:
         m_hud.update_debug_fps(fps);
     }
 
+    inline void update_console(const mve::Window& window)
+    {
+        m_hud.update_console(window);
+    }
+
     [[nodiscard]] mve::Vector3i player_block_pos() const;
 
     [[nodiscard]] mve::Vector3i player_chunk_pos() const;

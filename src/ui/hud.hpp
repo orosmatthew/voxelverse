@@ -1,5 +1,6 @@
 #pragma once
 
+#include "console.hpp"
 #include "crosshair.hpp"
 #include "debug_overlay.hpp"
 #include "hotbar.hpp"
@@ -23,6 +24,11 @@ public:
         m_debug_overlay.update_gpu_name(gpu);
     }
 
+    inline void update_console(const mve::Window& window)
+    {
+        m_console.update_from_window(window);
+    }
+
     void resize(mve::Vector2i extent);
 
     void draw();
@@ -44,4 +50,5 @@ private:
     Hotbar m_hotbar;
     Crosshair m_crosshair;
     DebugOverlay m_debug_overlay;
+    Console m_console;
 };

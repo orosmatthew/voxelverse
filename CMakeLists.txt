@@ -79,7 +79,8 @@ set(SOURCE_FILES
         src/ui/crosshair.cpp
         src/text_pipeline.cpp
         src/ui/debug_overlay.cpp
-        src/ui/hud.cpp)
+        src/ui/hud.cpp
+        src/ui/console.cpp)
 
 set(LIBS
         Vulkan::Vulkan

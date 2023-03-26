@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "../logger.hpp"
 #include "common.hpp"
 #include "math/math.hpp"
 
@@ -46,6 +47,7 @@ Window::Window(const std::string& title, mve::Vector2i size, bool resizable)
     glfwSetCursorPosCallback(m_glfw_window.get(), glfw_cursor_pos_callback);
     glfwSetScrollCallback(m_glfw_window.get(), glfw_scroll_callback);
     glfwSetKeyCallback(m_glfw_window.get(), glfw_key_callback);
+    glfwSetCharCallback(m_glfw_window.get(), glfw_char_callback);
 }
 
 GLFWwindow* Window::glfw_handle() const
@@ -109,6 +111,12 @@ void Window::poll_events()
 
     m_scroll_offset = m_current_scroll_offset;
     m_current_scroll_offset = mve::Vector2(0);
+
+    std::swap(m_current_input_stream, m_input_stream);
+    m_current_input_stream.clear();
+
+    std::swap(m_current_keys_repeated, m_keys_repeated);
+    m_current_keys_repeated.clear();
 }
 
 mve::Vector2 Window::mouse_scroll() const
@@ -349,12 +357,17 @@ bool Window::is_key_pressed(Key key) const
 void Window::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-    if (action == GLFW_PRESS) {
+    switch (action) {
+    case GLFW_PRESS:
         instance->m_current_keys_down.insert(static_cast<Key>(key));
-    }
-    else if (action == GLFW_RELEASE) {
+        break;
+    case GLFW_REPEAT:
+        instance->m_current_keys_repeated.insert(static_cast<Key>(key));
+        break;
+    case GLFW_RELEASE:
         instance->m_current_keys_down.erase(static_cast<Key>(key));
         instance->m_current_keys_released.insert(static_cast<Key>(key));
+        break;
     }
 }
 
@@ -461,5 +474,18 @@ void Window::glfw_scroll_callback(GLFWwindow* window, double offset_x, double of
 void Window::set_cursor_pos(mve::Vector2 pos)
 {
     glfwSetCursorPos(m_glfw_window.get(), static_cast<float>(pos.x), static_cast<float>(pos.y));
+}
+void Window::glfw_char_callback(GLFWwindow* window, unsigned int codepoint)
+{
+    auto* instance = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    wchar_t wchar = static_cast<wchar_t>(codepoint);
+    std::wstring wstr;
+    wstr.push_back(wchar);
+    std::string str(wstr.begin(), wstr.end());
+    instance->m_current_input_stream.push_back(str);
+}
+bool Window::is_key_repeated(Key key) const
+{
+    return m_keys_repeated.contains(key);
 }
 }

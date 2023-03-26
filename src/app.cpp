@@ -62,6 +62,8 @@ void App::main_loop()
     while (!m_window.should_close()) {
         m_window.poll_events();
 
+        m_world.update_console(m_window);
+
         m_fixed_loop.update(20, [&]() { m_world.fixed_update(m_window); });
 
         m_world.update(m_window, m_cursor_captured, m_fixed_loop.blend());

@@ -34,6 +34,7 @@ void DebugOverlay::draw() const
     }
 }
 
+
 void DebugOverlay::update_fps(int value)
 {
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "fps: %d", value);

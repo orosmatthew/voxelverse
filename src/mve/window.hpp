@@ -313,6 +313,8 @@ public:
 
     [[nodiscard]] bool is_key_released(Key key) const;
 
+    [[nodiscard]] bool is_key_repeated(Key key) const;
+
     [[nodiscard]] bool is_mouse_button_down(MouseButton button) const;
 
     [[nodiscard]] bool is_mouse_button_pressed(MouseButton button) const;
@@ -390,6 +392,11 @@ public:
      */
     mve::Vector2 get_cursor_pos(bool clamped_to_window = true);
 
+    inline const std::vector<std::string> input_stream() const
+    {
+        return m_input_stream;
+    }
+
 private:
     using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>;
 
@@ -415,6 +422,8 @@ private:
     std::set<Key> m_keys_pressed {};
     std::set<Key> m_current_keys_released {};
     std::set<Key> m_keys_released {};
+    std::set<Key> m_current_keys_repeated {};
+    std::set<Key> m_keys_repeated {};
 
     std::set<MouseButton> m_current_mouse_buttons_down {};
     std::set<MouseButton> m_mouse_buttons_down {};
@@ -426,6 +435,9 @@ private:
     mve::Vector2 m_mouse_pos_prev;
     mve::Vector2 m_mouse_delta;
     mve::Vector2 m_mouse_pos;
+
+    std::vector<std::string> m_current_input_stream {};
+    std::vector<std::string> m_input_stream {};
 
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 
@@ -442,5 +454,7 @@ private:
     static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     static void glfw_scroll_callback(GLFWwindow* window, double offset_x, double offset_y);
+
+    static void glfw_char_callback(GLFWwindow* window, unsigned int codepoint);
 };
 }
