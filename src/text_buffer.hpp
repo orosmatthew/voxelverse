@@ -89,7 +89,7 @@ public:
         m_pipeline->remove_cursor(*this);
     }
 
-    inline int cursor_pos() const
+    inline std::optional<int> cursor_pos() const
     {
         return m_pipeline->cursor_pos(*this);
     }

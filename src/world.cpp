@@ -264,11 +264,13 @@ void World::update(mve::Window& window, float blend)
     if (!m_console_enabled && window.is_key_pressed(mve::Key::t)) {
         m_console_enabled = true;
         window.enable_cursor();
+        m_hud.enable_console_cursor();
     }
     else if (m_console_enabled && window.is_key_pressed(mve::Key::escape)) {
         m_console_enabled = false;
         window.set_cursor_pos({ window.size().x / 2.0f, window.size().y / 2.0f });
         window.disable_cursor();
+        m_hud.disable_console_cursor();
     }
 
     if (window.is_key_pressed(mve::Key::f3)) {

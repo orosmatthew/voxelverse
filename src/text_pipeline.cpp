@@ -190,10 +190,15 @@ void TextPipeline::remove_cursor(const TextBuffer& buffer)
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.cursor.reset();
 }
-int TextPipeline::cursor_pos(const TextBuffer& buffer)
+std::optional<int> TextPipeline::cursor_pos(const TextBuffer& buffer)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to get cursor position on invalid text buffer")
-    return m_text_buffers[buffer.m_handle]->cursor_pos;
+    if (m_text_buffers[buffer.m_handle]->cursor.has_value()) {
+        return m_text_buffers[buffer.m_handle]->cursor_pos;
+    }
+    else {
+        return {};
+    }
 }
 
 void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view text)
@@ -260,12 +265,18 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
 
 void TextPipeline::cursor_left(const TextBuffer& buffer)
 {
-    set_cursor_pos(buffer, cursor_pos(buffer) - 1);
+    std::optional<int> pos = cursor_pos(buffer);
+    if (pos.has_value()) {
+        set_cursor_pos(buffer, *pos - 1);
+    }
 }
 
 void TextPipeline::cursor_right(const TextBuffer& buffer)
 {
-    set_cursor_pos(buffer, cursor_pos(buffer) + 1);
+    std::optional<int> pos = cursor_pos(buffer);
+    if (pos.has_value()) {
+        set_cursor_pos(buffer, *pos + 1);
+    }
 }
 
 void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)

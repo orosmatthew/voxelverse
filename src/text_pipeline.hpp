@@ -24,7 +24,7 @@ public:
 
     void cursor_left(const TextBuffer& buffer);
 
-    int cursor_pos(const TextBuffer& buffer);
+    std::optional<int> cursor_pos(const TextBuffer& buffer);
 
     void remove_cursor(const TextBuffer& buffer);
 

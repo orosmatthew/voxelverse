@@ -45,6 +45,14 @@ public:
         return m_hotbar;
     }
 
+    inline void enable_console_cursor() {
+        m_console.enable_cursor();
+    }
+
+    inline void disable_console_cursor() {
+        m_console.disable_cursor();
+    }
+
 private:
     bool m_show_debug;
     Hotbar m_hotbar;

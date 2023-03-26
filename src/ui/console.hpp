@@ -13,12 +13,17 @@ public:
 
     void backspace();
 
+    void del();
+
     void update_from_window(const mve::Window& window);
 
     void draw() const;
 
+    void enable_cursor();
+
+    void disable_cursor();
+
 private:
-    mve::Vector2i m_extent;
     std::string m_input_str;
     TextBuffer m_input_text;
 };
