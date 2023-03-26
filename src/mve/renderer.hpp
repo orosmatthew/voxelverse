@@ -307,6 +307,8 @@ public:
 
     [[nodiscard]] std::string gpu_name() const;
 
+    [[nodiscard]] mve::Vector2i texture_size(const mve::Texture& texture) const;
+
 private:
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphics_family;
@@ -350,6 +352,8 @@ private:
     struct Image {
         vk::Image vk_handle;
         VmaAllocation vma_allocation;
+        uint32_t width;
+        uint32_t height;
     };
 
     struct RenderImage {

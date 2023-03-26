@@ -2,8 +2,8 @@
 
 #include <filesystem>
 
-#include "mve/renderer.hpp"
-#include "ui_pipeline.hpp"
+#include "../mve/renderer.hpp"
+#include "../ui_pipeline.hpp"
 
 struct NinePatchMargins {
     int top;
@@ -14,15 +14,12 @@ struct NinePatchMargins {
 
 class NinePatch {
 public:
-    NinePatch(
-        mve::Renderer& renderer,
-        UIPipeline& ui_pipeline,
-        const std::filesystem::path& img_path,
-        NinePatchMargins margins);
+    NinePatch(UIPipeline& ui_pipeline, const std::filesystem::path& img_path, NinePatchMargins margins);
 
-    void draw(mve::Renderer& renderer, const UIPipeline& ui_pipeline);
+    void draw() const;
 
 private:
+    UIPipeline* m_pipeline;
     NinePatchMargins m_margins;
     UIUniformData m_uniform_data;
     mve::VertexBuffer m_vertex_buffer;

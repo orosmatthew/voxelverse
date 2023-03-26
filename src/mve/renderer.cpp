@@ -2053,7 +2053,7 @@ Renderer::Image Renderer::create_image(
     VkImage image;
     VmaAllocation image_allocation;
     vmaCreateImage(allocator, &image_info, &vma_alloc_info, &image, &image_allocation, nullptr);
-    return { image, image_allocation };
+    return { image, image_allocation, width, height };
 }
 
 void Renderer::cmd_generate_mipmaps(
@@ -2992,6 +2992,12 @@ Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer)
 std::string Renderer::gpu_name() const
 {
     return m_vk_physical_device.getProperties(m_vk_loader).deviceName;
+}
+mve::Vector2i Renderer::texture_size(const Texture& texture) const
+{
+    MVE_VAL_ASSERT(texture.m_valid, "[Renderer] Attempt to get size on invalid texture");
+    const TextureImpl& texture_impl = m_textures.at(texture.m_handle);
+    return { static_cast<int>(texture_impl.image.width), static_cast<int>(texture_impl.image.height) };
 }
 
 Renderer::DescriptorSetAllocator::DescriptorSetAllocator()

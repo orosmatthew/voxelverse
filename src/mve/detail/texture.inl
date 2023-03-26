@@ -20,6 +20,10 @@ inline Texture::~Texture()
         m_renderer->destroy(*this);
     }
 }
+mve::Vector2i Texture::size() const
+{
+    return m_renderer->texture_size(*this);
+}
 inline Texture& Texture::operator=(Texture&& other)
 {
     if (m_valid) {

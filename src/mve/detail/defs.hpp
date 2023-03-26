@@ -192,6 +192,8 @@ public:
 
     inline ~Texture();
 
+    [[nodiscard]] inline mve::Vector2i size() const;
+
     inline Texture& operator=(const Texture&) = delete;
 
     inline Texture& operator=(Texture&& other);

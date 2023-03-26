@@ -4,6 +4,7 @@
 #include "crosshair.hpp"
 #include "debug_overlay.hpp"
 #include "hotbar.hpp"
+#include "nine_patch.hpp"
 
 class HUD {
 public:
@@ -45,11 +46,13 @@ public:
         return m_hotbar;
     }
 
-    inline void enable_console_cursor() {
+    inline void enable_console_cursor()
+    {
         m_console.enable_cursor();
     }
 
-    inline void disable_console_cursor() {
+    inline void disable_console_cursor()
+    {
         m_console.disable_cursor();
     }
 
@@ -59,4 +62,5 @@ private:
     Crosshair m_crosshair;
     DebugOverlay m_debug_overlay;
     Console m_console;
+    NinePatch m_patch;
 };

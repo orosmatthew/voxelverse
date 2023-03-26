@@ -74,7 +74,7 @@ set(SOURCE_FILES
         src/wire_box_mesh.cpp
         src/world.cpp
         src/save_file.cpp
-        src/nine_patch.cpp
+        src/ui/nine_patch.cpp
         src/ui/hotbar.cpp
         src/ui/crosshair.cpp
         src/text_pipeline.cpp

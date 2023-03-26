@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mve/renderer.hpp"
-#include "nine_patch.hpp"
 #include "text_pipeline.hpp"
 #include "ui/crosshair.hpp"
 #include "ui/debug_overlay.hpp"

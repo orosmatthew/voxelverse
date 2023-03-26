@@ -160,7 +160,7 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
 }
 void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
 {
-    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer");
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.cursor_pos = pos;
     buffer_impl.cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
@@ -173,7 +173,7 @@ void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
 }
 void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
 {
-    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set cursor position on invalid text buffer");
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set cursor position on invalid text buffer")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     pos = std::clamp(pos, 0, buffer_impl.text_length);
     buffer_impl.cursor_pos = pos;
@@ -188,7 +188,7 @@ void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
 }
 void TextPipeline::remove_cursor(const TextBuffer& buffer)
 {
-    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to remove cursor on invalid text buffer");
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to remove cursor on invalid text buffer")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.cursor.reset();
 }
