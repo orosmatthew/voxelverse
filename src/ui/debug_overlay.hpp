@@ -19,6 +19,8 @@ public:
     void update_player_block_pos(mve::Vector3i pos);
 
 private:
+    const mve::Vector3 c_text_color = { 0.0f, 0.0f, 0.0f };
+
     mve::Vector2i m_extent;
     std::array<char, 1024> m_str_buffer;
 

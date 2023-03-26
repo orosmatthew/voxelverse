@@ -19,9 +19,9 @@ public:
         *this = std::move(pipeline.create_text_buffer());
     }
 
-    inline TextBuffer(TextPipeline& pipeline, std::string_view text, mve::Vector2 pos, float scale)
+    inline TextBuffer(TextPipeline& pipeline, std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color)
     {
-        *this = std::move(pipeline.create_text_buffer(text, pos, scale));
+        *this = std::move(pipeline.create_text_buffer(text, pos, scale, color));
     }
 
     inline TextBuffer(TextBuffer&& other)
@@ -57,6 +57,11 @@ public:
     inline void set_translation(mve::Vector2 pos) const
     {
         m_pipeline->set_text_buffer_translation(*this, pos);
+    }
+
+    inline void set_color(mve::Vector3 color) const
+    {
+        m_pipeline->set_text_buffer_color(*this, color);
     }
 
     inline void set_scale(float scale) const

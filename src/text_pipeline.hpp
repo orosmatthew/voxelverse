@@ -12,7 +12,7 @@ public:
 
     TextBuffer create_text_buffer();
 
-    TextBuffer create_text_buffer(std::string_view text, mve::Vector2 pos, float scale);
+    TextBuffer create_text_buffer(std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color);
 
     void update_text_buffer(const TextBuffer& buffer, std::string_view text);
 
@@ -31,6 +31,8 @@ public:
     void set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos);
 
     void set_text_buffer_scale(const TextBuffer& buffer, float scale);
+
+    void set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 color);
 
     void draw(const TextBuffer& buffer) const;
 
@@ -67,6 +69,7 @@ private:
         mve::Vector2 translation;
         float scale;
         int text_length;
+        mve::Vector3 color;
     };
 
     const mve::VertexLayout c_vertex_layout = {

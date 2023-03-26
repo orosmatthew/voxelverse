@@ -4,12 +4,12 @@
 #include "../world_data.hpp"
 
 DebugOverlay::DebugOverlay(TextPipeline& text_pipeline)
-    : m_fps_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
-    , m_ms_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
-    , m_gpu_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
-    , m_build_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
-    , m_player_block_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
-    , m_player_chunk_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f)
+    : m_fps_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
+    , m_ms_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
+    , m_gpu_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
+    , m_build_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
+    , m_player_block_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
+    , m_player_chunk_text(text_pipeline, "", { 0.0f, 0.0f }, 0.8f, c_text_color)
 {
     m_left_column.push_back(&m_fps_text);
     m_left_column.push_back(&m_ms_text);

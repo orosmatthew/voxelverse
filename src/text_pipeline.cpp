@@ -33,7 +33,9 @@ TextPipeline::TextPipeline(mve::Renderer& renderer)
     m_vertex_buffer = renderer.create_vertex_buffer(vertex_data);
     m_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
 
-    m_global_ubo.update(m_vert_shader.descriptor_set(0).binding(0).member("view").location(), mve::Matrix4::identity());
+    m_global_ubo.update(
+        m_vert_shader.descriptor_set(0).binding(0).member("view").location(),
+        mve::Matrix4::identity().translate({ 0.0f, 0.0f, -1.0f }));
 
     mve::VertexData cursor_data(c_vertex_layout);
     cursor_data.push_back({ -0.05f, -1.0f, 0.0f });
@@ -104,7 +106,7 @@ void TextPipeline::resize()
 }
 TextBuffer TextPipeline::create_text_buffer()
 {
-    return create_text_buffer("", { 0.0f, 0.0f }, 1.0f);
+    return create_text_buffer("", { 0.0f, 0.0f }, 1.0f, { 0.0f, 0.0f, 0.0f });
 }
 void TextPipeline::destroy(TextBuffer& buffer)
 {
@@ -181,7 +183,7 @@ void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
     }
     mve::Matrix4 model = mve::Matrix4::identity()
                              .scale(mve::Vector3(buffer_impl.scale * 36.0f))
-                             .translate({ x, -buffer_impl.translation.y, 0.0f });
+                             .translate({ x, -buffer_impl.translation.y, 0.1f });
     buffer_impl.cursor->ubo.update(m_model_location, model);
 }
 void TextPipeline::remove_cursor(const TextBuffer& buffer)
@@ -234,7 +236,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             });
         if (it != buffer_impl.render_glyphs.end()) {
             it->ubo.update(m_model_location, model);
-            it->ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO: Ability to change color
+            it->ubo.update(m_text_color_location, buffer_impl.color);
             it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
             it->character = *c;
             it->translation = pos;
@@ -252,7 +254,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
                                        .translation = pos,
                                        .scale = scale };
             render_glyph.ubo.update(m_model_location, model);
-            render_glyph.ubo.update(m_text_color_location, mve::Vector3(0.0f, 0.0f, 0.0f)); // TODO
+            render_glyph.ubo.update(m_text_color_location, buffer_impl.color);
             render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
             buffer_impl.render_glyphs.push_back(std::move(render_glyph));
         }
@@ -301,7 +303,7 @@ void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)
     }
 }
 
-TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 pos, float scale)
+TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color)
 {
     auto it
         = std::find_if(m_text_buffers.begin(), m_text_buffers.end(), [](const std::optional<TextBufferImpl>& buffer) {
@@ -311,7 +313,12 @@ TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 
     buffer.m_valid = true;
     buffer.m_pipeline = this;
     TextBufferImpl buffer_impl
-        = { .render_glyphs = {}, .cursor = {}, .translation = { 0.0f, 0.0f }, .scale = 1.0f, .text_length = 0 };
+        = { .render_glyphs = {},
+            .cursor = {},
+            .translation = { 0.0f, 0.0f },
+            .scale = 1.0f,
+            .text_length = 0,
+            .color = color };
     if (it != m_text_buffers.end()) {
         buffer.m_handle = it - m_text_buffers.begin();
         *it = std::move(buffer_impl);
@@ -322,6 +329,17 @@ TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 
     }
     set_text_buffer_scale(buffer, scale);
     set_text_buffer_translation(buffer, pos);
+    set_text_buffer_color(buffer, color);
     update_text_buffer(buffer, text);
     return buffer;
+}
+
+void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 color)
+{
+    MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set color on invalid text buffer")
+    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    buffer_impl.color = color;
+    for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
+        glyph.ubo.update(m_text_color_location, color);
+    }
 }

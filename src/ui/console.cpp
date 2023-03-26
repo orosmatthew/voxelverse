@@ -5,6 +5,7 @@
 Console::Console(TextPipeline& pipeline)
     : m_input_text(pipeline)
 {
+    m_input_text.set_color({ 1.0f, 1.0f, 1.0f });
 }
 
 void Console::resize(mve::Vector2i extent)
@@ -12,6 +13,10 @@ void Console::resize(mve::Vector2i extent)
     float x = -extent.x / 2.0f + 8.0f;
     float y = -extent.y / 2.0f + 105.0f;
     m_input_text.set_translation({ x, y });
+    std::optional<int> pos = m_input_text.cursor_pos();
+    if (pos.has_value()) {
+        m_input_text.set_cursor_pos(*pos);
+    }
 }
 
 void Console::draw() const
