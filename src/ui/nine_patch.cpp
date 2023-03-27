@@ -8,61 +8,49 @@ NinePatch::NinePatch(
     , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_texture(ui_pipeline.renderer(), img_path)
 {
+    m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), m_texture);
+    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(1.0f)));
+
     mve::Vector2 pixel = { 1.0f / m_texture.size().x, 1.0f / m_texture.size().y };
 
-    // TODO: Make less repetitive
+    std::array<float, 4> x_uvs = { 0.0f, pixel.x * margins.left, 1.0f - (pixel.x * margins.right), 1.0f };
+    std::array<float, 4> y_uvs = { 0.0f, pixel.y * margins.top, 1.0f - (pixel.y * margins.bottom), 1.0f };
+
     std::array<mve::Vector2, 16> uvs;
-    uvs[0] = { 0.0f, 0.0f };
-    uvs[1] = { pixel.x * margins.left, 0.0f };
-    uvs[2] = { 1.0f - (pixel.x * margins.right), 0.0f };
-    uvs[3] = { 1.0f, 0.0f };
+    int uv_index = 0;
+    for (float y : y_uvs) {
+        for (float x : x_uvs) {
+            uvs[uv_index] = { x, y };
+            uv_index++;
+        }
+    }
 
-    uvs[4] = { 0.0f, pixel.y * margins.top };
-    uvs[5] = { pixel.x * margins.left, pixel.y * margins.top };
-    uvs[6] = { 1.0f - (pixel.x * margins.right), pixel.y * margins.top };
-    uvs[7] = { 1.0f, pixel.y * margins.top };
-
-    uvs[8] = { 0.0f, 1.0f - (pixel.y * margins.bottom) };
-    uvs[9] = { pixel.x * margins.left, 1.0f - (pixel.y * margins.bottom) };
-    uvs[10] = { 1.0f - (pixel.x * margins.right), 1.0f - (pixel.y * margins.bottom) };
-    uvs[11] = { 1.0f, 1.0f - (pixel.y * margins.bottom) };
-
-    uvs[12] = { 0.0f, 1.0f };
-    uvs[13] = { pixel.x * margins.left, 1.0f };
-    uvs[14] = { 1.0f - (pixel.x * margins.right), 1.0f };
-    uvs[15] = { 1.0f, 1.0f };
+    std::array<float, 4> x_vertices = {
+        0.0f, static_cast<float>(margins.left), static_cast<float>(size.x - margins.right), static_cast<float>(size.x)
+    };
+    std::array<float, 4> y_vertices = {
+        0.0f, static_cast<float>(margins.top), static_cast<float>(size.y - margins.bottom), static_cast<float>(size.y)
+    };
 
     std::array<mve::Vector2, 16> vertices;
-    vertices[0] = { 0.0f, 0.0f };
-    vertices[1] = { static_cast<float>(margins.left), 0.0f };
-    vertices[2] = { static_cast<float>(size.x - margins.right), 0.0f };
-    vertices[3] = { static_cast<float>(size.x), 0.0f };
-
-    vertices[4] = { 0.0f, static_cast<float>(margins.top) };
-    vertices[5] = { static_cast<float>(margins.left), static_cast<float>(margins.top) };
-    vertices[6] = { static_cast<float>(size.x - margins.right), static_cast<float>(margins.top) };
-    vertices[7] = { static_cast<float>(size.x), static_cast<float>(margins.top) };
-
-    vertices[8] = { 0.0f, static_cast<float>(size.y - margins.bottom) };
-    vertices[9] = { static_cast<float>(margins.left), static_cast<float>(size.y - margins.bottom) };
-    vertices[10] = { static_cast<float>(size.x - margins.right), static_cast<float>(size.y - margins.bottom) };
-    vertices[11] = { static_cast<float>(size.x), static_cast<float>(size.y - margins.bottom) };
-
-    vertices[12] = { 0.0f, static_cast<float>(size.y) };
-    vertices[13] = { static_cast<float>(margins.left), static_cast<float>(size.y) };
-    vertices[14] = { static_cast<float>(size.x - margins.right), static_cast<float>(size.y) };
-    vertices[15] = { static_cast<float>(size.x), static_cast<float>(size.y) };
+    int vertex_count = 0;
+    for (float y : y_vertices) {
+        for (float x : x_vertices) {
+            vertices[vertex_count] = { x, y };
+            vertex_count++;
+        }
+    }
 
     // clang-format off
     std::vector<uint32_t> indices = {
-        0,  5,  1,  0,  4,  5,
-        1,  6,  2,  1,  5,  6,
-        2,  7,  3,  2,  6,  7,
-        4,  9,  5,  4,  8,  9,
-        5,  10, 6,  5,  9,  10,
-        6,  11, 7,  6,  10, 11,
-        8,  13, 9,  8,  12, 13,
-        9,  14, 10, 9,  13, 14,
+        0,   5,  1,  0,  4,  5,
+        1,   6,  2,  1,  5,  6,
+        2,   7,  3,  2,  6,  7,
+        4,   9,  5,  4,  8,  9,
+        5,  10,  6,  5,  9, 10,
+        6,  11,  7,  6, 10, 11,
+        8,  13,  9,  8, 12, 13,
+        9,  14, 10,  9, 13, 14,
         10, 15, 11, 10, 14, 15
     };
     // clang-format on
@@ -76,9 +64,6 @@ NinePatch::NinePatch(
 
     m_vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
     m_index_buffer = ui_pipeline.renderer().create_index_buffer(indices);
-
-    m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), m_texture);
-    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(10.0f)));
 }
 
 void NinePatch::draw() const
