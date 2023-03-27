@@ -31,6 +31,7 @@ void main() {
     //            out_color = vec4(1, 1, 1, 0) - tex_color;
     //        }
     //    } else {
+    //    out_color = vec4(frag_tex_coord.x, frag_tex_coord.y, 0, 0);
     out_color = tex_color;
     //    }
 

@@ -6,7 +6,7 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     , m_crosshair(ui_pipeline)
     , m_debug_overlay(text_pipeline)
     , m_console(text_pipeline)
-    , m_patch(ui_pipeline, "../res/button_gray.png", {})
+    , m_patch(ui_pipeline, "../res/button_gray.png", { 2, 2, 2, 2 }, { 30, 20 })
 {
     m_hotbar.set_item(0, 1);
     m_hotbar.set_item(1, 2);

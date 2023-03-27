@@ -14,7 +14,8 @@ struct NinePatchMargins {
 
 class NinePatch {
 public:
-    NinePatch(UIPipeline& ui_pipeline, const std::filesystem::path& img_path, NinePatchMargins margins);
+    NinePatch(
+        UIPipeline& ui_pipeline, const std::filesystem::path& img_path, NinePatchMargins margins, mve::Vector2i size);
 
     void draw() const;
 
