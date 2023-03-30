@@ -15,7 +15,11 @@ struct NinePatchMargins {
 class NinePatch {
 public:
     NinePatch(
-        UIPipeline& ui_pipeline, const std::filesystem::path& img_path, NinePatchMargins margins, mve::Vector2i size);
+        UIPipeline& ui_pipeline,
+        const std::filesystem::path& img_path,
+        NinePatchMargins margins,
+        mve::Vector2i size,
+        float scale = 1.0f);
 
     void draw() const;
 
@@ -26,4 +30,5 @@ private:
     mve::VertexBuffer m_vertex_buffer;
     mve::IndexBuffer m_index_buffer;
     mve::Texture m_texture;
+    float m_scale;
 };

@@ -2,14 +2,19 @@
 #include "../logger.hpp"
 
 NinePatch::NinePatch(
-    UIPipeline& ui_pipeline, const std::filesystem::path& img_path, NinePatchMargins margins, mve::Vector2i size)
+    UIPipeline& ui_pipeline,
+    const std::filesystem::path& img_path,
+    NinePatchMargins margins,
+    mve::Vector2i size,
+    float scale)
     : m_pipeline(&ui_pipeline)
     , m_margins(margins)
     , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_texture(ui_pipeline.renderer(), img_path)
+    , m_scale(scale)
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), m_texture);
-    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(1.0f)));
+    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
 
     mve::Vector2 pixel = { 1.0f / m_texture.size().x, 1.0f / m_texture.size().y };
 

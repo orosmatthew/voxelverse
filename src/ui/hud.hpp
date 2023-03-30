@@ -4,7 +4,7 @@
 #include "crosshair.hpp"
 #include "debug_overlay.hpp"
 #include "hotbar.hpp"
-#include "nine_patch.hpp"
+#include "button.hpp"
 
 class HUD {
 public:
@@ -62,5 +62,5 @@ private:
     Crosshair m_crosshair;
     DebugOverlay m_debug_overlay;
     Console m_console;
-    NinePatch m_patch;
+    Button m_button;
 };
