@@ -24,6 +24,7 @@ public:
     }
 
 private:
+    TextPipeline* m_text_pipeline;
     NinePatch m_patch;
     TextBuffer m_text;
     mve::Vector2 m_position;

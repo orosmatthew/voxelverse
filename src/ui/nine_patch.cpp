@@ -12,6 +12,7 @@ NinePatch::NinePatch(
     , m_texture(ui_pipeline.renderer(), img_path)
     , m_scale(scale)
     , m_position(mve::Vector2(0.0f, 0.0f))
+    , m_size(size)
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), m_texture);
     m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));

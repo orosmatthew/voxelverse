@@ -34,6 +34,13 @@ public:
 
     void set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 color);
 
+    [[nodiscard]] float text_buffer_width(const TextBuffer& buffer) const;
+
+    [[nodiscard]] inline float point_size() const
+    {
+        return c_point_size;
+    }
+
     void draw(const TextBuffer& buffer) const;
 
     void destroy(TextBuffer& buffer);

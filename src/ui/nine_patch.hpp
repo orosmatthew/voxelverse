@@ -37,6 +37,11 @@ public:
         return m_scale;
     }
 
+    [[nodiscard]] inline mve::Vector2i size() const
+    {
+        return m_size;
+    }
+
 private:
     UIPipeline* m_pipeline;
     UIUniformData m_uniform_data;
@@ -45,4 +50,5 @@ private:
     mve::Texture m_texture;
     mve::Vector2 m_position;
     float m_scale;
+    mve::Vector2i m_size;
 };

@@ -69,6 +69,11 @@ public:
         m_pipeline->set_text_buffer_scale(*this, scale);
     }
 
+    [[nodiscard]] inline float width() const
+    {
+        return m_pipeline->text_buffer_width(*this);
+    }
+
     inline void add_cursor(int pos)
     {
         m_pipeline->add_cursor(*this, pos);
