@@ -46,11 +46,11 @@ void DebugOverlay::update_fps(int value)
 void DebugOverlay::resize(mve::Vector2i extent)
 {
     m_extent = extent;
-    m_left_column_pos = { -m_extent.x / 2.0f + 8.0f * 1.0f, m_extent.y / 2.0f - 35.0f * 1.0f };
+    m_left_column_pos = { -m_extent.x / 2.0f + 8.0f * 1.0f, -m_extent.y / 2.0f * 1.0f };
     float y = m_left_column_pos.y;
     for (TextBuffer* buffer : m_left_column) {
         buffer->set_translation({ m_left_column_pos.x, y });
-        y -= m_column_offset * m_left_column_scale;
+        y += m_column_offset * m_left_column_scale;
     }
 }
 void DebugOverlay::update_gpu_name(const std::string& gpu)

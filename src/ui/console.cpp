@@ -11,7 +11,7 @@ Console::Console(TextPipeline& pipeline)
 void Console::resize(mve::Vector2i extent)
 {
     float x = -extent.x / 2.0f + 8.0f;
-    float y = -extent.y / 2.0f + 105.0f;
+    float y = extent.y / 2.0f - 150.0f;
     m_input_text.set_translation({ x, y });
     std::optional<int> pos = m_input_text.cursor_pos();
     if (pos.has_value()) {

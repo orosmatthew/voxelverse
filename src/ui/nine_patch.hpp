@@ -23,12 +23,26 @@ public:
 
     void draw() const;
 
+    void set_position(const mve::Vector2& pos);
+
+    void set_scale(float scale);
+
+    [[nodiscard]] inline mve::Vector2 position() const
+    {
+        return m_position;
+    }
+
+    [[nodiscard]] inline float scale() const
+    {
+        return m_scale;
+    }
+
 private:
     UIPipeline* m_pipeline;
-    NinePatchMargins m_margins;
     UIUniformData m_uniform_data;
     mve::VertexBuffer m_vertex_buffer;
     mve::IndexBuffer m_index_buffer;
     mve::Texture m_texture;
+    mve::Vector2 m_position;
     float m_scale;
 };

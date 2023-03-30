@@ -10,7 +10,7 @@ App::App()
     : m_window("Mini Vulkan Engine", mve::Vector2i(800, 600))
     , m_renderer(m_window, "Vulkan Testing", 0, 0, 1)
     , m_ui_pipeline(m_renderer)
-    , m_text_pipeline(m_renderer)
+    , m_text_pipeline(m_renderer, 36)
     , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
     , m_world_framebuffer(m_renderer.create_framebuffer([this]() {
         m_ui_pipeline.update_framebuffer_texture(

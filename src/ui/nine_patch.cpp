@@ -8,10 +8,10 @@ NinePatch::NinePatch(
     mve::Vector2i size,
     float scale)
     : m_pipeline(&ui_pipeline)
-    , m_margins(margins)
     , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_texture(ui_pipeline.renderer(), img_path)
     , m_scale(scale)
+    , m_position(mve::Vector2(0.0f, 0.0f))
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), m_texture);
     m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
@@ -74,4 +74,23 @@ NinePatch::NinePatch(
 void NinePatch::draw() const
 {
     m_pipeline->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
+}
+
+void NinePatch::set_position(const mve::Vector2& pos)
+{
+    m_position = pos;
+    m_uniform_data.buffer.update(
+        m_pipeline->model_location(),
+        mve::Matrix4::identity()
+            .scale(mve::Vector3(m_scale))
+            .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
+}
+void NinePatch::set_scale(float scale)
+{
+    m_scale = scale;
+    m_uniform_data.buffer.update(
+        m_pipeline->model_location(),
+        mve::Matrix4::identity()
+            .scale(mve::Vector3(m_scale))
+            .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
 }

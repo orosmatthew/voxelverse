@@ -6,7 +6,7 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     , m_crosshair(ui_pipeline)
     , m_debug_overlay(text_pipeline)
     , m_console(text_pipeline)
-    , m_button(ui_pipeline, 10.0f)
+    , m_button(ui_pipeline, text_pipeline, "Button", 10.0f)
 {
     m_hotbar.set_item(0, 1);
     m_hotbar.set_item(1, 2);

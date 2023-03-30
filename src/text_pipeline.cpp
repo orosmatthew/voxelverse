@@ -7,7 +7,7 @@
 #include "mve/common.hpp"
 #include "text_buffer.hpp"
 
-TextPipeline::TextPipeline(mve::Renderer& renderer)
+TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     : m_renderer(&renderer)
     , m_vert_shader("../res/bin/shader/text.vert.spv")
     , m_frag_shader("../res/bin/shader/text.frag.spv")
@@ -18,6 +18,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer)
     , m_text_color_location(m_vert_shader.descriptor_set(1).binding(0).member("text_color").location())
     , m_texture_binding(m_frag_shader.descriptor_set(1).binding(1))
     , m_glyph_ubo_binding(m_vert_shader.descriptor_set(1).binding(0))
+    , c_point_size(point_size)
 {
     m_global_descriptor_set.write_binding(m_vert_shader.descriptor_set(0).binding(0), m_global_ubo);
 
@@ -58,7 +59,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer)
     result = FT_New_Face(font_lib, "../res/karma_suture.otf", 0, &font_face);
     MVE_ASSERT(result == 0, "[Text Pipeline] Failed to load font")
 
-    FT_Set_Pixel_Sizes(font_face, 0, 36);
+    FT_Set_Pixel_Sizes(font_face, 0, c_point_size);
 
     for (unsigned char c = 0; c < 128; c++) {
         result = FT_Load_Char(font_face, c, FT_LOAD_RENDER);
@@ -147,12 +148,12 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
         float x_pos = pos.x + font_char.bearing.x * glyph.scale;
-        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * glyph.scale;
+        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * glyph.scale + c_point_size;
         float w = font_char.size.x * glyph.scale;
         float h = font_char.size.y * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
-        model = model.translate({ x_pos, -y_pos, 0.0f });
+        model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
         pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
@@ -182,8 +183,8 @@ void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
         x += mve::floor(m_font_chars[buffer_impl.render_glyphs[i].character].advance / 64.0f) * buffer_impl.scale;
     }
     mve::Matrix4 model = mve::Matrix4::identity()
-                             .scale(mve::Vector3(buffer_impl.scale * 36.0f))
-                             .translate({ x, -buffer_impl.translation.y, 0.1f });
+                             .scale(mve::Vector3(buffer_impl.scale * c_point_size))
+                             .translate({ x, buffer_impl.translation.y + c_point_size, 0.1f });
     buffer_impl.cursor->ubo.update(m_model_location, model);
 }
 void TextPipeline::remove_cursor(const TextBuffer& buffer)
@@ -222,13 +223,13 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
         }
         const FontChar& font_char = m_font_chars.at(*c);
         float x_pos = pos.x + font_char.bearing.x * scale;
-        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * scale;
+        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * scale + c_point_size;
         float w = font_char.size.x * scale;
         float h = font_char.size.y * scale;
 
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
-        model = model.translate({ x_pos, -y_pos, 0.0f });
+        model = model.translate({ x_pos, y_pos, 0.0f });
 
         auto it = std::find_if(
             buffer_impl.render_glyphs.begin(), buffer_impl.render_glyphs.end(), [](const RenderGlyph& glyph) {
@@ -291,12 +292,12 @@ void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
         float x_pos = pos.x + font_char.bearing.x * glyph.scale;
-        float y_pos = pos.y - (font_char.size.y - font_char.bearing.y) * glyph.scale;
+        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * scale + c_point_size;
         float w = font_char.size.x * glyph.scale;
         float h = font_char.size.y * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
-        model = model.translate({ x_pos, -y_pos, 0.0f });
+        model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
         pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;

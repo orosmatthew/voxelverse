@@ -6,7 +6,7 @@ class TextBuffer;
 
 class TextPipeline {
 public:
-    explicit TextPipeline(mve::Renderer& renderer);
+    explicit TextPipeline(mve::Renderer& renderer, int point_size);
 
     void resize();
 
@@ -96,4 +96,5 @@ private:
 
     std::unordered_map<char, FontChar> m_font_chars {};
     std::vector<std::optional<TextBufferImpl>> m_text_buffers {};
+    const int c_point_size;
 };
