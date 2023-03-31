@@ -15,11 +15,7 @@ class UIPipeline;
 
 class World {
 public:
-    World(
-        std::shared_ptr<mve::Renderer> renderer,
-        std::shared_ptr<UIPipeline> ui_pipeline,
-        std::shared_ptr<TextPipeline> text_pipeline,
-        int render_distance);
+    World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance);
 
     inline void set_render_distance(int distance)
     {

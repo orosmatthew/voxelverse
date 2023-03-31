@@ -8,13 +8,13 @@ namespace app {
 
 App::App()
     : m_window("Mini Vulkan Engine", mve::Vector2i(800, 600))
-    , m_renderer(std::make_shared<mve::Renderer>(m_window, "Vulkan Testing", 0, 0, 1))
-    , m_ui_pipeline(std::make_shared<UIPipeline>(m_renderer))
-    , m_text_pipeline(std::make_shared<TextPipeline>(m_renderer, 36))
+    , m_renderer(m_window, "Vulkan Testing", 0, 0, 1)
+    , m_ui_pipeline(m_renderer)
+    , m_text_pipeline(m_renderer, 36)
     , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
-    , m_world_framebuffer(m_renderer->create_framebuffer([this]() {
-        m_ui_pipeline->update_framebuffer_texture(
-            m_world_framebuffer.texture(), m_renderer->framebuffer_size(m_world_framebuffer));
+    , m_world_framebuffer(m_renderer.create_framebuffer([this]() {
+        m_ui_pipeline.update_framebuffer_texture(
+            m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
     }))
     , m_fixed_loop(60.0f)
     , m_begin_time(std::chrono::high_resolution_clock::now())
@@ -25,10 +25,10 @@ App::App()
     m_window.disable_cursor();
 
     auto resize_func = [&](mve::Vector2i new_size) {
-        m_renderer->resize(m_window);
-        m_world.resize(m_renderer->extent());
-        m_ui_pipeline->resize();
-        m_text_pipeline->resize();
+        m_renderer.resize(m_window);
+        m_world.resize(m_renderer.extent());
+        m_ui_pipeline.resize();
+        m_text_pipeline.resize();
         draw();
     };
 
@@ -39,21 +39,21 @@ App::App()
 
 void App::draw()
 {
-    m_renderer->begin_frame(m_window);
+    m_renderer.begin_frame(m_window);
 
-    m_renderer->begin_render_pass_framebuffer(m_world_framebuffer);
+    m_renderer.begin_render_pass_framebuffer(m_world_framebuffer);
 
     m_world.draw();
 
-    m_renderer->end_render_pass_framebuffer(m_world_framebuffer);
+    m_renderer.end_render_pass_framebuffer(m_world_framebuffer);
 
-    m_renderer->begin_render_pass_present();
+    m_renderer.begin_render_pass_present();
 
-    m_ui_pipeline->draw_world();
+    m_ui_pipeline.draw_world();
 
-    m_renderer->end_render_pass_present();
+    m_renderer.end_render_pass_present();
 
-    m_renderer->end_frame(m_window);
+    m_renderer.end_frame(m_window);
 }
 
 void App::main_loop()

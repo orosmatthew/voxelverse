@@ -6,7 +6,7 @@
 
 class Hotbar {
 public:
-    Hotbar(std::weak_ptr<UIPipeline> ui_pipeline);
+    Hotbar(UIPipeline& ui_pipeline);
 
     void resize(const mve::Vector2i& extent);
 
@@ -43,14 +43,7 @@ private:
         Element element;
     };
 
-    [[nodiscard]] inline std::shared_ptr<UIPipeline> lock_pipeline() const
-    {
-        auto pipeline_ref = m_ui_pipeline.lock();
-        MVE_VAL_ASSERT(pipeline_ref, "[Hotbar] Invalid UI pipeline")
-        return pipeline_ref;
-    }
-
-    std::weak_ptr<UIPipeline> m_ui_pipeline;
+    UIPipeline* m_ui_pipeline;
 
     mve::UniformLocation m_model_location;
     mve::ShaderDescriptorBinding m_texture_binding;

@@ -6,8 +6,8 @@
 class Button {
 public:
     explicit Button(
-        std::shared_ptr<UIPipeline> ui_pipeline,
-        std::shared_ptr<TextPipeline> text_pipeline,
+        UIPipeline& ui_pipeline,
+        TextPipeline& text_pipeline,
         std::shared_ptr<mve::Texture> texture,
         const std::string& text,
         float scale = 1.0f);
@@ -29,9 +29,10 @@ public:
     }
 
 private:
-    std::weak_ptr<TextPipeline> m_text_pipeline;
+    TextPipeline* m_text_pipeline;
     NinePatch m_patch;
     TextBuffer m_text;
     mve::Vector2 m_position;
+    std::shared_ptr<mve::Texture> m_texture;
     float m_scale;
 };

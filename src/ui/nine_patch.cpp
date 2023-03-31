@@ -2,24 +2,21 @@
 #include "../logger.hpp"
 
 NinePatch::NinePatch(
-    std::shared_ptr<UIPipeline> ui_pipeline,
+    UIPipeline& ui_pipeline,
     std::shared_ptr<mve::Texture> texture,
     NinePatchMargins margins,
     mve::Vector2i size,
     float scale)
-    : m_pipeline(ui_pipeline)
-    , m_uniform_data(ui_pipeline->create_uniform_data())
+    : m_pipeline(&ui_pipeline)
+    , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_scale(scale)
     , m_position(mve::Vector2(0.0f, 0.0f))
     , m_size(size)
     , m_texture(texture)
+    , m_model_location(ui_pipeline.model_location())
 {
-    MVE_ASSERT(ui_pipeline, "[NinePatch] Invalid UI pipeline")
-
-    m_model_location = ui_pipeline->model_location();
-
-    m_uniform_data.descriptor_set.write_binding(ui_pipeline->texture_binding(), *texture);
-    m_uniform_data.buffer.update(ui_pipeline->model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
+    m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
+    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
 
     mve::Vector2 pixel = { 1.0f / texture->size().x, 1.0f / texture->size().y };
 
@@ -71,15 +68,13 @@ NinePatch::NinePatch(
         vertex_data.push_back(mve::Vector3(1.0f, 1.0f, 1.0f));
         vertex_data.push_back(uvs[i]);
     }
-    m_vertex_buffer = ui_pipeline->renderer()->create_vertex_buffer(vertex_data);
-    m_index_buffer = ui_pipeline->renderer()->create_index_buffer(indices);
+    m_vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
+    m_index_buffer = ui_pipeline.renderer().create_index_buffer(indices);
 }
 
 void NinePatch::draw() const
 {
-    auto pipeline_ref = m_pipeline.lock();
-    MVE_ASSERT(pipeline_ref, "[NinePatch] Invalid UI pipeline")
-    pipeline_ref->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
+    m_pipeline->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
 }
 
 void NinePatch::set_position(const mve::Vector2& pos)
@@ -103,8 +98,6 @@ void NinePatch::set_scale(float scale)
 
 void NinePatch::update_texture(const mve::Texture& texture)
 {
-    auto pipeline_ref = m_pipeline.lock();
-    MVE_ASSERT(pipeline_ref, "[NinePatch] Invalid UI pipeline")
     // TODO: This texture could be different size from original
-    m_uniform_data.descriptor_set.write_binding(pipeline_ref->texture_binding(), texture);
+    m_uniform_data.descriptor_set.write_binding(m_pipeline->texture_binding(), texture);
 }

@@ -4,11 +4,7 @@
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
 
-World::World(
-    std::shared_ptr<mve::Renderer> renderer,
-    std::shared_ptr<UIPipeline> ui_pipeline,
-    std::shared_ptr<TextPipeline> text_pipeline,
-    int render_distance)
+World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
     , m_mesh_updates_per_frame(4)
@@ -18,7 +14,7 @@ World::World(
     , m_last_place_time(std::chrono::steady_clock::now())
     , m_last_break_time(std::chrono::steady_clock::now())
 {
-    m_hud.update_debug_gpu_name(renderer->gpu_name());
+    m_hud.update_debug_gpu_name(renderer.gpu_name());
 }
 
 void World::fixed_update(const mve::Window& window)

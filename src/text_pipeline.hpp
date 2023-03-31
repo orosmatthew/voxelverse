@@ -7,7 +7,7 @@ class TextBuffer;
 
 class TextPipeline {
 public:
-    explicit TextPipeline(std::shared_ptr<mve::Renderer> renderer, int point_size);
+    explicit TextPipeline(mve::Renderer& renderer, int point_size);
 
     void resize();
 
@@ -85,14 +85,7 @@ private:
         mve::VertexAttributeType::vec2 // UV
     };
 
-    [[nodiscard]] inline std::shared_ptr<mve::Renderer> lock_renderer() const
-    {
-        auto renderer_ref = m_renderer.lock();
-        MVE_VAL_ASSERT(renderer_ref, "[Text Pipeline] Invalid renderer")
-        return renderer_ref;
-    }
-
-    std::weak_ptr<mve::Renderer> m_renderer;
+    mve::Renderer* m_renderer;
     mve::Shader m_vert_shader;
     mve::Shader m_frag_shader;
     mve::GraphicsPipeline m_pipeline;
