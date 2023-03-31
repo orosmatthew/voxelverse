@@ -6,15 +6,7 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     , m_crosshair(ui_pipeline)
     , m_debug_overlay(text_pipeline)
     , m_console(text_pipeline)
-    , m_button(
-          ui_pipeline,
-          text_pipeline,
-          std::make_shared<mve::Texture>(ui_pipeline.renderer(), "../res/button_gray.png"),
-          "Button Text",
-          10.0f)
 {
-    m_button.set_position({ 10, 10 });
-
     m_hotbar.set_item(0, 1);
     m_hotbar.set_item(1, 2);
     m_hotbar.set_item(2, 3);
@@ -41,7 +33,6 @@ void HUD::draw()
         m_debug_overlay.draw();
     }
     m_console.draw();
-    //    m_button.draw();
 }
 
 void HUD::toggle_debug()

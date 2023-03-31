@@ -352,8 +352,7 @@ float TextPipeline::text_buffer_width(const TextBuffer& buffer) const
     for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to access invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
-        float x_pos = pos.x + font_char.bearing.x * glyph.scale;
         pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
     }
-    return pos.x;
+    return pos.x - buffer_impl.translation.x;
 }

@@ -81,7 +81,8 @@ set(SOURCE_FILES
         src/ui/debug_overlay.cpp
         src/ui/hud.cpp
         src/ui/console.cpp
-        src/ui/button.cpp)
+        src/ui/button.cpp
+        src/ui/pause_menu.cpp)
 
 set(LIBS
         Vulkan::Vulkan

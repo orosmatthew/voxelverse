@@ -58,7 +58,7 @@ void App::draw()
 
 void App::main_loop()
 {
-    while (!m_window.should_close()) {
+    while (!m_window.should_close() && !m_world.should_exit()) {
         m_window.poll_events();
 
         m_fixed_loop.update(20, [&]() { m_world.fixed_update(m_window); });

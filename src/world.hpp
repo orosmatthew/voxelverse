@@ -6,6 +6,7 @@
 #include "ui/debug_overlay.hpp"
 #include "ui/hotbar.hpp"
 #include "ui/hud.hpp"
+#include "ui/pause_menu.hpp"
 #include "world_generator.hpp"
 #include "world_renderer.hpp"
 
@@ -46,7 +47,13 @@ public:
         return m_world_data;
     }
 
+    [[nodiscard]] inline bool should_exit() const
+    {
+        return m_should_exit;
+    }
+
 private:
+    enum class FocusState { world, console, pause };
     struct ChunkState {
         bool has_mesh = false;
         bool can_mesh = false;
@@ -54,6 +61,9 @@ private:
         bool should_delete = false;
         int neighbors = 0;
     };
+
+    void update_world(mve::Window& window, float blend);
+
     WorldRenderer m_world_renderer;
     WorldGenerator m_world_generator;
     WorldData m_world_data;
@@ -64,7 +74,9 @@ private:
     mve::Vector2i m_player_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     int m_render_distance;
     HUD m_hud;
-    bool m_console_enabled;
+    PauseMenu m_pause_menu;
     std::chrono::time_point<std::chrono::steady_clock> m_last_place_time;
     std::chrono::time_point<std::chrono::steady_clock> m_last_break_time;
+    FocusState m_focus;
+    bool m_should_exit;
 };

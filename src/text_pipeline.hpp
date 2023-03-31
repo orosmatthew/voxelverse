@@ -42,6 +42,11 @@ public:
         return c_point_size;
     }
 
+    [[nodiscard]] inline mve::Renderer& renderer()
+    {
+        return *m_renderer;
+    }
+
     void draw(const TextBuffer& buffer) const;
 
     void destroy(TextBuffer& buffer);

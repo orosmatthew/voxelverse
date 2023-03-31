@@ -27,9 +27,9 @@ Player::Player()
     }
 }
 
-void Player::update(const mve::Window& window)
+void Player::update(const mve::Window& window, bool capture_input)
 {
-    mve::Vector2 mouse_delta = window.mouse_delta();
+    mve::Vector2 mouse_delta = capture_input ? window.mouse_delta() : mve::Vector2::zero();
     m_body_transform = m_body_transform.rotate_local({ 0, 0, 1 }, -mouse_delta.x * 0.001f);
     m_head_transform = m_head_transform.rotate_local({ 1, 0, 0 }, -mouse_delta.y * 0.001f);
     mve::Vector3 head_euler = m_head_transform.euler();
@@ -49,7 +49,7 @@ void Player::update(const mve::Window& window)
         m_head_transform = mve::Matrix4::from_basis_translation(
             mve::Matrix3::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
     }
-    if (window.is_key_pressed(mve::Key::space)) {
+    if (capture_input && window.is_key_pressed(mve::Key::space)) {
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_space_time).count() <= 250) {
             if (m_is_flying) {

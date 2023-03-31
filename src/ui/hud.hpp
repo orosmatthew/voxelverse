@@ -56,11 +56,15 @@ public:
         m_console.disable_cursor();
     }
 
+    [[nodiscard]] inline bool is_debug_enabled() const
+    {
+        return m_show_debug;
+    }
+
 private:
     bool m_show_debug;
     Hotbar m_hotbar;
     Crosshair m_crosshair;
     DebugOverlay m_debug_overlay;
     Console m_console;
-    Button m_button;
 };

@@ -10,16 +10,18 @@ World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& tex
     , m_mesh_updates_per_frame(4)
     , m_render_distance(render_distance)
     , m_hud(ui_pipeline, text_pipeline)
-    , m_console_enabled(false)
+    , m_pause_menu(ui_pipeline, text_pipeline)
     , m_last_place_time(std::chrono::steady_clock::now())
     , m_last_break_time(std::chrono::steady_clock::now())
+    , m_focus(FocusState::world)
+    , m_should_exit(false)
 {
     m_hud.update_debug_gpu_name(renderer.gpu_name());
 }
 
 void World::fixed_update(const mve::Window& window)
 {
-    m_player.fixed_update(window, m_world_data, !m_console_enabled);
+    m_player.fixed_update(window, m_world_data, m_focus == FocusState::world);
 }
 
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
@@ -186,113 +188,46 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
 
 void World::update(mve::Window& window, float blend)
 {
-    m_hud.update_debug_player_block_pos(m_player.block_position());
-
-    if (!m_console_enabled) {
-        m_player.update(window);
-    }
-
-    m_world_renderer.set_view(m_player.view_matrix(blend));
-
-    if (!m_console_enabled) {
-        auto now = std::chrono::steady_clock::now();
-        if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
-            trigger_break_block(m_player, m_world_data, m_world_renderer);
-            m_last_break_time = now;
-        }
-        if (window.is_mouse_button_down(mve::MouseButton::left)) {
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_break_time).count() > 200) {
-                trigger_break_block(m_player, m_world_data, m_world_renderer);
-                m_last_break_time = now;
-            }
-        }
-
-        if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
-            if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
-                trigger_place_block(
-                    m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
-                m_last_place_time = now;
-            }
-        }
-        if (window.is_mouse_button_down(mve::MouseButton::right)) {
-            if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_place_time).count() > 200) {
-                    trigger_place_block(
-                        m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
-                    m_last_place_time = now;
-                }
-            }
-        }
-
-        mve::Vector2 scroll = window.mouse_scroll();
-        int scroll_y = static_cast<int>(scroll.y);
-        if (scroll_y != 0) {
-            for (int i = 0; i < mve::abs(scroll_y); i++) {
-                if (scroll_y < 0) {
-                    if (m_hud.hotbar().select_pos() + 1 > 8) {
-                        m_hud.hotbar().update_hotbar_select(0);
-                    }
-                    else {
-                        m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() + 1);
-                    }
-                }
-                else {
-                    if (m_hud.hotbar().select_pos() - 1 < 0) {
-                        m_hud.hotbar().update_hotbar_select(8);
-                    }
-                    else {
-                        m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() - 1);
-                    }
-                }
-            }
-        }
-
-        if (window.is_key_pressed(mve::Key::one)) {
-            m_hud.hotbar().update_hotbar_select(0);
-        }
-        if (window.is_key_pressed(mve::Key::two)) {
-            m_hud.hotbar().update_hotbar_select(1);
-        }
-        if (window.is_key_pressed(mve::Key::three)) {
-            m_hud.hotbar().update_hotbar_select(2);
-        }
-        if (window.is_key_pressed(mve::Key::four)) {
-            m_hud.hotbar().update_hotbar_select(3);
-        }
-        if (window.is_key_pressed(mve::Key::five)) {
-            m_hud.hotbar().update_hotbar_select(4);
-        }
-        if (window.is_key_pressed(mve::Key::six)) {
-            m_hud.hotbar().update_hotbar_select(5);
-        }
-        if (window.is_key_pressed(mve::Key::seven)) {
-            m_hud.hotbar().update_hotbar_select(6);
-        }
-        if (window.is_key_pressed(mve::Key::eight)) {
-            m_hud.hotbar().update_hotbar_select(7);
-        }
-        if (window.is_key_pressed(mve::Key::nine)) {
-            m_hud.hotbar().update_hotbar_select(8);
-        }
-    }
-    else {
-        m_hud.update_console(window);
-    }
-
-    if (!m_console_enabled && window.is_key_pressed(mve::Key::t)) {
-        m_console_enabled = true;
-        window.enable_cursor();
-        m_hud.enable_console_cursor();
-    }
-    else if (m_console_enabled && window.is_key_pressed(mve::Key::escape)) {
-        m_console_enabled = false;
-        window.set_cursor_pos({ window.size().x / 2.0f, window.size().y / 2.0f });
-        window.disable_cursor();
-        m_hud.disable_console_cursor();
-    }
-
     if (window.is_key_pressed(mve::Key::f3)) {
         m_hud.toggle_debug();
+    }
+    if (m_hud.is_debug_enabled()) {
+        m_hud.update_debug_player_block_pos(m_player.block_position());
+    }
+
+    m_player.update(window, m_focus == FocusState::world);
+    m_world_renderer.set_view(m_player.view_matrix(blend));
+
+    switch (m_focus) {
+    case FocusState::world:
+        update_world(window, blend);
+        break;
+    case FocusState::console:
+        m_hud.update_console(window);
+        if (window.is_key_pressed(mve::Key::escape)) {
+            m_focus = FocusState::world;
+            window.disable_cursor();
+            m_hud.disable_console_cursor();
+        }
+        break;
+    case FocusState::pause:
+        if (window.is_key_pressed(mve::Key::escape)) {
+            m_focus = FocusState::world;
+            window.disable_cursor();
+        }
+        m_pause_menu.update(window);
+        if (m_pause_menu.exit_pressed()) {
+            m_should_exit = true;
+        }
+        if (m_pause_menu.back_pressed()) {
+            m_focus = FocusState::world;
+            window.disable_cursor();
+            m_last_break_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(1000);
+        }
+        if (m_pause_menu.fullscreen_toggled()) {
+            window.is_fullscreen() ? window.windowed() : window.fullscreen(true);
+        }
+        break;
     }
 
     std::vector<mve::Vector3i> blocks
@@ -445,11 +380,15 @@ void World::resize(mve::Vector2i extent)
 {
     m_world_renderer.resize();
     m_hud.resize(extent);
+    m_pause_menu.resize(extent);
 }
 void World::draw()
 {
     m_world_renderer.draw(m_player);
     m_hud.draw();
+    if (m_focus == FocusState::pause) {
+        m_pause_menu.draw();
+    }
 }
 mve::Vector3i World::player_block_pos() const
 {
@@ -466,5 +405,96 @@ std::optional<const ChunkData*> World::chunk_data_at(mve::Vector3i chunk_pos) co
     }
     else {
         return {};
+    }
+}
+void World::update_world(mve::Window& window, float blend)
+{
+    if (window.is_key_pressed(mve::Key::escape)) {
+        m_focus = FocusState::pause;
+        window.enable_cursor();
+    }
+    auto now = std::chrono::steady_clock::now();
+    if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
+        trigger_break_block(m_player, m_world_data, m_world_renderer);
+        m_last_break_time = now;
+    }
+    if (window.is_mouse_button_down(mve::MouseButton::left)) {
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_break_time).count() > 200) {
+            trigger_break_block(m_player, m_world_data, m_world_renderer);
+            m_last_break_time = now;
+        }
+    }
+
+    if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
+        if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
+            trigger_place_block(
+                m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+            m_last_place_time = now;
+        }
+    }
+    if (window.is_mouse_button_down(mve::MouseButton::right)) {
+        if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_place_time).count() > 200) {
+                trigger_place_block(
+                    m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+                m_last_place_time = now;
+            }
+        }
+    }
+
+    mve::Vector2 scroll = window.mouse_scroll();
+    int scroll_y = static_cast<int>(scroll.y);
+    if (scroll_y != 0) {
+        for (int i = 0; i < mve::abs(scroll_y); i++) {
+            if (scroll_y < 0) {
+                if (m_hud.hotbar().select_pos() + 1 > 8) {
+                    m_hud.hotbar().update_hotbar_select(0);
+                }
+                else {
+                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() + 1);
+                }
+            }
+            else {
+                if (m_hud.hotbar().select_pos() - 1 < 0) {
+                    m_hud.hotbar().update_hotbar_select(8);
+                }
+                else {
+                    m_hud.hotbar().update_hotbar_select(m_hud.hotbar().select_pos() - 1);
+                }
+            }
+        }
+    }
+
+    if (window.is_key_pressed(mve::Key::one)) {
+        m_hud.hotbar().update_hotbar_select(0);
+    }
+    if (window.is_key_pressed(mve::Key::two)) {
+        m_hud.hotbar().update_hotbar_select(1);
+    }
+    if (window.is_key_pressed(mve::Key::three)) {
+        m_hud.hotbar().update_hotbar_select(2);
+    }
+    if (window.is_key_pressed(mve::Key::four)) {
+        m_hud.hotbar().update_hotbar_select(3);
+    }
+    if (window.is_key_pressed(mve::Key::five)) {
+        m_hud.hotbar().update_hotbar_select(4);
+    }
+    if (window.is_key_pressed(mve::Key::six)) {
+        m_hud.hotbar().update_hotbar_select(5);
+    }
+    if (window.is_key_pressed(mve::Key::seven)) {
+        m_hud.hotbar().update_hotbar_select(6);
+    }
+    if (window.is_key_pressed(mve::Key::eight)) {
+        m_hud.hotbar().update_hotbar_select(7);
+    }
+    if (window.is_key_pressed(mve::Key::nine)) {
+        m_hud.hotbar().update_hotbar_select(8);
+    }
+    if (window.is_key_pressed(mve::Key::t)) {
+        m_focus = FocusState::console;
+        window.enable_cursor();
+        m_hud.enable_console_cursor();
     }
 }
