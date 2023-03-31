@@ -22,8 +22,8 @@ private:
 
     mve::Window m_window;
     mve::Renderer m_renderer;
-    UIPipeline m_ui_pipeline;
-    TextPipeline m_text_pipeline;
+    std::shared_ptr<UIPipeline> m_ui_pipeline;
+    std::shared_ptr<TextPipeline> m_text_pipeline;
     World m_world;
     mve::Framebuffer m_world_framebuffer;
     util::FixedLoop m_fixed_loop;

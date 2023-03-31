@@ -1,12 +1,14 @@
 #include "world.hpp"
 
-#include <lz4hc.h>
-
 #include "common.hpp"
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
 
-World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
+World::World(
+    mve::Renderer& renderer,
+    std::weak_ptr<UIPipeline> ui_pipeline,
+    std::weak_ptr<TextPipeline> text_pipeline,
+    int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
     , m_mesh_updates_per_frame(4)

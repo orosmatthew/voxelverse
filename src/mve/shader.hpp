@@ -57,10 +57,10 @@ public:
     [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const;
 
 private:
-    const std::string m_name;
-    const uint32_t m_size;
-    const uint32_t m_offset;
-    const std::unordered_map<std::string, ShaderBindingBlock> m_members;
+    std::string m_name;
+    uint32_t m_size;
+    uint32_t m_offset;
+    std::unordered_map<std::string, ShaderBindingBlock> m_members;
 };
 
 class ShaderDescriptorBinding {
@@ -81,10 +81,10 @@ public:
     [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const;
 
 private:
-    const std::string m_name;
-    const uint32_t m_binding;
-    const ShaderDescriptorType m_type;
-    const std::optional<ShaderBindingBlock> m_block;
+    std::string m_name;
+    uint32_t m_binding;
+    ShaderDescriptorType m_type;
+    std::optional<ShaderBindingBlock> m_block;
 };
 
 class ShaderDescriptorSet {

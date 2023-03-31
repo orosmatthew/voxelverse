@@ -5,7 +5,12 @@
 
 class Button {
 public:
-    explicit Button(UIPipeline& ui_pipeline, TextPipeline& text_pipeline, const std::string& text, float scale = 1.0f);
+    explicit Button(
+        std::weak_ptr<UIPipeline> ui_pipeline,
+        std::weak_ptr<TextPipeline> text_pipeline,
+        std::shared_ptr<mve::Texture> texture,
+        const std::string& text,
+        float scale = 1.0f);
 
     void draw() const;
 
@@ -24,7 +29,7 @@ public:
     }
 
 private:
-    TextPipeline* m_text_pipeline;
+    std::weak_ptr<TextPipeline> m_text_pipeline;
     NinePatch m_patch;
     TextBuffer m_text;
     mve::Vector2 m_position;

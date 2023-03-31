@@ -15,8 +15,8 @@ struct NinePatchMargins {
 class NinePatch {
 public:
     NinePatch(
-        UIPipeline& ui_pipeline,
-        const std::filesystem::path& img_path,
+        std::weak_ptr<UIPipeline> ui_pipeline,
+        std::shared_ptr<mve::Texture> texture,
         NinePatchMargins margins,
         mve::Vector2i size,
         float scale = 1.0f);
@@ -26,6 +26,8 @@ public:
     void set_position(const mve::Vector2& pos);
 
     void set_scale(float scale);
+
+    void update_texture(const mve::Texture& texture);
 
     [[nodiscard]] inline mve::Vector2 position() const
     {
@@ -43,11 +45,12 @@ public:
     }
 
 private:
-    UIPipeline* m_pipeline;
+    std::weak_ptr<UIPipeline> m_pipeline;
     UIUniformData m_uniform_data;
     mve::VertexBuffer m_vertex_buffer;
     mve::IndexBuffer m_index_buffer;
-    mve::Texture m_texture;
+    std::shared_ptr<mve::Texture> m_texture;
+    mve::UniformLocation m_model_location;
     mve::Vector2 m_position;
     float m_scale;
     mve::Vector2i m_size;

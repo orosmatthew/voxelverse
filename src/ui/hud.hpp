@@ -1,14 +1,14 @@
 #pragma once
 
+#include "button.hpp"
 #include "console.hpp"
 #include "crosshair.hpp"
 #include "debug_overlay.hpp"
 #include "hotbar.hpp"
-#include "button.hpp"
 
 class HUD {
 public:
-    HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline);
+    HUD(std::weak_ptr<UIPipeline> ui_pipeline, std::weak_ptr<TextPipeline> text_pipeline);
 
     inline void update_debug_player_block_pos(mve::Vector3i pos)
     {

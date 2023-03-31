@@ -1,12 +1,17 @@
 #include "hud.hpp"
 
-HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
+HUD::HUD(std::weak_ptr<UIPipeline> ui_pipeline, std::weak_ptr<TextPipeline> text_pipeline)
     : m_show_debug(false)
-    , m_hotbar(ui_pipeline)
-    , m_crosshair(ui_pipeline)
-    , m_debug_overlay(text_pipeline)
-    , m_console(text_pipeline)
-    , m_button(ui_pipeline, text_pipeline, "Button Text", 10.0f)
+    , m_hotbar(*ui_pipeline.lock())
+    , m_crosshair(*ui_pipeline.lock())
+    , m_debug_overlay(*text_pipeline.lock())
+    , m_console(*text_pipeline.lock())
+    , m_button(
+          ui_pipeline,
+          text_pipeline,
+          std::make_shared<mve::Texture>(ui_pipeline.lock()->renderer(), "../res/button_gray.png"),
+          "Button Text",
+          10.0f)
 {
     m_button.set_position({ 10, 10 });
 
