@@ -46,7 +46,7 @@ void DebugOverlay::update_fps(int value)
 void DebugOverlay::resize(mve::Vector2i extent)
 {
     m_extent = extent;
-    m_left_column_pos = { -m_extent.x / 2.0f + 8.0f * 1.0f, -m_extent.y / 2.0f * 1.0f };
+    m_left_column_pos = { 8.0f * 1.0f, 0.0f };
     float y = m_left_column_pos.y;
     for (TextBuffer* buffer : m_left_column) {
         buffer->set_translation({ m_left_column_pos.x, y });

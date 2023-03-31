@@ -10,6 +10,8 @@ public:
 
     void draw() const;
 
+    void resize();
+
 private:
     UIPipeline* m_pipeline;
     UIUniformData m_uniform_data;

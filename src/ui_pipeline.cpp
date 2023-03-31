@@ -24,10 +24,10 @@ UIPipeline::UIPipeline(mve::Renderer& renderer)
 void UIPipeline::resize()
 {
     mve::Matrix4 proj = mve::ortho(
-        -static_cast<float>(m_renderer->extent().x) / 2.0f,
-        static_cast<float>(m_renderer->extent().x) / 2.0f,
-        -static_cast<float>(m_renderer->extent().y) / 2.0f,
-        static_cast<float>(m_renderer->extent().y) / 2.0f,
+        0.0f,
+        static_cast<float>(m_renderer->extent().x),
+        0.0f,
+        static_cast<float>(m_renderer->extent().y),
         -1000.0f,
         1000.0f);
     m_global_ubo.update(m_proj_location, proj);
@@ -37,16 +37,16 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, mve::Ve
 {
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), texture);
     mve::VertexData world_data(vertex_layout());
-    world_data.push_back(mve::Vector3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+    world_data.push_back(mve::Vector3(0.0f, 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 0.0f });
-    world_data.push_back(mve::Vector3(0.5f * size.x, -0.5f * size.y, 0.0f));
+    world_data.push_back(mve::Vector3(size.x, 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 0.0f });
-    world_data.push_back(mve::Vector3(0.5f * size.x, 0.5f * size.y, 0.0f));
+    world_data.push_back(mve::Vector3(size.x, size.y, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 1.0f });
-    world_data.push_back(mve::Vector3(-0.5f * size.x, 0.5f * size.y, 0.0f));
+    world_data.push_back(mve::Vector3(0.0f, size.y, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 1.0f });
     if (!m_world.has_value()) {

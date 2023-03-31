@@ -5,7 +5,9 @@ Crosshair::Crosshair(UIPipeline& pipeline)
     , m_uniform_data(pipeline.create_uniform_data())
     , m_texture(pipeline.renderer().create_texture("../res/cross.png"))
 {
-    m_uniform_data.buffer.update(pipeline.model_location(), mve::Matrix4::identity());
+    auto transform = mve::Matrix4::identity().translate(
+        { pipeline.renderer().extent().x / 2.0f, pipeline.renderer().extent().y / 2.0f, 0.0f });
+    m_uniform_data.buffer.update(pipeline.model_location(), transform);
     m_uniform_data.descriptor_set.write_binding(pipeline.texture_binding(), m_texture);
 
     const float cross_scale = 25.0f;
@@ -32,4 +34,10 @@ Crosshair::Crosshair(UIPipeline& pipeline)
 void Crosshair::draw() const
 {
     m_pipeline->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
+}
+void Crosshair::resize()
+{
+    auto transform = mve::Matrix4::identity().translate(
+        { m_pipeline->renderer().extent().x / 2.0f, m_pipeline->renderer().extent().y / 2.0f, 0.0f });
+    m_uniform_data.buffer.update(m_pipeline->model_location(), transform);
 }

@@ -30,6 +30,7 @@ void HUD::resize(mve::Vector2i extent)
     m_hotbar.resize(extent);
     m_debug_overlay.resize(extent);
     m_console.resize(extent);
+    m_crosshair.resize();
 }
 
 void HUD::draw()

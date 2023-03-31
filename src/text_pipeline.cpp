@@ -97,10 +97,10 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
 void TextPipeline::resize()
 {
     mve::Matrix4 proj = mve::ortho(
-        -static_cast<float>(m_renderer->extent().x) / 2.0f,
-        static_cast<float>(m_renderer->extent().x) / 2.0f,
-        -static_cast<float>(m_renderer->extent().y) / 2.0f,
-        static_cast<float>(m_renderer->extent().y) / 2.0f,
+        0.0f,
+        static_cast<float>(m_renderer->extent().x),
+        0.0f,
+        static_cast<float>(m_renderer->extent().y),
         -1000.0f,
         1000.0f);
     m_global_ubo.update(m_vert_shader.descriptor_set(0).binding(0).member("proj").location(), proj);

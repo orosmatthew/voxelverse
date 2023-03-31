@@ -88,7 +88,7 @@ mve::Vector3 Hotbar::scale() const
 }
 mve::Vector3 Hotbar::translation() const
 {
-    return { 0, static_cast<float>(m_renderer_extent.y) * 0.5f, 0 };
+    return { static_cast<float>(m_renderer_extent.x) * 0.5f, static_cast<float>(m_renderer_extent.y), 0 };
 }
 std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(uint8_t block_type) const
 {
