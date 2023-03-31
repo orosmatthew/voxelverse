@@ -21,7 +21,7 @@ private:
     void draw();
 
     mve::Window m_window;
-    mve::Renderer m_renderer;
+    std::shared_ptr<mve::Renderer> m_renderer;
     std::shared_ptr<UIPipeline> m_ui_pipeline;
     std::shared_ptr<TextPipeline> m_text_pipeline;
     World m_world;

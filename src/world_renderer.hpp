@@ -14,7 +14,7 @@
 
 class WorldRenderer {
 public:
-    explicit WorldRenderer(mve::Renderer& renderer);
+    explicit WorldRenderer(std::shared_ptr<mve::Renderer> renderer);
 
     void queue_update(mve::Vector3i chunk_pos);
 
@@ -74,7 +74,14 @@ private:
 
     void rebuild_mesh_lookup();
 
-    mve::Renderer* m_renderer;
+    [[nodiscard]] inline std::shared_ptr<mve::Renderer> lock_renderer() const
+    {
+        auto renderer_ref = m_renderer.lock();
+        MVE_VAL_ASSERT(renderer_ref, "[WorldRenderer] Invalid renderer")
+        return renderer_ref;
+    }
+
+    std::weak_ptr<mve::Renderer> m_renderer;
     BS::thread_pool m_thread_pool;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;

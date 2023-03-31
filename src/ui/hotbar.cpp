@@ -3,18 +3,19 @@
 #include "../common.hpp"
 #include "../logger.hpp"
 
-Hotbar::Hotbar(UIPipeline& ui_pipeline)
-    : m_ui_pipeline(&ui_pipeline)
-    , m_model_location(m_ui_pipeline->model_location())
-    , m_texture_binding(m_ui_pipeline->texture_binding())
-    , m_hotbar({ .uniform_data = m_ui_pipeline->create_uniform_data() })
-    , m_select({ .uniform_data = m_ui_pipeline->create_uniform_data() })
-    , m_renderer_extent(ui_pipeline.renderer().extent())
+Hotbar::Hotbar(std::weak_ptr<UIPipeline> ui_pipeline)
+    : m_ui_pipeline(ui_pipeline)
+    , m_model_location(lock_pipeline()->model_location())
+    , m_texture_binding(lock_pipeline()->texture_binding())
+    , m_hotbar({ .uniform_data = lock_pipeline()->create_uniform_data() })
+    , m_select({ .uniform_data = lock_pipeline()->create_uniform_data() })
+    , m_renderer_extent(lock_pipeline()->renderer()->extent())
     , m_select_pos(0)
-    , m_atlas_texture(ui_pipeline.renderer(), "../res/atlas.png")
+    , m_atlas_texture(*lock_pipeline()->renderer(), "../res/atlas.png")
 {
+    auto pipeline_ref = lock_pipeline();
     mve::Vector2 size { 910, 110 };
-    mve::VertexData vertex_data(m_ui_pipeline->vertex_layout());
+    mve::VertexData vertex_data(pipeline_ref->vertex_layout());
     vertex_data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     vertex_data.push_back({ 1, 1, 1 });
     vertex_data.push_back({ 0.0f, 0.0f });
@@ -28,14 +29,14 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     vertex_data.push_back({ 1, 1, 1 });
     vertex_data.push_back({ 0.0f, 1.0f });
 
-    m_hotbar_texture = ui_pipeline.renderer().create_texture("../res/hotbar.png");
-    m_hotbar.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
-    m_hotbar.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_hotbar_texture = pipeline_ref->renderer()->create_texture("../res/hotbar.png");
+    m_hotbar.vertex_buffer = pipeline_ref->renderer()->create_vertex_buffer(vertex_data);
+    m_hotbar.index_buffer = pipeline_ref->renderer()->create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_hotbar.uniform_data.descriptor_set.write_binding(m_texture_binding, m_hotbar_texture);
     m_hotbar.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
 
     mve::Vector2 select_size { 24 * 5, 23 * 5 };
-    mve::VertexData select_vertex_data(m_ui_pipeline->vertex_layout());
+    mve::VertexData select_vertex_data(pipeline_ref->vertex_layout());
     select_vertex_data.push_back(mve::Vector3(-0.5f * select_size.x, -1.0f * select_size.y, 0.0f));
     select_vertex_data.push_back({ 1, 1, 1 });
     select_vertex_data.push_back({ 0.0f, 0.0f });
@@ -49,9 +50,9 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     select_vertex_data.push_back({ 1, 1, 1 });
     select_vertex_data.push_back({ 0.0f, 1.0f });
 
-    m_select_texture = ui_pipeline.renderer().create_texture("../res/hotbar_select.png");
-    m_select.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(select_vertex_data);
-    m_select.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_select_texture = pipeline_ref->renderer()->create_texture("../res/hotbar_select.png");
+    m_select.vertex_buffer = pipeline_ref->renderer()->create_vertex_buffer(select_vertex_data);
+    m_select.index_buffer = pipeline_ref->renderer()->create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_select.uniform_data.descriptor_set.write_binding(m_texture_binding, m_select_texture);
     m_select.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
 }
@@ -114,22 +115,24 @@ std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(uint8
 
 void Hotbar::draw() const
 {
-    m_ui_pipeline->draw(m_hotbar.uniform_data.descriptor_set, m_hotbar.vertex_buffer, m_hotbar.index_buffer);
+    auto pipeline_ref = lock_pipeline();
+    pipeline_ref->draw(m_hotbar.uniform_data.descriptor_set, m_hotbar.vertex_buffer, m_hotbar.index_buffer);
     for (const auto& [pos, item] : m_items) {
         if (item.has_value()) {
-            m_ui_pipeline->draw(
+            pipeline_ref->draw(
                 item->element.uniform_data.descriptor_set, item->element.vertex_buffer, item->element.index_buffer);
         }
     }
-    m_ui_pipeline->draw(m_select.uniform_data.descriptor_set, m_select.vertex_buffer, m_select.index_buffer);
+    pipeline_ref->draw(m_select.uniform_data.descriptor_set, m_select.vertex_buffer, m_select.index_buffer);
 }
 
 void Hotbar::set_item(int pos, uint8_t block_type)
 {
+    auto pipeline_ref = lock_pipeline();
     auto [vertex_data, index_data] = create_item_mesh(block_type);
-    Element element = { .uniform_data = m_ui_pipeline->create_uniform_data(),
-                        .vertex_buffer = m_ui_pipeline->renderer().create_vertex_buffer(vertex_data),
-                        .index_buffer = m_ui_pipeline->renderer().create_index_buffer(index_data) };
+    Element element = { .uniform_data = pipeline_ref->create_uniform_data(),
+                        .vertex_buffer = pipeline_ref->renderer()->create_vertex_buffer(vertex_data),
+                        .index_buffer = pipeline_ref->renderer()->create_index_buffer(index_data) };
     element.uniform_data.descriptor_set.write_binding(m_texture_binding, m_atlas_texture);
     element.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
     m_items[pos] = { block_type, std::move(element) };

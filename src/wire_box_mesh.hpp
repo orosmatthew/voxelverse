@@ -1,13 +1,14 @@
 #pragma once
 
 #include "common.hpp"
+#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/renderer.hpp"
 
 class WireBoxMesh {
 public:
     WireBoxMesh(
-        mve::Renderer& renderer,
+        std::shared_ptr<mve::Renderer> renderer,
         mve::GraphicsPipeline& pipeline,
         const mve::ShaderDescriptorSet& set,
         const mve::ShaderDescriptorBinding& uniform_buffer_binding,
@@ -35,7 +36,14 @@ private:
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 
-    mve::Renderer* m_renderer;
+    [[nodiscard]] inline std::shared_ptr<mve::Renderer> lock_renderer() const
+    {
+        auto renderer_ref = m_renderer.lock();
+        MVE_VAL_ASSERT(renderer_ref, "[WireBoxMesh] Invalid renderer")
+        return renderer_ref;
+    }
+
+    std::weak_ptr<mve::Renderer> m_renderer;
     mve::DescriptorSet m_descriptor_set;
     mve::UniformBuffer m_uniform_buffer;
     mve::UniformLocation m_model_location;

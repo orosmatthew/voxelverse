@@ -3,16 +3,16 @@
 #include "world_renderer.hpp"
 
 WireBoxMesh::WireBoxMesh(
-    mve::Renderer& renderer,
+    std::shared_ptr<mve::Renderer> renderer,
     mve::GraphicsPipeline& pipeline,
     const mve::ShaderDescriptorSet& set,
     const mve::ShaderDescriptorBinding& uniform_buffer_binding,
     const BoundingBox& box,
     float width,
     mve::Vector3 color)
-    : m_renderer(&renderer)
+    : m_renderer(renderer)
     , m_descriptor_set(pipeline.create_descriptor_set(set))
-    , m_uniform_buffer(renderer.create_uniform_buffer(uniform_buffer_binding))
+    , m_uniform_buffer(renderer->create_uniform_buffer(uniform_buffer_binding))
     , m_model_location(uniform_buffer_binding.member("model").location())
 {
     m_descriptor_set.write_binding(uniform_buffer_binding, m_uniform_buffer);
@@ -37,21 +37,23 @@ WireBoxMesh::WireBoxMesh(
 
     for (const mve::Vector3& vertex : combined_data.vertices) {
         data.push_back(vertex);
-        data.push_back(color);  // TODO: Fix broken color
+        data.push_back(color); // TODO: Fix broken color
         data.push_back({ 0, 0 });
     }
 
     m_uniform_buffer.update(m_model_location, mve::Matrix4::identity());
 
-    m_mesh_buffers = { .vertex_buffer = m_renderer->create_vertex_buffer(data),
-                       .index_buffer = m_renderer->create_index_buffer(combined_data.indices) };
+    auto renderer_ref = lock_renderer();
+    m_mesh_buffers = { .vertex_buffer = renderer_ref->create_vertex_buffer(data),
+                       .index_buffer = renderer_ref->create_index_buffer(combined_data.indices) };
 }
 void WireBoxMesh::draw(const mve::DescriptorSet& global_set) const
 {
+    auto renderer_ref = lock_renderer();
     if (m_mesh_buffers.has_value()) {
-        m_renderer->bind_descriptor_sets(global_set, m_descriptor_set);
-        m_renderer->bind_vertex_buffer(m_mesh_buffers->vertex_buffer);
-        m_renderer->draw_index_buffer(m_mesh_buffers->index_buffer);
+        renderer_ref->bind_descriptor_sets(global_set, m_descriptor_set);
+        renderer_ref->bind_vertex_buffer(m_mesh_buffers->vertex_buffer);
+        renderer_ref->draw_index_buffer(m_mesh_buffers->index_buffer);
     }
 }
 void WireBoxMesh::set_position(mve::Vector3 position)

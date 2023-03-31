@@ -8,7 +8,7 @@
 
 class HUD {
 public:
-    HUD(std::weak_ptr<UIPipeline> ui_pipeline, std::weak_ptr<TextPipeline> text_pipeline);
+    HUD(std::shared_ptr<UIPipeline> ui_pipeline, std::shared_ptr<TextPipeline> text_pipeline);
 
     inline void update_debug_player_block_pos(mve::Vector3i pos)
     {

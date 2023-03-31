@@ -7,13 +7,13 @@
 #include "mve/common.hpp"
 #include "text_buffer.hpp"
 
-TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
-    : m_renderer(&renderer)
+TextPipeline::TextPipeline(std::shared_ptr<mve::Renderer> renderer, int point_size)
+    : m_renderer(renderer)
     , m_vert_shader("../res/bin/shader/text.vert.spv")
     , m_frag_shader("../res/bin/shader/text.frag.spv")
-    , m_pipeline(renderer, m_vert_shader, m_frag_shader, c_vertex_layout)
-    , m_global_ubo(renderer, m_vert_shader.descriptor_set(0).binding(0))
-    , m_global_descriptor_set(renderer, m_pipeline, m_vert_shader.descriptor_set(0))
+    , m_pipeline(*renderer, m_vert_shader, m_frag_shader, c_vertex_layout)
+    , m_global_ubo(*renderer, m_vert_shader.descriptor_set(0).binding(0))
+    , m_global_descriptor_set(*renderer, m_pipeline, m_vert_shader.descriptor_set(0))
     , m_model_location(m_vert_shader.descriptor_set(1).binding(0).member("model").location())
     , m_text_color_location(m_vert_shader.descriptor_set(1).binding(0).member("text_color").location())
     , m_texture_binding(m_frag_shader.descriptor_set(1).binding(1))
@@ -31,8 +31,8 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     vertex_data.push_back({ 1.0f, 1.0f });
     vertex_data.push_back({ 0.0f, 0.0f, 0.0f });
     vertex_data.push_back({ 0.0f, 1.0f });
-    m_vertex_buffer = renderer.create_vertex_buffer(vertex_data);
-    m_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_vertex_buffer = renderer->create_vertex_buffer(vertex_data);
+    m_index_buffer = renderer->create_index_buffer({ 0, 3, 2, 0, 2, 1 });
 
     m_global_ubo.update(
         m_vert_shader.descriptor_set(0).binding(0).member("view").location(),
@@ -47,8 +47,8 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     cursor_data.push_back({ 1.0f, 1.0f });
     cursor_data.push_back({ -0.05f, 0.0f, 0.0f });
     cursor_data.push_back({ 0.0f, 1.0f });
-    m_cursor_vertex_buffer = renderer.create_vertex_buffer(cursor_data);
-    m_cursor_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_cursor_vertex_buffer = renderer->create_vertex_buffer(cursor_data);
+    m_cursor_index_buffer = renderer->create_index_buffer({ 0, 3, 2, 0, 2, 1 });
 
     FT_Error result;
     FT_Library font_lib;
@@ -69,7 +69,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
         }
         mve::Texture texture;
         if (font_face->glyph->bitmap.width != 0 && font_face->glyph->bitmap.rows != 0) {
-            texture = renderer.create_texture(
+            texture = renderer->create_texture(
                 mve::TextureFormat::r,
                 font_face->glyph->bitmap.width,
                 font_face->glyph->bitmap.rows,
@@ -77,7 +77,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
         }
         else {
             std::byte val {};
-            texture = renderer.create_texture(mve::TextureFormat::r, 1, 1, &val);
+            texture = renderer->create_texture(mve::TextureFormat::r, 1, 1, &val);
         }
         FontChar font_char
             = { .texture = std::move(texture),
@@ -91,16 +91,17 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     FT_Done_FreeType(font_lib);
 
     std::byte cursor_texture_data { 255 };
-    m_cursor_texture = renderer.create_texture(mve::TextureFormat::r, 1, 1, &cursor_texture_data);
+    m_cursor_texture = renderer->create_texture(mve::TextureFormat::r, 1, 1, &cursor_texture_data);
 }
 
 void TextPipeline::resize()
 {
+    auto renderer_ref = m_renderer.lock();
     mve::Matrix4 proj = mve::ortho(
-        -static_cast<float>(m_renderer->extent().x) / 2.0f,
-        static_cast<float>(m_renderer->extent().x) / 2.0f,
-        -static_cast<float>(m_renderer->extent().y) / 2.0f,
-        static_cast<float>(m_renderer->extent().y) / 2.0f,
+        -static_cast<float>(renderer_ref->extent().x) / 2.0f,
+        static_cast<float>(renderer_ref->extent().x) / 2.0f,
+        -static_cast<float>(renderer_ref->extent().y) / 2.0f,
+        static_cast<float>(renderer_ref->extent().y) / 2.0f,
         -1000.0f,
         1000.0f);
     m_global_ubo.update(m_vert_shader.descriptor_set(0).binding(0).member("proj").location(), proj);
@@ -120,22 +121,23 @@ void TextPipeline::destroy(TextBuffer& buffer)
 
 void TextPipeline::draw(const TextBuffer& buffer) const
 {
+    auto renderer_ref = lock_renderer();
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to draw invalid text buffer")
-    m_renderer->bind_graphics_pipeline(m_pipeline); // TODO: Determine if this is the best way to do this
-    m_renderer->bind_vertex_buffer(m_vertex_buffer);
+    renderer_ref->bind_graphics_pipeline(m_pipeline); // TODO: Determine if this is the best way to do this
+    renderer_ref->bind_vertex_buffer(m_vertex_buffer);
     MVE_VAL_ASSERT(
         m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Attempt to draw invalid text buffer")
     const TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         if (glyph.is_valid) {
-            m_renderer->bind_descriptor_sets(m_global_descriptor_set, glyph.descriptor_set);
-            m_renderer->draw_index_buffer(m_index_buffer);
+            renderer_ref->bind_descriptor_sets(m_global_descriptor_set, glyph.descriptor_set);
+            renderer_ref->draw_index_buffer(m_index_buffer);
         }
     }
     if (buffer_impl.cursor.has_value()) {
-        m_renderer->bind_descriptor_sets(m_global_descriptor_set, buffer_impl.cursor->descriptor_set);
-        m_renderer->bind_vertex_buffer(m_cursor_vertex_buffer);
-        m_renderer->draw_index_buffer(m_cursor_index_buffer);
+        renderer_ref->bind_descriptor_sets(m_global_descriptor_set, buffer_impl.cursor->descriptor_set);
+        renderer_ref->bind_vertex_buffer(m_cursor_vertex_buffer);
+        renderer_ref->draw_index_buffer(m_cursor_index_buffer);
     }
 }
 
@@ -161,10 +163,11 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
 }
 void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
 {
+    auto renderer_ref = lock_renderer();
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.cursor_pos = pos;
-    buffer_impl.cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
+    buffer_impl.cursor = { .ubo = renderer_ref->create_uniform_buffer(m_glyph_ubo_binding),
                            .descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1)),
                            .translation = buffer_impl.translation };
     buffer_impl.cursor->ubo.update(m_text_color_location, mve::Vector3(0.0f));
@@ -206,6 +209,7 @@ std::optional<int> TextPipeline::cursor_pos(const TextBuffer& buffer)
 
 void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view text)
 {
+    auto renderer_ref = m_renderer.lock();
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Text buffer invalid")
     // TODO: Find a better way to do this
     for (RenderGlyph& glyph : m_text_buffers[buffer.m_handle]->render_glyphs) {
@@ -245,7 +249,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             it->is_valid = true;
         }
         else {
-            mve::UniformBuffer glyph_ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding);
+            mve::UniformBuffer glyph_ubo = renderer_ref->create_uniform_buffer(m_glyph_ubo_binding);
             mve::DescriptorSet glyph_descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1));
             glyph_descriptor_set.write_binding(m_glyph_ubo_binding, glyph_ubo);
             RenderGlyph render_glyph { .is_valid = true,

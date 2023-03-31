@@ -1,34 +1,25 @@
 #include "nine_patch.hpp"
 #include "../logger.hpp"
-#include "../mve/common.hpp"
-
-static UIUniformData create_uniform_data(std::weak_ptr<UIPipeline> pipeline)
-{
-    auto pipeline_ref = pipeline.lock();
-    MVE_ASSERT(pipeline_ref, "[NinePatch] Invalid ui pipeline")
-    return pipeline_ref->create_uniform_data();
-}
 
 NinePatch::NinePatch(
-    std::weak_ptr<UIPipeline> ui_pipeline,
+    std::shared_ptr<UIPipeline> ui_pipeline,
     std::shared_ptr<mve::Texture> texture,
     NinePatchMargins margins,
     mve::Vector2i size,
     float scale)
     : m_pipeline(ui_pipeline)
-    , m_uniform_data(create_uniform_data(ui_pipeline))
+    , m_uniform_data(ui_pipeline->create_uniform_data())
     , m_scale(scale)
     , m_position(mve::Vector2(0.0f, 0.0f))
     , m_size(size)
     , m_texture(texture)
 {
-    auto pipeline_ref = m_pipeline.lock();
-    MVE_ASSERT(pipeline_ref, "[NinePatch] Invalid UI pipeline")
+    MVE_ASSERT(ui_pipeline, "[NinePatch] Invalid UI pipeline")
 
-    m_model_location = pipeline_ref->model_location();
+    m_model_location = ui_pipeline->model_location();
 
-    m_uniform_data.descriptor_set.write_binding(pipeline_ref->texture_binding(), *texture);
-    m_uniform_data.buffer.update(pipeline_ref->model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
+    m_uniform_data.descriptor_set.write_binding(ui_pipeline->texture_binding(), *texture);
+    m_uniform_data.buffer.update(ui_pipeline->model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
 
     mve::Vector2 pixel = { 1.0f / texture->size().x, 1.0f / texture->size().y };
 
@@ -80,9 +71,8 @@ NinePatch::NinePatch(
         vertex_data.push_back(mve::Vector3(1.0f, 1.0f, 1.0f));
         vertex_data.push_back(uvs[i]);
     }
-
-    m_vertex_buffer = pipeline_ref->renderer().create_vertex_buffer(vertex_data);
-    m_index_buffer = pipeline_ref->renderer().create_index_buffer(indices);
+    m_vertex_buffer = ui_pipeline->renderer()->create_vertex_buffer(vertex_data);
+    m_index_buffer = ui_pipeline->renderer()->create_index_buffer(indices);
 }
 
 void NinePatch::draw() const

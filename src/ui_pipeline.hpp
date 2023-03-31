@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mve/common.hpp"
 #include "mve/renderer.hpp"
 
 struct UIUniformData {
@@ -9,7 +10,7 @@ struct UIUniformData {
 
 class UIPipeline {
 public:
-    explicit UIPipeline(mve::Renderer& renderer);
+    explicit UIPipeline(std::shared_ptr<mve::Renderer> renderer);
 
     void resize();
 
@@ -41,9 +42,10 @@ public:
 
     void bind() const;
 
-    inline mve::Renderer& renderer()
+    inline std::shared_ptr<mve::Renderer> renderer()
     {
-        return *m_renderer;
+        auto renderer_ref = lock_renderer();
+        return renderer_ref;
     }
 
     static inline const mve::VertexLayout vertex_layout()
@@ -64,7 +66,14 @@ private:
         mve::UniformLocation model_location;
     };
 
-    mve::Renderer* m_renderer;
+    [[nodiscard]] inline std::shared_ptr<mve::Renderer> lock_renderer() const
+    {
+        auto renderer_ref = m_renderer.lock();
+        MVE_VAL_ASSERT(renderer_ref, "[UIPipeline] Invalid renderer")
+        return renderer_ref;
+    }
+
+    std::weak_ptr<mve::Renderer> m_renderer;
     mve::Shader m_vertex_shader;
     mve::Shader m_fragment_shader;
     mve::GraphicsPipeline m_graphics_pipeline;

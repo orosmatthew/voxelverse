@@ -15,7 +15,7 @@ struct NinePatchMargins {
 class NinePatch {
 public:
     NinePatch(
-        std::weak_ptr<UIPipeline> ui_pipeline,
+        std::shared_ptr<UIPipeline> ui_pipeline,
         std::shared_ptr<mve::Texture> texture,
         NinePatchMargins margins,
         mve::Vector2i size,

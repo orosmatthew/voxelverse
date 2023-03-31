@@ -27,16 +27,16 @@ void WorldRenderer::queue_update(mve::Vector3i chunk_pos)
     m_chunk_update_queue.push_back(chunk_pos);
 }
 
-WorldRenderer::WorldRenderer(mve::Renderer& renderer)
-    : m_renderer(&renderer)
+WorldRenderer::WorldRenderer(std::shared_ptr<mve::Renderer> renderer)
+    : m_renderer(renderer)
     , m_thread_pool()
     , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv"))
     , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv"))
-    , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
-    , m_block_texture(std::make_shared<mve::Texture>(renderer, "../res/atlas.png"))
-    , m_global_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
-    , m_chunk_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)))
-    , m_global_descriptor_set(renderer.create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))
+    , m_graphics_pipeline(renderer->create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
+    , m_block_texture(std::make_shared<mve::Texture>(*renderer, "../res/atlas.png"))
+    , m_global_ubo(renderer->create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
+    , m_chunk_ubo(renderer->create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)))
+    , m_global_descriptor_set(renderer->create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))
     , m_chunk_descriptor_set(m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)))
     , m_view_location(m_vertex_shader.descriptor_set(0).binding(0).member("view").location())
     , m_proj_location(m_vertex_shader.descriptor_set(0).binding(0).member("proj").location())
@@ -69,8 +69,9 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
 
 void WorldRenderer::resize()
 {
+    auto renderer_ref = lock_renderer();
     float angle = mve::radians(90.0f);
-    float ratio = (float)(m_renderer->extent().x) / (float)(m_renderer->extent().y);
+    float ratio = (float)(renderer_ref->extent().x) / (float)(renderer_ref->extent().y);
     float near = 0.01f;
     float far = 10000.0f;
 
@@ -86,7 +87,8 @@ void WorldRenderer::draw(const Player& camera)
 {
     m_frustum.update_camera(camera);
 
-    m_renderer->bind_graphics_pipeline(m_graphics_pipeline);
+    auto renderer_ref = lock_renderer();
+    renderer_ref->bind_graphics_pipeline(m_graphics_pipeline);
 
     if (m_selection_box.is_shown) {
         m_selection_box.mesh.draw(m_global_descriptor_set);
@@ -94,8 +96,8 @@ void WorldRenderer::draw(const Player& camera)
 
     for (const std::optional<ChunkMesh>& mesh : m_chunk_meshes) {
         if (mesh.has_value() && m_frustum.contains_sphere(mesh->chunk_position() * 16.0f, 30.0f)) {
-            m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
-            mesh->draw(*m_renderer);
+            renderer_ref->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
+            mesh->draw(*renderer_ref);
         }
     }
 
@@ -130,8 +132,9 @@ void WorldRenderer::remove_data(mve::Vector3i position)
 
 uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, float width, mve::Vector3 color)
 {
+    auto renderer_ref = lock_renderer();
     WireBoxMesh box_mesh(
-        *m_renderer,
+        renderer_ref,
         m_graphics_pipeline,
         m_vertex_shader.descriptor_set(1),
         m_vertex_shader.descriptor_set(1).binding(0),
@@ -181,8 +184,9 @@ void WorldRenderer::process_updates(const WorldData& world_data)
                 }
             })
         .wait();
+    auto renderer_ref = lock_renderer();
     for (const mve::Vector3i& chunk_pos : m_chunk_update_queue) {
-        m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*m_renderer);
+        m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*renderer_ref);
     }
     m_chunk_update_queue.clear();
 }

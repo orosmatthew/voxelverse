@@ -1,11 +1,12 @@
 #pragma once
 
+#include "../mve/common.hpp"
 #include "../mve/renderer.hpp"
 #include "../ui_pipeline.hpp"
 
 class Hotbar {
 public:
-    Hotbar(UIPipeline& ui_pipeline);
+    Hotbar(std::weak_ptr<UIPipeline> ui_pipeline);
 
     void resize(const mve::Vector2i& extent);
 
@@ -42,7 +43,14 @@ private:
         Element element;
     };
 
-    UIPipeline* m_ui_pipeline;
+    [[nodiscard]] inline std::shared_ptr<UIPipeline> lock_pipeline() const
+    {
+        auto pipeline_ref = m_ui_pipeline.lock();
+        MVE_VAL_ASSERT(pipeline_ref, "[Hotbar] Invalid UI pipeline")
+        return pipeline_ref;
+    }
+
+    std::weak_ptr<UIPipeline> m_ui_pipeline;
 
     mve::UniformLocation m_model_location;
     mve::ShaderDescriptorBinding m_texture_binding;
