@@ -50,7 +50,7 @@ add_subdirectory(lib/leveldb-1.23)
 
 set(LIB_SOURCE_FILES
         lib/whereami-ba364cd/src/whereami.c
-        lib/spirv-reflect-1.3.236/src/spirv_reflect.cpp
+        lib/spirv-reflect-1.3.250.0/src/spirv_reflect.cpp
         lib/lz4-1.9.4/src/lz4.c
         lib/lz4-1.9.4/src/lz4hc.c)
 
@@ -96,11 +96,11 @@ set(LIB_INCLUDES
         lib/whereami-ba364cd/include
         lib/stb-8b5f1f3/include
         lib/tinyobjloader-45f683c/include
-        lib/spirv-reflect-1.3.236/include
+        lib/spirv-reflect-1.3.250.0/include
         lib/fast-noise-lite-1.0.3/include
         lib/cereal-1.3.2/include
         lib/lz4-1.9.4/include
-        lib/thread-pool-3.3.0/include)
+        lib/thread-pool-3.5.0/include)
 
 add_executable(${PROJECT_NAME})
 
@@ -128,14 +128,14 @@ add_shaders(vulkan_testing
         text.frag)
 
 set(TEST_LIB_SOURCE_FILES
-        lib/catch2-3.2.1/src/catch_amalgamated.cpp)
+        lib/catch2-3.3.2/src/catch_amalgamated.cpp)
 
 set(TEST_SOURCE_FILES
         tests/vertex_data.cpp
         tests/mve/math/functions.cpp)
 
 set(TEST_LIB_INCLUDES
-        lib/catch2-3.2.1/include)
+        lib/catch2-3.3.2/include)
 
 add_executable(tests)
 
