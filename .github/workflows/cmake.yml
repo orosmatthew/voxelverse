@@ -15,12 +15,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-
-    - name: Install Vulkan SDK
+    
+    - name: Setup Vulkan
       run: |
-        mkdir C:\VulkanSDK
-        curl -L -o vulkansdk.exe https://sdk.lunarg.com/sdk/download/1.3.250.0/windows/VulkanSDK-1.3.250.0-Installer.exe
-        Start-Process -Wait -FilePath .\vulkansdk.exe -ArgumentList '/S /D=C:\VulkanSDK'
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.3.250.0/windows/VulkanSDK-1.3.250.0-Installer.exe" -OutFile VulkanSDK.exe
+          $installer = Start-Process -FilePath VulkanSDK.exe -Wait -PassThru -ArgumentList @("/S");
+          $installer.WaitForExit();
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
