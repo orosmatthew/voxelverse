@@ -4,6 +4,7 @@
 #include <set>
 #include <vector>
 
+#define VMA_VULKAN_VERSION 1001000
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -63,6 +64,11 @@ Renderer::Renderer(
     m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0, m_vk_loader);
 
     VmaAllocatorCreateInfo allocatorCreateInfo = {};
+    VmaVulkanFunctions func = {};
+    func.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+    func.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+    allocatorCreateInfo.pVulkanFunctions = &func;
+    allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
     allocatorCreateInfo.physicalDevice = m_vk_physical_device;
     allocatorCreateInfo.device = m_vk_device;
     allocatorCreateInfo.instance = m_vk_instance;
@@ -117,7 +123,7 @@ Renderer::Renderer(
     m_current_draw_state.is_drawing = false;
     m_current_draw_state.frame_index = 0;
     m_current_draw_state.image_index = 0;
-    m_current_draw_state.command_buffer = VK_NULL_HANDLE;
+    m_current_draw_state.command_buffer = nullptr;
 }
 
 bool Renderer::has_validation_layer_support(const vk::DispatchLoaderDynamic& loader)
@@ -353,7 +359,7 @@ vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* wi
     VkSurfaceKHR surface;
     VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     MVE_ASSERT(result == VK_SUCCESS, "[Renderer] Failed to create window surface")
-    return { surface };
+    return vk::SurfaceKHR(surface);
 }
 
 std::vector<const char*> Renderer::get_vk_device_required_exts()
@@ -944,7 +950,7 @@ Renderer::~Renderer()
     for (auto& [handle, texture] : m_textures) {
         m_vk_device.destroy(texture.vk_sampler, nullptr, m_vk_loader);
         m_vk_device.destroy(texture.vk_image_view, nullptr, m_vk_loader);
-        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
+        vmaDestroyImage(m_vma_allocator, static_cast<VkImage>(texture.image.vk_handle), texture.image.vma_allocation);
     }
 
     m_descriptor_set_allocator.cleanup(m_vk_loader, m_vk_device);
@@ -954,7 +960,9 @@ Renderer::~Renderer()
             if (uniform_buffer.has_value()) {
                 vmaUnmapMemory(m_vma_allocator, uniform_buffer->buffer.vma_allocation);
                 vmaDestroyBuffer(
-                    m_vma_allocator, uniform_buffer->buffer.vk_handle, uniform_buffer->buffer.vma_allocation);
+                    m_vma_allocator,
+                    static_cast<VkBuffer>(uniform_buffer->buffer.vk_handle),
+                    uniform_buffer->buffer.vma_allocation);
             }
         }
     }
@@ -965,13 +973,19 @@ Renderer::~Renderer()
 
     for (std::optional<VertexBufferImpl>& vertex_buffer : m_vertex_buffers_new) {
         if (vertex_buffer.has_value()) {
-            vmaDestroyBuffer(m_vma_allocator, vertex_buffer->buffer.vk_handle, vertex_buffer->buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator,
+                static_cast<VkBuffer>(vertex_buffer->buffer.vk_handle),
+                vertex_buffer->buffer.vma_allocation);
         }
     }
 
     for (std::optional<IndexBufferImpl>& index_buffer : m_index_buffers_new) {
         if (index_buffer.has_value()) {
-            vmaDestroyBuffer(m_vma_allocator, index_buffer->buffer.vk_handle, index_buffer->buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator,
+                static_cast<VkBuffer>(index_buffer->buffer.vk_handle),
+                index_buffer->buffer.vma_allocation);
         }
     }
 
@@ -1073,10 +1087,12 @@ void Renderer::recreate_swapchain(const Window& window)
 void Renderer::cleanup_vk_swapchain()
 {
     m_vk_device.destroy(m_color_image.vk_image_view, nullptr, m_vk_loader);
-    vmaDestroyImage(m_vma_allocator, m_color_image.image.vk_handle, m_color_image.image.vma_allocation);
+    vmaDestroyImage(
+        m_vma_allocator, static_cast<VkImage>(m_color_image.image.vk_handle), m_color_image.image.vma_allocation);
 
     m_vk_device.destroy(m_depth_image.vk_image_view, nullptr, m_vk_loader);
-    vmaDestroyImage(m_vma_allocator, m_depth_image.image.vk_handle, m_depth_image.image.vma_allocation);
+    vmaDestroyImage(
+        m_vma_allocator, static_cast<VkImage>(m_depth_image.image.vk_handle), m_depth_image.image.vma_allocation);
 
     for (vk::Framebuffer framebuffer : m_vk_swapchain_framebuffers) {
         m_vk_device.destroy(framebuffer, nullptr, m_vk_loader);
@@ -1121,7 +1137,7 @@ vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance inst
 
     VkDebugUtilsMessengerEXT debug_messenger;
     func(instance, &debug_create_info, nullptr, &debug_messenger);
-    return { debug_messenger };
+    return vk::DebugUtilsMessengerEXT(debug_messenger);
 }
 
 VkBool32 Renderer::vk_debug_callback(
@@ -1143,7 +1159,7 @@ void Renderer::cleanup_vk_debug_messenger()
         = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_vk_instance, "vkDestroyDebugUtilsMessengerEXT");
 
     if (func != nullptr) {
-        func(m_vk_instance, m_vk_debug_utils_messenger, nullptr);
+        func(m_vk_instance, static_cast<VkDebugUtilsMessengerEXT>(m_vk_debug_utils_messenger), nullptr);
     }
 }
 
@@ -1239,7 +1255,7 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
-            m_vertex_buffers_new.at(handle)->buffer.vk_handle,
+            static_cast<VkBuffer>(m_vertex_buffers_new.at(handle)->buffer.vk_handle),
             m_vertex_buffers_new.at(handle)->buffer.vma_allocation);
         m_vertex_buffers_new[handle].reset();
     });
@@ -1266,7 +1282,7 @@ Renderer::Buffer Renderer::create_buffer(
 
     vmaCreateBuffer(allocator, &buffer_info, &vma_alloc_info, &vk_buffer, &allocation, nullptr);
 
-    return { vk_buffer, allocation };
+    return { vk::Buffer(vk_buffer), allocation };
 }
 
 void Renderer::cmd_copy_buffer(
@@ -2061,7 +2077,7 @@ Renderer::Image Renderer::create_image(
     VkImage image;
     VmaAllocation image_allocation;
     vmaCreateImage(allocator, &image_info, &vma_alloc_info, &image, &image_allocation, nullptr);
-    return { image, image_allocation, width, height };
+    return { vk::Image(image), image_allocation, width, height };
 }
 
 void Renderer::cmd_generate_mipmaps(
@@ -2315,7 +2331,8 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
             m_vk_loader);
 
         defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator, static_cast<VkBuffer>(staging_buffer.vk_handle), staging_buffer.vma_allocation);
         });
     });
 
@@ -2393,7 +2410,8 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
             m_vk_loader);
 
         defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator, static_cast<VkBuffer>(staging_buffer.vk_handle), staging_buffer.vma_allocation);
         });
     });
 
@@ -2605,7 +2623,7 @@ void Renderer::destroy(Texture& texture)
         TextureImpl& texture = m_textures.at(handle);
         m_vk_device.destroy(texture.vk_sampler, nullptr, m_vk_loader);
         m_vk_device.destroy(texture.vk_image_view, nullptr, m_vk_loader);
-        vmaDestroyImage(m_vma_allocator, texture.image.vk_handle, texture.image.vma_allocation);
+        vmaDestroyImage(m_vma_allocator, static_cast<VkImage>(texture.image.vk_handle), texture.image.vma_allocation);
         m_textures.erase(handle);
     });
 }
@@ -2676,7 +2694,8 @@ Texture Renderer::create_texture(TextureFormat format, uint32_t width, uint32_t 
             m_vk_loader, m_vk_physical_device, command_buffer, image.vk_handle, vk_format, width, height, mip_levels);
 
         defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator, static_cast<VkBuffer>(staging_buffer.vk_handle), staging_buffer.vma_allocation);
         });
     });
 
@@ -2800,7 +2819,10 @@ void Renderer::destroy(UniformBuffer& uniform_buffer)
         for (const FrameInFlight& frame : m_frames_in_flight) {
             UniformBufferImpl uniform_buffer = *(frame.uniform_buffers.at(handle));
             vmaUnmapMemory(m_vma_allocator, uniform_buffer.buffer.vma_allocation);
-            vmaDestroyBuffer(m_vma_allocator, uniform_buffer.buffer.vk_handle, uniform_buffer.buffer.vma_allocation);
+            vmaDestroyBuffer(
+                m_vma_allocator,
+                static_cast<VkBuffer>(uniform_buffer.buffer.vk_handle),
+                uniform_buffer.buffer.vma_allocation);
         }
         for (FrameInFlight& frame : m_frames_in_flight) {
             frame.uniform_buffers[handle].reset();
@@ -2817,7 +2839,7 @@ void Renderer::destroy(IndexBuffer& index_buffer)
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
             m_vma_allocator,
-            m_index_buffers_new.at(handle)->buffer.vk_handle,
+            static_cast<VkBuffer>(m_index_buffers_new.at(handle)->buffer.vk_handle),
             m_index_buffers_new.at(handle)->buffer.vma_allocation);
         m_index_buffers_new[handle].reset();
     });

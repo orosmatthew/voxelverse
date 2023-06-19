@@ -221,7 +221,7 @@ class UniformBuffer {
 public:
     inline UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding);
 
-    inline UniformBuffer(Renderer& renderer, uint64_t handle);
+    inline UniformBuffer(Renderer& renderer, size_t handle);
 
     inline UniformBuffer(const UniformBuffer&) = delete;
 
