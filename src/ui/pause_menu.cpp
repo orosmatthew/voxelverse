@@ -28,9 +28,12 @@ void PauseMenu::draw() const
 }
 void PauseMenu::resize(mve::Vector2i extent)
 {
-    m_back_button.set_position((extent / 2.0f - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, -100.0f));
-    m_fullscreen_button.set_position((extent / 2.0f - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 0.0f));
-    m_exit_button.set_position((extent / 2.0f - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 100.0f));
+    m_back_button.set_position(
+        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, -100.0f));
+    m_fullscreen_button.set_position(
+        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 0.0f));
+    m_exit_button.set_position(
+        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 100.0f));
 }
 void PauseMenu::update(const mve::Window& window)
 {

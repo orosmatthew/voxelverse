@@ -31,7 +31,7 @@ public:
 
     inline mve::Vector3i block_position() const
     {
-        return m_body_transform.translate({ 0.0f, 0.0f, -1.62f }).translation().round();
+        return mve::Vector3i(m_body_transform.translate({ 0.0f, 0.0f, -1.62f }).translation().round());
     }
 
     inline mve::Matrix4 view_matrix(float interpolation_weight) const

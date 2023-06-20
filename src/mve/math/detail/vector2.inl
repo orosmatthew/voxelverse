@@ -35,12 +35,12 @@ inline Vector2 Vector2::clamp(const Vector2& min, const Vector2& max) const
 
 inline Vector2 Vector2::operator-(const Vector2& other) const
 {
-    return Vector2(x - other.x, y - other.y);
+    return { x - other.x, y - other.y };
 }
 
 inline Vector2 Vector2::operator*(float scalar) const
 {
-    return Vector2(x * scalar, y * scalar);
+    return { x * scalar, y * scalar };
 }
 
 inline Vector2 Vector2::normalize() const
@@ -71,7 +71,7 @@ inline Vector2 Vector2::linear_interpolate(const Vector2& to, float weight) cons
 }
 inline Vector2 Vector2::operator+(const Vector2& other) const
 {
-    return Vector2(x + other.x, y + other.y);
+    return { x + other.x, y + other.y };
 }
 inline Vector2Axis Vector2::max_axis() const
 {
@@ -107,23 +107,23 @@ inline bool Vector2::operator!=(const Vector2& other) const
 }
 inline Vector2 Vector2::operator*(const Vector2& vector) const
 {
-    return Vector2(x * vector.x, y * vector.y);
+    return { x * vector.x, y * vector.y };
 }
 inline Vector2 Vector2::operator*(int scalar) const
 {
-    return Vector2(x * scalar, y * scalar);
+    return { x * static_cast<float>(scalar), y * static_cast<float>(scalar) };
 }
 inline Vector2 Vector2::operator/(const Vector2& other) const
 {
-    return Vector2(x / other.x, y / other.y);
+    return { x / other.x, y / other.y };
 }
 inline Vector2 Vector2::operator/(float scalar) const
 {
-    return Vector2(x / scalar, y / scalar);
+    return { x / scalar, y / scalar };
 }
 inline Vector2 Vector2::operator/(int scalar) const
 {
-    return Vector2(x / scalar, y / scalar);
+    return { x / static_cast<float>(scalar), y / static_cast<float>(scalar) };
 }
 inline bool Vector2::operator<(const Vector2& other) const
 {
@@ -182,11 +182,11 @@ inline float& Vector2::operator[](int index)
 }
 inline Vector2 Vector2::operator+() const
 {
-    return Vector2(x, y);
+    return { x, y };
 }
 inline Vector2 Vector2::operator-() const
 {
-    return Vector2(-x, -y);
+    return { -x, -y };
 }
 inline Vector2& Vector2::operator*=(const Vector2& vector)
 {
@@ -208,8 +208,8 @@ inline Vector2& Vector2::operator*=(float scalar)
 }
 inline Vector2& Vector2::operator*=(int scalar)
 {
-    x *= scalar;
-    y *= scalar;
+    x *= static_cast<float>(scalar);
+    y *= static_cast<float>(scalar);
     return *this;
 }
 inline Vector2& Vector2::operator+=(const Vector2& other)
@@ -232,8 +232,8 @@ inline Vector2& Vector2::operator/=(float scalar)
 }
 inline Vector2& Vector2::operator/=(int scalar)
 {
-    x /= scalar;
-    y /= scalar;
+    x /= static_cast<float>(scalar);
+    y /= static_cast<float>(scalar);
     return *this;
 }
 inline float& Vector2::operator[](Vector2Axis axis)
@@ -254,11 +254,11 @@ inline Vector2::operator bool() const
 }
 inline Vector2 Vector2::zero()
 {
-    return Vector2(0.0f, 0.0f);
+    return { 0.0f, 0.0f };
 }
 inline Vector2 Vector2::one()
 {
-    return Vector2(1.0f, 1.0f);
+    return { 1.0f, 1.0f };
 }
 inline Vector2 Vector2::move_toward(const Vector2& to, float amount) const
 {
@@ -285,14 +285,14 @@ inline Vector2::Vector2(const Vector2i& vector)
     , y(static_cast<float>(vector.y))
 {
 }
-inline Vector2 Vector2::rotate(float angle)
+inline Vector2 Vector2::rotate(float angle) const
 {
     return mve::rotate(*this, angle);
 }
 
 inline Vector2 abs(const Vector2& vector)
 {
-    return Vector2(abs(vector.x), abs(vector.y));
+    return { abs(vector.x), abs(vector.y) };
 }
 
 inline float aspect_ratio(const Vector2& vector)
@@ -302,12 +302,12 @@ inline float aspect_ratio(const Vector2& vector)
 
 inline Vector2 ceil(const Vector2& vector)
 {
-    return Vector2(ceil(vector.x), ceil(vector.y));
+    return { ceil(vector.x), ceil(vector.y) };
 }
 
 inline Vector2 clamp(const Vector2& vector, const Vector2& min, const Vector2& max)
 {
-    return Vector2(clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y));
+    return { clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y) };
 }
 
 inline Vector2 direction(const Vector2& from, const Vector2& to)
@@ -344,7 +344,7 @@ inline float distance(const Vector2& from, const Vector2& to)
 
 inline Vector2 floor(const Vector2& vector)
 {
-    return Vector2(floor(vector.x), floor(vector.y));
+    return { floor(vector.x), floor(vector.y) };
 }
 
 inline float length(const Vector2& vector)
@@ -419,7 +419,7 @@ inline Vector2 rotate(const Vector2& vector, float angle)
 }
 inline Vector2 inverse(const Vector2& vector)
 {
-    return Vector2(1.0f / vector.x, 1.0f / vector.y);
+    return { 1.0f / vector.x, 1.0f / vector.y };
 }
 inline Vector2 clamp_length(const Vector2& vector, float min, float max)
 {

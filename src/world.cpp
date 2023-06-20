@@ -244,7 +244,7 @@ void World::update(mve::Window& window, float blend)
         RayCollision collision = ray_box_collision(ray, bb);
         if (collision.hit) {
             m_world_renderer.show_selection();
-            m_world_renderer.set_selection_position(block_pos);
+            m_world_renderer.set_selection_position(mve::Vector3(block_pos));
             break;
         }
     }
@@ -280,8 +280,8 @@ void World::update(mve::Window& window, float blend)
             m_sorted_chunks.push_back(pos);
         }
         std::sort(m_sorted_chunks.begin(), m_sorted_chunks.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-            return mve::distance_sqrd(a, mve::Vector2i(m_player_chunk.x, m_player_chunk.y))
-                < mve::distance_sqrd(b, mve::Vector2i(m_player_chunk.x, m_player_chunk.y));
+            return mve::distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk.x, m_player_chunk.y))
+                < mve::distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk.x, m_player_chunk.y));
         });
     }
 

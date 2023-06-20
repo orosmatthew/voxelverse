@@ -27,7 +27,7 @@ public:
 
     [[nodiscard]] inline mve::Vector2 size() const
     {
-        return m_patch.size() * m_patch.scale();
+        return mve::Vector2(m_patch.size() * m_patch.scale());
     }
 
     [[nodiscard]] inline mve::Vector2 position() const

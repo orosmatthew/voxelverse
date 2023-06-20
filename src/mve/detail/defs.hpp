@@ -35,13 +35,13 @@ public:
 
     inline DescriptorSet(const DescriptorSet&) = delete;
 
-    inline DescriptorSet(DescriptorSet&& other);
+    inline DescriptorSet(DescriptorSet&& other) noexcept;
 
     inline ~DescriptorSet();
 
     inline DescriptorSet& operator=(const DescriptorSet&) = delete;
 
-    inline DescriptorSet& operator=(DescriptorSet&& other);
+    inline DescriptorSet& operator=(DescriptorSet&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const DescriptorSet& other) const;
 
@@ -59,8 +59,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 class Framebuffer {
@@ -74,15 +74,15 @@ public:
 
     inline Framebuffer(const Framebuffer&) = delete;
 
-    inline Framebuffer(Framebuffer&& other);
+    inline Framebuffer(Framebuffer&& other) noexcept;
 
     inline ~Framebuffer();
 
-    inline const Texture& texture() const;
+    [[nodiscard]] inline const Texture& texture() const;
 
     inline Framebuffer& operator=(const Framebuffer&) = delete;
 
-    inline Framebuffer& operator=(Framebuffer&& other);
+    inline Framebuffer& operator=(Framebuffer&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const Framebuffer& other) const;
 
@@ -96,8 +96,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 class GraphicsPipeline {
@@ -112,13 +112,13 @@ public:
 
     inline GraphicsPipeline(const GraphicsPipeline&) = delete;
 
-    inline GraphicsPipeline(GraphicsPipeline&& other);
+    inline GraphicsPipeline(GraphicsPipeline&& other) noexcept;
 
     inline ~GraphicsPipeline();
 
     inline GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
-    inline GraphicsPipeline& operator=(GraphicsPipeline&& other);
+    inline GraphicsPipeline& operator=(GraphicsPipeline&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const GraphicsPipeline& other) const;
 
@@ -134,8 +134,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 class IndexBuffer {
@@ -151,13 +151,13 @@ public:
 
     inline IndexBuffer(const IndexBuffer&) = delete;
 
-    inline IndexBuffer(IndexBuffer&& other);
+    inline IndexBuffer(IndexBuffer&& other) noexcept;
 
     inline ~IndexBuffer();
 
     inline IndexBuffer& operator=(const IndexBuffer&) = delete;
 
-    inline IndexBuffer& operator=(IndexBuffer&& other);
+    inline IndexBuffer& operator=(IndexBuffer&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const IndexBuffer& other) const;
 
@@ -171,8 +171,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 class Texture {
@@ -188,7 +188,7 @@ public:
 
     inline Texture(const Texture&) = delete;
 
-    inline Texture(Texture&& other);
+    inline Texture(Texture&& other) noexcept;
 
     inline ~Texture();
 
@@ -196,7 +196,7 @@ public:
 
     inline Texture& operator=(const Texture&) = delete;
 
-    inline Texture& operator=(Texture&& other);
+    inline Texture& operator=(Texture&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const Texture& other) const;
 
@@ -210,8 +210,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    uint64_t m_handle;
+    Renderer* m_renderer {};
+    uint64_t m_handle {};
 };
 
 class UniformBuffer {
@@ -225,13 +225,13 @@ public:
 
     inline UniformBuffer(const UniformBuffer&) = delete;
 
-    inline UniformBuffer(UniformBuffer&& other);
+    inline UniformBuffer(UniformBuffer&& other) noexcept;
 
     inline ~UniformBuffer();
 
     inline UniformBuffer& operator=(const UniformBuffer&) = delete;
 
-    inline UniformBuffer& operator=(UniformBuffer&& other);
+    inline UniformBuffer& operator=(UniformBuffer&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const UniformBuffer& other) const;
 
@@ -257,8 +257,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 class VertexBuffer {
@@ -274,13 +274,13 @@ public:
 
     inline VertexBuffer(const VertexBuffer&) = delete;
 
-    inline VertexBuffer(VertexBuffer&& other);
+    inline VertexBuffer(VertexBuffer&& other) noexcept;
 
     inline ~VertexBuffer();
 
     inline VertexBuffer& operator=(const VertexBuffer&) = delete;
 
-    inline VertexBuffer& operator=(VertexBuffer&& other);
+    inline VertexBuffer& operator=(VertexBuffer&& other) noexcept;
 
     [[nodiscard]] inline bool operator==(const VertexBuffer& other) const;
 
@@ -294,8 +294,8 @@ public:
 
 private:
     bool m_valid = false;
-    Renderer* m_renderer;
-    size_t m_handle;
+    Renderer* m_renderer {};
+    size_t m_handle {};
 };
 
 }

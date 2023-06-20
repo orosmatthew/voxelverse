@@ -46,11 +46,10 @@ inline Quaternion Quaternion::from_euler(const Vector3& euler)
     float cos_z = cos(half.z);
     float sin_z = sin(half.z);
 
-    return Quaternion(
-        sin_x * cos_y * sin_z + cos_x * sin_y * cos_z,
-        sin_x * cos_y * cos_z - cos_x * sin_y * sin_z,
-        -sin_x * sin_y * cos_z + cos_x * cos_y * sin_z,
-        sin_x * sin_y * sin_z + cos_x * cos_y * cos_z);
+    return { sin_x * cos_y * sin_z + cos_x * sin_y * cos_z,
+             sin_x * cos_y * cos_z - cos_x * sin_y * sin_z,
+             -sin_x * sin_y * cos_z + cos_x * cos_y * sin_z,
+             sin_x * sin_y * sin_z + cos_x * cos_y * cos_z };
 }
 inline float Quaternion::angle_to(const Quaternion& to) const
 {
@@ -94,11 +93,10 @@ inline bool Quaternion::operator!=(const Quaternion& other) const
 }
 inline Quaternion Quaternion::operator*(const Quaternion& other) const
 {
-    return Quaternion(
-        w * other.x + x * other.w + y * other.z - z * other.y,
-        w * other.y + y * other.w + z * other.x - x * other.z,
-        w * other.z + z * other.w + x * other.y - y * other.x,
-        w * other.w - x * other.x - y * other.y - z * other.z);
+    return { w * other.x + x * other.w + y * other.z - z * other.y,
+             w * other.y + y * other.w + z * other.x - x * other.z,
+             w * other.z + z * other.w + x * other.y - y * other.x,
+             w * other.w - x * other.x - y * other.y - z * other.z };
 }
 inline void Quaternion::operator*=(const Quaternion& other)
 {
@@ -112,7 +110,7 @@ inline void Quaternion::operator*=(const Quaternion& other)
 }
 inline Quaternion Quaternion::operator*(float value) const
 {
-    return data * value;
+    return Quaternion(data * value);
 }
 inline void Quaternion::operator*=(float value)
 {
@@ -120,7 +118,7 @@ inline void Quaternion::operator*=(float value)
 }
 inline Quaternion Quaternion::operator*(int value) const
 {
-    return data * value;
+    return Quaternion(data * value);
 }
 inline void Quaternion::operator*=(int value)
 {
@@ -128,7 +126,7 @@ inline void Quaternion::operator*=(int value)
 }
 inline Quaternion Quaternion::operator+(const Quaternion& other) const
 {
-    return data + other.data;
+    return Quaternion(data + other.data);
 }
 inline void Quaternion::operator+=(const Quaternion& other)
 {
@@ -136,7 +134,7 @@ inline void Quaternion::operator+=(const Quaternion& other)
 }
 inline Quaternion Quaternion::operator-(const Quaternion& other) const
 {
-    return data - other.data;
+    return Quaternion(data - other.data);
 }
 inline void Quaternion::operator-=(const Quaternion& other)
 {
@@ -144,7 +142,7 @@ inline void Quaternion::operator-=(const Quaternion& other)
 }
 inline Quaternion Quaternion::operator/(float value) const
 {
-    return data * (1.0f / value);
+    return Quaternion(data * (1.0f / value));
 }
 inline void Quaternion::operator/=(float value)
 {
@@ -152,11 +150,11 @@ inline void Quaternion::operator/=(float value)
 }
 inline Quaternion Quaternion::operator/(int value) const
 {
-    return data * (1.0f / value);
+    return Quaternion(data * (1.0f / static_cast<float>(value)));
 }
 inline void Quaternion::operator/=(int value)
 {
-    data *= 1.0f / value;
+    data *= 1.0f / static_cast<float>(value);
 }
 inline bool Quaternion::operator==(const Quaternion& other) const
 {
@@ -172,7 +170,7 @@ inline Quaternion Quaternion::operator+() const
 }
 inline Quaternion Quaternion::operator-() const
 {
-    return -data;
+    return Quaternion(-data);
 }
 inline Quaternion Quaternion::from_matrix(const Matrix3& matrix)
 {
@@ -236,8 +234,10 @@ inline Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const
 {
     Quaternion result;
 
-    float cos2Theta = (from.x*to.x + from.y*to.y + from.z*to.z);    // Vector3DotProduct(from, to)
-    Vector3 cross = { from.y*to.z - from.z*to.y, from.z*to.x - from.x*to.z, from.x*to.y - from.y*to.x }; // Vector3CrossProduct(from, to)
+    float cos2Theta = (from.x * to.x + from.y * to.y + from.z * to.z); // Vector3DotProduct(from, to)
+    Vector3 cross = {
+        from.y * to.z - from.z * to.y, from.z * to.x - from.x * to.z, from.x * to.y - from.y * to.x
+    }; // Vector3CrossProduct(from, to)
 
     result.x = cross.x;
     result.y = cross.y;
@@ -247,14 +247,15 @@ inline Quaternion Quaternion::from_vector3_to_vector3(const Vector3& from, const
     // QuaternionNormalize(q);
     // NOTE: Normalize to essentially nlerp the original and identity to 0.5
     Quaternion q = result;
-    float length = sqrtf(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
-    if (length == 0.0f) length = 1.0f;
-    float ilength = 1.0f/length;
+    float length = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+    if (length == 0.0f)
+        length = 1.0f;
+    float ilength = 1.0f / length;
 
-    result.x = q.x*ilength;
-    result.y = q.y*ilength;
-    result.z = q.z*ilength;
-    result.w = q.w*ilength;
+    result.x = q.x * ilength;
+    result.y = q.y * ilength;
+    result.z = q.z * ilength;
+    result.w = q.w * ilength;
 
     return result;
 }
@@ -274,7 +275,7 @@ inline Vector3 euler(const Quaternion& quaternion)
 }
 inline Quaternion inverse(const Quaternion& quaternion)
 {
-    return Quaternion(-quaternion.x, -quaternion.y, -quaternion.z, quaternion.w);
+    return { -quaternion.x, -quaternion.y, -quaternion.z, quaternion.w };
 }
 inline bool is_equal_approx(const Quaternion& a, const Quaternion& b)
 {
@@ -320,11 +321,10 @@ inline Quaternion spherical_linear_interpolate(const Quaternion& from, const Qua
         scale1 = weight;
     }
 
-    return Quaternion(
-        scale0 * from.x + scale1 * to_new.x,
-        scale0 * from.y + scale1 * to_new.y,
-        scale0 * from.z + scale1 * to_new.z,
-        scale0 * from.w + scale1 * to_new.w);
+    return { scale0 * from.x + scale1 * to_new.x,
+             scale0 * from.y + scale1 * to_new.y,
+             scale0 * from.z + scale1 * to_new.z,
+             scale0 * from.w + scale1 * to_new.w };
 }
 inline Matrix3 matrix(const Quaternion& quaternion)
 {

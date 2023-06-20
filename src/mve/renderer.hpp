@@ -274,7 +274,7 @@ public:
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix3& value, bool persist = true);
 
     /**
      * @brief Update uniform buffer mat4
@@ -284,7 +284,7 @@ public:
      * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
      */
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix4 value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix4& value, bool persist = true);
 
     /**
      * @brief Bind descriptor set
@@ -330,23 +330,23 @@ private:
 
     struct Buffer {
         vk::Buffer vk_handle;
-        VmaAllocation vma_allocation;
+        VmaAllocation vma_allocation {};
     };
 
     struct VertexBufferImpl {
         Buffer buffer;
-        int vertex_count;
+        int vertex_count {};
     };
 
     struct IndexBufferImpl {
         Buffer buffer;
-        size_t index_count;
+        size_t index_count {};
     };
 
     struct UniformBufferImpl {
         Buffer buffer;
-        uint32_t size;
-        std::byte* mapped_ptr;
+        uint32_t size {};
+        std::byte* mapped_ptr {};
     };
 
     struct Image {
@@ -370,11 +370,11 @@ private:
         Image image;
         vk::ImageView vk_image_view;
         vk::Sampler vk_sampler;
-        uint32_t mip_levels;
+        uint32_t mip_levels {};
     };
 
     struct DescriptorSetImpl {
-        uint64_t id;
+        uint64_t id {};
         vk::DescriptorSet vk_handle;
         vk::DescriptorPool vk_pool;
     };
@@ -408,7 +408,7 @@ private:
     };
 
     struct GraphicsPipelineImpl {
-        size_t layout;
+        size_t layout {};
         vk::Pipeline pipeline;
     };
 
@@ -477,7 +477,7 @@ private:
     std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
     vk::CommandPool m_vk_command_pool;
     QueueFamilyIndices m_vk_queue_family_indices;
-    VmaAllocator m_vma_allocator;
+    VmaAllocator m_vma_allocator {};
     uint64_t m_resource_handle_count;
     CurrentDrawState m_current_draw_state;
     DescriptorSetAllocator m_descriptor_set_allocator {};
@@ -527,7 +527,7 @@ private:
             .data_size = sizeof(T)
         };
         memcpy(update_data.data.data(), &value, sizeof(T));
-        m_deferred_uniform_updates.push_back(std::move(update_data));
+        m_deferred_uniform_updates.push_back(update_data);
     }
 
     struct DeferredUniformUpdateData {
@@ -618,7 +618,7 @@ private:
 
     void defer_after_all_frames(std::function<void(uint32_t)> func);
 
-    void defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func);
+    void defer_to_command_buffer_front(const std::function<void(vk::CommandBuffer)>& func);
 
     static RenderImage create_color_image(
         const vk::DispatchLoaderDynamic& loader,

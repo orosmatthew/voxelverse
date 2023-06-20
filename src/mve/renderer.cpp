@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <set>
+#include <utility>
 #include <vector>
 
 #define VMA_VULKAN_VERSION 1001000
@@ -359,7 +360,7 @@ vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* wi
     VkSurfaceKHR surface;
     VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     MVE_ASSERT(result == VK_SUCCESS, "[Renderer] Failed to create window surface")
-    return vk::SurfaceKHR(surface);
+    return { surface };
 }
 
 std::vector<const char*> Renderer::get_vk_device_required_exts()
@@ -375,7 +376,7 @@ Renderer::SwapchainSupportDetails Renderer::get_vk_swapchain_support_details(
     vk::ResultValue<vk::SurfaceCapabilitiesKHR> capabilities_result
         = physical_device.getSurfaceCapabilitiesKHR(surface, loader);
     MVE_ASSERT(capabilities_result.result == vk::Result::eSuccess, "[Renderer] Failed to get surface capabilities")
-    details.capabilities = std::move(capabilities_result.value);
+    details.capabilities = capabilities_result.value;
 
     vk::ResultValue<std::vector<vk::SurfaceFormatKHR>> formats_result
         = physical_device.getSurfaceFormatsKHR(surface, loader);
@@ -538,7 +539,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
         = device.createShaderModule(vertex_shader_create_info, nullptr, loader);
     MVE_ASSERT(
         vertex_shader_module_result.result == vk::Result::eSuccess, "[Renderer] Failed to create vertex shader module")
-    vk::ShaderModule vertex_shader_module = std::move(vertex_shader_module_result.value);
+    vk::ShaderModule vertex_shader_module = vertex_shader_module_result.value;
 
     std::vector<uint32_t> fragment_spv_code = fragment_shader.spv_code();
     auto fragment_shader_create_info
@@ -549,7 +550,7 @@ vk::Pipeline Renderer::create_vk_graphics_pipeline(
     MVE_ASSERT(
         fragment_shader_module_result.result == vk::Result::eSuccess,
         "[Renderer] Failed to create fragment shader module")
-    vk::ShaderModule fragment_shader_module = std::move(fragment_shader_module_result.value);
+    vk::ShaderModule fragment_shader_module = fragment_shader_module_result.value;
 
     auto vertex_shader_stage_info
         = vk::PipelineShaderStageCreateInfo()
@@ -893,7 +894,7 @@ std::vector<vk::Framebuffer> Renderer::create_vk_framebuffers(
         vk::ResultValue<vk::Framebuffer> framebuffer_result
             = device.createFramebuffer(framebuffer_info, nullptr, loader);
         MVE_ASSERT(framebuffer_result.result == vk::Result::eSuccess, "[Renderer] Failed to create framebuffer")
-        framebuffers.push_back(std::move(framebuffer_result.value));
+        framebuffers.push_back(framebuffer_result.value);
     }
     return framebuffers;
 }
@@ -1137,7 +1138,7 @@ vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance inst
 
     VkDebugUtilsMessengerEXT debug_messenger;
     func(instance, &debug_create_info, nullptr, &debug_messenger);
-    return vk::DebugUtilsMessengerEXT(debug_messenger);
+    return { debug_messenger };
 }
 
 VkBool32 Renderer::vk_debug_callback(
@@ -1226,18 +1227,18 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
         MVE_ASSERT(
             image_available_semaphore_result.result == vk::Result::eSuccess,
             "[Renderer] Failed to create image available semaphore")
-        frame.image_available_semaphore = std::move(image_available_semaphore_result.value);
+        frame.image_available_semaphore = image_available_semaphore_result.value;
 
         vk::ResultValue<vk::Semaphore> render_finished_semaphore_result
             = device.createSemaphore(semaphore_info, nullptr, loader);
         MVE_ASSERT(
             render_finished_semaphore_result.result == vk::Result::eSuccess,
             "[Renderer] Failed to create render finished semaphore")
-        frame.render_finished_semaphore = std::move(render_finished_semaphore_result.value);
+        frame.render_finished_semaphore = render_finished_semaphore_result.value;
 
         vk::ResultValue<vk::Fence> in_flight_fence_result = device.createFence(fence_info, nullptr, loader);
         MVE_ASSERT(in_flight_fence_result.result == vk::Result::eSuccess, "[Renderer] Failed to create in flight fence")
-        frame.in_flight_fence = std::move(in_flight_fence_result.value);
+        frame.in_flight_fence = in_flight_fence_result.value;
         frame.command_buffer = command_buffers.at(i);
         frame.uniform_buffers = {};
         frames_in_flight.push_back(frame);
@@ -1473,7 +1474,7 @@ void Renderer::begin_frame(const Window& window)
         }
         write_data.counter--;
         if (write_data.counter <= 0) {
-            m_deferred_descriptor_writes.erase(m_deferred_descriptor_writes.begin() + i);
+            m_deferred_descriptor_writes.erase(m_deferred_descriptor_writes.begin() + static_cast<long long>(i));
             i--;
         }
     }
@@ -1487,7 +1488,7 @@ void Renderer::begin_frame(const Window& window)
             m_current_draw_state.frame_index);
         update_data.counter--;
         if (update_data.counter <= 0) {
-            m_deferred_uniform_updates.erase(m_deferred_uniform_updates.begin() + i);
+            m_deferred_uniform_updates.erase(m_deferred_uniform_updates.begin() + static_cast<long long>(i));
             i--;
         }
     }
@@ -1680,7 +1681,7 @@ Renderer::DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
     MVE_ASSERT(
         descriptor_set_layout_result.result == vk::Result::eSuccess,
         "[Renderer] Failed to create descriptor set layout")
-    vk::DescriptorSetLayout vk_layout = std::move(descriptor_set_layout_result.value);
+    vk::DescriptorSetLayout vk_layout = descriptor_set_layout_result.value;
 
     auto handle = DescriptorSetLayoutHandleImpl(m_resource_handle_count);
     m_descriptor_set_layouts.insert({ handle, vk_layout });
@@ -1717,7 +1718,7 @@ size_t Renderer::create_graphics_pipeline_layout(
     }
     if (!id.has_value()) {
         id = m_graphics_pipeline_layouts_new.size();
-        m_graphics_pipeline_layouts_new.push_back({});
+        m_graphics_pipeline_layouts_new.emplace_back();
     }
     m_graphics_pipeline_layouts_new[*id]
         = { .vk_handle = vk_layout, .descriptor_set_layouts = std::move(descriptor_set_layouts) };
@@ -1771,7 +1772,7 @@ vk::CommandBuffer Renderer::begin_single_submit(
         = device.allocateCommandBuffers(command_buffer_alloc_info, loader);
     MVE_ASSERT(
         command_buffer_result.result == vk::Result::eSuccess, "[Renderer] Failed to allocate texture command buffer")
-    vk::CommandBuffer command_buffer = std::move(command_buffer_result.value.at(0));
+    vk::CommandBuffer command_buffer = command_buffer_result.value.at(0);
 
     auto begin_info = vk::CommandBufferBeginInfo().setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
@@ -2015,10 +2016,8 @@ vk::Format Renderer::find_supported_format(
 {
     for (vk::Format format : formats) {
         vk::FormatProperties properties = physical_device.getFormatProperties(format, loader);
-        if (tiling == vk::ImageTiling::eLinear && (properties.linearTilingFeatures & features) == features) {
-            return format;
-        }
-        else if (tiling == vk::ImageTiling::eOptimal && (properties.optimalTilingFeatures & features) == features) {
+        if ((tiling == vk::ImageTiling::eLinear && (properties.linearTilingFeatures & features) == features)
+            || (tiling == vk::ImageTiling::eOptimal && (properties.optimalTilingFeatures & features) == features)) {
             return format;
         }
     }
@@ -2130,7 +2129,9 @@ void Renderer::cmd_generate_mipmaps(
             1,
             &barrier);
 
-        std::array<vk::Offset3D, 2> src_offsets = { vk::Offset3D(0, 0, 0), vk::Offset3D(mip_width, mip_height, 1) };
+        std::array<vk::Offset3D, 2> src_offsets
+            = { vk::Offset3D(0, 0, 0),
+                vk::Offset3D(static_cast<int32_t>(mip_width), static_cast<int32_t>(mip_height), 1) };
 
         auto src_subresource
             = vk::ImageSubresourceLayers()
@@ -2141,7 +2142,10 @@ void Renderer::cmd_generate_mipmaps(
 
         std::array<vk::Offset3D, 2> dst_offsets
             = { vk::Offset3D(0, 0, 0),
-                vk::Offset3D(mip_width > 1 ? mip_width / 2 : 1, mip_height > 1 ? mip_height / 2 : 1, 1) };
+                vk::Offset3D(
+                    static_cast<int32_t>(mip_width > 1 ? mip_width / 2 : 1),
+                    static_cast<int32_t>(mip_height > 1 ? mip_height / 2 : 1),
+                    1) };
 
         auto dst_subresource
             = vk::ImageSubresourceLayers()
@@ -2263,7 +2267,7 @@ Renderer::RenderImage Renderer::create_color_image(
     return { color_image, image_view };
 }
 
-void Renderer::defer_to_command_buffer_front(std::function<void(vk::CommandBuffer)> func)
+void Renderer::defer_to_command_buffer_front(const std::function<void(vk::CommandBuffer)>& func)
 {
     m_command_buffer_deferred_functions.push(func);
 }
@@ -2278,7 +2282,7 @@ void Renderer::write_descriptor_binding(
         .descriptor_handle = descriptor_set.m_handle,
         .binding = descriptor_binding.binding()
     };
-    m_deferred_descriptor_writes.push_back(std::move(write_data));
+    m_deferred_descriptor_writes.push_back(write_data);
 }
 
 VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
@@ -2345,13 +2349,13 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
     }
     if (!id.has_value()) {
         id = m_vertex_buffers_new.size();
-        m_vertex_buffers_new.push_back({});
+        m_vertex_buffers_new.emplace_back();
     }
     m_vertex_buffers_new[*id] = { buffer, vertex_data.vertex_count() };
 
     LOG->debug("[Renderer] Vertex buffer created with ID: {}", *id);
 
-    return VertexBuffer(*this, *id);
+    return { *this, *id };
 }
 
 void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer)
@@ -2424,13 +2428,13 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
     }
     if (!id.has_value()) {
         id = m_index_buffers_new.size();
-        m_index_buffers_new.push_back({});
+        m_index_buffers_new.emplace_back();
     }
     m_index_buffers_new[*id] = { buffer, indices.size() };
 
     LOG->debug("[Renderer] Index buffer created with ID: {}", *id);
 
-    return IndexBuffer(*this, *id);
+    return { *this, *id };
 }
 
 void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
@@ -2466,13 +2470,13 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
     }
     if (!id.has_value()) {
         id = m_graphics_pipelines_new.size();
-        m_graphics_pipelines_new.push_back({});
+        m_graphics_pipelines_new.emplace_back();
     }
     m_graphics_pipelines_new[*id] = { .layout = layout, .pipeline = vk_pipeline };
 
     LOG->debug("[Renderer] Graphics pipeline created with ID: {}", *id);
 
-    return GraphicsPipeline(*this, *id);
+    return { *this, *id };
 }
 
 DescriptorSet Renderer::create_descriptor_set(
@@ -2500,7 +2504,7 @@ DescriptorSet Renderer::create_descriptor_set(
     if (!id.has_value()) {
         id = ref_frame.descriptor_sets.size();
         for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.descriptor_sets.push_back({});
+            frame.descriptor_sets.emplace_back();
         }
     }
     int i = 0;
@@ -2511,7 +2515,7 @@ DescriptorSet Renderer::create_descriptor_set(
 
     LOG->debug("[Renderer] Descriptor set created with ID: {}", *id);
 
-    return DescriptorSet(*this, *id);
+    return { *this, *id };
 }
 
 void Renderer::bind_graphics_pipeline(const GraphicsPipeline& graphics_pipeline)
@@ -2538,7 +2542,7 @@ void Renderer::write_descriptor_binding(
         .descriptor_handle = descriptor_set.m_handle,
         .binding = descriptor_binding.binding()
     };
-    m_deferred_descriptor_writes.push_back(std::move(write_data));
+    m_deferred_descriptor_writes.push_back(write_data);
 }
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set)
@@ -2565,7 +2569,7 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
     if (!id.has_value()) {
         id = ref_frame.uniform_buffers.size();
         for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.uniform_buffers.push_back({});
+            frame.uniform_buffers.emplace_back();
         }
     }
     int i = 0;
@@ -2585,7 +2589,7 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
 
     LOG->debug("[Renderer] Uniform buffer created with ID: {}", *id);
 
-    return UniformBuffer(*this, *id);
+    return { *this, *id };
 }
 
 void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist)
@@ -2604,11 +2608,13 @@ void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation loc
 {
     update_uniform<mve::Vector4>(uniform_buffer, location, value, persist);
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix3 value, bool persist)
+void Renderer::update_uniform(
+    UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix3& value, bool persist)
 {
     update_uniform<mve::Matrix3>(uniform_buffer, location, value, persist);
 }
-void Renderer::update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix4 value, bool persist)
+void Renderer::update_uniform(
+    UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix4& value, bool persist)
 {
     update_uniform<mve::Matrix4>(uniform_buffer, location, value, persist);
 }
@@ -2714,7 +2720,7 @@ Texture Renderer::create_texture(TextureFormat format, uint32_t width, uint32_t 
 
     LOG->debug("[Renderer] Texture created with ID: {}", handle);
 
-    return Texture(*this, handle);
+    return { *this, handle };
 }
 
 Texture Renderer::create_texture(const std::filesystem::path& path)
@@ -2746,7 +2752,7 @@ Texture Renderer::create_texture(Image image, vk::ImageView image_view, vk::Samp
 
     LOG->debug("[Renderer] Texture created with ID: {}", handle);
 
-    return Texture(*this, handle);
+    return { *this, handle };
 }
 
 void Renderer::draw_vertex_buffer(const VertexBuffer& vertex_buffer)
@@ -2886,13 +2892,13 @@ Framebuffer Renderer::create_framebuffer(std::function<void(void)> callback)
     }
     if (!id.has_value()) {
         id = m_framebuffers.size();
-        m_framebuffers.push_back({});
+        m_framebuffers.emplace_back();
     }
     m_framebuffers[*id] = std::move(create_framebuffer_impl(m_vk_loader, callback));
 
     LOG->debug("[Renderer] Framebuffer created with ID: {}", *id);
 
-    return Framebuffer(*this, *id);
+    return { *this, *id };
 }
 void Renderer::destroy(Framebuffer& framebuffer)
 {
@@ -2917,7 +2923,7 @@ void Renderer::recreate_framebuffers()
     std::vector<std::pair<size_t, std::optional<std::function<void(void)>>>> ids_to_recreate;
     for (size_t i = 0; i < m_framebuffers.size(); i++) {
         if (m_framebuffers[i].has_value()) {
-            ids_to_recreate.push_back({ i, m_framebuffers[i]->callback });
+            ids_to_recreate.emplace_back(i, m_framebuffers[i]->callback);
             for (vk::Framebuffer& buffer : m_framebuffers[i]->vk_framebuffers) {
                 m_vk_device.destroy(buffer, nullptr, m_vk_loader);
             }
@@ -2961,7 +2967,7 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
         vk::ResultValue<vk::Framebuffer> framebuffer_result
             = m_vk_device.createFramebuffer(framebuffer_info, nullptr, loader);
         MVE_ASSERT(framebuffer_result.result == vk::Result::eSuccess, "[Renderer] Failed to create framebuffer")
-        framebuffers.push_back(std::move(framebuffer_result.value));
+        framebuffers.push_back(framebuffer_result.value);
     }
 
     vk::Sampler sampler = create_texture_sampler(m_vk_loader, m_vk_physical_device, m_vk_device, 1);
@@ -2971,7 +2977,7 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
     FramebufferImpl framebuffer_impl {
         .vk_framebuffers = std::move(framebuffers),
         .texture = std::move(texture),
-        .callback = callback,
+        .callback = std::move(callback),
         .size = { static_cast<int>(m_vk_swapchain_extent.width), static_cast<int>(m_vk_swapchain_extent.height) }
     };
 
@@ -3025,7 +3031,7 @@ std::string Renderer::gpu_name() const
 }
 mve::Vector2i Renderer::texture_size(const Texture& texture) const
 {
-    MVE_VAL_ASSERT(texture.m_valid, "[Renderer] Attempt to get size on invalid texture");
+    MVE_VAL_ASSERT(texture.m_valid, "[Renderer] Attempt to get size on invalid texture")
     const TextureImpl& texture_impl = m_textures.at(texture.m_handle);
     return { static_cast<int>(texture_impl.image.width), static_cast<int>(texture_impl.image.height) };
 }
@@ -3056,7 +3062,8 @@ vk::DescriptorPool Renderer::DescriptorSetAllocator::create_pool(
 
     std::transform(
         m_sizes.cbegin(), m_sizes.cend(), std::back_inserter(sizes), [&](std::pair<vk::DescriptorType, float> s) {
-            return vk::DescriptorPoolSize(s.first, static_cast<uint32_t>(s.second * m_max_sets_per_pool));
+            return vk::DescriptorPoolSize(
+                s.first, static_cast<uint32_t>(s.second * static_cast<float>(m_max_sets_per_pool)));
         });
 
     auto pool_info = vk::DescriptorPoolCreateInfo()
@@ -3123,7 +3130,7 @@ Renderer::DescriptorSetImpl Renderer::DescriptorSetAllocator::create(
     }
     if (!id.has_value()) {
         id = m_descriptor_sets.size();
-        m_descriptor_sets.push_back({});
+        m_descriptor_sets.emplace_back();
     }
     DescriptorSetImpl descriptor_set_impl {
         .id = *id, .vk_handle = *descriptor_set, .vk_pool = m_descriptor_pools.at(m_current_pool_index)

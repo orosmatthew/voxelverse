@@ -7,7 +7,7 @@ inline IndexBuffer::IndexBuffer(Renderer& renderer, const std::vector<uint32_t>&
     *this = std::move(renderer.create_index_buffer(indices));
 }
 
-inline IndexBuffer::IndexBuffer(IndexBuffer&& other)
+inline IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
     : m_valid(other.m_valid)
     , m_handle(other.m_handle)
     , m_renderer(other.m_renderer)
@@ -32,7 +32,7 @@ inline bool IndexBuffer::is_valid() const
     return m_valid;
 }
 
-inline IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other)
+inline IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);

@@ -2,19 +2,18 @@ namespace mve {
 
 inline Vector4 abs(Vector4 vector)
 {
-    return Vector4(abs(vector.x), abs(vector.y), abs(vector.z), abs(vector.w));
+    return { abs(vector.x), abs(vector.y), abs(vector.z), abs(vector.w) };
 }
 inline Vector4 ceil(Vector4 vector)
 {
-    return Vector4(ceil(vector.x), ceil(vector.y), ceil(vector.z), ceil(vector.w));
+    return { ceil(vector.x), ceil(vector.y), ceil(vector.z), ceil(vector.w) };
 }
 inline Vector4 clamp(Vector4 vector, Vector4 min, Vector4 max)
 {
-    return Vector4(
-        clamp(vector.x, min.x, max.x),
-        clamp(vector.y, min.y, max.y),
-        clamp(vector.z, min.z, max.z),
-        clamp(vector.w, min.w, max.w));
+    return { clamp(vector.x, min.x, max.x),
+             clamp(vector.y, min.y, max.y),
+             clamp(vector.z, min.z, max.z),
+             clamp(vector.w, min.w, max.w) };
 }
 inline Vector4 direction(Vector4 from, Vector4 to)
 {
@@ -50,7 +49,7 @@ inline Vector4 normalize(Vector4 vector)
 }
 inline Vector4 floor(Vector4 vector)
 {
-    return Vector4(floor(vector.x), floor(vector.y), floor(vector.z), floor(vector.w));
+    return { floor(vector.x), floor(vector.y), floor(vector.z), floor(vector.w) };
 }
 inline float length(Vector4 vector)
 {
@@ -62,11 +61,10 @@ inline float length_sqrd(Vector4 vector)
 }
 inline Vector4 linear_interpolate(Vector4 from, Vector4 to, float weight)
 {
-    return Vector4(
-        linear_interpolate(from.x, to.x, weight),
-        linear_interpolate(from.y, to.y, weight),
-        linear_interpolate(from.z, to.z, weight),
-        linear_interpolate(from.w, to.w, weight));
+    return { linear_interpolate(from.x, to.x, weight),
+             linear_interpolate(from.y, to.y, weight),
+             linear_interpolate(from.z, to.z, weight),
+             linear_interpolate(from.w, to.w, weight) };
 }
 inline Vector4Axis min_axis(Vector4 vector)
 {
@@ -125,7 +123,7 @@ inline float dot(Vector4 a, Vector4 b)
 }
 inline Vector4 inverse(Vector4 vector)
 {
-    return Vector4(1.0f / vector.x, 1.0f / vector.y, 1.0f / vector.z, 1.0f / vector.w);
+    return { 1.0f / vector.x, 1.0f / vector.y, 1.0f / vector.z, 1.0f / vector.w };
 }
 inline Vector4 clamp_length(Vector4 vector, float min, float max)
 {
@@ -143,7 +141,7 @@ inline Vector4 clamp_length(Vector4 vector, float min, float max)
 }
 inline Vector4 round(Vector4 vector)
 {
-    return Vector4(round(vector.x), round(vector.y), round(vector.z), round(vector.w));
+    return { round(vector.x), round(vector.y), round(vector.z), round(vector.w) };
 }
 inline Vector4::Vector4()
     : x(0.0f)
@@ -168,11 +166,11 @@ inline Vector4::Vector4(float x, float y, float z, float w)
 }
 inline Vector4 Vector4::zero()
 {
-    return Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+    return { 0.0f, 0.0f, 0.0f, 0.0f };
 }
 inline Vector4 Vector4::one()
 {
-    return Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    return { 1.0f, 1.0f, 1.0f, 1.0f };
 }
 inline Vector4 Vector4::abs() const
 {
@@ -256,7 +254,7 @@ inline bool Vector4::operator!=(Vector4 other) const
 }
 inline Vector4 Vector4::operator*(Vector4 other) const
 {
-    return Vector4(x * other.x, y * other.y, z * other.z, w * other.w);
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
 }
 inline Vector4& Vector4::operator*=(Vector4 other)
 {
@@ -269,7 +267,7 @@ inline Vector4& Vector4::operator*=(Vector4 other)
 }
 inline Vector4 Vector4::operator*(float val) const
 {
-    return Vector4(x * val, y * val, z * val, w * val);
+    return { x * val, y * val, z * val, w * val };
 }
 inline Vector4& Vector4::operator*=(float val)
 {
@@ -282,20 +280,23 @@ inline Vector4& Vector4::operator*=(float val)
 }
 inline Vector4 Vector4::operator*(int val) const
 {
-    return Vector4(x * val, y * val, z * val, w * val);
+    return { x * static_cast<float>(val),
+             y * static_cast<float>(val),
+             z * static_cast<float>(val),
+             w * static_cast<float>(val) };
 }
 inline Vector4& Vector4::operator*=(int val)
 {
-    x *= val;
-    y *= val;
-    z *= val;
-    w *= val;
+    x *= static_cast<float>(val);
+    y *= static_cast<float>(val);
+    z *= static_cast<float>(val);
+    w *= static_cast<float>(val);
 
     return *this;
 }
 inline Vector4 Vector4::operator+(Vector4 other) const
 {
-    return Vector4(x + other.x, y + other.y, z + other.z, w + other.w);
+    return { x + other.x, y + other.y, z + other.z, w + other.w };
 }
 inline Vector4& Vector4::operator+=(Vector4 other)
 {
@@ -308,7 +309,7 @@ inline Vector4& Vector4::operator+=(Vector4 other)
 }
 inline Vector4 Vector4::operator-(Vector4 other) const
 {
-    return Vector4(x - other.x, y - other.y, z - other.z, w - other.w);
+    return { x - other.x, y - other.y, z - other.z, w - other.w };
 }
 inline Vector4& Vector4::operator-=(Vector4 other)
 {
@@ -321,7 +322,7 @@ inline Vector4& Vector4::operator-=(Vector4 other)
 }
 inline Vector4 Vector4::operator/(Vector4 other) const
 {
-    return Vector4(x / other.x, y / other.y, z / other.z, w / other.w);
+    return { x / other.x, y / other.y, z / other.z, w / other.w };
 }
 inline Vector4& Vector4::operator/=(Vector4 other)
 {
@@ -334,7 +335,7 @@ inline Vector4& Vector4::operator/=(Vector4 other)
 }
 inline Vector4 Vector4::operator/(float val) const
 {
-    return Vector4(x / val, y / val, z / val, w / val);
+    return { x / val, y / val, z / val, w / val };
 }
 inline Vector4& Vector4::operator/=(float val)
 {
@@ -347,14 +348,17 @@ inline Vector4& Vector4::operator/=(float val)
 }
 inline Vector4 Vector4::operator/(int val) const
 {
-    return Vector4(x / val, y / val, z / val, w / val);
+    return { x / static_cast<float>(val),
+             y / static_cast<float>(val),
+             z / static_cast<float>(val),
+             w / static_cast<float>(val) };
 }
 inline Vector4& Vector4::operator/=(int val)
 {
-    x /= val;
-    y /= val;
-    z /= val;
-    w /= val;
+    x /= static_cast<float>(val);
+    y /= static_cast<float>(val);
+    z /= static_cast<float>(val);
+    w /= static_cast<float>(val);
 
     return *this;
 }
@@ -458,11 +462,11 @@ inline float& Vector4::operator[](Vector4Axis axis)
 }
 inline Vector4 Vector4::operator+() const
 {
-    return Vector4(x, y, z, w);
+    return { x, y, z, w };
 }
 inline Vector4 Vector4::operator-() const
 {
-    return Vector4(-x, -y, -z, -w);
+    return { -x, -y, -z, -w };
 }
 inline const float& Vector4::operator[](int index) const
 {

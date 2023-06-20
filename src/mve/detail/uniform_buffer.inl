@@ -7,7 +7,7 @@ inline UniformBuffer::UniformBuffer(Renderer& renderer, const ShaderDescriptorBi
     *this = renderer.create_uniform_buffer(descriptor_binding);
 }
 
-inline UniformBuffer::UniformBuffer(UniformBuffer&& other)
+inline UniformBuffer::UniformBuffer(UniformBuffer&& other) noexcept
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
@@ -22,7 +22,7 @@ inline UniformBuffer::~UniformBuffer()
     }
 }
 
-inline UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other)
+inline UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);

@@ -32,7 +32,7 @@ void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Ve
                                      static_cast<float>(y + chunk_pos.y * 16) };
             float height_oct1 = m_noise_oct1->GetNoise(noise_pos.x * scale_oct1.x, noise_pos.y * scale_oct1.x) * 32.0f;
             float height_oct2 = m_noise_oct2->GetNoise(noise_pos.x * scale_oct2.x, noise_pos.y * scale_oct2.x) * 32.0f;
-            int height_oct3 = m_noise_oct3->GetNoise(noise_pos.x * scale_oct3.x, noise_pos.y * scale_oct3.x) * 32.0f;
+            float height_oct3 = m_noise_oct3->GetNoise(noise_pos.x * scale_oct3.x, noise_pos.y * scale_oct3.x) * 32.0f;
             float height = (1.0f * height_oct1 + 0.5f * height_oct2 + 0.2f * height_oct3);
             heights[x][y] = height;
         }

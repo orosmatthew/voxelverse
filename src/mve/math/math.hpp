@@ -81,7 +81,7 @@ public:
 
     inline Vector4i();
 
-    inline Vector4i(const Vector4& vector);
+    inline explicit Vector4i(const Vector4& vector);
 
     inline Vector4i(int x, int y, int z, int w);
 
@@ -159,7 +159,7 @@ public:
 
     [[nodiscard]] inline Vector4i operator-() const;
 
-    [[nodiscard]] inline operator bool() const;
+    [[nodiscard]] inline explicit operator bool() const;
 };
 
 [[nodiscard]] inline Vector4i abs(Vector4i vector);
@@ -334,7 +334,7 @@ public:
 
     inline Vector3i();
 
-    inline Vector3i(Vector3 vector);
+    inline explicit Vector3i(Vector3 vector);
 
     inline Vector3i(int x, int y, int z);
 
@@ -434,7 +434,7 @@ public:
 
     inline Vector2i();
 
-    inline Vector2i(const Vector2& vector);
+    inline explicit Vector2i(const Vector2& vector);
 
     inline Vector2i(int x, int y);
 
@@ -518,7 +518,7 @@ public:
 
     [[nodiscard]] inline Vector2i operator-() const;
 
-    [[nodiscard]] inline operator bool() const;
+    [[nodiscard]] inline explicit operator bool() const;
 };
 
 [[nodiscard]] inline Vector2i abs(const Vector2i& vector);
@@ -544,7 +544,7 @@ public:
 
     inline Vector2();
 
-    inline Vector2(const Vector2i& vector);
+    inline explicit Vector2(const Vector2i& vector);
 
     inline explicit Vector2(float scalar);
 
@@ -592,7 +592,7 @@ public:
 
     [[nodiscard]] inline Vector2 reflect(const Vector2& normal) const;
 
-    [[nodiscard]] inline Vector2 rotate(float angle);
+    [[nodiscard]] inline Vector2 rotate(float angle) const;
 
     [[nodiscard]] inline Vector2 inverse() const;
 
@@ -650,7 +650,7 @@ public:
 
     [[nodiscard]] inline Vector2 operator-() const;
 
-    [[nodiscard]] inline operator bool() const;
+    [[nodiscard]] inline explicit operator bool() const;
 };
 
 [[nodiscard]] inline Vector2 abs(const Vector2& vector);
@@ -711,7 +711,7 @@ public:
 
     inline Quaternion();
 
-    inline Quaternion(const Vector4& vector);
+    inline explicit Quaternion(const Vector4& vector);
 
     inline Quaternion(float x, float y, float z, float w);
 
@@ -940,7 +940,7 @@ public:
 
     inline Vector3();
 
-    inline Vector3(Vector3i vector);
+    inline explicit Vector3(Vector3i vector);
 
     inline explicit Vector3(float val);
 
@@ -1170,7 +1170,7 @@ public:
 
     [[nodiscard]] inline Quaternion quaternion() const;
 
-    [[nodiscard]] inline Matrix4 with_translation(const Vector3 translation) const;
+    [[nodiscard]] inline Matrix4 with_translation(Vector3 translation) const;
 
     inline Vector3& operator[](int index);
 
@@ -1237,7 +1237,7 @@ public:
 
 [[nodiscard]] inline bool is_zero_approx(const Matrix3& matrix);
 
-[[nodiscard]] inline Matrix4 with_translation(const Matrix3& matrix, const Vector3 translation);
+[[nodiscard]] inline Matrix4 with_translation(const Matrix3& matrix, Vector3 translation);
 
 [[nodiscard]] inline Matrix3 look_at(const Vector3& target, const Vector3& up);
 

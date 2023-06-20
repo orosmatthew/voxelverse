@@ -8,7 +8,7 @@ inline DescriptorSet::DescriptorSet(
     *this = std::move(renderer.create_descriptor_set(graphics_pipeline, descriptor_set));
 }
 
-inline DescriptorSet::DescriptorSet(DescriptorSet&& other)
+inline DescriptorSet::DescriptorSet(DescriptorSet&& other) noexcept
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
@@ -23,7 +23,7 @@ inline DescriptorSet::~DescriptorSet()
     }
 }
 
-inline DescriptorSet& DescriptorSet::operator=(DescriptorSet&& other)
+inline DescriptorSet& DescriptorSet::operator=(DescriptorSet&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);
@@ -54,7 +54,8 @@ inline bool DescriptorSet::is_valid() const
 {
     return m_valid;
 }
-inline void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
+inline void DescriptorSet::write_binding(
+    const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, uniform_buffer);
 }

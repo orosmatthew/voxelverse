@@ -55,7 +55,8 @@ void ChunkMesh::calc_block_faces(
             if (adj_block_type != 0 && WorldData::is_block_pos_local(adj_local_pos)) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_face_lighting(world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
-                FaceData face = create_face_mesh(adj_block_type, adj_local_pos, opposite_direction(dir), face_lighting);
+                FaceData face = create_face_mesh(
+                    adj_block_type, mve::Vector3(adj_local_pos), opposite_direction(dir), face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -63,7 +64,7 @@ void ChunkMesh::calc_block_faces(
             if (adj_block_type == 0 || is_transparent(adj_block_type)) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
-                FaceData face = create_face_mesh(block_type, local_pos, dir, face_lighting);
+                FaceData face = create_face_mesh(block_type, mve::Vector3(local_pos), dir, face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -117,7 +118,7 @@ void ChunkMesh::create_mesh_data(mve::Vector3i chunk_pos, const WorldData& world
 
     mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i) + m_chunk_pos * 16.0f);
+        vertex_data.push_back(mesh.vertices.at(i) + mve::Vector3(m_chunk_pos) * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
     }

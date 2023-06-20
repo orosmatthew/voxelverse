@@ -2,15 +2,15 @@ namespace mve {
 
 inline Vector3 abs(Vector3 vector)
 {
-    return Vector3(abs(vector.x), abs(vector.y), abs(vector.z));
+    return { abs(vector.x), abs(vector.y), abs(vector.z) };
 }
 inline Vector3 ceil(Vector3 vector)
 {
-    return Vector3(ceil(vector.x), ceil(vector.y), ceil(vector.z));
+    return { ceil(vector.x), ceil(vector.y), ceil(vector.z) };
 }
 inline Vector3 clamp(Vector3 vector, Vector3 min, Vector3 max)
 {
-    return Vector3(clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y), clamp(vector.z, min.z, max.z));
+    return { clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y), clamp(vector.z, min.z, max.z) };
 }
 inline Vector3 direction(Vector3 from, Vector3 to)
 {
@@ -44,7 +44,7 @@ inline Vector3 normalize(Vector3 vector)
 }
 inline Vector3 floor(Vector3 vector)
 {
-    return Vector3(floor(vector.x), floor(vector.y), floor(vector.z));
+    return { floor(vector.x), floor(vector.y), floor(vector.z) };
 }
 inline float length(Vector3 vector)
 {
@@ -56,10 +56,9 @@ inline float length_sqrd(Vector3 vector)
 }
 inline Vector3 linear_interpolate(Vector3 from, Vector3 to, float weight)
 {
-    return Vector3(
-        linear_interpolate(from.x, to.x, weight),
-        linear_interpolate(from.y, to.y, weight),
-        linear_interpolate(from.z, to.z, weight));
+    return { linear_interpolate(from.x, to.x, weight),
+             linear_interpolate(from.y, to.y, weight),
+             linear_interpolate(from.z, to.z, weight) };
 }
 inline Vector3Axis max_axis(Vector3 vector)
 {
@@ -72,7 +71,6 @@ inline Vector3Axis max_axis(Vector3 vector)
     }
 
     if (vector.z > max_val) {
-        max_val = vector.z;
         max_axis = Vector3Axis::z;
     }
 
@@ -89,7 +87,6 @@ inline Vector3Axis min_axis(Vector3 vector)
     }
 
     if (vector.z < min_val) {
-        min_val = vector.z;
         min_axis = Vector3Axis::z;
     }
 
@@ -118,7 +115,7 @@ inline float dot(Vector3 a, Vector3 b)
 }
 inline Vector3 cross(Vector3 a, Vector3 b)
 {
-    return Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+    return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
 }
 inline Vector3 reflect(Vector3 vector, Vector3 normal)
 {
@@ -134,7 +131,7 @@ inline Vector3 reflect(Vector3 vector, Vector3 normal)
 }
 inline Vector3 inverse(Vector3 vector)
 {
-    return Vector3(1.0f / vector.x, 1.0f / vector.y, 1.0f / vector.z);
+    return { 1.0f / vector.x, 1.0f / vector.y, 1.0f / vector.z };
 }
 inline Vector3 clamp_length(Vector3 vector, float min, float max)
 {
@@ -152,7 +149,7 @@ inline Vector3 clamp_length(Vector3 vector, float min, float max)
 }
 inline Vector3 round(Vector3 vector)
 {
-    return Vector3(round(vector.x), round(vector.y), round(vector.z));
+    return { round(vector.x), round(vector.y), round(vector.z) };
 }
 float angle(Vector3 a, Vector3 b)
 {
@@ -215,11 +212,11 @@ inline Vector3::Vector3(float x, float y, float z)
 }
 inline Vector3 Vector3::zero()
 {
-    return Vector3(0.0f, 0.0f, 0.0f);
+    return { 0.0f, 0.0f, 0.0f };
 }
 inline Vector3 Vector3::one()
 {
-    return Vector3(1.0f, 1.0f, 1.0f);
+    return { 1.0f, 1.0f, 1.0f };
 }
 inline Vector3 Vector3::abs() const
 {
@@ -323,7 +320,7 @@ inline bool Vector3::operator!=(Vector3 other) const
 }
 inline Vector3 Vector3::operator*(Vector3 other) const
 {
-    return Vector3(x * other.x, y * other.y, z * other.z);
+    return { x * other.x, y * other.y, z * other.z };
 }
 inline Vector3& Vector3::operator*=(Vector3 other)
 {
@@ -335,7 +332,7 @@ inline Vector3& Vector3::operator*=(Vector3 other)
 }
 inline Vector3 Vector3::operator*(float val) const
 {
-    return Vector3(x * val, y * val, z * val);
+    return { x * val, y * val, z * val };
 }
 inline Vector3& Vector3::operator*=(float val)
 {
@@ -347,19 +344,19 @@ inline Vector3& Vector3::operator*=(float val)
 }
 inline Vector3 Vector3::operator*(int val) const
 {
-    return Vector3(x * val, y * val, z * val);
+    return { x * static_cast<float>(val), y * static_cast<float>(val), z * static_cast<float>(val) };
 }
 inline Vector3& Vector3::operator*=(int val)
 {
-    x *= val;
-    y *= val;
-    z *= val;
+    x *= static_cast<float>(val);
+    y *= static_cast<float>(val);
+    z *= static_cast<float>(val);
 
     return *this;
 }
 inline Vector3 Vector3::operator+(Vector3 other) const
 {
-    return Vector3(x + other.x, y + other.y, z + other.z);
+    return { x + other.x, y + other.y, z + other.z };
 }
 inline Vector3& Vector3::operator+=(Vector3 other)
 {
@@ -371,7 +368,7 @@ inline Vector3& Vector3::operator+=(Vector3 other)
 }
 inline Vector3 Vector3::operator-(const Vector3& other) const
 {
-    return Vector3(x - other.x, y - other.y, z - other.z);
+    return { x - other.x, y - other.y, z - other.z };
 }
 inline Vector3& Vector3::operator-=(const Vector3& other)
 {
@@ -383,7 +380,7 @@ inline Vector3& Vector3::operator-=(const Vector3& other)
 }
 inline Vector3 Vector3::operator/(Vector3 other) const
 {
-    return Vector3(x / other.x, y / other.y, z / other.z);
+    return { x / other.x, y / other.y, z / other.z };
 }
 inline Vector3& Vector3::operator/=(Vector3 other)
 {
@@ -395,7 +392,7 @@ inline Vector3& Vector3::operator/=(Vector3 other)
 }
 inline Vector3 Vector3::operator/(float val) const
 {
-    return Vector3(x / val, y / val, z / val);
+    return { x / val, y / val, z / val };
 }
 inline Vector3& Vector3::operator/=(float val)
 {
@@ -407,13 +404,13 @@ inline Vector3& Vector3::operator/=(float val)
 }
 inline Vector3 Vector3::operator/(int val) const
 {
-    return Vector3(x / val, y / val, z / val);
+    return { x / static_cast<float>(val), y / static_cast<float>(val), z / static_cast<float>(val) };
 }
 inline Vector3& Vector3::operator/=(int val)
 {
-    x /= val;
-    y /= val;
-    z /= val;
+    x /= static_cast<float>(val);
+    y /= static_cast<float>(val);
+    z /= static_cast<float>(val);
 
     return *this;
 }
@@ -501,11 +498,11 @@ inline float& Vector3::operator[](Vector3Axis axis)
 }
 inline Vector3 Vector3::operator+() const
 {
-    return Vector3(x, y, z);
+    return { x, y, z };
 }
 inline Vector3 Vector3::operator-() const
 {
-    return Vector3(-x, -y, -z);
+    return { -x, -y, -z };
 }
 inline const float& Vector3::operator[](int index) const
 {

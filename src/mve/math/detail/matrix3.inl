@@ -22,11 +22,11 @@ inline Matrix3::Matrix3(
 }
 inline Matrix3 Matrix3::zero()
 {
-    return Matrix3(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    return { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 }
 inline Matrix3 Matrix3::identity()
 {
-    return Matrix3(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    return { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 }
 inline Vector3 Matrix3::euler() const
 {
@@ -491,7 +491,7 @@ inline Matrix3 orthonormalize(const Matrix3& matrix)
     z = (z - x * (mve::dot(x, z)) - y * (mve::dot(y, z)));
     z = mve::normalize(z);
 
-    return Matrix3(x, y, z);
+    return { x, y, z };
 }
 inline Matrix3 rotate(const Matrix3& matrix, const Vector3& axis, float angle)
 {

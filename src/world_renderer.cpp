@@ -93,7 +93,7 @@ void WorldRenderer::draw(const Player& camera)
     }
 
     for (const std::optional<ChunkMesh>& mesh : m_chunk_meshes) {
-        if (mesh.has_value() && m_frustum.contains_sphere(mesh->chunk_position() * 16.0f, 30.0f)) {
+        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3(mesh->chunk_position()) * 16.0f, 30.0f)) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
             mesh->draw(*m_renderer);
         }

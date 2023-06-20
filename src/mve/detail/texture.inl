@@ -7,7 +7,7 @@ inline Texture::Texture(Renderer& renderer, const std::filesystem::path& path)
     *this = std::move(renderer.create_texture(path));
 }
 
-inline Texture::Texture(Texture&& other)
+inline Texture::Texture(Texture&& other) noexcept
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
@@ -24,7 +24,7 @@ mve::Vector2i Texture::size() const
 {
     return m_renderer->texture_size(*this);
 }
-inline Texture& Texture::operator=(Texture&& other)
+inline Texture& Texture::operator=(Texture&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);

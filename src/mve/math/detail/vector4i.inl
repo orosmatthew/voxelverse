@@ -2,27 +2,29 @@ namespace mve {
 
 inline Vector4i abs(Vector4i vector)
 {
-    return Vector4i(abs(vector.x), abs(vector.y), abs(vector.z), abs(vector.w));
+    return { abs(vector.x), abs(vector.y), abs(vector.z), abs(vector.w) };
 }
 inline Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max)
 {
-    return Vector4i(
-        clamp(vector.x, min.x, max.x),
-        clamp(vector.y, min.y, max.y),
-        clamp(vector.z, min.z, max.z),
-        clamp(vector.w, min.w, max.w));
+    return { clamp(vector.x, min.x, max.x),
+             clamp(vector.y, min.y, max.y),
+             clamp(vector.z, min.z, max.z),
+             clamp(vector.w, min.w, max.w) };
 }
 inline float length(Vector4i vector)
 {
-    return sqrt(sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w));
+    return sqrt(
+        sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y)) + sqrd(static_cast<float>(vector.z))
+        + sqrd(static_cast<float>(vector.w)));
 }
 inline float length_sqrd(Vector4i vector)
 {
-    return sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z) + sqrd(vector.w);
+    return sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y)) + sqrd(static_cast<float>(vector.z))
+        + sqrd(static_cast<float>(vector.w));
 }
 inline Vector4iAxis max_axis(Vector4i vector)
 {
-    float max_val = vector.x;
+    int max_val = vector.x;
     Vector4iAxis max_axis = Vector4iAxis::x;
 
     if (vector.y > max_val) {
@@ -43,7 +45,7 @@ inline Vector4iAxis max_axis(Vector4i vector)
 }
 inline Vector4iAxis min_axis(Vector4i vector)
 {
-    float min_val = vector.x;
+    int min_val = vector.x;
     Vector4iAxis min_axis = Vector4iAxis::x;
 
     if (vector.y < min_val) {
@@ -85,11 +87,11 @@ inline Vector4i::Vector4i(int val)
 }
 inline Vector4i Vector4i::zero()
 {
-    return Vector4i(0, 0, 0, 0);
+    return { 0, 0, 0, 0 };
 }
 inline Vector4i Vector4i::one()
 {
-    return Vector4i(1, 1, 1, 1);
+    return { 1, 1, 1, 1 };
 }
 inline Vector4i Vector4i::abs() const
 {
@@ -121,7 +123,7 @@ inline bool Vector4i::operator!=(Vector4i other) const
 }
 inline Vector4i Vector4i::operator%(Vector4i other) const
 {
-    return Vector4i(x % other.x, y & other.y, z % other.z, w % other.w);
+    return { x % other.x, y & other.y, z % other.z, w % other.w };
 }
 inline Vector4i& Vector4i::operator%=(Vector4i other)
 {
@@ -134,7 +136,7 @@ inline Vector4i& Vector4i::operator%=(Vector4i other)
 }
 inline Vector4i Vector4i::operator%(int val) const
 {
-    return Vector4i(x % val, y % val, z % val, w % val);
+    return { x % val, y % val, z % val, w % val };
 }
 inline Vector4i& Vector4i::operator%=(int val)
 {
@@ -147,7 +149,7 @@ inline Vector4i& Vector4i::operator%=(int val)
 }
 inline Vector4i Vector4i::operator*(Vector4i other) const
 {
-    return Vector4i(x * other.x, y * other.y, z * other.z, w * other.w);
+    return { x * other.x, y * other.y, z * other.z, w * other.w };
 }
 inline Vector4i& Vector4i::operator*=(Vector4i other)
 {
@@ -160,20 +162,22 @@ inline Vector4i& Vector4i::operator*=(Vector4i other)
 }
 inline Vector4i Vector4i::operator*(float val) const
 {
-    return Vector4i(x * val, y * val, z * val, w * val);
+    return {
+        x * static_cast<int>(val), y * static_cast<int>(val), z * static_cast<int>(val), w * static_cast<int>(val)
+    };
 }
 inline Vector4i& Vector4i::operator*=(float val)
 {
-    x *= val;
-    y *= val;
-    z *= val;
-    w *= val;
+    x *= static_cast<int>(val);
+    y *= static_cast<int>(val);
+    z *= static_cast<int>(val);
+    w *= static_cast<int>(val);
 
     return *this;
 }
 inline Vector4i Vector4i::operator+(Vector4i other) const
 {
-    return Vector4i(x + other.x, y + other.y, z + other.z, w + other.w);
+    return { x + other.x, y + other.y, z + other.z, w + other.w };
 }
 inline Vector4i& Vector4i::operator+=(Vector4i other)
 {
@@ -186,7 +190,7 @@ inline Vector4i& Vector4i::operator+=(Vector4i other)
 }
 inline Vector4i Vector4i::operator-(Vector4i other) const
 {
-    return Vector4i(x - other.x, y - other.y, z - other.z, w - other.w);
+    return { x - other.x, y - other.y, z - other.z, w - other.w };
 }
 inline Vector4i& Vector4i::operator-=(Vector4i other)
 {
@@ -199,7 +203,7 @@ inline Vector4i& Vector4i::operator-=(Vector4i other)
 }
 inline Vector4i Vector4i::operator/(Vector4i other) const
 {
-    return Vector4i(x / other.x, y / other.y, z / other.z, w / other.w);
+    return { x / other.x, y / other.y, z / other.z, w / other.w };
 }
 inline Vector4i& Vector4i::operator/=(Vector4i other)
 {
@@ -212,20 +216,22 @@ inline Vector4i& Vector4i::operator/=(Vector4i other)
 }
 inline Vector4i Vector4i::operator/(float val) const
 {
-    return Vector4i(x / val, y / val, z / val, w / val);
+    return {
+        x / static_cast<int>(val), y / static_cast<int>(val), z / static_cast<int>(val), w / static_cast<int>(val)
+    };
 }
 inline Vector4i& Vector4i::operator/=(float val)
 {
-    x /= val;
-    y /= val;
-    z /= val;
-    w /= val;
+    x /= static_cast<int>(val);
+    y /= static_cast<int>(val);
+    z /= static_cast<int>(val);
+    w /= static_cast<int>(val);
 
     return *this;
 }
 inline Vector4i Vector4i::operator/(int val) const
 {
-    return Vector4i(x / val, y / val, z / val, w / val);
+    return { x / val, y / val, z / val, w / val };
 }
 inline Vector4i& Vector4i::operator/=(int val)
 {
@@ -336,11 +342,11 @@ inline int& Vector4i::operator[](Vector4iAxis axis)
 }
 inline Vector4i Vector4i::operator+() const
 {
-    return Vector4i(x, y, z, w);
+    return { x, y, z, w };
 }
 inline Vector4i Vector4i::operator-() const
 {
-    return Vector4i(-x, -y, -z, -w);
+    return { -x, -y, -z, -w };
 }
 inline Vector4i::operator bool() const
 {

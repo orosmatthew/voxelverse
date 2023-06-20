@@ -43,7 +43,7 @@ std::vector<mve::Monitor> mve::Monitor::list()
     monitors.reserve(monitor_count);
 
     for (int i = 0; i < monitor_count; i++) {
-        monitors.push_back(Monitor(glfw_monitors[i]));
+        monitors.emplace_back(glfw_monitors[i]);
     }
     return monitors;
 }

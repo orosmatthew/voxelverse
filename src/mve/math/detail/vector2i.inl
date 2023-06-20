@@ -50,11 +50,11 @@ inline Vector2iAxis Vector2i::min_axis() const
 }
 inline Vector2i Vector2i::zero()
 {
-    return Vector2i(0.0f, 0.0f);
+    return { 0, 0 };
 }
 inline Vector2i Vector2i::one()
 {
-    return Vector2i(1.0f, 1.0f);
+    return { 1, 1 };
 }
 inline bool Vector2i::operator!=(const Vector2i& other) const
 {
@@ -62,43 +62,43 @@ inline bool Vector2i::operator!=(const Vector2i& other) const
 }
 inline Vector2i Vector2i::operator%(const Vector2i& other) const
 {
-    return Vector2i(x % other.x, y % other.y);
+    return { x % other.x, y % other.y };
 }
 inline Vector2i Vector2i::operator%(int val) const
 {
-    return Vector2i(x % val, y % val);
+    return { x % val, y % val };
 }
 inline Vector2i Vector2i::operator*(const Vector2i& other) const
 {
-    return Vector2i(x * other.x, y * other.y);
+    return { x * other.x, y * other.y };
 }
 inline Vector2i Vector2i::operator*(float val) const
 {
-    return Vector2i(x * val, y * val);
+    return { x * static_cast<int>(val), y * static_cast<int>(val) };
 }
 inline Vector2i Vector2i::operator*(int val) const
 {
-    return Vector2i(x * val, y * val);
+    return { x * val, y * val };
 }
 inline Vector2i Vector2i::operator+(const Vector2i& other) const
 {
-    return Vector2i(x + other.x, y + other.y);
+    return { x + other.x, y + other.y };
 }
 inline Vector2i Vector2i::operator-(const Vector2i& other) const
 {
-    return Vector2i(x - other.x, y - other.y);
+    return { x - other.x, y - other.y };
 }
 inline Vector2i Vector2i::operator/(const Vector2i& other) const
 {
-    return Vector2i(x / other.x, y / other.y);
+    return { x / other.x, y / other.y };
 }
 inline Vector2i Vector2i::operator/(float val) const
 {
-    return Vector2i(static_cast<float>(x) / val, static_cast<float>(y) / val);
+    return { x / static_cast<int>(val), y / static_cast<int>(val) };
 }
 inline Vector2i Vector2i::operator/(int val) const
 {
-    return Vector2i(x / val, y / val);
+    return { x / val, y / val };
 }
 inline bool Vector2i::operator<(const Vector2i& other) const
 {
@@ -168,11 +168,11 @@ inline int& Vector2i::operator[](Vector2iAxis axis)
 }
 inline Vector2i Vector2i::operator+() const
 {
-    return Vector2i(x, y);
+    return { x, y };
 }
 inline Vector2i Vector2i::operator-() const
 {
-    return Vector2i(-x, -y);
+    return { -x, -y };
 }
 inline Vector2i& Vector2i::operator%=(const Vector2i& other)
 {
@@ -197,8 +197,8 @@ inline Vector2i& Vector2i::operator*=(const Vector2i& other)
 }
 inline Vector2i& Vector2i::operator*=(float val)
 {
-    x *= val;
-    y *= val;
+    x *= static_cast<int>(val);
+    y *= static_cast<int>(val);
 
     return *this;
 }
@@ -232,8 +232,8 @@ inline Vector2i& Vector2i::operator/=(const Vector2i& other)
 }
 inline Vector2i& Vector2i::operator/=(float val)
 {
-    x /= val;
-    y /= val;
+    x /= static_cast<int>(val);
+    y /= static_cast<int>(val);
 
     return *this;
 }
@@ -250,7 +250,7 @@ inline Vector2i::operator bool() const
 }
 inline Vector2i abs(const Vector2i& vector)
 {
-    return Vector2i(abs(vector.x), abs(vector.y));
+    return { abs(vector.x), abs(vector.y) };
 }
 inline float aspect_ratio(const Vector2i& vector)
 {
@@ -258,15 +258,15 @@ inline float aspect_ratio(const Vector2i& vector)
 }
 inline Vector2i clamp(const Vector2i& vector, const Vector2i& min, const Vector2i& max)
 {
-    return Vector2i(clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y));
+    return { clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y) };
 }
 inline float length(const Vector2i& vector)
 {
-    return sqrt(sqrd(vector.x) + sqrd(vector.y));
+    return sqrt(sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y)));
 }
 inline float length_sqrd(const Vector2i& vector)
 {
-    return sqrd(vector.x) + sqrd(vector.y);
+    return sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y));
 }
 inline Vector2iAxis max_axis(const Vector2i& vector)
 {

@@ -8,7 +8,7 @@ inline GraphicsPipeline::GraphicsPipeline(
     *this = std::move(renderer.create_graphics_pipeline(vertex_shader, fragment_shader, vertex_layout));
 }
 
-inline GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other)
+inline GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);
@@ -30,7 +30,7 @@ inline bool GraphicsPipeline::operator<(const GraphicsPipeline& other) const
 {
     return m_handle < other.m_handle;
 }
-inline GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other)
+inline GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other) noexcept
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)

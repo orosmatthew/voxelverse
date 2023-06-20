@@ -16,13 +16,15 @@ inline Matrix4::Matrix4(const Vector4& col0, const Vector4& col1, const Vector4&
 }
 inline Matrix4 Matrix4::identity()
 {
-    return Matrix4(
-        { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f });
+    return {
+        { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }
+    };
 }
 inline Matrix4 Matrix4::zero()
 {
-    return Matrix4(
-        { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f });
+    return {
+        { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }
+    };
 }
 inline float Matrix4::determinant() const
 {
@@ -141,7 +143,7 @@ inline Matrix4 Matrix4::from_rotation_translation(
 }
 inline Matrix4 Matrix4::operator+(const Matrix4& other) const
 {
-    return Matrix4(col0 + other.col0, col1 + other.col1, col2 + other.col2, col3 + other.col3);
+    return { col0 + other.col0, col1 + other.col1, col2 + other.col2, col3 + other.col3 };
 }
 inline void Matrix4::operator+=(const Matrix4& other)
 {
@@ -152,7 +154,7 @@ inline void Matrix4::operator+=(const Matrix4& other)
 }
 inline Matrix4 Matrix4::operator-(const Matrix4& other) const
 {
-    return Matrix4(col0 - other.col0, col1 - other.col1, col2 - other.col2, col3 - other.col3);
+    return { col0 - other.col0, col1 - other.col1, col2 - other.col2, col3 - other.col3 };
 }
 inline void Matrix4::operator-=(const Matrix4& other)
 {
@@ -348,7 +350,7 @@ inline Matrix4 inverse(Matrix4 matrix)
     if (det == 0.0f)
         return Matrix4::identity();
 
-    det = 1.0 / det;
+    det = 1.0f / det;
 
     for (int c = 0; c < 4; c++) {
         for (int r = 0; r < 4; r++) {
@@ -392,7 +394,7 @@ inline Matrix4 rotate(const Matrix4& matrix, const Matrix3& basis)
 }
 inline Vector3 translation(const Matrix4& matrix)
 {
-    return Vector3(matrix[3][0], matrix[3][1], matrix[3][2]);
+    return { matrix[3][0], matrix[3][1], matrix[3][2] };
 }
 inline Vector3 scale(const Matrix4& matrix)
 {

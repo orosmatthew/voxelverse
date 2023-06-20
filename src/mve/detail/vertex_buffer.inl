@@ -7,7 +7,7 @@ inline VertexBuffer::VertexBuffer(Renderer& renderer, const VertexData& vertex_d
     *this = std::move(renderer.create_vertex_buffer(vertex_data));
 }
 
-inline VertexBuffer::VertexBuffer(VertexBuffer&& other)
+inline VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
     : m_valid(other.m_valid)
     , m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
@@ -30,7 +30,7 @@ inline bool VertexBuffer::is_valid() const
     return m_valid;
 }
 
-inline VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other)
+inline VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other) noexcept
 {
     if (m_valid) {
         m_renderer->destroy(*this);
