@@ -37,7 +37,7 @@ Renderer::Renderer(
 #endif
     m_vk_surface = create_vk_surface(m_vk_instance, window.glfw_handle());
     m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_loader, m_vk_surface);
-    m_msaa_samples = vk::SampleCountFlagBits::e1; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
+    m_msaa_samples = vk::SampleCountFlagBits::e2; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
     m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_loader, m_vk_physical_device, m_vk_surface);
     m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_vk_queue_family_indices);
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr, m_vk_device, vkGetDeviceProcAddr);
@@ -708,7 +708,9 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
               .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
               .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
               .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+              .setFinalLayout(
+                  samples == vk::SampleCountFlagBits::e1 ? vk::ImageLayout::eShaderReadOnlyOptimal
+                                                         : vk::ImageLayout::eColorAttachmentOptimal);
 
     auto depth_attachment
         = vk::AttachmentDescription()
@@ -721,23 +723,9 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
               .setInitialLayout(vk::ImageLayout::eUndefined)
               .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_ref
-        = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-    auto depth_attachment_ref
-        = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-    auto subpass = vk::SubpassDescription()
-                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-                       .setColorAttachmentCount(1)
-                       .setPColorAttachments(&color_attachment_ref)
-                       .setPDepthStencilAttachment(&depth_attachment_ref);
-
-    std::vector<vk::AttachmentDescription> attachments = { color_attachment, depth_attachment };
+    std::optional<vk::AttachmentDescription> color_attachment_resolve {};
     if (samples != vk::SampleCountFlagBits::e1) {
-        color_attachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-        auto color_attachment_resolve
+        color_attachment_resolve
             = vk::AttachmentDescription()
                   .setFormat(swapchain_format)
                   .setSamples(vk::SampleCountFlagBits::e1)
@@ -747,11 +735,33 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
                   .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-        auto color_attachment_resolve_ref
-            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
 
-        subpass.setPResolveAttachments(&color_attachment_resolve_ref);
-        attachments.push_back(color_attachment_resolve);
+    auto color_attachment_ref
+        = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    auto depth_attachment_ref
+        = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    std::optional<vk::AttachmentReference> color_attachment_resolve_ref {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve_ref
+            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
+
+    auto subpass = vk::SubpassDescription()
+                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+                       .setColorAttachmentCount(1)
+                       .setPColorAttachments(&color_attachment_ref)
+                       .setPDepthStencilAttachment(&depth_attachment_ref);
+
+    if (color_attachment_resolve_ref.has_value()) {
+        subpass.setPResolveAttachments(&(color_attachment_resolve_ref.value()));
+    }
+
+    std::array<vk::AttachmentDescription, 3> attachments = { color_attachment, depth_attachment };
+    if (color_attachment_resolve.has_value()) {
+        attachments[2] = color_attachment_resolve.value();
     }
 
     auto subpass_dependency
@@ -770,7 +780,7 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
 
     auto render_pass_info
         = vk::RenderPassCreateInfo()
-              .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+              .setAttachmentCount(samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
               .setPAttachments(attachments.data())
               .setSubpassCount(1)
               .setPSubpasses(&subpass)
@@ -798,7 +808,9 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
               .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
               .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+              .setFinalLayout(
+                  samples == vk::SampleCountFlagBits::e1 ? vk::ImageLayout::ePresentSrcKHR
+                                                         : vk::ImageLayout::eColorAttachmentOptimal);
 
     auto depth_attachment
         = vk::AttachmentDescription()
@@ -811,23 +823,9 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setInitialLayout(vk::ImageLayout::eUndefined)
               .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_ref
-        = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-    auto depth_attachment_ref
-        = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-    auto subpass = vk::SubpassDescription()
-                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-                       .setColorAttachmentCount(1)
-                       .setPColorAttachments(&color_attachment_ref)
-                       .setPDepthStencilAttachment(&depth_attachment_ref);
-
-    std::vector<vk::AttachmentDescription> attachments = { color_attachment, depth_attachment };
+    std::optional<vk::AttachmentDescription> color_attachment_resolve {};
     if (samples != vk::SampleCountFlagBits::e1) {
-        color_attachment.setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-        auto color_attachment_resolve
+        color_attachment_resolve
             = vk::AttachmentDescription()
                   .setFormat(swapchain_format)
                   .setSamples(vk::SampleCountFlagBits::e1)
@@ -837,11 +835,33 @@ vk::RenderPass Renderer::create_vk_render_pass(
                   .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
                   .setInitialLayout(vk::ImageLayout::eUndefined)
                   .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
-        auto color_attachment_resolve_ref
-            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
 
-        subpass.setPResolveAttachments(&color_attachment_resolve_ref);
-        attachments.push_back(color_attachment_resolve);
+    auto color_attachment_ref
+        = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+    auto depth_attachment_ref
+        = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    std::optional<vk::AttachmentReference> color_attachment_resolve_ref {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve_ref
+            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
+
+    std::array<vk::AttachmentDescription, 3> attachments = { color_attachment, depth_attachment };
+    if (color_attachment_resolve.has_value()) {
+        attachments[2] = color_attachment_resolve.value();
+    }
+
+    auto subpass = vk::SubpassDescription()
+                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+                       .setColorAttachmentCount(1)
+                       .setPColorAttachments(&color_attachment_ref)
+                       .setPDepthStencilAttachment(&depth_attachment_ref);
+
+    if (color_attachment_resolve_ref.has_value()) {
+        subpass.setPResolveAttachments(&(color_attachment_resolve_ref.value()));
     }
 
     auto subpass_dependency
@@ -860,7 +880,7 @@ vk::RenderPass Renderer::create_vk_render_pass(
 
     auto render_pass_info
         = vk::RenderPassCreateInfo()
-              .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+              .setAttachmentCount(samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
               .setPAttachments(attachments.data())
               .setSubpassCount(1)
               .setPSubpasses(&subpass)
