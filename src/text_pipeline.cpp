@@ -56,7 +56,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     MVE_ASSERT(result == 0, "[Text Pipeline] Failed to init FreeType")
 
     FT_Face font_face;
-    result = FT_New_Face(font_lib, "../res/karma_suture.otf", 0, &font_face);
+    result = FT_New_Face(font_lib, "../res/matrix_sans_video.otf", 0, &font_face);
     MVE_ASSERT(result == 0, "[Text Pipeline] Failed to load font")
 
     FT_Set_Pixel_Sizes(font_face, 0, c_point_size);
