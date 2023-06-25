@@ -16,9 +16,9 @@ class WorldRenderer {
 public:
     explicit WorldRenderer(mve::Renderer& renderer);
 
-    void queue_update(mve::Vector3i chunk_pos);
+    void push_mesh_update(mve::Vector3i chunk_pos);
 
-    void process_updates(const WorldData& world_data);
+    void process_mesh_updates(const WorldData& world_data);
 
     bool contains_data(mve::Vector3i position);
 
@@ -47,7 +47,8 @@ public:
         return {
             mve::VertexAttributeType::vec3, // Position
             mve::VertexAttributeType::vec3, // Color
-            mve::VertexAttributeType::vec2 // UV
+            mve::VertexAttributeType::vec2, // UV
+            mve::VertexAttributeType::scalar // Lighting
         };
     }
 
@@ -91,5 +92,5 @@ private:
     Frustum m_frustum;
     SelectionBox m_selection_box;
     std::unordered_map<uint64_t, DebugBox> m_debug_boxes {};
-    std::vector<mve::Vector3i> m_chunk_update_queue {};
+    std::vector<mve::Vector3i> m_chunk_mesh_update_list {};
 };

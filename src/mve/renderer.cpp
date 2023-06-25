@@ -117,7 +117,8 @@ Renderer::Renderer(
         m_vk_render_pass,
         m_vk_swapchain_extent,
         m_color_image.vk_image_view,
-        m_depth_image.vk_image_view);
+        m_depth_image.vk_image_view,
+        m_msaa_samples);
 
     m_frames_in_flight = create_frames_in_flight(m_vk_loader, m_vk_device, m_vk_command_pool, c_frames_in_flight);
 
@@ -360,7 +361,7 @@ vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* wi
     VkSurfaceKHR surface;
     VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     MVE_ASSERT(result == VK_SUCCESS, "[Renderer] Failed to create window surface")
-    return { surface };
+    return vk::SurfaceKHR(surface);
 }
 
 std::vector<const char*> Renderer::get_vk_device_required_exts()
@@ -707,7 +708,9 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
               .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
               .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
               .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+              .setFinalLayout(
+                  samples == vk::SampleCountFlagBits::e1 ? vk::ImageLayout::eShaderReadOnlyOptimal
+                                                         : vk::ImageLayout::eColorAttachmentOptimal);
 
     auto depth_attachment
         = vk::AttachmentDescription()
@@ -720,16 +723,19 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
               .setInitialLayout(vk::ImageLayout::eUndefined)
               .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_resolve
-        = vk::AttachmentDescription()
-              .setFormat(swapchain_format)
-              .setSamples(vk::SampleCountFlagBits::e1)
-              .setLoadOp(vk::AttachmentLoadOp::eDontCare)
-              .setStoreOp(vk::AttachmentStoreOp::eStore)
-              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-              .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    std::optional<vk::AttachmentDescription> color_attachment_resolve {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve
+            = vk::AttachmentDescription()
+                  .setFormat(swapchain_format)
+                  .setSamples(vk::SampleCountFlagBits::e1)
+                  .setLoadOp(vk::AttachmentLoadOp::eDontCare)
+                  .setStoreOp(vk::AttachmentStoreOp::eStore)
+                  .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+                  .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                  .setInitialLayout(vk::ImageLayout::eUndefined)
+                  .setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
 
     auto color_attachment_ref
         = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
@@ -737,16 +743,26 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
     auto depth_attachment_ref
         = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_resolve_ref
-        = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    std::optional<vk::AttachmentReference> color_attachment_resolve_ref {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve_ref
+            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
 
-    auto subpass
-        = vk::SubpassDescription()
-              .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-              .setColorAttachmentCount(1)
-              .setPColorAttachments(&color_attachment_ref)
-              .setPDepthStencilAttachment(&depth_attachment_ref)
-              .setPResolveAttachments(&color_attachment_resolve_ref);
+    auto subpass = vk::SubpassDescription()
+                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+                       .setColorAttachmentCount(1)
+                       .setPColorAttachments(&color_attachment_ref)
+                       .setPDepthStencilAttachment(&depth_attachment_ref);
+
+    if (color_attachment_resolve_ref.has_value()) {
+        subpass.setPResolveAttachments(&(color_attachment_resolve_ref.value()));
+    }
+
+    std::array<vk::AttachmentDescription, 3> attachments = { color_attachment, depth_attachment };
+    if (color_attachment_resolve.has_value()) {
+        attachments[2] = color_attachment_resolve.value();
+    }
 
     auto subpass_dependency
         = vk::SubpassDependency()
@@ -762,12 +778,9 @@ vk::RenderPass Renderer::create_vk_render_pass_framebuffer(
               .setDstAccessMask(
                   vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite);
 
-    std::array<vk::AttachmentDescription, 3> attachments
-        = { color_attachment, depth_attachment, color_attachment_resolve };
-
     auto render_pass_info
         = vk::RenderPassCreateInfo()
-              .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+              .setAttachmentCount(samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
               .setPAttachments(attachments.data())
               .setSubpassCount(1)
               .setPSubpasses(&subpass)
@@ -795,7 +808,9 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
               .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
               .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::eColorAttachmentOptimal);
+              .setFinalLayout(
+                  samples == vk::SampleCountFlagBits::e1 ? vk::ImageLayout::ePresentSrcKHR
+                                                         : vk::ImageLayout::eColorAttachmentOptimal);
 
     auto depth_attachment
         = vk::AttachmentDescription()
@@ -808,16 +823,19 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setInitialLayout(vk::ImageLayout::eUndefined)
               .setFinalLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_resolve
-        = vk::AttachmentDescription()
-              .setFormat(swapchain_format)
-              .setSamples(vk::SampleCountFlagBits::e1)
-              .setLoadOp(vk::AttachmentLoadOp::eDontCare)
-              .setStoreOp(vk::AttachmentStoreOp::eStore)
-              .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-              .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-              .setInitialLayout(vk::ImageLayout::eUndefined)
-              .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+    std::optional<vk::AttachmentDescription> color_attachment_resolve {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve
+            = vk::AttachmentDescription()
+                  .setFormat(swapchain_format)
+                  .setSamples(vk::SampleCountFlagBits::e1)
+                  .setLoadOp(vk::AttachmentLoadOp::eDontCare)
+                  .setStoreOp(vk::AttachmentStoreOp::eStore)
+                  .setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
+                  .setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
+                  .setInitialLayout(vk::ImageLayout::eUndefined)
+                  .setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+    }
 
     auto color_attachment_ref
         = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
@@ -825,16 +843,26 @@ vk::RenderPass Renderer::create_vk_render_pass(
     auto depth_attachment_ref
         = vk::AttachmentReference().setAttachment(1).setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    auto color_attachment_resolve_ref
-        = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    std::optional<vk::AttachmentReference> color_attachment_resolve_ref {};
+    if (samples != vk::SampleCountFlagBits::e1) {
+        color_attachment_resolve_ref
+            = vk::AttachmentReference().setAttachment(2).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+    }
 
-    auto subpass
-        = vk::SubpassDescription()
-              .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
-              .setColorAttachmentCount(1)
-              .setPColorAttachments(&color_attachment_ref)
-              .setPDepthStencilAttachment(&depth_attachment_ref)
-              .setPResolveAttachments(&color_attachment_resolve_ref);
+    std::array<vk::AttachmentDescription, 3> attachments = { color_attachment, depth_attachment };
+    if (color_attachment_resolve.has_value()) {
+        attachments[2] = color_attachment_resolve.value();
+    }
+
+    auto subpass = vk::SubpassDescription()
+                       .setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
+                       .setColorAttachmentCount(1)
+                       .setPColorAttachments(&color_attachment_ref)
+                       .setPDepthStencilAttachment(&depth_attachment_ref);
+
+    if (color_attachment_resolve_ref.has_value()) {
+        subpass.setPResolveAttachments(&(color_attachment_resolve_ref.value()));
+    }
 
     auto subpass_dependency
         = vk::SubpassDependency()
@@ -850,12 +878,9 @@ vk::RenderPass Renderer::create_vk_render_pass(
               .setDstAccessMask(
                   vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite);
 
-    std::array<vk::AttachmentDescription, 3> attachments
-        = { color_attachment, depth_attachment, color_attachment_resolve };
-
     auto render_pass_info
         = vk::RenderPassCreateInfo()
-              .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+              .setAttachmentCount(samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
               .setPAttachments(attachments.data())
               .setSubpassCount(1)
               .setPSubpasses(&subpass)
@@ -874,18 +899,25 @@ std::vector<vk::Framebuffer> Renderer::create_vk_framebuffers(
     vk::RenderPass render_pass,
     vk::Extent2D swapchain_extent,
     vk::ImageView color_image_view,
-    vk::ImageView depth_image_view)
+    vk::ImageView depth_image_view,
+    vk::SampleCountFlagBits samples)
 {
     std::vector<vk::Framebuffer> framebuffers;
 
     for (const vk::ImageView& swapchain_image_view : swapchain_image_views) {
 
-        std::array<vk::ImageView, 3> attachments = { color_image_view, depth_image_view, swapchain_image_view };
+        std::array<vk::ImageView, 3> attachments {};
+        if (samples == vk::SampleCountFlagBits::e1) {
+            attachments = { swapchain_image_view, depth_image_view };
+        }
+        else {
+            attachments = { color_image_view, depth_image_view, swapchain_image_view };
+        }
 
         auto framebuffer_info
             = vk::FramebufferCreateInfo()
                   .setRenderPass(render_pass)
-                  .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+                  .setAttachmentCount(samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
                   .setPAttachments(attachments.data())
                   .setWidth(swapchain_extent.width)
                   .setHeight(swapchain_extent.height)
@@ -1080,7 +1112,8 @@ void Renderer::recreate_swapchain(const Window& window)
         m_vk_render_pass,
         m_vk_swapchain_extent,
         m_color_image.vk_image_view,
-        m_depth_image.vk_image_view);
+        m_depth_image.vk_image_view,
+        m_msaa_samples);
 
     recreate_framebuffers();
 }
@@ -1138,7 +1171,7 @@ vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance inst
 
     VkDebugUtilsMessengerEXT debug_messenger;
     func(instance, &debug_create_info, nullptr, &debug_messenger);
-    return { debug_messenger };
+    return vk::DebugUtilsMessengerEXT(debug_messenger);
 }
 
 VkBool32 Renderer::vk_debug_callback(
@@ -2952,13 +2985,18 @@ Renderer::FramebufferImpl Renderer::create_framebuffer_impl(
 
     for (size_t i = 0; i < m_vk_swapchain_framebuffers.size(); i++) {
 
-        std::array<vk::ImageView, 3> attachments
-            = { m_color_image.vk_image_view, m_depth_image.vk_image_view, render_image.vk_image_view };
+        std::array<vk::ImageView, 3> attachments {};
+        if (m_msaa_samples == vk::SampleCountFlagBits::e1) {
+            attachments = { render_image.vk_image_view, m_depth_image.vk_image_view };
+        }
+        else {
+            attachments = { m_color_image.vk_image_view, m_depth_image.vk_image_view, render_image.vk_image_view };
+        }
 
         auto framebuffer_info
             = vk::FramebufferCreateInfo()
                   .setRenderPass(m_vk_render_pass)
-                  .setAttachmentCount(static_cast<uint32_t>(attachments.size()))
+                  .setAttachmentCount(m_msaa_samples == vk::SampleCountFlagBits::e1 ? 2 : 3)
                   .setPAttachments(attachments.data())
                   .setWidth(m_vk_swapchain_extent.width)
                   .setHeight(m_vk_swapchain_extent.height)

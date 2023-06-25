@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(vulkan_testing)
+project(voxelverse)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -117,7 +117,7 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIB_INCLUDES})
 
-add_shaders(vulkan_testing
+add_shaders(voxelverse
         simple.frag
         simple.vert
         color.frag

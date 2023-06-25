@@ -778,7 +778,8 @@ private:
         vk::RenderPass render_pass,
         vk::Extent2D swapchain_extent,
         vk::ImageView color_image_view,
-        vk::ImageView depth_image_view);
+        vk::ImageView depth_image_view,
+        vk::SampleCountFlagBits samples);
 
     static vk::CommandPool create_vk_command_pool(
         const vk::DispatchLoaderDynamic& loader, vk::Device device, QueueFamilyIndices queue_family_indices);

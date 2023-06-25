@@ -1,7 +1,7 @@
 #include "world_renderer.hpp"
 #include "mve/math/math.hpp"
 
-void WorldRenderer::queue_update(mve::Vector3i chunk_pos)
+void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
 {
     ChunkMesh mesh;
     if (m_chunk_mesh_lookup.contains(chunk_pos)) {
@@ -24,7 +24,7 @@ void WorldRenderer::queue_update(mve::Vector3i chunk_pos)
             m_chunk_meshes.push_back(std::move(mesh));
         }
     }
-    m_chunk_update_queue.push_back(chunk_pos);
+    m_chunk_mesh_update_list.push_back(chunk_pos);
 }
 
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
@@ -166,23 +166,23 @@ void WorldRenderer::delete_all_debug_boxes()
 {
     m_debug_boxes.clear();
 }
-void WorldRenderer::process_updates(const WorldData& world_data)
+void WorldRenderer::process_mesh_updates(const WorldData& world_data)
 {
-    std::erase_if(m_chunk_update_queue, [&](const mve::Vector3i& chunk_pos) {
+    std::erase_if(m_chunk_mesh_update_list, [&](const mve::Vector3i& chunk_pos) {
         return !m_chunk_mesh_lookup.contains(chunk_pos);
     });
     m_thread_pool
         .parallelize_loop(
-            m_chunk_update_queue.size(),
+            m_chunk_mesh_update_list.size(),
             [&](const size_t& a, const size_t& b) {
                 for (size_t i = a; i < b; i++) {
-                    ChunkMesh& mesh = *m_chunk_meshes[m_chunk_mesh_lookup[m_chunk_update_queue[i]]];
-                    mesh.create_mesh_data(m_chunk_update_queue[i], world_data);
+                    ChunkMesh& mesh = *m_chunk_meshes[m_chunk_mesh_lookup[m_chunk_mesh_update_list[i]]];
+                    mesh.create_mesh_data(m_chunk_mesh_update_list[i], world_data);
                 }
             })
         .wait();
-    for (const mve::Vector3i& chunk_pos : m_chunk_update_queue) {
+    for (const mve::Vector3i& chunk_pos : m_chunk_mesh_update_list) {
         m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*m_renderer);
     }
-    m_chunk_update_queue.clear();
+    m_chunk_mesh_update_list.clear();
 }

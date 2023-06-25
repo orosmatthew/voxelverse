@@ -39,6 +39,7 @@ WireBoxMesh::WireBoxMesh(
         data.push_back(vertex);
         data.push_back(color); // TODO: Fix broken color
         data.push_back({ 0, 0 });
+        data.push_back(1.0f);
     }
 
     m_uniform_buffer.update(m_model_location, mve::Matrix4::identity());

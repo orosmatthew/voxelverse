@@ -6,8 +6,10 @@
 #include <stdint.h>
 
 #include <cereal/types/array.hpp>
+#include <cereal/types/vector.hpp>
 
 #include "common.hpp"
+#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 
 inline mve::Vector3i direction_vector(Direction dir)
@@ -56,6 +58,11 @@ public:
 
     explicit ChunkData(mve::Vector3i chunk_pos);
 
+    inline void reset_lighting()
+    {
+        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 4);
+    }
+
     inline void set_modified_callback(std::function<void(mve::Vector3i, const ChunkData&)> func)
     {
         m_modified_callback = func;
@@ -74,6 +81,17 @@ public:
         return m_block_data[index(pos)];
     }
 
+    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+    {
+        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+        m_lighting_data[index(pos)] = val;
+    }
+
+    inline uint8_t lighting_at(mve::Vector3i pos) const
+    {
+        return m_lighting_data[index(pos)];
+    }
+
     inline int block_count() const
     {
         return m_block_count;
@@ -84,7 +102,14 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(m_pos, m_block_data, m_block_count);
+        archive(m_pos, m_block_data, m_block_count, m_emissive_blocks);
+    }
+
+    void for_emissive_block(const std::function<void(const mve::Vector3i&)> func)
+    {
+        for (const mve::Vector3i pos : m_emissive_blocks) {
+            std::invoke(func, pos);
+        }
     }
 
 private:
@@ -104,7 +129,9 @@ private:
 
     static const int sc_chunk_size = 16;
     mve::Vector3i m_pos;
-    std::array<uint8_t, sc_chunk_size* sc_chunk_size* sc_chunk_size> m_block_data = { 0 };
+    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_block_data = { 0 };
+    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
     int m_block_count = 0;
+    std::vector<mve::Vector3i> m_emissive_blocks {};
     std::optional<std::function<void(mve::Vector3i, const ChunkData&)>> m_modified_callback;
 };
