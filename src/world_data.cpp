@@ -79,8 +79,8 @@ void WorldData::spread_light(const mve::Vector3i light_pos)
 void WorldData::propagate_light(mve::Vector3i chunk_pos)
 {
     for_3d(chunk_pos - mve::Vector3i(1), chunk_pos + mve::Vector3i(2), [&](const mve::Vector3i adj_chunk_pos) {
-        if (m_chunks.contains(adj_chunk_pos)) {
-            m_chunks[adj_chunk_pos].for_emissive_block([&](const mve::Vector3i local_pos) {
+        if (adj_chunk_pos.z >= -10 && adj_chunk_pos.z < 10) {
+            m_chunks[adj_chunk_pos].for_emissive_block([&](const mve::Vector3i& local_pos) {
                 spread_light(block_local_to_world(adj_chunk_pos, local_pos));
             });
         }

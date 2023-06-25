@@ -8,7 +8,7 @@
 World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(4)
+    , m_mesh_updates_per_frame(2)
     , m_render_distance(render_distance)
     , m_hud(ui_pipeline, text_pipeline)
     , m_pause_menu(ui_pipeline, text_pipeline)
@@ -315,16 +315,16 @@ void World::update(mve::Window& window, float blend)
                 }
                 m_world_generator.generate_chunks(chunk_datas, pos);
             }
-            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
+            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
                 if (neighbor != mve::Vector2i(0, 0)) {
                     m_chunk_states[pos + neighbor].neighbors++;
-                    if (m_chunk_states[pos + neighbor].has_data && m_chunk_states[pos + neighbor].neighbors == 8) {
+                    if (m_chunk_states[pos + neighbor].has_data && m_chunk_states[pos + neighbor].neighbors == 24) {
                         m_chunk_states[pos + neighbor].can_mesh = true;
                     }
                 }
             });
             m_chunk_states[pos].has_data = true;
-            if (m_chunk_states[pos].neighbors == 8) {
+            if (m_chunk_states[pos].neighbors == 24) {
                 m_chunk_states[pos].can_mesh = true;
             }
             chunk_count++;
@@ -365,7 +365,7 @@ void World::update(mve::Window& window, float blend)
             }
         }
         if (m_chunk_states.at(pos).has_data) {
-            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
+            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
                 if (neighbor == mve::Vector2i(0, 0)) {
                     return;
                 }

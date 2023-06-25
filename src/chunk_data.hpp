@@ -105,9 +105,9 @@ public:
         archive(m_pos, m_block_data, m_block_count, m_emissive_blocks);
     }
 
-    void for_emissive_block(const std::function<void(const mve::Vector3i&)> func)
+    void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func)
     {
-        for (const mve::Vector3i pos : m_emissive_blocks) {
+        for (const mve::Vector3i& pos : m_emissive_blocks) {
             std::invoke(func, pos);
         }
     }
