@@ -285,6 +285,8 @@ inline mve::Vector2i block_uv(uint8_t block_type, Direction face)
         return { 2, 2 };
     case 9:
         return { 3, 2 };
+    case 10:
+        return { 0, 3 };
     default:
         return { 0, 0 };
     }
@@ -295,6 +297,15 @@ inline bool is_transparent(uint8_t block_type)
     switch (block_type) {
     case 0:
     case 9:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool is_emissive(uint8_t block_type) {
+    switch (block_type) {
+    case 10:
         return true;
     default:
         return false;

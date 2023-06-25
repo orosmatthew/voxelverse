@@ -16,6 +16,7 @@ layout (set = 1, binding = 0) uniform ObjectUnifom {
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec3 in_color;
 layout (location = 2) in vec2 in_tex_coord;
+layout (location = 3) in float in_lighting;
 
 layout (location = 0) out vec3 frag_position;
 layout (location = 1) out vec3 frag_color;

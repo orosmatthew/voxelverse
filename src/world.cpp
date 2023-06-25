@@ -1,5 +1,6 @@
 #include "world.hpp"
 
+#include "chunk_data.hpp"
 #include "common.hpp"
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
@@ -138,6 +139,12 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
                 break;
             }
             world_data.set_block(place_pos, block_type);
+
+            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
+                world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(place_pos) + adj_chunk);
+            });
+            world_data.process_chunk_lighting_updates();
+
             update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
             // TODO: Check chunks only on edges
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
@@ -149,9 +156,9 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
         }
     }
     for (mve::Vector3i chunk_pos : update_chunks) {
-        world_renderer.queue_update(chunk_pos);
+        world_renderer.push_mesh_update(chunk_pos);
     }
-    world_renderer.process_updates(world_data);
+    world_renderer.process_mesh_updates(world_data);
 }
 
 void trigger_break_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer)
@@ -170,7 +177,13 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
         if (collision.hit) {
             mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
             mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
+
+            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
+                world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(block_pos) + adj_chunk);
+            });
+
             world_data.set_block_local(chunk_pos, local_pos, 0);
+            world_data.process_chunk_lighting_updates();
             update_chunks.insert(chunk_pos);
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
                 if (world_data.contains_chunk(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
@@ -181,9 +194,9 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
         }
     }
     for (mve::Vector3i chunk_pos : update_chunks) {
-        world_renderer.queue_update(chunk_pos);
+        world_renderer.push_mesh_update(chunk_pos);
     }
-    world_renderer.process_updates(world_data);
+    world_renderer.process_mesh_updates(world_data);
 }
 
 void World::update(mve::Window& window, float blend)
@@ -318,7 +331,13 @@ void World::update(mve::Window& window, float blend)
         }
         if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
             for (int h = -10; h < 10; h++) {
-                m_world_renderer.queue_update({ pos.x, pos.y, h });
+                for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& offset) {
+                    if (offset.x == 0 && offset.y == 0 && offset.y != 0) {
+                        return;
+                    }
+                    m_world_data.push_chunk_lighting_update(mve::Vector3i(pos.x, pos.y, h) + offset);
+                });
+                m_world_renderer.push_mesh_update({ pos.x, pos.y, h });
             }
             m_chunk_states[pos].has_mesh = true;
             chunk_count++;
@@ -327,7 +346,8 @@ void World::update(mve::Window& window, float blend)
             break;
         }
     }
-    m_world_renderer.process_updates(m_world_data);
+    m_world_data.process_chunk_lighting_updates();
+    m_world_renderer.process_mesh_updates(m_world_data);
 
     chunk_count = 0;
     for (int i = m_sorted_chunks.size() - 1; i >= 0; i--) {

@@ -121,6 +121,7 @@ void ChunkMesh::create_mesh_data(mve::Vector3i chunk_pos, const WorldData& world
         vertex_data.push_back(mesh.vertices.at(i) + mve::Vector3(m_chunk_pos) * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
+        vertex_data.push_back(1.0f);
     }
 
     m_vertex_data = { std::move(vertex_data), std::move(mesh.indices) };
@@ -217,9 +218,12 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
     mve::Vector3i local_block_pos,
     Direction dir)
 {
+    uint8_t base_lighting;
+    mve::Vector3i world_pos = WorldData::block_local_to_world(chunk_pos, local_block_pos);
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
     case Direction::front:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
         check_blocks[0] = { -1, -1, 1 };
         check_blocks[1] = { 0, -1, 1 };
         check_blocks[2] = { 1, -1, 1 };
@@ -230,6 +234,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { -1, -1, 0 };
         break;
     case Direction::back:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
         check_blocks[0] = { 1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { -1, 1, 1 };
@@ -240,6 +245,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { 1, 1, 0 };
         break;
     case Direction::left:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { -1, 0, 1 };
         check_blocks[2] = { -1, -1, 1 };
@@ -250,6 +256,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { -1, 1, 0 };
         break;
     case Direction::right:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
         check_blocks[0] = { 1, -1, 1 };
         check_blocks[1] = { 1, 0, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -260,6 +267,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { 1, -1, 0 };
         break;
     case Direction::top:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -270,6 +278,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { -1, 0, 1 };
         break;
     case Direction::bottom:
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, -1)).value();
         check_blocks[0] = { 1, 1, -1 };
         check_blocks[1] = { 0, 1, -1 };
         check_blocks[2] = { -1, 1, -1 };
@@ -281,7 +290,11 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         break;
     }
 
-    std::array<uint8_t, 4> lighting = { 255, 255, 255, 255 };
+    MVE_VAL_ASSERT(base_lighting >= 0 && base_lighting <= 15, "[ChunkMesh] Base lighting is not between 0 and 15")
+
+    base_lighting = static_cast<uint8_t>(mve::clamp(base_lighting * 16, 0, 255));
+    std::array<uint8_t, 4> lighting = { base_lighting, base_lighting, base_lighting, base_lighting };
+
     for (int i = 0; i < check_blocks.size(); i++) {
         mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
         std::optional<uint8_t> check_block;

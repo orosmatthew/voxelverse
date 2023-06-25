@@ -42,6 +42,23 @@ public:
         }
     }
 
+    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+    {
+        m_chunks.at(chunk_pos_from_block_pos(pos)).set_lighting(block_world_to_local(pos), val);
+    }
+
+    inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
+    {
+        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        auto result = m_chunks.find(chunk_pos);
+        if (result == m_chunks.end()) {
+            return {};
+        }
+        else {
+            return result->second.lighting_at(block_world_to_local(block_pos));
+        }
+    }
+
     inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
     {
         return m_chunks.at(chunk_pos).get_block(block_world_to_local(block_pos));
@@ -159,6 +176,16 @@ public:
         return height >= -160 && height < 160;
     }
 
+    inline void push_chunk_lighting_update(mve::Vector3i chunk_pos)
+    {
+        if (std::find(m_chunk_lighting_update_list.begin(), m_chunk_lighting_update_list.end(), chunk_pos)
+            == m_chunk_lighting_update_list.end()) {
+            m_chunk_lighting_update_list.push_back(chunk_pos);
+        }
+    }
+
+    void process_chunk_lighting_updates();
+
 private:
     void queue_save_chunk(mve::Vector3i pos);
 
@@ -167,7 +194,12 @@ private:
     std::function<void(mve::Vector3i, const ChunkData&)> m_modified_callback
         = [this](mve::Vector3i chunk_pos, const ChunkData& chunk_data) { queue_save_chunk(chunk_pos); };
 
+    void spread_light(const mve::Vector3i light_pos);
+
+    void propagate_light(mve::Vector3i chunk_pos);
+
     std::set<mve::Vector3i> m_save_queue;
     SaveFile m_save;
     std::unordered_map<mve::Vector3i, ChunkData> m_chunks {};
+    std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
 };
