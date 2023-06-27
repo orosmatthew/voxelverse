@@ -19,7 +19,7 @@ WorldGenerator::WorldGenerator(int seed)
     m_struct_noise->SetFrequency(1.0f);
 }
 
-void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Vector2i chunk_pos)
+void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
 {
     std::array<std::array<float, 16>, 16> heights;
 
@@ -38,20 +38,20 @@ void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Ve
         }
     }
 
-    for (ChunkData* data : chunks) {
+    for (int i = -10; i < 10; i++) {
         for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i pos) {
-            int world_z = pos.z + data->position().z * 16;
-            if (world_z < heights[pos.x][pos.y] - 4) {
-                data->set_block(pos, 2);
+            mve::Vector3i world_pos = block_local_to_world({ chunk_pos.x, chunk_pos.y, i }, pos);
+            if (world_pos.z < heights[pos.x][pos.y] - 4) {
+                data.set_block(world_pos, 2);
             }
-            else if (world_z < heights[pos.x][pos.y] - 1) {
-                data->set_block(pos, 4);
+            else if (world_pos.z < heights[pos.x][pos.y] - 1) {
+                data.set_block(world_pos, 4);
             }
-            else if (world_z < heights[pos.x][pos.y]) {
-                data->set_block(pos, 1);
+            else if (world_pos.z < heights[pos.x][pos.y]) {
+                data.set_block(world_pos, 1);
             }
             else {
-                data->set_block(pos, 0);
+                data.set_block(world_pos, 0);
             }
         });
     }
@@ -73,12 +73,11 @@ void WorldGenerator::generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Ve
             }
             if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2))) {
                 int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z + height + 1));
-                chunks.at(chunk_height + 10)
-                    ->set_block(
-                        { pos.x + struct_pos.x - 2,
-                          pos.y + struct_pos.y - 2,
-                          WorldData::block_height_world_to_local(struct_pos.z + height + 1) },
-                        c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
+                mve::Vector3i world_pos = block_local_to_world(
+                    { chunk_pos.x, chunk_pos.y, 0 },
+                    { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
+                world_pos.z = struct_pos.z + height + 1;
+                data.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
             }
         });
     });

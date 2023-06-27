@@ -302,18 +302,12 @@ void World::update(mve::Window& window, float blend)
     for (mve::Vector2i pos : m_sorted_chunks) {
         if (!m_chunk_states.at(pos).has_data) {
             bool loaded = false;
-            for (int h = -10; h < 10; h++) {
-                if (m_world_data.try_load_chunk_from_save({ pos.x, pos.y, h })) {
-                    loaded = true;
-                }
+            if (m_world_data.try_load_chunk_column_from_save({ pos.x, pos.y })) {
+                loaded = true;
             }
             if (!loaded) {
-                std::array<ChunkData*, 20> chunk_datas;
-                for (int h = -10; h < 10; h++) {
-                    m_world_data.create_chunk({ pos.x, pos.y, h });
-                    chunk_datas[h + 10] = &(m_world_data.chunk_data_at({ pos.x, pos.y, h }));
-                }
-                m_world_generator.generate_chunks(chunk_datas, pos);
+                m_world_data.create_chunk_column({ pos.x, pos.y });
+                m_world_generator.generate_chunks(m_world_data.chunk_column_data_at({ pos.x, pos.y }), pos);
             }
             for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
                 if (neighbor != mve::Vector2i(0, 0)) {
@@ -331,12 +325,7 @@ void World::update(mve::Window& window, float blend)
         }
         if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
             for (int h = -10; h < 10; h++) {
-                for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& offset) {
-                    if (offset.x == 0 && offset.y == 0 && offset.y != 0) {
-                        return;
-                    }
-                    m_world_data.push_chunk_lighting_update(mve::Vector3i(pos.x, pos.y, h) + offset);
-                });
+                m_world_data.push_chunk_lighting_update({ pos.x, pos.y, h });
                 m_world_renderer.push_mesh_update({ pos.x, pos.y, h });
             }
             m_chunk_states[pos].has_mesh = true;
@@ -372,10 +361,11 @@ void World::update(mve::Window& window, float blend)
                 m_chunk_states[pos + neighbor].neighbors--;
             });
         }
+
+        if (m_chunk_states.at(pos).has_data) {
+            m_world_data.remove_chunk_column({ pos.x, pos.y });
+        }
         for (int h = -10; h < 10; h++) {
-            if (m_chunk_states.at(pos).has_data) {
-                m_world_data.remove_chunk({ pos.x, pos.y, h });
-            }
             if (m_chunk_states.at(pos).has_mesh) {
                 m_world_renderer.remove_data({ pos.x, pos.y, h });
             }

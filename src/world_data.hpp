@@ -5,6 +5,7 @@
 #include <set>
 #include <unordered_map>
 
+#include "chunk_column.hpp"
 #include "chunk_data.hpp"
 #include "mve/math/math.hpp"
 #include "save_file.hpp"
@@ -15,53 +16,60 @@ public:
 
     ~WorldData();
 
-    inline void remove_chunk(mve::Vector3i chunk_pos)
+    inline void remove_chunk_column(mve::Vector2i chunk_pos)
     {
         if (m_save_queue.contains(chunk_pos)) {
             process_save_queue();
         }
-        m_chunks.erase(chunk_pos);
+        m_chunk_columns.erase(chunk_pos);
     }
 
-    inline void create_chunk(mve::Vector3i chunk_pos)
+    inline void create_chunk_column(mve::Vector2i chunk_pos)
     {
-        m_chunks.insert({ chunk_pos, ChunkData(chunk_pos) });
-        m_chunks.at(chunk_pos).set_modified_callback(m_modified_callback);
+        m_chunk_columns.insert({ chunk_pos, ChunkColumn(chunk_pos) });
+        m_chunk_columns.at(chunk_pos).set_modified_callback(m_modified_callback);
         queue_save_chunk(chunk_pos);
     }
 
     inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        auto result = m_chunks.find(chunk_pos);
-        if (result == m_chunks.end()) {
+        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+            return {};
+        }
+        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
+        if (result == m_chunk_columns.end()) {
             return {};
         }
         else {
-            return result->second.get_block(block_world_to_local(block_pos));
+            return result->second.get_block(block_pos);
         }
     }
 
     inline void set_lighting(mve::Vector3i pos, uint8_t val)
     {
-        m_chunks.at(chunk_pos_from_block_pos(pos)).set_lighting(block_world_to_local(pos), val);
+        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
+        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
     }
 
     inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        auto result = m_chunks.find(chunk_pos);
-        if (result == m_chunks.end()) {
+        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+            return {};
+        }
+        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
+        if (result == m_chunk_columns.end()) {
             return {};
         }
         else {
-            return result->second.lighting_at(block_world_to_local(block_pos));
+            return result->second.lighting_at(block_pos);
         }
     }
 
     inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
     {
-        return m_chunks.at(chunk_pos).get_block(block_world_to_local(block_pos));
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).get_block(block_pos);
     }
 
     inline std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
@@ -77,40 +85,37 @@ public:
     inline void set_block(mve::Vector3i block_pos, uint8_t type)
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
-        queue_save_chunk(chunk_pos);
+        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_block(block_pos, type);
+        queue_save_chunk({ chunk_pos.x, chunk_pos.y });
     }
 
     inline void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type)
     {
-        m_chunks.at(chunk_pos).set_block(block_world_to_local(block_pos), type);
-        queue_save_chunk(chunk_pos);
+        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_block(block_pos, type);
+        queue_save_chunk({ chunk_pos.x, chunk_pos.y });
     }
 
-    inline void for_all_chunk_data(
-        const std::function<void(mve::Vector3i chunk_pos, const ChunkData& chunk_data)>& func) const
+    inline ChunkColumn& chunk_column_data_at(mve::Vector2i chunk_pos)
     {
-        for (const auto& [pos, data] : m_chunks) {
-            std::invoke(func, pos, data);
-        }
+        return m_chunk_columns.at(chunk_pos);
     }
 
     inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
     {
-        return m_chunks.at(chunk_pos);
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
 
     inline ChunkData& chunk_data_at(mve::Vector3i chunk_pos)
     {
-        return m_chunks.at(chunk_pos);
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
 
     inline bool contains_chunk(mve::Vector3i chunk_pos) const
     {
-        return m_chunks.contains(chunk_pos);
+        return m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y });
     }
 
-    bool try_load_chunk_from_save(mve::Vector3i chunk_pos);
+    bool try_load_chunk_column_from_save(mve::Vector2i chunk_pos);
 
     static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
     {
@@ -187,19 +192,19 @@ public:
     void process_chunk_lighting_updates();
 
 private:
-    void queue_save_chunk(mve::Vector3i pos);
+    void queue_save_chunk(mve::Vector2i pos);
 
     void process_save_queue();
 
-    std::function<void(mve::Vector3i, const ChunkData&)> m_modified_callback
-        = [this](mve::Vector3i chunk_pos, const ChunkData& chunk_data) { queue_save_chunk(chunk_pos); };
+    std::function<void(mve::Vector2i, const ChunkColumn&)> m_modified_callback
+        = [this](mve::Vector2i chunk_pos, const ChunkColumn& data) { queue_save_chunk(chunk_pos); };
 
     void spread_light(const mve::Vector3i light_pos);
 
     void propagate_light(mve::Vector3i chunk_pos);
 
-    std::set<mve::Vector3i> m_save_queue;
+    std::set<mve::Vector2i> m_save_queue;
     SaveFile m_save;
-    std::unordered_map<mve::Vector3i, ChunkData> m_chunks {};
+    std::unordered_map<mve::Vector2i, ChunkColumn> m_chunk_columns {};
     std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
 };

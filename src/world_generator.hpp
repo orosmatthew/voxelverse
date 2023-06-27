@@ -12,12 +12,13 @@
 #include "chunk_data.hpp"
 
 class FastNoiseLite;
+class ChunkColumn;
 
 class WorldGenerator {
 public:
     explicit WorldGenerator(int seed);
 
-    void generate_chunks(std::array<ChunkData*, 20>& chunks, mve::Vector2i chunk_pos);
+    void generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos);
 
 private:
     // clang-format off

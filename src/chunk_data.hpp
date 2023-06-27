@@ -118,6 +118,10 @@ private:
         return pos.x + pos.y * sc_chunk_size + pos.z * sc_chunk_size * sc_chunk_size;
     }
 
+    static inline size_t index2(mve::Vector2i pos) {
+        return pos.x + pos.y * sc_chunk_size;
+    }
+
     static inline mve::Vector3i pos(size_t index)
     {
         mve::Vector3i vector;
@@ -127,10 +131,17 @@ private:
         return vector;
     }
 
+    static inline mve::Vector2i pos2(size_t index) {
+        mve::Vector2i vector;
+        vector.x = index % sc_chunk_size;
+        vector.y = (index / sc_chunk_size) % sc_chunk_size;
+    }
+
     static const int sc_chunk_size = 16;
     mve::Vector3i m_pos;
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_block_data = { 0 };
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
+    std::array<uint8_t, (sc_chunk_size * sc_chunk_size)> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};
     std::optional<std::function<void(mve::Vector3i, const ChunkData&)>> m_modified_callback;
