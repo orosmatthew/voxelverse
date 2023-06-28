@@ -91,7 +91,8 @@ public:
 
     inline void set_block_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos, uint8_t type)
     {
-        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_block(block_pos, type);
+        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y })
+            .set_block(WorldData::block_local_to_world(chunk_pos, block_pos), type);
         queue_save_chunk({ chunk_pos.x, chunk_pos.y });
     }
 
@@ -112,7 +113,7 @@ public:
 
     inline bool contains_chunk(mve::Vector3i chunk_pos) const
     {
-        return m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y });
+        return chunk_pos.z >= -10 && chunk_pos.z < 10 && m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y });
     }
 
     bool try_load_chunk_column_from_save(mve::Vector2i chunk_pos);
