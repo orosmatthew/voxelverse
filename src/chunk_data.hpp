@@ -60,7 +60,7 @@ public:
 
     inline void reset_lighting()
     {
-        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 4);
+        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
     }
 
     inline void set_modified_callback(std::function<void(mve::Vector3i, const ChunkData&)> func)
@@ -118,7 +118,8 @@ private:
         return pos.x + pos.y * sc_chunk_size + pos.z * sc_chunk_size * sc_chunk_size;
     }
 
-    static inline size_t index2(mve::Vector2i pos) {
+    static inline size_t index2(mve::Vector2i pos)
+    {
         return pos.x + pos.y * sc_chunk_size;
     }
 
@@ -131,10 +132,12 @@ private:
         return vector;
     }
 
-    static inline mve::Vector2i pos2(size_t index) {
+    static inline mve::Vector2i pos2(size_t index)
+    {
         mve::Vector2i vector;
         vector.x = index % sc_chunk_size;
         vector.y = (index / sc_chunk_size) % sc_chunk_size;
+        return vector;
     }
 
     static const int sc_chunk_size = 16;

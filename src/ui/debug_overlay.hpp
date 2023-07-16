@@ -21,7 +21,6 @@ public:
 private:
     const mve::Vector3 c_text_color = { 0.0f, 0.0f, 0.0f };
 
-    mve::Vector2i m_extent;
     std::array<char, 1024> m_str_buffer;
 
     mve::Vector2 m_left_column_pos;

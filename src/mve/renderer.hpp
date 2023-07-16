@@ -13,6 +13,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#define VMA_VULKAN_VERSION 1001000
 #include "vk_mem_alloc.h"
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_ASSERT_ON_RESULT

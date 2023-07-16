@@ -17,7 +17,7 @@ SaveFile::SaveFile(size_t max_file_size, const std::string& name)
     db_options.compression = leveldb::kNoCompression;
     db_options.max_file_size = max_file_size;
     leveldb::Status db_status = leveldb::DB::Open(db_options, "save/" + name, &m_db);
-    MVE_ASSERT(db_status.ok(), "[SaveFile] Leveldb open not ok for " + name);
+    MVE_ASSERT(db_status.ok(), "[SaveFile] Leveldb open not ok for " + name)
 }
 SaveFile::~SaveFile()
 {
@@ -42,7 +42,7 @@ std::optional<std::string> SaveFile::at(const std::string& key)
     decompressed_data.resize(value_data.decompressed_size);
     int result_size = LZ4_decompress_safe(
         value_data.data.data(), decompressed_data.data(), value_data.data.size(), decompressed_data.size());
-    MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key);
+    MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key)
     decompressed_data.resize(result_size);
 
     return std::string(decompressed_data.begin(), decompressed_data.end());
@@ -70,7 +70,7 @@ void SaveFile::insert(const std::string& key, const std::string& value)
     }
     else {
         leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, data_stream.str());
-        MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key);
+        MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key)
     }
 }
 
