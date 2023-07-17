@@ -1,5 +1,6 @@
 #pragma once
 
+#include "chunk_controller.hpp"
 #include "mve/renderer.hpp"
 #include "text_pipeline.hpp"
 #include "ui/crosshair.hpp"
@@ -21,6 +22,7 @@ public:
     inline void set_render_distance(int distance)
     {
         m_render_distance = distance;
+        m_chunk_controller.set_render_distance(distance);
     }
 
     void fixed_update(const mve::Window& window);
@@ -54,24 +56,14 @@ public:
 
 private:
     enum class FocusState { world, console, pause };
-    struct ChunkState {
-        bool has_mesh = false;
-        bool can_mesh = false;
-        bool has_data = false;
-        bool should_delete = false;
-        int neighbors = 0;
-    };
 
     void update_world(mve::Window& window, float blend);
 
     WorldRenderer m_world_renderer;
     WorldGenerator m_world_generator;
     WorldData m_world_data;
-    int m_mesh_updates_per_frame;
     Player m_player;
-    std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;
-    std::vector<mve::Vector2i> m_sorted_chunks;
-    mve::Vector2i m_player_chunk = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
+    ChunkController m_chunk_controller {};
     int m_render_distance;
     HUD m_hud;
     PauseMenu m_pause_menu;

@@ -56,7 +56,7 @@ public:
     inline void set_block(mve::Vector3i block_pos, uint8_t type)
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        m_chunks[chunk_pos.z + 10].set_block(block_world_to_local(block_pos), type);
+        m_chunks.at(chunk_pos.z + 10).set_block(block_world_to_local(block_pos), type);
     }
 
     inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
@@ -72,7 +72,7 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(m_pos, m_chunks);
+        archive(m_pos, m_chunks, m_generated);
     }
 
     inline ~ChunkColumn()
@@ -82,14 +82,24 @@ public:
         }
     }
 
+    inline void set_generated(bool val)
+    {
+        m_generated = val;
+    }
+
+    inline bool is_generated() {
+        return m_generated;
+    }
+
 private:
     std::function<void(const mve::Vector3i&, const ChunkData&)> m_chunk_modified_callback
         = [this](const mve::Vector3i& chunk_pos, const ChunkData&) {
               if (m_modified_callback.has_value()) {
-                  std::invoke(*m_modified_callback, m_pos, *this);
+                  std::invoke(m_modified_callback.value(), m_pos, *this);
               }
           };
 
+    bool m_generated = false;
     mve::Vector2i m_pos;
     std::array<ChunkData, 20> m_chunks = {};
     std::optional<std::function<void(mve::Vector2i, const ChunkColumn& column)>> m_modified_callback {};

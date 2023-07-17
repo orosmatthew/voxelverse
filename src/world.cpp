@@ -8,7 +8,6 @@
 World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
-    , m_mesh_updates_per_frame(2)
     , m_render_distance(render_distance)
     , m_hud(ui_pipeline, text_pipeline)
     , m_pause_menu(ui_pipeline, text_pipeline)
@@ -18,6 +17,7 @@ World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& tex
     , m_should_exit(false)
 {
     m_hud.update_debug_gpu_name(renderer.gpu_name());
+    m_chunk_controller.set_mesh_updates_per_frame(2).set_render_distance(render_distance);
 }
 
 void World::fixed_update(const mve::Window& window)
@@ -262,128 +262,8 @@ void World::update(mve::Window& window, float blend)
         }
     }
 
-    // Chunk updates
-    mve::Vector3i current_player_chunk_3d = WorldData::chunk_pos_from_block_pos(m_player.block_position());
-    mve::Vector2i current_player_chunk = { current_player_chunk_3d.x, current_player_chunk_3d.y };
-    if (current_player_chunk != m_player_chunk) {
-        m_player_chunk = current_player_chunk;
-        m_sorted_chunks.clear();
-        m_sorted_chunks.reserve(m_chunk_states.size());
-        for (auto& [pos, data] : m_chunk_states) {
-            if (mve::abs(mve::sqrd(pos.x - m_player_chunk.x) + mve::sqrd(pos.y - m_player_chunk.y))
-                > mve::sqrd(m_render_distance)) {
-                data.should_delete = true;
-            }
-        }
-        for_2d(
-            mve::Vector2i(-m_render_distance, -m_render_distance) + mve::Vector2i(m_player_chunk.x, m_player_chunk.y),
-            mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_player_chunk.x, m_player_chunk.y),
-            [&](mve::Vector2i pos) {
-                if (mve::abs(mve::sqrd(pos.x - m_player_chunk.x) + mve::sqrd(pos.y - m_player_chunk.y))
-                    <= mve::sqrd(m_render_distance)) {
-                    if (!m_chunk_states.contains(pos)) {
-                        m_chunk_states[pos] = {};
-                    }
-                    else {
-                        m_chunk_states[pos].should_delete = false;
-                    }
-                }
-            });
-        for (auto& [pos, data] : m_chunk_states) {
-            m_sorted_chunks.push_back(pos);
-        }
-        std::sort(m_sorted_chunks.begin(), m_sorted_chunks.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-            return mve::distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk.x, m_player_chunk.y))
-                < mve::distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk.x, m_player_chunk.y));
-        });
-    }
-
-    int chunk_count = 0;
-    for (mve::Vector2i pos : m_sorted_chunks) {
-        if (!m_chunk_states.at(pos).has_data) {
-            bool loaded = false;
-            if (m_world_data.try_load_chunk_column_from_save({ pos.x, pos.y })) {
-                loaded = true;
-            }
-            if (!loaded) {
-                m_world_data.create_chunk_column({ pos.x, pos.y });
-                m_world_generator.generate_chunks(m_world_data.chunk_column_data_at({ pos.x, pos.y }), pos);
-            }
-            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
-                if (neighbor != mve::Vector2i(0, 0)) {
-                    m_chunk_states[pos + neighbor].neighbors++;
-                    if (m_chunk_states[pos + neighbor].has_data && m_chunk_states[pos + neighbor].neighbors == 24) {
-                        m_chunk_states[pos + neighbor].can_mesh = true;
-                    }
-                }
-            });
-            m_chunk_states[pos].has_data = true;
-            if (m_chunk_states[pos].neighbors == 24) {
-                m_chunk_states[pos].can_mesh = true;
-            }
-            chunk_count++;
-        }
-        if (!m_chunk_states.at(pos).has_mesh && m_chunk_states.at(pos).can_mesh) {
-            for (int h = -10; h < 10; h++) {
-                m_world_data.push_chunk_lighting_update({ pos.x, pos.y, h });
-                m_world_renderer.push_mesh_update({ pos.x, pos.y, h });
-            }
-            m_chunk_states[pos].has_mesh = true;
-            chunk_count++;
-        }
-        if (chunk_count > m_mesh_updates_per_frame) {
-            break;
-        }
-    }
-    m_world_data.process_chunk_lighting_updates();
-    m_world_renderer.process_mesh_updates(m_world_data);
-
-    chunk_count = 0;
-    for (int i = m_sorted_chunks.size() - 1; i >= 0; i--) {
-        const mve::Vector2i pos = m_sorted_chunks[i];
-        if (!m_chunk_states.at(pos).should_delete) {
-            continue;
-        }
-        auto it = m_sorted_chunks.begin();
-        while (it != m_sorted_chunks.end()) {
-            if (*it == pos) {
-                it = m_sorted_chunks.erase(it);
-            }
-            else {
-                it++;
-            }
-        }
-        if (m_chunk_states.at(pos).has_data) {
-            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
-                if (neighbor == mve::Vector2i(0, 0)) {
-                    return;
-                }
-                m_chunk_states[pos + neighbor].neighbors--;
-            });
-        }
-
-        if (m_chunk_states.at(pos).has_data) {
-            m_world_data.remove_chunk_column({ pos.x, pos.y });
-        }
-        for (int h = -10; h < 10; h++) {
-            if (m_chunk_states.at(pos).has_mesh) {
-                m_world_renderer.remove_data({ pos.x, pos.y, h });
-            }
-        }
-        if (m_chunk_states.at(pos).has_mesh) {
-            chunk_count++;
-        }
-        m_chunk_states.at(pos).has_data = false;
-        m_chunk_states.at(pos).has_mesh = false;
-        m_chunk_states.at(pos).can_mesh = false;
-        m_chunk_states.at(pos).should_delete = true;
-        if (m_chunk_states.at(pos).neighbors == 0) {
-            m_chunk_states.erase(pos);
-        }
-        if (chunk_count > m_mesh_updates_per_frame) {
-            break;
-        }
-    }
+    m_chunk_controller.update(
+        m_world_data, m_world_generator, m_world_renderer, chunk_pos_from_block_pos(m_player.block_position()));
 }
 
 void World::resize(mve::Vector2i extent)

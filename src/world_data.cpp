@@ -10,9 +10,9 @@ WorldData::WorldData()
 void WorldData::queue_save_chunk(mve::Vector2i pos)
 {
     m_save_queue.insert(pos);
-    if (m_save_queue.size() > 50) {
-        process_save_queue();
-    }
+    //    if (m_save_queue.size() > 50) {
+    process_save_queue();
+    //    }
 }
 
 WorldData::~WorldData()
@@ -23,7 +23,9 @@ void WorldData::process_save_queue()
 {
     m_save.begin_batch();
     for (mve::Vector2i pos : m_save_queue) {
-        m_save.insert<mve::Vector2i, ChunkColumn>(pos, m_chunk_columns.at(pos));
+        if (m_chunk_columns.at(pos).is_generated()) {
+            m_save.insert<mve::Vector2i, ChunkColumn>(pos, m_chunk_columns.at(pos));
+        }
     }
     m_save.submit_batch();
     m_save_queue.clear();
