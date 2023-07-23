@@ -1,4 +1,5 @@
 #include "world_renderer.hpp"
+#include "common.hpp"
 #include "mve/math/math.hpp"
 
 void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
@@ -30,10 +31,10 @@ void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
     , m_thread_pool()
-    , m_vertex_shader(mve::Shader("../res/bin/shader/simple.vert.spv"))
-    , m_fragment_shader(mve::Shader("../res/bin/shader/simple.frag.spv"))
+    , m_vertex_shader(mve::Shader(res_path("bin/shader/simple.vert.spv")))
+    , m_fragment_shader(mve::Shader(res_path("bin/shader/simple.frag.spv")))
     , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
-    , m_block_texture(std::make_shared<mve::Texture>(renderer, "../res/atlas.png"))
+    , m_block_texture(std::make_shared<mve::Texture>(renderer, res_path("atlas.png")))
     , m_global_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(0).binding(0)))
     , m_chunk_ubo(renderer.create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)))
     , m_global_descriptor_set(renderer.create_descriptor_set(m_graphics_pipeline, m_vertex_shader.descriptor_set(0)))

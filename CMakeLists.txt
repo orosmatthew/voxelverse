@@ -106,6 +106,8 @@ set(LIB_INCLUDES
 
 add_executable(${PROJECT_NAME})
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC RES_PATH="../res")
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_link_libraries(${PROJECT_NAME} -static-libgcc -static-libstdc++)
 endif ()

@@ -11,7 +11,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     , m_select({ .uniform_data = ui_pipeline.create_uniform_data() })
     , m_renderer_extent(ui_pipeline.renderer().extent())
     , m_select_pos(0)
-    , m_atlas_texture(ui_pipeline.renderer(), "../res/atlas.png")
+    , m_atlas_texture(ui_pipeline.renderer(), res_path("atlas.png"))
 {
     mve::Vector2 size { 910, 110 };
     mve::VertexData vertex_data(ui_pipeline.vertex_layout());
@@ -28,7 +28,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     vertex_data.push_back({ 1, 1, 1 });
     vertex_data.push_back({ 0.0f, 1.0f });
 
-    m_hotbar_texture = ui_pipeline.renderer().create_texture("../res/hotbar.png");
+    m_hotbar_texture = ui_pipeline.renderer().create_texture(res_path("hotbar.png"));
     m_hotbar.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
     m_hotbar.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_hotbar.uniform_data.descriptor_set.write_binding(m_texture_binding, m_hotbar_texture);
@@ -49,7 +49,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     select_vertex_data.push_back({ 1, 1, 1 });
     select_vertex_data.push_back({ 0.0f, 1.0f });
 
-    m_select_texture = ui_pipeline.renderer().create_texture("../res/hotbar_select.png");
+    m_select_texture = ui_pipeline.renderer().create_texture(res_path("hotbar_select.png"));
     m_select.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(select_vertex_data);
     m_select.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_select.uniform_data.descriptor_set.write_binding(m_texture_binding, m_select_texture);

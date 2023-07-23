@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <vector>
 
@@ -37,6 +38,11 @@ inline void serialize(Archive& archive, Vector3& v)
 {
     archive(v.x, v.y, v.z);
 }
+}
+
+inline std::filesystem::path res_path(const std::filesystem::path& path)
+{
+    return std::filesystem::path(RES_PATH) / path;
 }
 
 struct Quad {

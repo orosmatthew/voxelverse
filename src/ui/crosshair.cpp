@@ -1,9 +1,10 @@
 #include "crosshair.hpp"
+#include "../common.hpp"
 
 Crosshair::Crosshair(UIPipeline& pipeline)
     : m_pipeline(&pipeline)
     , m_uniform_data(pipeline.create_uniform_data())
-    , m_texture(pipeline.renderer().create_texture("../res/cross.png"))
+    , m_texture(pipeline.renderer().create_texture(res_path("cross.png")))
 {
     auto transform = mve::Matrix4::identity().translate(
         { pipeline.renderer().extent().x / 2.0f, pipeline.renderer().extent().y / 2.0f, 0.0f });
