@@ -10,9 +10,9 @@ WorldData::WorldData()
 void WorldData::queue_save_chunk(mve::Vector2i pos)
 {
     m_save_queue.insert(pos);
-    //    if (m_save_queue.size() > 50) {
-    process_save_queue();
-    //    }
+    if (m_save_queue.size() > 50) {
+        process_save_queue();
+    }
 }
 
 WorldData::~WorldData()
@@ -36,7 +36,6 @@ bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
     if (!data.has_value()) {
         return false;
     }
-    data->set_modified_callback(m_modified_callback);
     m_chunk_columns.insert({ chunk_pos, std::move(*data) });
     return true;
 }

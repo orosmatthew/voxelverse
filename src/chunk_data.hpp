@@ -63,16 +63,6 @@ public:
         std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
     }
 
-    inline void set_modified_callback(std::function<void(mve::Vector3i, const ChunkData&)> func)
-    {
-        m_modified_callback = func;
-    }
-
-    inline void remove_modified_callback()
-    {
-        m_modified_callback.reset();
-    }
-
     mve::Vector3i position() const;
 
     void set_block(mve::Vector3i pos, uint8_t type);
@@ -147,5 +137,4 @@ private:
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size)> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};
-    std::optional<std::function<void(mve::Vector3i, const ChunkData&)>> m_modified_callback;
 };

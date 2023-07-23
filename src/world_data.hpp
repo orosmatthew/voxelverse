@@ -27,7 +27,6 @@ public:
     inline void create_chunk_column(mve::Vector2i chunk_pos)
     {
         m_chunk_columns.insert({ chunk_pos, ChunkColumn(chunk_pos) });
-        m_chunk_columns.at(chunk_pos).set_modified_callback(m_modified_callback);
         queue_save_chunk(chunk_pos);
     }
 
@@ -192,13 +191,10 @@ public:
 
     void process_chunk_lighting_updates();
 
-private:
     void queue_save_chunk(mve::Vector2i pos);
 
+private:
     void process_save_queue();
-
-    std::function<void(mve::Vector2i, const ChunkColumn&)> m_modified_callback
-        = [this](mve::Vector2i chunk_pos, const ChunkColumn& data) { queue_save_chunk(chunk_pos); };
 
     void spread_light(const mve::Vector3i light_pos);
 

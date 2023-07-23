@@ -15,7 +15,7 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     m_hotbar.set_item(5, 6);
     m_hotbar.set_item(6, 7);
     m_hotbar.set_item(7, 8);
-    m_hotbar.set_item(8, 10);
+    m_hotbar.set_item(8, 9);
 }
 void HUD::resize(mve::Vector2i extent)
 {

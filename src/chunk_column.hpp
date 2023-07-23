@@ -12,27 +12,11 @@ class ChunkColumn {
 public:
     inline ChunkColumn()
     {
-        for (ChunkData& chunk : m_chunks) {
-            chunk.set_modified_callback(m_chunk_modified_callback);
-        }
-    };
+    }
 
     inline ChunkColumn(mve::Vector2i chunk_pos)
         : m_pos(chunk_pos)
     {
-        for (ChunkData& chunk : m_chunks) {
-            chunk.set_modified_callback(m_chunk_modified_callback);
-        }
-    }
-
-    inline void set_modified_callback(const std::function<void(mve::Vector2i, const ChunkColumn& column)>& callback)
-    {
-        m_modified_callback = std::move(callback);
-    }
-
-    inline void clear_modified_callback()
-    {
-        m_modified_callback.reset();
     }
 
     inline uint8_t get_block(mve::Vector3i block_pos) const
@@ -75,32 +59,18 @@ public:
         archive(m_pos, m_chunks, m_generated);
     }
 
-    inline ~ChunkColumn()
-    {
-        for (ChunkData& data : m_chunks) {
-            data.remove_modified_callback();
-        }
-    }
-
     inline void set_generated(bool val)
     {
         m_generated = val;
     }
 
-    inline bool is_generated() {
+    inline bool is_generated()
+    {
         return m_generated;
     }
 
 private:
-    std::function<void(const mve::Vector3i&, const ChunkData&)> m_chunk_modified_callback
-        = [this](const mve::Vector3i& chunk_pos, const ChunkData&) {
-              if (m_modified_callback.has_value()) {
-                  std::invoke(m_modified_callback.value(), m_pos, *this);
-              }
-          };
-
     bool m_generated = false;
     mve::Vector2i m_pos;
     std::array<ChunkData, 20> m_chunks = {};
-    std::optional<std::function<void(mve::Vector2i, const ChunkColumn& column)>> m_modified_callback {};
 };
