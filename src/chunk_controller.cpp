@@ -58,7 +58,7 @@ void ChunkController::update(
         }
     }
 
-    world_data.process_chunk_lighting_updates();
+//    world_data.process_chunk_lighting_updates();
     world_renderer.process_mesh_updates(world_data);
 
     chunk_count = 0;

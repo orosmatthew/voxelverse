@@ -58,10 +58,10 @@ public:
 
     explicit ChunkData(mve::Vector3i chunk_pos);
 
-    inline void reset_lighting()
-    {
-        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
-    }
+//    inline void reset_lighting()
+//    {
+//        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
+//    }
 
     mve::Vector3i position() const;
 
@@ -71,16 +71,16 @@ public:
         return m_block_data[index(pos)];
     }
 
-    inline void set_lighting(mve::Vector3i pos, uint8_t val)
-    {
-        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
-        m_lighting_data[index(pos)] = val;
-    }
+//    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+//    {
+//        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+//        m_lighting_data[index(pos)] = val;
+//    }
 
-    inline uint8_t lighting_at(mve::Vector3i pos) const
-    {
-        return m_lighting_data[index(pos)];
-    }
+//    inline uint8_t lighting_at(mve::Vector3i pos) const
+//    {
+//        return m_lighting_data[index(pos)];
+//    }
 
     inline int block_count() const
     {
@@ -133,7 +133,7 @@ private:
     static const int sc_chunk_size = 16;
     mve::Vector3i m_pos;
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_block_data = { 0 };
-    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
+//    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size)> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};

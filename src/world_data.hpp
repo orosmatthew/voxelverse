@@ -45,26 +45,26 @@ public:
         }
     }
 
-    inline void set_lighting(mve::Vector3i pos, uint8_t val)
-    {
-        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
-        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
-    }
+//    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+//    {
+//        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
+//        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
+//    }
 
-    inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
-    {
-        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
-            return {};
-        }
-        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
-        if (result == m_chunk_columns.end()) {
-            return {};
-        }
-        else {
-            return result->second.lighting_at(block_pos);
-        }
-    }
+//    inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
+//    {
+//        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+//        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+//            return {};
+//        }
+//        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
+//        if (result == m_chunk_columns.end()) {
+//            return {};
+//        }
+//        else {
+//            return result->second.lighting_at(block_pos);
+//        }
+//    }
 
     inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
     {
@@ -189,7 +189,7 @@ public:
         }
     }
 
-    void process_chunk_lighting_updates();
+//    void process_chunk_lighting_updates();
 
     void queue_save_chunk(mve::Vector2i pos);
 
