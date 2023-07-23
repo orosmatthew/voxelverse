@@ -143,6 +143,8 @@ set(TEST_LIB_INCLUDES
 
 add_executable(tests)
 
+target_compile_definitions(tests PUBLIC RES_PATH="../res")
+
 target_sources(tests PRIVATE
         ${LIB_SOURCE_FILES}
         ${SOURCE_FILES}
