@@ -30,10 +30,6 @@ endfunction()
 
 find_package(Vulkan REQUIRED)
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
 set(FT_DISABLE_ZLIB ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
@@ -44,24 +40,19 @@ set(LEVELDB_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(lib/glfw-3.3.8)
-add_subdirectory(lib/freetype-2.13.0)
-add_subdirectory(lib/leveldb-1.23)
+
+add_subdirectory(external/freetype-2.13.0)
+add_subdirectory(external/leveldb-1.23)
 
 set(LIB_SOURCE_FILES
-        lib/whereami-ba364cd/src/whereami.c
-        lib/spirv-reflect-1.3.250.0/src/spirv_reflect.cpp
-        lib/lz4-1.9.4/src/lz4.c
-        lib/lz4-1.9.4/src/lz4hc.c)
+        external/whereami-ba364cd/src/whereami.c
+        external/lz4-1.9.4/src/lz4.c
+        external/lz4-1.9.4/src/lz4hc.c)
+
+add_subdirectory(lib/mve)
 
 set(SOURCE_FILES
         src/app.cpp
-        src/logger.cpp
-        src/mve/renderer.cpp
-        src/mve/window.cpp
-        src/mve/vertex_data.cpp
-        src/mve/shader.cpp
-        src/mve/monitor.cpp
         src/util.cpp
         src/util/fixed_loop.cpp
         src/chunk_mesh.cpp
@@ -88,21 +79,20 @@ set(SOURCE_FILES
 
 set(LIBS
         Vulkan::Vulkan
-        glfw
         freetype
-        leveldb)
+        leveldb
+        mve)
 
 set(LIB_INCLUDES
-        lib/spdlog-1.11.0/include
-        lib/vma-3.0.1/include
-        lib/whereami-ba364cd/include
-        lib/stb-8b5f1f3/include
-        lib/tinyobjloader-45f683c/include
-        lib/spirv-reflect-1.3.250.0/include
-        lib/fast-noise-lite-1.0.3/include
-        lib/cereal-1.3.2/include
-        lib/lz4-1.9.4/include
-        lib/thread-pool-3.5.0/include)
+        external/spdlog-1.11.0/include
+        external/vma-3.0.1/include
+        external/whereami-ba364cd/include
+        external/stb-8b5f1f3/include
+        external/tinyobjloader-45f683c/include
+        external/fast-noise-lite-1.0.3/include
+        external/cereal-1.3.2/include
+        external/lz4-1.9.4/include
+        external/thread-pool-3.5.0/include)
 
 add_executable(${PROJECT_NAME})
 
@@ -132,14 +122,13 @@ add_shaders(voxelverse
         text.frag)
 
 set(TEST_LIB_SOURCE_FILES
-        lib/catch2-3.3.2/src/catch_amalgamated.cpp)
+        external/catch2-3.3.2/src/catch_amalgamated.cpp)
 
 set(TEST_SOURCE_FILES
-        tests/vertex_data.cpp
-        tests/mve/math/functions.cpp)
+        tests/vertex_data.cpp)
 
 set(TEST_LIB_INCLUDES
-        lib/catch2-3.3.2/include)
+        external/catch2-3.3.2/include)
 
 add_executable(tests)
 

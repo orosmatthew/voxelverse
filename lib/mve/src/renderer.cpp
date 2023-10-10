@@ -1,4 +1,4 @@
-#include "renderer.hpp"
+#include <mve/renderer.hpp>
 
 #include <fstream>
 #include <set>
@@ -36,7 +36,7 @@ Renderer::Renderer(
 #endif
     m_vk_surface = create_vk_surface(m_vk_instance, window.glfw_handle());
     m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_loader, m_vk_surface);
-    m_msaa_samples = get_max_sample_count(m_vk_loader, m_vk_physical_device);
+    m_msaa_samples = vk::SampleCountFlagBits::e1; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
     m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_loader, m_vk_physical_device, m_vk_surface);
     m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_vk_queue_family_indices);
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr, m_vk_device, vkGetDeviceProcAddr);

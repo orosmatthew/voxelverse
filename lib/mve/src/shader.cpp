@@ -1,10 +1,10 @@
-#include "shader.hpp"
+#include <mve/shader.hpp>
 
 #include <fstream>
 #include <optional>
 #include <vector>
 
-#include "spirv_reflect.h"
+#include <spirv_reflect.h>
 
 #include "../logger.hpp"
 #include "common.hpp"

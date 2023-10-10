@@ -1,4 +1,4 @@
-#include "monitor.hpp"
+#include <mve/monitor.hpp>
 
 mve::Monitor::Monitor(GLFWmonitor* monitor)
     : m_monitor(monitor)

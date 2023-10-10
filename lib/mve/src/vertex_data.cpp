@@ -1,8 +1,8 @@
-#include "vertex_data.hpp"
+#include <mve/vertex_data.hpp>
 
 #include <stdexcept>
 
-#include "common.hpp"
+#include <mve/common.hpp>
 
 namespace mve {
 

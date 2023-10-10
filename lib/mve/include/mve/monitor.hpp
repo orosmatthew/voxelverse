@@ -3,8 +3,9 @@
 #include <string>
 #include <vector>
 
+#include <GLFW/glfw3.h>
+
 #include "math/math.hpp"
-#include "GLFW/glfw3.h"
 
 namespace mve {
 
