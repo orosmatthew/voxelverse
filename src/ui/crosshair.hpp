@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../mve/renderer.hpp"
+#include <mve/renderer.hpp>
 
 #include "../ui_pipeline.hpp"
 

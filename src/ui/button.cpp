@@ -1,7 +1,7 @@
 #include "button.hpp"
 
 #include "../logger.hpp"
-#include "../mve/window.hpp"
+#include <mve/window.hpp>
 
 Button::Button(
     UIPipeline& ui_pipeline,

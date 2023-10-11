@@ -1,6 +1,6 @@
 #include "console.hpp"
 
-#include "../mve/window.hpp"
+#include <mve/window.hpp>
 
 Console::Console(TextPipeline& pipeline)
     : m_input_text(pipeline)

@@ -2,7 +2,8 @@
 
 #include <filesystem>
 
-#include "../mve/renderer.hpp"
+#include <mve/renderer.hpp>
+
 #include "../ui_pipeline.hpp"
 
 struct NinePatchMargins {

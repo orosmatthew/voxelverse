@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../mve/common.hpp"
-#include "../mve/renderer.hpp"
+#include <mve/common.hpp>
+#include <mve/renderer.hpp>
+
 #include "../ui_pipeline.hpp"
 
 class Hotbar {

@@ -27,9 +27,6 @@ function(add_shaders TARGET)
     endforeach ()
 endfunction()
 
-
-find_package(Vulkan REQUIRED)
-
 set(FT_DISABLE_ZLIB ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_BZIP2 ON CACHE BOOL "" FORCE)
 set(FT_DISABLE_PNG ON CACHE BOOL "" FORCE)
@@ -53,6 +50,7 @@ add_subdirectory(lib/mve)
 
 set(SOURCE_FILES
         src/app.cpp
+        src/logger.cpp
         src/util.cpp
         src/util/fixed_loop.cpp
         src/chunk_mesh.cpp
@@ -78,16 +76,13 @@ set(SOURCE_FILES
         src/chunk_controller.cpp)
 
 set(LIBS
-        Vulkan::Vulkan
         freetype
         leveldb
         mve)
 
 set(LIB_INCLUDES
         external/spdlog-1.11.0/include
-        external/vma-3.0.1/include
         external/whereami-ba364cd/include
-        external/stb-8b5f1f3/include
         external/tinyobjloader-45f683c/include
         external/fast-noise-lite-1.0.3/include
         external/cereal-1.3.2/include
