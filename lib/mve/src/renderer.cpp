@@ -10,7 +10,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// #include "../logger.hpp"
+#include "./logger.hpp"
 #include <mve/common.hpp>
 #include <mve/math/math.hpp>
 #include <mve/vertex_data.hpp>
@@ -217,7 +217,7 @@ vk::PhysicalDevice Renderer::pick_vk_physical_device(
     MVE_ASSERT(!physical_devices.empty(), "[Renderer] Failed to find Vulkan device")
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
-//        LOG->debug("[Renderer] GPU Found: {0}", physical_device.getProperties(loader).deviceName);
+        log().debug("[Renderer] GPU Found: {0}", physical_device.getProperties(loader).deviceName);
     }
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
@@ -226,7 +226,7 @@ vk::PhysicalDevice Renderer::pick_vk_physical_device(
                   return is_vk_physical_device_suitable(loader, physical_device, surface);
               });
         if (it != physical_devices.end()) {
-//            LOG->info("[Renderer] Using GPU: {0}", physical_device.getProperties(loader).deviceName);
+            log().info("[Renderer] Using GPU: {0}", physical_device.getProperties(loader).deviceName);
             return physical_device;
         }
     }
@@ -1180,7 +1180,7 @@ VkBool32 Renderer::vk_debug_callback(
     void* user_data_ptr)
 {
     if (msg_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-//        LOG->warn("[Vulkan Debug] " + std::string(callback_data->pMessage));
+        log().warn("[Vulkan Debug] " + std::string(callback_data->pMessage));
     }
 
     return false;
@@ -1282,7 +1282,7 @@ std::vector<Renderer::FrameInFlight> Renderer::create_frames_in_flight(
 void Renderer::destroy(VertexBuffer& vertex_buffer)
 {
     MVE_VAL_ASSERT(vertex_buffer.is_valid(), "[Renderer] Attempted to destroy invalid vertex buffer")
-//    LOG->debug("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
+    log().debug("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
     size_t handle = vertex_buffer.handle();
     vertex_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -1719,7 +1719,7 @@ Renderer::DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
     m_descriptor_set_layouts.insert({ handle, vk_layout });
     m_resource_handle_count++;
 
-//    LOG->debug("[Renderer] Descriptor set layout created with ID: {}", handle);
+    log().debug("[Renderer] Descriptor set layout created with ID: {}", handle);
 
     return handle;
 }
@@ -1755,7 +1755,7 @@ size_t Renderer::create_graphics_pipeline_layout(
     m_graphics_pipeline_layouts_new[*id]
         = { .vk_handle = vk_layout, .descriptor_set_layouts = std::move(descriptor_set_layouts) };
 
-//    LOG->debug("[Renderer] Graphics pipeline layout created with ID: {}", *id);
+    log().debug("[Renderer] Graphics pipeline layout created with ID: {}", *id);
 
     return *id;
 }
@@ -2385,7 +2385,7 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
     }
     m_vertex_buffers_new[*id] = { buffer, vertex_data.vertex_count() };
 
-//    LOG->debug("[Renderer] Vertex buffer created with ID: {}", *id);
+    log().debug("[Renderer] Vertex buffer created with ID: {}", *id);
 
     return { *this, *id };
 }
@@ -2464,7 +2464,7 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
     }
     m_index_buffers_new[*id] = { buffer, indices.size() };
 
-//    LOG->debug("[Renderer] Index buffer created with ID: {}", *id);
+    log().debug("[Renderer] Index buffer created with ID: {}", *id);
 
     return { *this, *id };
 }
@@ -2506,7 +2506,7 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
     }
     m_graphics_pipelines_new[*id] = { .layout = layout, .pipeline = vk_pipeline };
 
-//    LOG->debug("[Renderer] Graphics pipeline created with ID: {}", *id);
+    log().debug("[Renderer] Graphics pipeline created with ID: {}", *id);
 
     return { *this, *id };
 }
@@ -2545,7 +2545,7 @@ DescriptorSet Renderer::create_descriptor_set(
         i++;
     }
 
-//    LOG->debug("[Renderer] Descriptor set created with ID: {}", *id);
+    log().debug("[Renderer] Descriptor set created with ID: {}", *id);
 
     return { *this, *id };
 }
@@ -2619,7 +2619,7 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
         i++;
     }
 
-//    LOG->debug("[Renderer] Uniform buffer created with ID: {}", *id);
+    log().debug("[Renderer] Uniform buffer created with ID: {}", *id);
 
     return { *this, *id };
 }
@@ -2654,7 +2654,7 @@ void Renderer::update_uniform(
 void Renderer::destroy(Texture& texture)
 {
     MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempted to destroy invalid texture")
-//    LOG->debug("[Renderer] Destroyed texture with ID: {}", texture.handle());
+    log().debug("[Renderer] Destroyed texture with ID: {}", texture.handle());
     uint64_t handle = texture.handle();
     texture.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -2750,7 +2750,7 @@ Texture Renderer::create_texture(TextureFormat format, uint32_t width, uint32_t 
     m_resource_handle_count++;
     m_textures.insert({ handle, texture });
 
-//    LOG->debug("[Renderer] Texture created with ID: {}", handle);
+    log().debug("[Renderer] Texture created with ID: {}", handle);
 
     return { *this, handle };
 }
@@ -2782,7 +2782,7 @@ Texture Renderer::create_texture(Image image, vk::ImageView image_view, vk::Samp
     m_resource_handle_count++;
     m_textures.insert({ handle, texture });
 
-//    LOG->debug("[Renderer] Texture created with ID: {}", handle);
+    log().debug("[Renderer] Texture created with ID: {}", handle);
 
     return { *this, handle };
 }
@@ -2797,7 +2797,7 @@ void Renderer::draw_vertex_buffer(const VertexBuffer& vertex_buffer)
 void Renderer::destroy(DescriptorSet& descriptor_set)
 {
     MVE_VAL_ASSERT(descriptor_set.is_valid(), "[Renderer] Attempted to destroy invalid descriptor set")
-//    LOG->debug("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
+    log().debug("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
     uint64_t handle = descriptor_set.handle();
     descriptor_set.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -2819,7 +2819,7 @@ void Renderer::destroy(DescriptorSet& descriptor_set)
 void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
 {
     MVE_VAL_ASSERT(graphics_pipeline.is_valid(), "[Renderer] Attempted to destroy invalid graphics pipeline")
-//    LOG->debug("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
+    log().debug("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
     size_t handle = graphics_pipeline.handle();
     graphics_pipeline.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -2850,7 +2850,7 @@ void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
 void Renderer::destroy(UniformBuffer& uniform_buffer)
 {
     MVE_VAL_ASSERT(uniform_buffer.is_valid(), "[Renderer] Attempted to destroy invalid uniform buffer")
-//    LOG->debug("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
+    log().debug("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
     uniform_buffer.invalidate();
     size_t handle = uniform_buffer.handle();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -2871,7 +2871,7 @@ void Renderer::destroy(UniformBuffer& uniform_buffer)
 void Renderer::destroy(IndexBuffer& index_buffer)
 {
     MVE_VAL_ASSERT(index_buffer.is_valid(), "[Renderer] Attempted to destroy invalid index buffer")
-//    LOG->debug("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
+    log().debug("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
     uint64_t handle = index_buffer.handle();
     index_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
@@ -2928,14 +2928,14 @@ Framebuffer Renderer::create_framebuffer(std::function<void(void)> callback)
     }
     m_framebuffers[*id] = std::move(create_framebuffer_impl(m_vk_loader, callback));
 
-//    LOG->debug("[Renderer] Framebuffer created with ID: {}", *id);
+    log().debug("[Renderer] Framebuffer created with ID: {}", *id);
 
     return { *this, *id };
 }
 void Renderer::destroy(Framebuffer& framebuffer)
 {
     MVE_VAL_ASSERT(framebuffer.is_valid(), "[Renderer] Attempted to destroy invalid framebuffer")
-//    LOG->debug("[Renderer] Destroyed framebuffer with ID: {}", framebuffer.handle());
+    log().debug("[Renderer] Destroyed framebuffer with ID: {}", framebuffer.handle());
     size_t handle = framebuffer.handle();
     framebuffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {

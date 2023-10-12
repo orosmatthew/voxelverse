@@ -16,7 +16,8 @@ add_library(mve STATIC
         src/window.cpp
         src/vertex_data.cpp
         src/shader.cpp
-        src/monitor.cpp)
+        src/monitor.cpp
+        src/logger.cpp)
 
 target_link_libraries(mve Vulkan::Vulkan glfw)
 
@@ -25,3 +26,5 @@ target_include_directories(mve PUBLIC
         external/vma-3.0.1/include
         external/stb-8b5f1f3/include
         include)
+
+target_include_directories(mve PRIVATE external/spdlog-1.11.0/include)

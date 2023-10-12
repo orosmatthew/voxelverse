@@ -6,14 +6,14 @@
 
 #include <spirv_reflect.h>
 
-// #include "../logger.hpp"
+#include "./logger.hpp"
 #include <mve/common.hpp>
 
 namespace mve {
 
 Shader::Shader(const std::filesystem::path& file_path)
 {
-    //    LOG->debug("Loading shader: " + file_path.string());
+    log().debug("Loading shader: " + file_path.string());
 
     std::ifstream file(file_path, std::ios::binary);
 
