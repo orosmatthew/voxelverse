@@ -10,7 +10,7 @@ static void initLogger()
 {
     std::vector<spdlog::sink_ptr> sinks;
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-    g_logger = spdlog::logger("mve", std::begin(sinks), std::end(sinks));
+    g_logger = spdlog::logger("MVE", std::begin(sinks), std::end(sinks));
 }
 
 spdlog::logger& log()
