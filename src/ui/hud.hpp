@@ -36,7 +36,7 @@ public:
 
     void toggle_debug();
 
-    inline const Hotbar& hotbar() const
+    [[nodiscard]] inline const Hotbar& hotbar() const
     {
         return m_hotbar;
     }

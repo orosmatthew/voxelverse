@@ -1,8 +1,8 @@
 #include "ui_pipeline.hpp"
 
+#include "common.hpp"
 #include "logger.hpp"
 #include "mve/math/math.hpp"
-#include "common.hpp"
 
 UIPipeline::UIPipeline(mve::Renderer& renderer)
     : m_renderer(&renderer)
@@ -41,13 +41,13 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, mve::Ve
     world_data.push_back(mve::Vector3(0.0f, 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 0.0f });
-    world_data.push_back(mve::Vector3(size.x, 0.0f, 0.0f));
+    world_data.push_back(mve::Vector3(static_cast<float>(size.x), 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 0.0f });
-    world_data.push_back(mve::Vector3(size.x, size.y, 0.0f));
+    world_data.push_back(mve::Vector3(static_cast<float>(size.x), static_cast<float>(size.y), 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 1.0f });
-    world_data.push_back(mve::Vector3(0.0f, size.y, 0.0f));
+    world_data.push_back(mve::Vector3(0.0f, static_cast<float>(size.y), 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 1.0f });
     if (!m_world.has_value()) {

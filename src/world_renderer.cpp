@@ -22,7 +22,7 @@ void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
         }
         else {
             m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_meshes.size() });
-            m_chunk_meshes.push_back(std::move(mesh));
+            m_chunk_meshes.emplace_back(std::move(mesh));
         }
     }
     m_chunk_mesh_update_list.push_back(chunk_pos);

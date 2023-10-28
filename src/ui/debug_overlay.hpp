@@ -21,7 +21,7 @@ public:
 private:
     const mve::Vector3 c_text_color = { 0.0f, 0.0f, 0.0f };
 
-    std::array<char, 1024> m_str_buffer;
+    std::array<char, 1024> m_str_buffer {};
 
     mve::Vector2 m_left_column_pos;
     float m_left_column_scale { 0.8f };

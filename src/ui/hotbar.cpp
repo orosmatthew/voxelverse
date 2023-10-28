@@ -14,7 +14,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     , m_atlas_texture(ui_pipeline.renderer(), res_path("atlas.png"))
 {
     mve::Vector2 size { 910, 110 };
-    mve::VertexData vertex_data(ui_pipeline.vertex_layout());
+    mve::VertexData vertex_data(UIPipeline::vertex_layout());
     vertex_data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     vertex_data.push_back({ 1, 1, 1 });
     vertex_data.push_back({ 0.0f, 0.0f });
@@ -35,7 +35,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     m_hotbar.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
 
     mve::Vector2 select_size { 24 * 5, 23 * 5 };
-    mve::VertexData select_vertex_data(ui_pipeline.vertex_layout());
+    mve::VertexData select_vertex_data(UIPipeline::vertex_layout());
     select_vertex_data.push_back(mve::Vector3(-0.5f * select_size.x, -1.0f * select_size.y, 0.0f));
     select_vertex_data.push_back({ 1, 1, 1 });
     select_vertex_data.push_back({ 0.0f, 0.0f });
@@ -68,7 +68,8 @@ void Hotbar::resize(const mve::Vector2i& extent)
             item->element.uniform_data.buffer.update(
                 m_model_location,
                 mve::Matrix4::identity().scale(scale()).translate(
-                    translation() + mve::Vector3(first_offset_x + (pos * 20 * 5), -5 * 4, 0) * scale()));
+                    translation()
+                    + mve::Vector3(static_cast<float>(first_offset_x + (pos * 20 * 5)), -5 * 4, 0) * scale()));
         }
     }
 }
@@ -80,17 +81,18 @@ void Hotbar::update_hotbar_select(int pos)
     m_select.uniform_data.buffer.update(
         m_model_location,
         mve::Matrix4::identity().scale(scale()).translate(
-            translation() + mve::Vector3(first_offset_x + (pos * 20 * 5), 0, 0) * scale()));
+            translation() + mve::Vector3(static_cast<float>(first_offset_x + (pos * 20 * 5)), 0, 0) * scale()));
 }
 mve::Vector3 Hotbar::scale() const
 {
-    return (mve::Vector3(m_renderer_extent.x) / 1000.0f).clamp(mve::Vector3(0.1), mve::Vector3(1.0f));
+    return (mve::Vector3(static_cast<float>(m_renderer_extent.x)) / 1000.0f)
+        .clamp(mve::Vector3(0.1), mve::Vector3(1.0f));
 }
 mve::Vector3 Hotbar::translation() const
 {
     return { static_cast<float>(m_renderer_extent.x) * 0.5f, static_cast<float>(m_renderer_extent.y), 0 };
 }
-std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(uint8_t block_type) const
+std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(uint8_t block_type)
 {
     mve::Vector2 size(14 * 5);
     QuadUVs quad_uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));

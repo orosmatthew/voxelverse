@@ -2,11 +2,12 @@
 
 #include "../logger.hpp"
 #include <mve/window.hpp>
+#include <utility>
 
 Button::Button(
     UIPipeline& ui_pipeline,
     TextPipeline& text_pipeline,
-    std::shared_ptr<mve::Texture> texture,
+    const std::shared_ptr<mve::Texture>& texture,
     const std::string& text,
     const mve::Vector2i& size,
     float scale)
@@ -33,8 +34,9 @@ void Button::set_position(const mve::Vector2& pos)
 {
     m_patch.set_position(pos);
     m_text.set_translation(
-        { (pos.x + (m_patch.size().x * m_patch.scale()) / 2.0f) - m_text.width() / 2.0f,
-          (pos.y + (m_patch.size().y * m_patch.scale()) / 2.0f) - m_text_pipeline->point_size() / 2.0f });
+        { (pos.x + (static_cast<float>(m_patch.size().x) * m_patch.scale()) / 2.0f) - m_text.width() / 2.0f,
+          (pos.y + (static_cast<float>(m_patch.size().y) * m_patch.scale()) / 2.0f)
+              - static_cast<float>(m_text_pipeline->point_size()) / 2.0f });
 }
 void Button::set_scale(float scale)
 {
@@ -44,7 +46,7 @@ void Button::set_scale(float scale)
 
 void Button::set_hover_texture(std::shared_ptr<mve::Texture> texture)
 {
-    m_texture_hover = texture;
+    m_texture_hover = std::move(texture);
 }
 void Button::update(const mve::Window& window)
 {
@@ -88,11 +90,11 @@ void Button::update(const mve::Window& window)
 }
 void Button::set_pressed_texture(std::shared_ptr<mve::Texture> texture)
 {
-    m_texture_pressed = texture;
+    m_texture_pressed = std::move(texture);
 }
 bool Button::is_pos_in_button(const mve::Vector2& pos) const
 {
     return pos.x >= m_patch.position().x && pos.y >= m_patch.position().y
-        && pos.x <= m_patch.position().x + m_patch.size().x * m_patch.scale()
-        && pos.y <= m_patch.position().y + m_patch.size().y * m_patch.scale();
+        && pos.x <= m_patch.position().x + static_cast<float>(m_patch.size().x) * m_patch.scale()
+        && pos.y <= m_patch.position().y + static_cast<float>(m_patch.size().y) * m_patch.scale();
 }

@@ -3,7 +3,7 @@
 
 NinePatch::NinePatch(
     UIPipeline& ui_pipeline,
-    std::shared_ptr<mve::Texture> texture,
+    const std::shared_ptr<mve::Texture>& texture,
     NinePatchMargins margins,
     mve::Vector2i size,
     float scale)
@@ -18,10 +18,14 @@ NinePatch::NinePatch(
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
     m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
 
-    mve::Vector2 pixel = { 1.0f / texture->size().x, 1.0f / texture->size().y };
+    mve::Vector2 pixel = { 1.0f / static_cast<float>(texture->size().x), 1.0f / static_cast<float>(texture->size().y) };
 
-    std::array<float, 4> x_uvs = { 0.0f, pixel.x * margins.left, 1.0f - (pixel.x * margins.right), 1.0f };
-    std::array<float, 4> y_uvs = { 0.0f, pixel.y * margins.top, 1.0f - (pixel.y * margins.bottom), 1.0f };
+    std::array<float, 4> x_uvs = {
+        0.0f, pixel.x * static_cast<float>(margins.left), 1.0f - (pixel.x * static_cast<float>(margins.right)), 1.0f
+    };
+    std::array<float, 4> y_uvs = {
+        0.0f, pixel.y * static_cast<float>(margins.top), 1.0f - (pixel.y * static_cast<float>(margins.bottom)), 1.0f
+    };
 
     std::array<mve::Vector2, 16> uvs;
     int uv_index = 0;

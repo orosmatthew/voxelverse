@@ -37,7 +37,7 @@ public:
 
     [[nodiscard]] float text_buffer_width(const TextBuffer& buffer) const;
 
-    [[nodiscard]] inline float point_size() const
+    [[nodiscard]] inline int point_size() const
     {
         return c_point_size;
     }

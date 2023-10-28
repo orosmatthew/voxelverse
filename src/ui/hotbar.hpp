@@ -7,7 +7,7 @@
 
 class Hotbar {
 public:
-    Hotbar(UIPipeline& ui_pipeline);
+    explicit Hotbar(UIPipeline& ui_pipeline);
 
     void resize(const mve::Vector2i& extent);
 
@@ -17,7 +17,7 @@ public:
 
     void set_item(int pos, uint8_t block_type);
 
-    std::optional<uint8_t> item_at(int pos) const
+    [[nodiscard]] std::optional<uint8_t> item_at(int pos) const
     {
         if (m_items.at(pos).has_value()) {
             return m_items.at(pos)->type;
@@ -27,7 +27,7 @@ public:
         }
     }
 
-    inline int select_pos() const
+    [[nodiscard]] inline int select_pos() const
     {
         return m_select_pos;
     }
@@ -60,7 +60,7 @@ private:
     mve::Vector2i m_renderer_extent;
     int m_select_pos;
 
-    mve::Vector3 scale() const;
-    mve::Vector3 translation() const;
-    std::pair<mve::VertexData, std::vector<uint32_t>> create_item_mesh(uint8_t block_type) const;
+    [[nodiscard]] mve::Vector3 scale() const;
+    [[nodiscard]] mve::Vector3 translation() const;
+    static std::pair<mve::VertexData, std::vector<uint32_t>> create_item_mesh(uint8_t block_type);
 };

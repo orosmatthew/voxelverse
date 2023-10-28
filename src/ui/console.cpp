@@ -11,7 +11,7 @@ Console::Console(TextPipeline& pipeline)
 void Console::resize(mve::Vector2i extent)
 {
     float x = 0.0f + 8.0f;
-    float y = extent.y - 150.0f;
+    float y = static_cast<float>(extent.y) - 150.0f;
     m_input_text.set_translation({ x, y });
     std::optional<int> pos = m_input_text.cursor_pos();
     if (pos.has_value()) {
@@ -71,8 +71,8 @@ void Console::del()
 void Console::update_from_window(const mve::Window& window)
 {
     for (const std::string& str : window.input_stream()) {
-        for (auto c = str.begin(); c != str.end(); c++) {
-            input_char(*c);
+        for (char c : str) {
+            input_char(c);
         }
     }
     if (window.is_key_pressed(mve::Key::backspace) || window.is_key_repeated(mve::Key::backspace)) {
@@ -95,7 +95,7 @@ void Console::update_from_window(const mve::Window& window)
 }
 void Console::enable_cursor()
 {
-    m_input_text.add_cursor(m_input_str.length());
+    m_input_text.add_cursor(static_cast<int>(m_input_str.length()));
 }
 void Console::disable_cursor()
 {

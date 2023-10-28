@@ -24,13 +24,13 @@ int main()
         MVE_ASSERT(result, "[Main] Failed to create save dir")
     }
 
-    try {
-        app::App instance;
-        instance.main_loop();
-    }
-    catch (const std::exception& e) {
-        LOG->error(e.what());
-        return EXIT_FAILURE;
-    }
+    //    try {
+    app::App instance;
+    instance.main_loop();
+    //    }
+    //    catch (const std::exception& e) {
+    //        LOG->error(e.what());
+    //        return EXIT_FAILURE;
+    //    }
     return EXIT_SUCCESS;
 }

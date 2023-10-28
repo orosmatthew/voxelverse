@@ -1,8 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <sstream>
-#include <stdint.h>
 #include <string>
 
 #include <cereal/archives/portable_binary.hpp>
@@ -90,5 +90,5 @@ private:
 
     bool m_writing_batch = false;
     leveldb::WriteBatch m_batch {};
-    leveldb::DB* m_db;
+    leveldb::DB* m_db {};
 };

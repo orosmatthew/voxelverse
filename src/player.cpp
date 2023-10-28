@@ -149,7 +149,7 @@ mve::Vector3 Player::move_and_slide(
     auto detect_collision = [](mve::Vector3 vel, const BoundingBox& box, const WorldData& data) {
         BoundingBox broadphase_box = swept_broadphase_box(vel, box);
         SweptBoundingBoxCollision min_collision { .time = 1.0f, .normal = mve::Vector3(0.0f) };
-        mve::Vector3i min_neighbor = mve::Vector3i(broadphase_box.min.round());
+        auto min_neighbor = mve::Vector3i(broadphase_box.min.round());
         mve::Vector3i max_neighbor = mve::Vector3i(broadphase_box.max.round()) + mve::Vector3i(1, 1, 2);
         for_3d(min_neighbor, max_neighbor, [&](mve::Vector3i neighbor) {
             mve::Vector3i block_pos = neighbor - mve::Vector3i(0, 0, 1);

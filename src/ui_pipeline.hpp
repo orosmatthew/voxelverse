@@ -23,17 +23,17 @@ public:
         const mve::VertexBuffer& vertex_buffer,
         const mve::IndexBuffer& index_buffer) const;
 
-    inline mve::UniformLocation model_location() const
+    [[nodiscard]] inline mve::UniformLocation model_location() const
     {
         return m_vertex_shader.descriptor_set(1).binding(0).member("model").location();
     }
 
-    inline const mve::ShaderDescriptorBinding& texture_binding() const
+    [[nodiscard]] inline const mve::ShaderDescriptorBinding& texture_binding() const
     {
         return m_fragment_shader.descriptor_set(1).binding(1);
     }
 
-    inline const mve::DescriptorSet& global_descriptor_set() const
+    [[nodiscard]] inline const mve::DescriptorSet& global_descriptor_set() const
     {
         return m_global_descriptor_set;
     }
@@ -47,7 +47,7 @@ public:
         return *m_renderer;
     }
 
-    static inline const mve::VertexLayout vertex_layout()
+    static inline mve::VertexLayout vertex_layout()
     {
         return {
             mve::VertexAttributeType::vec3, // Position

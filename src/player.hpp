@@ -24,17 +24,17 @@ public:
     void update(const mve::Window& window, bool capture_input);
     void fixed_update(const mve::Window& window, const WorldData& data, bool capture_input);
 
-    inline mve::Vector3 position() const
+    [[nodiscard]] inline mve::Vector3 position() const
     {
         return m_body_transform.translation();
     }
 
-    inline mve::Vector3i block_position() const
+    [[nodiscard]] inline mve::Vector3i block_position() const
     {
         return mve::Vector3i(m_body_transform.translate({ 0.0f, 0.0f, -1.62f }).translation().round());
     }
 
-    inline mve::Matrix4 view_matrix(float interpolation_weight) const
+    [[nodiscard]] inline mve::Matrix4 view_matrix(float interpolation_weight) const
     {
         mve::Matrix4 transform = m_head_transform * m_body_transform;
         mve::Matrix3 basis = transform.basis();
@@ -44,7 +44,7 @@ public:
         return view;
     }
 
-    inline mve::Vector3 direction() const
+    [[nodiscard]] inline mve::Vector3 direction() const
     {
         mve::Matrix4 transform = m_head_transform * m_body_transform;
         mve::Matrix3 basis = transform.basis().transpose();
@@ -53,24 +53,24 @@ public:
         return direction.normalize();
     }
 
-    inline mve::Vector3 target() const
+    [[nodiscard]] inline mve::Vector3 target() const
     {
         return position() + direction();
     }
 
-    inline mve::Vector3 up() const
+    [[nodiscard]] static inline mve::Vector3 up()
     {
         return { 0, 0, 1 };
     }
 
-    inline BoundingBox bounding_box() const
+    [[nodiscard]] inline BoundingBox bounding_box() const
     {
         mve::Vector3 pos = m_body_transform.translation();
         return { { mve::Vector3(pos) - mve::Vector3(0.3f, 0.3f, 1.62f) },
                  { mve::Vector3(pos) + mve::Vector3(0.3f, 0.3f, 0.18f) } };
     }
 
-    inline mve::Vector3 velocity() const
+    [[nodiscard]] inline mve::Vector3 velocity() const
     {
         return m_velocity;
     }
@@ -78,7 +78,7 @@ public:
 private:
     void save_pos();
 
-    bool is_on_ground(const WorldData& data) const;
+    [[nodiscard]] bool is_on_ground(const WorldData& data) const;
 
     template <class Archive>
     void serialize(Archive& archive)

@@ -3,7 +3,6 @@
 #include "common.hpp"
 
 #include "FastNoiseLite.h"
-#include "logger.hpp"
 #include "world_data.hpp"
 
 WorldGenerator::WorldGenerator(int seed)
@@ -21,7 +20,7 @@ WorldGenerator::WorldGenerator(int seed)
 
 void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
 {
-    std::array<std::array<float, 16>, 16> heights;
+    std::array<std::array<float, 16>, 16> heights {};
 
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
@@ -41,13 +40,13 @@ void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
     for (int i = -10; i < 10; i++) {
         for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i pos) {
             mve::Vector3i world_pos = block_local_to_world({ chunk_pos.x, chunk_pos.y, i }, pos);
-            if (world_pos.z < heights[pos.x][pos.y] - 4) {
+            if (static_cast<float>(world_pos.z) < heights[pos.x][pos.y] - 4) {
                 data.set_block(world_pos, 2);
             }
-            else if (world_pos.z < heights[pos.x][pos.y] - 1) {
+            else if (static_cast<float>(world_pos.z) < heights[pos.x][pos.y] - 1) {
                 data.set_block(world_pos, 4);
             }
-            else if (world_pos.z < heights[pos.x][pos.y]) {
+            else if (static_cast<float>(world_pos.z) < heights[pos.x][pos.y]) {
                 data.set_block(world_pos, 1);
             }
             else {
@@ -72,7 +71,8 @@ void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
                 return;
             }
             if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2))) {
-                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z + height + 1));
+                //                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z +
+                //                height + 1));
                 mve::Vector3i world_pos = block_local_to_world(
                     { chunk_pos.x, chunk_pos.y, 0 },
                     { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });

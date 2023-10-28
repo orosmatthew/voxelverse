@@ -149,16 +149,17 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
     for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
-        float x_pos = pos.x + font_char.bearing.x * glyph.scale;
-        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * glyph.scale + c_point_size;
-        float w = font_char.size.x * glyph.scale;
-        float h = font_char.size.y * glyph.scale;
+        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * glyph.scale;
+        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * glyph.scale
+            + static_cast<float>(c_point_size);
+        float w = static_cast<float>(font_char.size.x) * glyph.scale;
+        float h = static_cast<float>(font_char.size.y) * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
-        pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
+        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
     }
 }
 void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
@@ -182,11 +183,12 @@ void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
     buffer_impl.cursor_pos = pos;
     float x = buffer_impl.translation.x;
     for (int i = 0; i < buffer_impl.render_glyphs.size() && i < pos; i++) {
-        x += mve::floor(m_font_chars[buffer_impl.render_glyphs[i].character].advance / 64.0f) * buffer_impl.scale;
+        x += mve::floor(static_cast<float>(m_font_chars[buffer_impl.render_glyphs[i].character].advance) / 64.0f)
+            * buffer_impl.scale;
     }
     mve::Matrix4 model = mve::Matrix4::identity()
-                             .scale(mve::Vector3(buffer_impl.scale * c_point_size))
-                             .translate({ x, buffer_impl.translation.y + c_point_size, 0.1f });
+                             .scale(mve::Vector3(buffer_impl.scale * static_cast<float>(c_point_size)))
+                             .translate({ x, buffer_impl.translation.y + static_cast<float>(c_point_size), 0.1f });
     buffer_impl.cursor->ubo.update(m_model_location, model);
 }
 void TextPipeline::remove_cursor(const TextBuffer& buffer)
@@ -216,18 +218,19 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
     MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     mve::Vector2 pos = buffer_impl.translation;
-    buffer_impl.text_length = text.length();
+    buffer_impl.text_length = static_cast<int>(text.length());
     float scale = buffer_impl.scale;
-    for (auto c = text.begin(); c != text.end(); c++) {
-        if (!m_font_chars.contains(*c)) {
-            LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(*c));
+    for (char c : text) {
+        if (!m_font_chars.contains(c)) {
+            LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(c));
             continue;
         }
-        const FontChar& font_char = m_font_chars.at(*c);
-        float x_pos = pos.x + font_char.bearing.x * scale;
-        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * scale + c_point_size;
-        float w = font_char.size.x * scale;
-        float h = font_char.size.y * scale;
+        const FontChar& font_char = m_font_chars.at(c);
+        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * scale;
+        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * scale
+            + static_cast<float>(c_point_size);
+        float w = static_cast<float>(font_char.size.x) * scale;
+        float h = static_cast<float>(font_char.size.y) * scale;
 
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
@@ -241,7 +244,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             it->ubo.update(m_model_location, model);
             it->ubo.update(m_text_color_location, buffer_impl.color);
             it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
-            it->character = *c;
+            it->character = c;
             it->translation = pos;
             it->scale = scale;
             it->is_valid = true;
@@ -253,7 +256,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             RenderGlyph render_glyph { .is_valid = true,
                                        .ubo = std::move(glyph_ubo),
                                        .descriptor_set = std::move(glyph_descriptor_set),
-                                       .character = *c,
+                                       .character = c,
                                        .translation = pos,
                                        .scale = scale };
             render_glyph.ubo.update(m_model_location, model);
@@ -261,7 +264,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
             render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
             buffer_impl.render_glyphs.push_back(std::move(render_glyph));
         }
-        pos.x += mve::floor(font_char.advance / 64.0f) * scale;
+        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * scale;
     }
     if (buffer_impl.cursor.has_value()) {
         set_cursor_pos(buffer, buffer_impl.cursor_pos);
@@ -293,16 +296,17 @@ void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)
     for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
-        float x_pos = pos.x + font_char.bearing.x * glyph.scale;
-        float y_pos = pos.y - (font_char.bearing.y - font_char.size.y) * scale + c_point_size;
-        float w = font_char.size.x * glyph.scale;
-        float h = font_char.size.y * glyph.scale;
+        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * glyph.scale;
+        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * scale
+            + static_cast<float>(c_point_size);
+        float w = static_cast<float>(font_char.size.x) * glyph.scale;
+        float h = static_cast<float>(font_char.size.y) * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
-        pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
+        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
     }
 }
 
@@ -328,7 +332,7 @@ TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 
     }
     else {
         buffer.m_handle = m_text_buffers.size();
-        m_text_buffers.push_back(std::move(buffer_impl));
+        m_text_buffers.emplace_back(std::move(buffer_impl));
     }
     set_text_buffer_scale(buffer, scale);
     set_text_buffer_translation(buffer, pos);
@@ -354,7 +358,7 @@ float TextPipeline::text_buffer_width(const TextBuffer& buffer) const
     for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to access invalid character")
         const FontChar& font_char = m_font_chars.at(glyph.character);
-        pos.x += mve::floor(font_char.advance / 64.0f) * glyph.scale;
+        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
     }
     return pos.x - buffer_impl.translation.x;
 }

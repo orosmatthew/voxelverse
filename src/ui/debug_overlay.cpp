@@ -39,7 +39,7 @@ void DebugOverlay::update_fps(int value)
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "fps: %d", value);
     m_fps_text.update(m_str_buffer.data());
 
-    std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "ms: %.1f", 1000.0f / value);
+    std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "ms: %.1f", 1000.0f / static_cast<float>(value));
     m_ms_text.update(m_str_buffer.data());
 }
 

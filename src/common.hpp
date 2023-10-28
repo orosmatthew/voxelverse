@@ -128,7 +128,7 @@ inline BoundingBox swept_broadphase_box(mve::Vector3 vel, const BoundingBox& box
 }
 
 struct SweptBoundingBoxCollision {
-    float time;
+    float time {};
     mve::Vector3 normal;
 };
 
@@ -252,10 +252,11 @@ struct QuadUVs {
 
 inline QuadUVs uvs_from_atlas(mve::Vector2i atlas_size, mve::Vector2i pos)
 {
-    mve::Vector2 atlas_unit = mve::Vector2(1.0f / atlas_size.x, 1.0f / atlas_size.y);
+    mve::Vector2 atlas_unit
+        = mve::Vector2(1.0f / static_cast<float>(atlas_size.x), 1.0f / static_cast<float>(atlas_size.y));
 
     QuadUVs uvs;
-    uvs.top_left = mve::Vector2(pos.x * atlas_unit.x, pos.y * atlas_unit.y);
+    uvs.top_left = mve::Vector2(static_cast<float>(pos.x) * atlas_unit.x, static_cast<float>(pos.y) * atlas_unit.y);
     uvs.top_right = uvs.top_left + mve::Vector2(atlas_unit.x, 0.0f);
     uvs.bottom_right = uvs.top_right + mve::Vector2(0.0f, atlas_unit.y);
     uvs.bottom_left = uvs.bottom_right + mve::Vector2(-atlas_unit.x, 0.0f);
@@ -317,19 +318,14 @@ inline bool is_transparent(uint8_t block_type)
 
 inline bool is_emissive(uint8_t block_type)
 {
-    switch (block_type) {
-    case 10:
-        return true;
-    default:
-        return false;
-    }
+    return block_type == 10;
 }
 
 inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
 {
-    return { static_cast<int>(mve::floor(block_pos.x / 16.0f)),
-             static_cast<int>(mve::floor(block_pos.y / 16.0f)),
-             static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
+    return { static_cast<int>(mve::floor(static_cast<float>(block_pos.x) / 16.0f)),
+             static_cast<int>(mve::floor(static_cast<float>(block_pos.y) / 16.0f)),
+             static_cast<int>(mve::floor(static_cast<float>(block_pos.z) / 16.0f)) };
 }
 
 inline mve::Vector3i block_world_to_local(mve::Vector3i world_block_pos)

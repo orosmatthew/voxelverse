@@ -55,7 +55,7 @@ private:
     }
 
     struct ChunkState {
-        uint8_t m_flags;
+        uint8_t m_flags {};
         int neighbors = 0;
     };
 

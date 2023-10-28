@@ -58,12 +58,12 @@ void ChunkController::update(
         }
     }
 
-//    world_data.process_chunk_lighting_updates();
+    //    world_data.process_chunk_lighting_updates();
     world_renderer.process_mesh_updates(world_data);
 
     chunk_count = 0;
 
-    for (int i = m_sorted_cols.size() - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(m_sorted_cols.size()) - 1; i >= 0; i--) {
         const mve::Vector2i pos = m_sorted_cols[i];
         ChunkState& state = m_chunk_states.at(pos);
         if (!contains_flag(state.m_flags, flag_queued_delete)) {
@@ -135,7 +135,11 @@ void ChunkController::sort_cols()
         m_sorted_cols.push_back(pos);
     }
     std::sort(m_sorted_cols.begin(), m_sorted_cols.end(), [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-        return mve::distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk_col.x, m_player_chunk_col.y))
-            < mve::distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk_col.x, m_player_chunk_col.y));
+        return mve::distance_sqrd(
+                   mve::Vector2(a),
+                   mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))
+            < mve::distance_sqrd(
+                   mve::Vector2(b),
+                   mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)));
     });
 }

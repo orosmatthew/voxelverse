@@ -30,7 +30,7 @@ public:
         queue_save_chunk(chunk_pos);
     }
 
-    inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
+    [[nodiscard]] inline std::optional<uint8_t> block_at(mve::Vector3i block_pos) const
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
         if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
@@ -45,33 +45,34 @@ public:
         }
     }
 
-//    inline void set_lighting(mve::Vector3i pos, uint8_t val)
-//    {
-//        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
-//        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
-//    }
+    //    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+    //    {
+    //        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
+    //        m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
+    //    }
 
-//    inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
-//    {
-//        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-//        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
-//            return {};
-//        }
-//        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
-//        if (result == m_chunk_columns.end()) {
-//            return {};
-//        }
-//        else {
-//            return result->second.lighting_at(block_pos);
-//        }
-//    }
+    //    inline std::optional<uint8_t> lighting_at(mve::Vector3i block_pos) const
+    //    {
+    //        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+    //        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+    //            return {};
+    //        }
+    //        auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y });
+    //        if (result == m_chunk_columns.end()) {
+    //            return {};
+    //        }
+    //        else {
+    //            return result->second.lighting_at(block_pos);
+    //        }
+    //    }
 
-    inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
+    [[nodiscard]] inline uint8_t block_at_local(mve::Vector3i chunk_pos, mve::Vector3i block_pos) const
     {
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).get_block(block_pos);
     }
 
-    inline std::optional<uint8_t> block_at_relative(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
+    [[nodiscard]] inline std::optional<uint8_t> block_at_relative(
+        mve::Vector3i chunk_pos, mve::Vector3i local_block_pos) const
     {
         if (WorldData::is_block_pos_local(local_block_pos)) {
             return block_at_local(chunk_pos, local_block_pos);
@@ -100,7 +101,7 @@ public:
         return m_chunk_columns.at(chunk_pos);
     }
 
-    inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
+    [[nodiscard]] inline const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
     {
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
@@ -110,7 +111,7 @@ public:
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
 
-    inline bool contains_chunk(mve::Vector3i chunk_pos) const
+    [[nodiscard]] inline bool contains_chunk(mve::Vector3i chunk_pos) const
     {
         return chunk_pos.z >= -10 && chunk_pos.z < 10 && m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y });
     }
@@ -119,14 +120,14 @@ public:
 
     static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)
     {
-        return { static_cast<int>(mve::floor(block_pos.x / 16.0f)),
-                 static_cast<int>(mve::floor(block_pos.y / 16.0f)),
-                 static_cast<int>(mve::floor(block_pos.z / 16.0f)) };
+        return { static_cast<int>(mve::floor(static_cast<float>(block_pos.x) / 16.0f)),
+                 static_cast<int>(mve::floor(static_cast<float>(block_pos.y) / 16.0f)),
+                 static_cast<int>(mve::floor(static_cast<float>(block_pos.z) / 16.0f)) };
     }
 
     static inline int chunk_height_from_block_height(int block_height)
     {
-        return static_cast<int>(mve::floor(block_height / 16.0f));
+        return static_cast<int>(mve::floor(static_cast<float>(block_height) / 16.0f));
     }
 
     static inline mve::Vector3i block_local_to_world(mve::Vector3i chunk_pos, mve::Vector3i local_block_pos)
@@ -189,16 +190,16 @@ public:
         }
     }
 
-//    void process_chunk_lighting_updates();
+    //    void process_chunk_lighting_updates();
 
     void queue_save_chunk(mve::Vector2i pos);
 
 private:
     void process_save_queue();
 
-    void spread_light(const mve::Vector3i light_pos);
+    //    void spread_light(const mve::Vector3i light_pos);
 
-    void propagate_light(mve::Vector3i chunk_pos);
+    //    void propagate_light(mve::Vector3i chunk_pos);
 
     std::set<mve::Vector2i> m_save_queue;
     SaveFile m_save;

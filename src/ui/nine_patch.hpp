@@ -17,7 +17,7 @@ class NinePatch {
 public:
     NinePatch(
         UIPipeline& ui_pipeline,
-        std::shared_ptr<mve::Texture> texture,
+        const std::shared_ptr<mve::Texture>& texture,
         NinePatchMargins margins,
         mve::Vector2i size,
         float scale = 1.0f);

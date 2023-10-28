@@ -41,7 +41,10 @@ std::optional<std::string> SaveFile::at(const std::string& key)
     std::vector<char> decompressed_data;
     decompressed_data.resize(value_data.decompressed_size);
     int result_size = LZ4_decompress_safe(
-        value_data.data.data(), decompressed_data.data(), value_data.data.size(), decompressed_data.size());
+        value_data.data.data(),
+        decompressed_data.data(),
+        static_cast<int>(value_data.data.size()),
+        static_cast<int>(decompressed_data.size()));
     MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key)
     decompressed_data.resize(result_size);
 
@@ -51,9 +54,9 @@ std::optional<std::string> SaveFile::at(const std::string& key)
 void SaveFile::insert(const std::string& key, const std::string& value)
 {
 
-    std::vector<char> compressed_data(LZ4_compressBound(value.size()));
-    int compressed_size
-        = LZ4_compress_default(value.data(), compressed_data.data(), value.size(), compressed_data.size());
+    std::vector<char> compressed_data(LZ4_compressBound(static_cast<int>(value.size())));
+    int compressed_size = LZ4_compress_default(
+        value.data(), compressed_data.data(), static_cast<int>(value.size()), static_cast<int>(compressed_data.size()));
     MVE_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
     compressed_data.resize(compressed_size);
 

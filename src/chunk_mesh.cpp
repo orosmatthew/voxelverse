@@ -4,7 +4,7 @@
 #include "mve/math/math.hpp"
 #include "world_renderer.hpp"
 
-ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data)
+ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos)
     : m_chunk_pos(chunk_pos)
 {
     //    create_mesh_data(chunk_pos, data);
@@ -19,8 +19,8 @@ void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
         data.uvs.push_back(other.uvs[i]);
     }
 
-    for (int i = 0; i < other.indices.size(); i++) {
-        data.indices.push_back(other.indices[i] + indices_offset);
+    for (unsigned int index : other.indices) {
+        data.indices.push_back(index + indices_offset);
     }
 }
 
@@ -38,7 +38,7 @@ void ChunkMesh::calc_block_faces(
         if (!directions[f]) {
             continue;
         }
-        Direction dir = static_cast<Direction>(f);
+        auto dir = static_cast<Direction>(f);
         mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
         std::optional<uint8_t> adj_block;
         if (WorldData::is_block_pos_local(adj_local_pos)) {
@@ -183,16 +183,24 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(
         data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     default:
-        MVE_ASSERT(false, "Unreachable");
+        MVE_ASSERT(false, "Unreachable")
     }
     data.uvs[0] = uvs.top_left;
     data.uvs[1] = uvs.top_right;
     data.uvs[2] = uvs.bottom_right;
     data.uvs[3] = uvs.bottom_left;
-    data.colors[0] = { lighting[0] / 255.0f, lighting[0] / 255.0f, lighting[0] / 255.0f };
-    data.colors[1] = { lighting[1] / 255.0f, lighting[1] / 255.0f, lighting[1] / 255.0f };
-    data.colors[2] = { lighting[2] / 255.0f, lighting[2] / 255.0f, lighting[2] / 255.0f };
-    data.colors[3] = { lighting[3] / 255.0f, lighting[3] / 255.0f, lighting[3] / 255.0f };
+    data.colors[0] = { static_cast<float>(lighting[0]) / 255.0f,
+                       static_cast<float>(lighting[0]) / 255.0f,
+                       static_cast<float>(lighting[0]) / 255.0f };
+    data.colors[1] = { static_cast<float>(lighting[1]) / 255.0f,
+                       static_cast<float>(lighting[1]) / 255.0f,
+                       static_cast<float>(lighting[1]) / 255.0f };
+    data.colors[2] = { static_cast<float>(lighting[2]) / 255.0f,
+                       static_cast<float>(lighting[2]) / 255.0f,
+                       static_cast<float>(lighting[2]) / 255.0f };
+    data.colors[3] = { static_cast<float>(lighting[3]) / 255.0f,
+                       static_cast<float>(lighting[3]) / 255.0f,
+                       static_cast<float>(lighting[3]) / 255.0f };
     data.indices = { 0, 3, 2, 0, 2, 1 };
     return data;
 }
@@ -206,8 +214,8 @@ void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::Fac
         data.uvs.push_back(face.uvs[i]);
     }
 
-    for (int i = 0; i < face.indices.size(); i++) {
-        data.indices.push_back(face.indices[i] + indices_offset);
+    for (unsigned int index : face.indices) {
+        data.indices.push_back(index + indices_offset);
     }
 }
 
@@ -219,11 +227,11 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
     Direction dir)
 {
     uint8_t base_lighting;
-    mve::Vector3i world_pos = WorldData::block_local_to_world(chunk_pos, local_block_pos);
+    //    mve::Vector3i world_pos = WorldData::block_local_to_world(chunk_pos, local_block_pos);
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
     case Direction::front:
-        base_lighting = 15; //base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
+        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
         check_blocks[0] = { -1, -1, 1 };
         check_blocks[1] = { 0, -1, 1 };
         check_blocks[2] = { 1, -1, 1 };
@@ -234,7 +242,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { -1, -1, 0 };
         break;
     case Direction::back:
-        base_lighting = 15; //base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
+        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
         check_blocks[0] = { 1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { -1, 1, 1 };
@@ -245,7 +253,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { 1, 1, 0 };
         break;
     case Direction::left:
-        base_lighting = 15; //base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
+        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { -1, 0, 1 };
         check_blocks[2] = { -1, -1, 1 };
@@ -256,7 +264,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { -1, 1, 0 };
         break;
     case Direction::right:
-        base_lighting = 15; //base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
+        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
         check_blocks[0] = { 1, -1, 1 };
         check_blocks[1] = { 1, 0, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -267,7 +275,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         check_blocks[7] = { 1, -1, 0 };
         break;
     case Direction::top:
-        base_lighting = 15; //base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
+        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -307,37 +315,40 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         if (!check_block.has_value()) {
             continue;
         }
-        const float dark_fraction = 0.8f;
+        const uint8_t occlusion_factor = 35;
+        static_assert(255 - static_cast<int>(occlusion_factor) * 3 > 0);
         if (check_block.value() != 0) {
             switch (i) {
             case 0:
-                lighting[0] *= dark_fraction;
+                lighting[0] -= occlusion_factor;
                 break;
             case 1:
-                lighting[0] *= dark_fraction;
-                lighting[1] *= dark_fraction;
+                lighting[0] -= occlusion_factor;
+                lighting[1] -= occlusion_factor;
                 break;
             case 2:
-                lighting[1] *= dark_fraction;
+                lighting[1] -= occlusion_factor;
                 break;
             case 3:
-                lighting[1] *= dark_fraction;
-                lighting[2] *= dark_fraction;
+                lighting[1] -= occlusion_factor;
+                lighting[2] -= occlusion_factor;
                 break;
             case 4:
-                lighting[2] *= dark_fraction;
+                lighting[2] -= occlusion_factor;
                 break;
             case 5:
-                lighting[2] *= dark_fraction;
-                lighting[3] *= dark_fraction;
+                lighting[2] -= occlusion_factor;
+                lighting[3] -= occlusion_factor;
                 break;
             case 6:
-                lighting[3] *= dark_fraction;
+                lighting[3] -= occlusion_factor;
                 break;
             case 7:
-                lighting[3] *= dark_fraction;
-                lighting[0] *= dark_fraction;
+                lighting[3] -= occlusion_factor;
+                lighting[0] -= occlusion_factor;
                 break;
+            default:
+                MVE_ASSERT(false, "Unreachable")
             }
         }
     }
@@ -353,6 +364,4 @@ void ChunkMesh::create_buffers(mve::Renderer& renderer)
         = { renderer.create_vertex_buffer(m_vertex_data->first), renderer.create_index_buffer(m_vertex_data->second) };
     m_vertex_data.reset();
 }
-ChunkMesh::ChunkMesh()
-{
-}
+ChunkMesh::ChunkMesh() = default;

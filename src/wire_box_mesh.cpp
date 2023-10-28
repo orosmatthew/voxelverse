@@ -65,35 +65,35 @@ WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(float length, float width, c
     float hl = length / 2.0f;
     float hw = width / 2.0f;
     // Front
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, -hw));
+    mesh_data.vertices.emplace_back(-hl, -hw, hw);
+    mesh_data.vertices.emplace_back(hl, -hw, hw);
+    mesh_data.vertices.emplace_back(hl, -hw, -hw);
+    mesh_data.vertices.emplace_back(-hl, -hw, -hw);
     // Back
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, -hw));
+    mesh_data.vertices.emplace_back(hl, hw, hw);
+    mesh_data.vertices.emplace_back(-hl, hw, hw);
+    mesh_data.vertices.emplace_back(-hl, hw, -hw);
+    mesh_data.vertices.emplace_back(hl, hw, -hw);
     // Left
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, -hw));
+    mesh_data.vertices.emplace_back(-hl, hw, hw);
+    mesh_data.vertices.emplace_back(-hl, -hw, hw);
+    mesh_data.vertices.emplace_back(-hl, -hw, -hw);
+    mesh_data.vertices.emplace_back(-hl, hw, -hw);
     // Right
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, -hw));
+    mesh_data.vertices.emplace_back(hl, -hw, hw);
+    mesh_data.vertices.emplace_back(hl, hw, hw);
+    mesh_data.vertices.emplace_back(hl, hw, -hw);
+    mesh_data.vertices.emplace_back(hl, -hw, -hw);
     // Top
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, hw));
+    mesh_data.vertices.emplace_back(-hl, hw, hw);
+    mesh_data.vertices.emplace_back(hl, hw, hw);
+    mesh_data.vertices.emplace_back(hl, -hw, hw);
+    mesh_data.vertices.emplace_back(-hl, -hw, hw);
     // Bottom
-    mesh_data.vertices.push_back(mve::Vector3(hl, hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(-hl, -hw, -hw));
-    mesh_data.vertices.push_back(mve::Vector3(hl, -hw, -hw));
+    mesh_data.vertices.emplace_back(hl, hw, -hw);
+    mesh_data.vertices.emplace_back(-hl, hw, -hw);
+    mesh_data.vertices.emplace_back(-hl, -hw, -hw);
+    mesh_data.vertices.emplace_back(hl, -hw, -hw);
 
     std::transform(
         mesh_data.vertices.cbegin(), mesh_data.vertices.cend(), mesh_data.vertices.begin(), [&](mve::Vector3 vertex) {

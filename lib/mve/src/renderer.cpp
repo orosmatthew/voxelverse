@@ -36,7 +36,7 @@ Renderer::Renderer(
 #endif
     m_vk_surface = create_vk_surface(m_vk_instance, window.glfw_handle());
     m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_loader, m_vk_surface);
-    m_msaa_samples = vk::SampleCountFlagBits::e1; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
+    m_msaa_samples = vk::SampleCountFlagBits::e4; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
     m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_loader, m_vk_physical_device, m_vk_surface);
     m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_vk_queue_family_indices);
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr, m_vk_device, vkGetDeviceProcAddr);
@@ -360,7 +360,7 @@ vk::SurfaceKHR Renderer::create_vk_surface(vk::Instance instance, GLFWwindow* wi
     VkSurfaceKHR surface;
     VkResult result = glfwCreateWindowSurface(instance, window, nullptr, &surface);
     MVE_ASSERT(result == VK_SUCCESS, "[Renderer] Failed to create window surface")
-    return vk::SurfaceKHR(surface);
+    return { surface };
 }
 
 std::vector<const char*> Renderer::get_vk_device_required_exts()
@@ -1170,7 +1170,7 @@ vk::DebugUtilsMessengerEXT Renderer::create_vk_debug_messenger(vk::Instance inst
 
     VkDebugUtilsMessengerEXT debug_messenger;
     func(instance, &debug_create_info, nullptr, &debug_messenger);
-    return vk::DebugUtilsMessengerEXT(debug_messenger);
+    return { debug_messenger };
 }
 
 VkBool32 Renderer::vk_debug_callback(

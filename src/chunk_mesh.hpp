@@ -12,11 +12,11 @@ class ChunkMesh {
 public:
     ChunkMesh();
 
-    ChunkMesh(mve::Vector3i chunk_pos, const WorldData& data);
+    explicit ChunkMesh(mve::Vector3i chunk_pos);
 
     void draw(mve::Renderer& renderer) const;
 
-    inline mve::Vector3i chunk_position() const
+    [[nodiscard]] inline mve::Vector3i chunk_position() const
     {
         return m_chunk_pos;
     }
@@ -36,7 +36,7 @@ private:
         std::array<mve::Vector3, 4> vertices;
         std::array<mve::Vector3, 4> colors;
         std::array<mve::Vector2, 4> uvs;
-        std::array<uint32_t, 6> indices;
+        std::array<uint32_t, 6> indices {};
     };
     struct MeshBuffers {
         mve::VertexBuffer vertex_buffer;

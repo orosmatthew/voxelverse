@@ -8,7 +8,7 @@ public:
     explicit Button(
         UIPipeline& ui_pipeline,
         TextPipeline& text_pipeline,
-        std::shared_ptr<mve::Texture> texture,
+        const std::shared_ptr<mve::Texture>& texture,
         const std::string& text,
         const mve::Vector2i& size,
         float scale = 1.0f);

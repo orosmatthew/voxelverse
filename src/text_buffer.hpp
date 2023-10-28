@@ -24,7 +24,7 @@ public:
         *this = std::move(pipeline.create_text_buffer(text, pos, scale, color));
     }
 
-    inline TextBuffer(TextBuffer&& other)
+    inline TextBuffer(TextBuffer&& other) noexcept
         : m_valid(other.m_valid)
         , m_pipeline(other.m_pipeline)
         , m_handle(other.m_handle)
@@ -39,12 +39,12 @@ public:
         }
     }
 
-    inline size_t handle() const
+    [[nodiscard]] inline size_t handle() const
     {
         return m_handle;
     }
 
-    inline bool is_valid() const
+    [[nodiscard]] inline bool is_valid() const
     {
         return m_valid;
     }
@@ -99,7 +99,7 @@ public:
         m_pipeline->remove_cursor(*this);
     }
 
-    inline std::optional<int> cursor_pos() const
+    [[nodiscard]] inline std::optional<int> cursor_pos() const
     {
         return m_pipeline->cursor_pos(*this);
     }
@@ -109,7 +109,7 @@ public:
         m_pipeline->draw(*this);
     }
 
-    inline TextBuffer& operator=(TextBuffer&& other)
+    inline TextBuffer& operator=(TextBuffer&& other) noexcept
     {
         if (m_valid) {
             m_pipeline->destroy(*this);
@@ -133,8 +133,8 @@ public:
 
 private:
     bool m_valid = false;
-    TextPipeline* m_pipeline;
-    size_t m_handle;
+    TextPipeline* m_pipeline {};
+    size_t m_handle {};
 };
 
 namespace std {

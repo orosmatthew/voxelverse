@@ -28,7 +28,7 @@ void World::fixed_update(const mve::Window& window)
 std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
 {
     mve::Vector3 delta = end - start;
-    int step = mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z))));
+    int step = static_cast<int>(mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z)))));
     mve::Vector3 increment = delta / static_cast<float>(step);
     std::set<mve::Vector3i> blocks_set;
     mve::Vector3 current = start;
@@ -91,7 +91,7 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     t[6] = mve::max(mve::max(mve::min(t[0], t[1]), mve::min(t[2], t[3])), mve::min(t[4], t[5]));
     t[7] = mve::min(mve::min(mve::max(t[0], t[1]), mve::max(t[2], t[3])), mve::max(t[4], t[5]));
 
-    RayCollision collision = { 0 };
+    RayCollision collision = { false };
     collision.hit = !((t[7] < 0) || (t[6] > t[7]));
     collision.distance = t[6];
     collision.point = ray.position + (ray.direction * collision.distance);
@@ -125,9 +125,11 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
         RayCollision collision = ray_box_collision(ray, bb);
         if (collision.hit) {
-            mve::Vector3i place_pos { static_cast<int>(mve::round(block_pos.x + collision.normal.x)),
-                                      static_cast<int>(mve::round(block_pos.y + collision.normal.y)),
-                                      static_cast<int>(mve::round(block_pos.z + collision.normal.z)) };
+            mve::Vector3i place_pos {
+                static_cast<int>(mve::round(static_cast<float>(block_pos.x) + collision.normal.x)),
+                static_cast<int>(mve::round(static_cast<float>(block_pos.y) + collision.normal.y)),
+                static_cast<int>(mve::round(static_cast<float>(block_pos.z) + collision.normal.z))
+            };
             BoundingBox player_box = camera.bounding_box();
             BoundingBox broadphase_box = swept_broadphase_box(camera.velocity(), player_box);
             BoundingBox place_bb = { { mve::Vector3(place_pos) - mve::Vector3(0.5f) },

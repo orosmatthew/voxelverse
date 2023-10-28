@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <optional>
-#include <stdint.h>
 
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
@@ -58,36 +58,36 @@ public:
 
     explicit ChunkData(mve::Vector3i chunk_pos);
 
-//    inline void reset_lighting()
-//    {
-//        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
-//    }
+    //    inline void reset_lighting()
+    //    {
+    //        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
+    //    }
 
-    mve::Vector3i position() const;
+    [[nodiscard]] mve::Vector3i position() const;
 
     void set_block(mve::Vector3i pos, uint8_t type);
-    inline uint8_t get_block(mve::Vector3i pos) const
+    [[nodiscard]] inline uint8_t get_block(mve::Vector3i pos) const
     {
         return m_block_data[index(pos)];
     }
 
-//    inline void set_lighting(mve::Vector3i pos, uint8_t val)
-//    {
-//        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
-//        m_lighting_data[index(pos)] = val;
-//    }
+    //    inline void set_lighting(mve::Vector3i pos, uint8_t val)
+    //    {
+    //        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+    //        m_lighting_data[index(pos)] = val;
+    //    }
 
-//    inline uint8_t lighting_at(mve::Vector3i pos) const
-//    {
-//        return m_lighting_data[index(pos)];
-//    }
+    //    inline uint8_t lighting_at(mve::Vector3i pos) const
+    //    {
+    //        return m_lighting_data[index(pos)];
+    //    }
 
-    inline int block_count() const
+    [[nodiscard]] inline int block_count() const
     {
         return m_block_count;
     }
 
-    bool in_bounds(mve::Vector3i pos) const;
+    [[nodiscard]] bool in_bounds(mve::Vector3i pos) const;
 
     template <class Archive>
     void serialize(Archive& archive)
@@ -113,7 +113,7 @@ private:
         return pos.x + pos.y * sc_chunk_size;
     }
 
-    static inline mve::Vector3i pos(size_t index)
+    static inline mve::Vector3i pos(int index)
     {
         mve::Vector3i vector;
         vector.x = index % sc_chunk_size;
@@ -122,7 +122,7 @@ private:
         return vector;
     }
 
-    static inline mve::Vector2i pos2(size_t index)
+    static inline mve::Vector2i pos2(int index)
     {
         mve::Vector2i vector;
         vector.x = index % sc_chunk_size;
@@ -133,7 +133,7 @@ private:
     static const int sc_chunk_size = 16;
     mve::Vector3i m_pos;
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_block_data = { 0 };
-//    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
+    //    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
     std::array<uint8_t, (sc_chunk_size * sc_chunk_size)> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};
