@@ -14,8 +14,8 @@ public:
 
         // compute width and height of the near and far quads
         m_tan_angle = mve::tan(m_angle);
-        m_sphere_factor.y = 1.0 / mve::cos(m_angle);
-        m_sphere_factor.x = 1.0 / mve::cos(mve::atan(m_tan_angle * ratio));
+        m_sphere_factor.y = 1.0f / mve::cos(m_angle);
+        m_sphere_factor.x = 1.0f / mve::cos(mve::atan(m_tan_angle * ratio));
 
         m_near_size.y = m_near_dist * m_tan_angle;
         m_near_size.x = m_near_size.y * ratio;
@@ -52,7 +52,7 @@ public:
         m_far_quad.bottom_left = far_center - m_y_axis * m_far_size.y - m_x_axis * m_far_size.x;
     }
 
-    inline bool contains_point(mve::Vector3 point) const
+    [[nodiscard]] inline bool contains_point(mve::Vector3 point) const
     {
         mve::Vector3 point_from_center = point - m_camera_pos;
 
@@ -76,7 +76,7 @@ public:
         return true;
     }
 
-    inline bool contains_sphere(mve::Vector3 position, float radius) const
+    [[nodiscard]] inline bool contains_sphere(mve::Vector3 position, float radius) const
     {
         float d1, d2;
         float az, ax, ay, zz1, zz2;
@@ -124,11 +124,11 @@ private:
     mve::Vector3 m_y_axis;
     mve::Vector3 m_z_axis;
     mve::Vector3 m_camera_pos;
-    float m_near_dist;
-    float m_far_dist;
-    float m_ratio;
-    float m_angle;
-    float m_tan_angle;
+    float m_near_dist {};
+    float m_far_dist {};
+    float m_ratio {};
+    float m_angle {};
+    float m_tan_angle {};
     mve::Vector2 m_sphere_factor;
     mve::Vector2 m_near_size;
     mve::Vector2 m_far_size;
