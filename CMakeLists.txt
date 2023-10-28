@@ -93,8 +93,10 @@ add_executable(${PROJECT_NAME})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC RES_PATH="../res")
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_link_libraries(${PROJECT_NAME} -static-libgcc -static-libstdc++)
+if (WIN32)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -stdlib=libc++ -lc++abi")
+    endif ()
 endif ()
 
 target_sources(${PROJECT_NAME} PRIVATE
