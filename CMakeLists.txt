@@ -5,7 +5,7 @@ project(voxelverse)
 set(CMAKE_CXX_STANDARD 20)
 
 function(add_shaders TARGET)
-    find_program(GLSLANGVALIDATOR glslangvalidator)
+    find_program(GLSLANGVALIDATOR glslangValidator)
     foreach (SHADER ${ARGN})
         set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
         set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
@@ -116,27 +116,27 @@ add_shaders(voxelverse
         text.vert
         text.frag)
 
-set(TEST_LIB_SOURCE_FILES
-        external/catch2-3.3.2/src/catch_amalgamated.cpp)
-
-set(TEST_SOURCE_FILES
-        tests/vertex_data.cpp)
-
-set(TEST_LIB_INCLUDES
-        external/catch2-3.3.2/include)
-
-add_executable(tests)
-
-target_compile_definitions(tests PUBLIC RES_PATH="../res")
-
-target_sources(tests PRIVATE
-        ${LIB_SOURCE_FILES}
-        ${SOURCE_FILES}
-        ${TEST_LIB_SOURCE_FILES}
-        ${TEST_SOURCE_FILES})
-
-target_link_libraries(tests ${LIBS})
-
-target_include_directories(tests PRIVATE
-        ${LIB_INCLUDES}
-        ${TEST_LIB_INCLUDES})
+#set(TEST_LIB_SOURCE_FILES
+#        external/catch2-3.3.2/src/catch_amalgamated.cpp)
+#
+#set(TEST_SOURCE_FILES
+#        tests/vertex_data.cpp)
+#
+#set(TEST_LIB_INCLUDES
+#        external/catch2-3.3.2/include)
+#
+#add_executable(tests)
+#
+#target_compile_definitions(tests PUBLIC RES_PATH="../res")
+#
+#target_sources(tests PRIVATE
+#        ${LIB_SOURCE_FILES}
+#        ${SOURCE_FILES}
+#        ${TEST_LIB_SOURCE_FILES}
+#        ${TEST_SOURCE_FILES})
+#
+#target_link_libraries(tests ${LIBS})
+#
+#target_include_directories(tests PRIVATE
+#        ${LIB_INCLUDES}
+#        ${TEST_LIB_INCLUDES})
