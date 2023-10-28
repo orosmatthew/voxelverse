@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "mve/math/math.hpp"
 
 class WorldData;

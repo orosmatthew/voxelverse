@@ -24,7 +24,7 @@ inline float abs(float val)
 }
 inline float ceil(float val)
 {
-    return ::ceilf(val);
+    return std::ceilf(val);
 }
 inline float clamp(float val, float min, float max)
 {
@@ -38,11 +38,11 @@ inline float clamp(float val, float min, float max)
 }
 inline float sqrt(float val)
 {
-    return ::sqrtf(val);
+    return std::sqrtf(val);
 }
 inline float pow(float val, float power)
 {
-    return ::powf(val, power);
+    return std::powf(val, power);
 }
 inline float sqrd(float val)
 {
@@ -51,7 +51,7 @@ inline float sqrd(float val)
 
 inline float floor(float val)
 {
-    return ::floorf(val);
+    return std::floorf(val);
 }
 inline float linear_interpolate(float from, float to, float weight)
 {
@@ -59,15 +59,15 @@ inline float linear_interpolate(float from, float to, float weight)
 }
 inline float sin(float val)
 {
-    return ::sinf(val);
+    return std::sinf(val);
 }
 inline float cos(float val)
 {
-    return ::cosf(val);
+    return std::cosf(val);
 }
 inline float tan(float val)
 {
-    return ::tanf(val);
+    return std::tanf(val);
 }
 inline int abs(int val)
 {
@@ -93,11 +93,11 @@ inline float round(float val)
 }
 inline float atan(float val)
 {
-    return ::atanf(val);
+    return std::atanf(val);
 }
 inline float atan2(float a, float b)
 {
-    return ::atan2f(a, b);
+    return std::atan2f(a, b);
 }
 inline float radians(float degrees)
 {
@@ -109,11 +109,11 @@ inline float degrees(float radians)
 }
 inline float asin(float val)
 {
-    return ::asinf(val);
+    return std::asinf(val);
 }
 inline float acos(float val)
 {
-    return ::acosf(val);
+    return std::acosf(val);
 }
 inline float min(float a, float b)
 {
