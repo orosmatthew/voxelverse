@@ -93,7 +93,7 @@ inline float round(float val)
 }
 inline float atan(float val)
 {
-    return std::atanf(val);
+    return std::atan(val);
 }
 inline float atan2(float a, float b)
 {
