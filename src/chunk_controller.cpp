@@ -23,7 +23,7 @@ void ChunkController::update(
         if (!contains_flag(flags, flag_has_data)) {
             if (!world_data.try_load_chunk_column_from_save(col_pos)) {
                 world_data.create_chunk_column(col_pos);
-                world_generator.generate_chunks(world_data.chunk_column_data_at(col_pos), col_pos);
+                world_generator.generate_chunk(world_data.chunk_column_data_at(col_pos), col_pos);
                 world_data.queue_save_chunk(col_pos);
                 world_data.chunk_column_data_at(col_pos).set_generated(true);
             }

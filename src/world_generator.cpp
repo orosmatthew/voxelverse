@@ -18,7 +18,48 @@ WorldGenerator::WorldGenerator(int seed)
     m_struct_noise->SetFrequency(1.0f);
 }
 
-void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
+bool WorldGenerator::generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos)
+{
+    generate_terrain(data, chunk_pos);
+    std::array<std::array<int, 16>, 16> heights {};
+    for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
+        for (int h = 9 * 16; h > -10 * 16; h--) {
+            if (data.get_block(mve::Vector3i(chunk_pos.x * 16 + pos.x, chunk_pos.y * 16 + pos.y, h)) != 0) {
+                heights[pos.x][pos.y] = h;
+                break;
+            }
+        }
+    });
+    for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
+        mve::Vector2i world_col_pos
+            = WorldData::block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
+        float rand = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
+        if (rand <= 0.8f) {
+            return;
+        }
+        int height = heights[pos.x][pos.y];
+        for_3d({ 0, 0, 0 }, { 5, 5, 7 }, [&](mve::Vector3i struct_pos) {
+            if (c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x] == 0) {
+                return;
+            }
+            if (!WorldData::is_block_height_world_valid(struct_pos.z + height + 1)) {
+                return;
+            }
+            if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2))) {
+                //                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z +
+                //                height + 1));
+                mve::Vector3i world_pos = block_local_to_world(
+                    { chunk_pos.x, chunk_pos.y, 0 },
+                    { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
+                world_pos.z = struct_pos.z + height + 1;
+                data.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
+            }
+        });
+    });
+    return true;
+}
+
+void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos)
 {
     std::array<std::array<float, 16>, 16> heights {};
 
@@ -54,31 +95,4 @@ void WorldGenerator::generate_chunks(ChunkColumn& data, mve::Vector2i chunk_pos)
             }
         });
     }
-
-    for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
-        mve::Vector2i world_col_pos
-            = WorldData::block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
-        float rand = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
-        if (rand <= 0.8f) {
-            return;
-        }
-        int height = std::floor(heights[pos.x][pos.y]);
-        for_3d({ 0, 0, 0 }, { 5, 5, 7 }, [&](mve::Vector3i struct_pos) {
-            if (c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x] == 0) {
-                return;
-            }
-            if (!WorldData::is_block_height_world_valid(struct_pos.z + height + 1)) {
-                return;
-            }
-            if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2))) {
-                //                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z +
-                //                height + 1));
-                mve::Vector3i world_pos = block_local_to_world(
-                    { chunk_pos.x, chunk_pos.y, 0 },
-                    { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
-                world_pos.z = struct_pos.z + height + 1;
-                data.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
-            }
-        });
-    });
 }
