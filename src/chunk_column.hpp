@@ -10,6 +10,8 @@
 
 class ChunkColumn {
 public:
+    enum class GenLevel { none, terrain, trees, generated };
+
     inline ChunkColumn() = default;
 
     inline explicit ChunkColumn(mve::Vector2i chunk_pos)
@@ -54,21 +56,21 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(m_pos, m_chunks, m_generated);
+        archive(m_pos, m_chunks, m_gen_level);
     }
 
-    inline void set_generated(bool val)
+    inline void set_gen_level(GenLevel level)
     {
-        m_generated = val;
+        m_gen_level = level;
     }
 
-    [[nodiscard]] inline bool is_generated() const
+    [[nodiscard]] inline GenLevel gen_level() const
     {
-        return m_generated;
+        return m_gen_level;
     }
 
 private:
-    bool m_generated = false;
+    GenLevel m_gen_level = GenLevel::none;
     mve::Vector2i m_pos;
     std::array<ChunkData, 20> m_chunks = {};
 };

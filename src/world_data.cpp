@@ -23,7 +23,7 @@ void WorldData::process_save_queue()
 {
     m_save.begin_batch();
     for (mve::Vector2i pos : m_save_queue) {
-        if (m_chunk_columns.at(pos).is_generated()) {
+        if (m_chunk_columns.at(pos).gen_level() == ChunkColumn::GenLevel::generated) {
             m_save.insert<mve::Vector2i, ChunkColumn>(pos, m_chunk_columns.at(pos));
         }
     }
@@ -41,7 +41,7 @@ bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
 }
 
 // NOTE: Not thread safe
-//void WorldData::spread_light(const mve::Vector3i light_pos)
+// void WorldData::spread_light(const mve::Vector3i light_pos)
 //{
 //    static std::vector<mve::Vector3i> prev_list;
 //    static std::vector<mve::Vector3i> current_list;
@@ -77,26 +77,26 @@ bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
 //    }
 //}
 
-//void WorldData::propagate_light(mve::Vector3i chunk_pos)
+// void WorldData::propagate_light(mve::Vector3i chunk_pos)
 //{
-//    for_3d(chunk_pos - mve::Vector3i(1), chunk_pos + mve::Vector3i(2), [&](const mve::Vector3i adj_chunk_pos) {
-//        if (adj_chunk_pos.z >= -10 && adj_chunk_pos.z < 10) {
-//            m_chunk_columns[{ adj_chunk_pos.x, adj_chunk_pos.y }]
-//                .chunk_data_at(adj_chunk_pos)
-//                .for_emissive_block([&](const mve::Vector3i& local_pos) {
-//                    spread_light(block_local_to_world(adj_chunk_pos, local_pos));
-//                });
-//        }
-//    });
-//}
+//     for_3d(chunk_pos - mve::Vector3i(1), chunk_pos + mve::Vector3i(2), [&](const mve::Vector3i adj_chunk_pos) {
+//         if (adj_chunk_pos.z >= -10 && adj_chunk_pos.z < 10) {
+//             m_chunk_columns[{ adj_chunk_pos.x, adj_chunk_pos.y }]
+//                 .chunk_data_at(adj_chunk_pos)
+//                 .for_emissive_block([&](const mve::Vector3i& local_pos) {
+//                     spread_light(block_local_to_world(adj_chunk_pos, local_pos));
+//                 });
+//         }
+//     });
+// }
 
-//void WorldData::process_chunk_lighting_updates()
+// void WorldData::process_chunk_lighting_updates()
 //{
-//    //    for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
-//    //        m_chunks[chunk_pos].reset_lighting();
-//    //    }
-//    for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
-//        propagate_light(chunk_pos);
-//    }
-//    m_chunk_lighting_update_list.clear();
-//}
+//     //    for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
+//     //        m_chunks[chunk_pos].reset_lighting();
+//     //    }
+//     for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
+//         propagate_light(chunk_pos);
+//     }
+//     m_chunk_lighting_update_list.clear();
+// }

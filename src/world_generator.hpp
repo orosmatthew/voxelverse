@@ -19,7 +19,7 @@ class WorldGenerator {
 public:
     explicit WorldGenerator(int seed);
 
-    bool generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos);
+    void generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos);
 
 private:
 

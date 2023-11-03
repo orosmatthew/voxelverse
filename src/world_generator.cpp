@@ -18,7 +18,7 @@ WorldGenerator::WorldGenerator(int seed)
     m_struct_noise->SetFrequency(1.0f);
 }
 
-bool WorldGenerator::generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos)
+void WorldGenerator::generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos)
 {
     generate_terrain(data, chunk_pos);
     std::array<std::array<int, 16>, 16> heights {};
@@ -56,7 +56,7 @@ bool WorldGenerator::generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos)
             }
         });
     });
-    return true;
+    data.set_gen_level(ChunkColumn::GenLevel::generated);
 }
 
 void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos)
