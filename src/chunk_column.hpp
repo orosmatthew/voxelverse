@@ -10,7 +10,7 @@
 
 class ChunkColumn {
 public:
-    enum class GenLevel { none, terrain, trees, generated };
+    enum GenLevel { none, terrain, trees, generated };
 
     inline ChunkColumn() = default;
 

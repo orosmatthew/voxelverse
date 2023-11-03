@@ -14,16 +14,18 @@
 
 class FastNoiseLite;
 class ChunkColumn;
+class WorldData;
 
 class WorldGenerator {
 public:
     explicit WorldGenerator(int seed);
 
-    void generate_chunk(ChunkColumn& data, mve::Vector2i chunk_pos);
+    void generate_chunk(WorldData& world_data, mve::Vector2i chunk_pos);
 
 private:
-
     void generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos);
+
+    void generate_trees(WorldData& world_data, mve::Vector2i chunk_pos);
 
     // clang-format off
     const uint8_t c_tree_struct[7][5][5]

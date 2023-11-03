@@ -116,6 +116,11 @@ public:
         return chunk_pos.z >= -10 && chunk_pos.z < 10 && m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y });
     }
 
+    [[nodiscard]] inline bool contains_column(mve::Vector2i col_pos) const
+    {
+        return m_chunk_columns.contains(col_pos);
+    }
+
     bool try_load_chunk_column_from_save(mve::Vector2i chunk_pos);
 
     static inline mve::Vector3i chunk_pos_from_block_pos(mve::Vector3i block_pos)

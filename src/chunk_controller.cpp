@@ -22,10 +22,11 @@ void ChunkController::update(
         }
         if (!contains_flag(flags, flag_has_data)) {
             if (!world_data.try_load_chunk_column_from_save(col_pos)) {
-                world_data.create_chunk_column(col_pos);
-                ChunkColumn& column = world_data.chunk_column_data_at(col_pos);
-                world_generator.generate_chunk(column, col_pos);
-                if (column.gen_level() == ChunkColumn::GenLevel::generated) {
+                if (!world_data.contains_column(col_pos)) {
+                    world_data.create_chunk_column(col_pos);
+                }
+                world_generator.generate_chunk(world_data, col_pos);
+                if (world_data.chunk_column_data_at(col_pos).gen_level() == ChunkColumn::GenLevel::generated) {
                     world_data.queue_save_chunk(col_pos);
                 }
             }
