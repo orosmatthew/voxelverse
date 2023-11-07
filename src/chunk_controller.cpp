@@ -30,18 +30,18 @@ void ChunkController::update(
                     world_data.queue_save_chunk(col_pos);
                 }
             }
-            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
+            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
                 if (neighbor == mve::Vector2i(0, 0)) {
                     return;
                 }
                 ChunkState& neighbor_state = m_chunk_states[col_pos + neighbor];
                 neighbor_state.neighbors++;
-                if (contains_flag(neighbor_state.m_flags, flag_has_data) && neighbor_state.neighbors == 24) {
+                if (contains_flag(neighbor_state.m_flags, flag_has_data) && neighbor_state.neighbors == 8) {
                     enable_flag(neighbor_state.m_flags, flag_queued_mesh);
                 }
             });
             enable_flag(flags, flag_has_data);
-            if (chunk_state.neighbors == 24) {
+            if (chunk_state.neighbors == 8) {
                 enable_flag(flags, flag_queued_mesh);
             }
             chunk_count++;
@@ -76,7 +76,7 @@ void ChunkController::update(
         m_sorted_cols.erase(std::find(m_sorted_cols.begin(), m_sorted_cols.end(), pos));
 
         if (contains_flag(state.m_flags, flag_has_data)) {
-            for_2d({ -2, -2 }, { 3, 3 }, [&](mve::Vector2i neighbor) {
+            for_2d({ -1, -1 }, { 2, 2 }, [&](mve::Vector2i neighbor) {
                 if (neighbor == mve::Vector2i(0, 0)) {
                     return;
                 }
