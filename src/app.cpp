@@ -45,7 +45,7 @@ void App::draw()
 
     m_world.draw();
 
-    m_renderer.end_render_pass_framebuffer(m_world_framebuffer);
+    m_renderer.end_render_pass_framebuffer();
 
     m_renderer.begin_render_pass_present();
 

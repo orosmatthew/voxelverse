@@ -5,7 +5,6 @@
 #include <map>
 #include <optional>
 #include <queue>
-#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -22,12 +21,6 @@
 
 #include "shader.hpp"
 #include "vertex_data.hpp"
-
-#ifndef NDEBUG
-#define MVE_ENABLE_VALIDATION
-#endif
-
-// #define MVE_ENABLE_VALIDATION
 
 namespace mve {
 
@@ -64,9 +57,9 @@ public:
      */
     void begin_frame(const Window& window);
 
-    void begin_render_pass_present();
+    void begin_render_pass_present() const;
 
-    void begin_render_pass_framebuffer(Framebuffer& framebuffer);
+    void begin_render_pass_framebuffer(const Framebuffer& framebuffer) const;
 
     /**
      * @brief Bind and draw vertex buffer
@@ -78,7 +71,7 @@ public:
      * @brief Bind vertex buffer
      * @param vertex_buffer
      */
-    void bind_vertex_buffer(const VertexBuffer& vertex_buffer);
+    void bind_vertex_buffer(const VertexBuffer& vertex_buffer) const;
 
     /**
      * @brief Bind graphics pipeline
@@ -98,9 +91,9 @@ public:
      */
     void end_frame(const Window& window);
 
-    void end_render_pass_present();
+    void end_render_pass_present() const;
 
-    void end_render_pass_framebuffer(const Framebuffer& framebuffer);
+    void end_render_pass_framebuffer() const;
 
     /**
      * @brief Resize the renderer. Should be called on window resize
@@ -167,13 +160,6 @@ public:
 
     Texture create_texture(TextureFormat format, uint32_t width, uint32_t height, const std::byte* data);
 
-    /**
-     * @brief Create graphics pipeline from shaders and vertex layout
-     * @param vertex_shader
-     * @param fragment_shader
-     * @param vertex_layout
-     * @return Returns graphics pipeline object
-     */
     GraphicsPipeline create_graphics_pipeline(
         const Shader& vertex_shader,
         const Shader& fragment_shader,
@@ -218,97 +204,35 @@ public:
 
     void destroy(Framebuffer& framebuffer);
 
-    /**
-     * @brief Update uniform buffer float
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist = true);
 
-    /**
-     * @brief Update uniform buffer vec2
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector2 value, bool persist = true);
+
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector3 value, bool persist = true);
+
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector4 value, bool persist = true);
+
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector2 value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix3& value, bool persist = true);
 
-    /**
-     * @brief Update uniform buffer vec3
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector3 value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix4& value, bool persist = true);
 
-    /**
-     * @brief Update uniform buffer vec4
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, mve::Vector4 value, bool persist = true);
+    void bind_descriptor_set(DescriptorSet& descriptor_set) const;
 
-    /**
-     * @brief Update uniform buffer mat2
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    //    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, mve::Matrix value, bool persist =
-    //    true);
+    void bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b) const;
 
-    /**
-     * @brief Update uniform buffer mat3
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix3& value, bool persist = true);
+    [[nodiscard]] Vector2i extent() const;
 
-    /**
-     * @brief Update uniform buffer mat4
-     * @param uniform_buffer
-     * @param location - Location is represents a byte offset in the uniform buffer of the variable being set
-     * @param value - value to set
-     * @param persist - Only set to false if data will update every frame. If true, it will set for all frames
-     */
-    void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const mve::Matrix4& value, bool persist = true);
+    Framebuffer create_framebuffer(std::function<void()> callback);
 
-    /**
-     * @brief Bind descriptor set
-     * @param descriptor_set
-     */
-    void bind_descriptor_set(DescriptorSet& descriptor_set);
-
-    void bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b);
-    /**
-     * @brief Get extent of renderer
-     * @return Returns ivec2 of the extent of the renderer
-     */
-    [[nodiscard]] mve::Vector2i extent() const;
-
-    Framebuffer create_framebuffer(std::function<void(void)> callback);
-
-    Vector2i framebuffer_size(const Framebuffer& framebuffer);
+    [[nodiscard]] Vector2i framebuffer_size(const Framebuffer& framebuffer) const;
 
     const Texture& framebuffer_texture(const Framebuffer& framebuffer);
 
     [[nodiscard]] std::string gpu_name() const;
 
-    [[nodiscard]] mve::Vector2i texture_size(const mve::Texture& texture) const;
+    [[nodiscard]] Vector2i texture_size(const Texture& texture) const;
 
 private:
     struct QueueFamilyIndices {
@@ -416,7 +340,7 @@ private:
     struct FramebufferImpl {
         std::vector<vk::Framebuffer> vk_framebuffers;
         Texture texture;
-        std::optional<std::function<void(void)>> callback;
+        std::optional<std::function<void()>> callback;
         Vector2i size;
     };
 
@@ -426,7 +350,7 @@ private:
 
         void cleanup(const vk::DispatchLoaderDynamic& loader, vk::Device device);
 
-        void free(const vk::DispatchLoaderDynamic& loader, vk::Device device, DescriptorSetImpl descriptor_set);
+        void free(const vk::DispatchLoaderDynamic& loader, vk::Device device, const DescriptorSetImpl& descriptor_set);
 
         DescriptorSetImpl create(
             const vk::DispatchLoaderDynamic& loader, vk::Device device, vk::DescriptorSetLayout layout);
@@ -446,19 +370,14 @@ private:
             vk::Device device,
             vk::DescriptorSetLayout layout);
 
-        vk::DescriptorPool create_pool(
+        [[nodiscard]] vk::DescriptorPool create_pool(
             const vk::DispatchLoaderDynamic& loader,
             vk::Device device,
-            vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags());
+            vk::DescriptorPoolCreateFlags flags = vk::DescriptorPoolCreateFlags()) const;
     };
 
-    static constexpr const size_t c_max_uniform_value_size = std::max(
-        { sizeof(float),
-          sizeof(mve::Vector2),
-          sizeof(mve::Vector3),
-          sizeof(mve::Vector4),
-          sizeof(mve::Matrix3),
-          sizeof(mve::Matrix4) });
+    static constexpr size_t sc_max_uniform_value_size = std::max(
+        { sizeof(float), sizeof(Vector2), sizeof(Vector3), sizeof(Vector4), sizeof(Matrix3), sizeof(Matrix4) });
     const int c_frames_in_flight;
     vk::Instance m_vk_instance;
     vk::DispatchLoaderDynamic m_vk_loader;
@@ -486,7 +405,7 @@ private:
     vk::SampleCountFlagBits m_msaa_samples;
     RenderImage m_color_image;
 
-    void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets);
+    void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const;
 
     std::vector<FrameInFlight> m_frames_in_flight;
 
@@ -516,10 +435,10 @@ private:
     std::queue<std::function<void(vk::CommandBuffer)>> m_command_buffer_deferred_functions {};
 
     template <typename T>
-    inline void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, T value, bool persist)
+    void update_uniform(UniformBuffer& uniform_buffer, const UniformLocation location, T value, const bool persist)
     {
-        static_assert(sizeof(T) <= c_max_uniform_value_size);
-        uint64_t handle = uniform_buffer.handle();
+        static_assert(sizeof(T) <= sc_max_uniform_value_size);
+        const uint64_t handle = uniform_buffer.handle();
         DeferredUniformUpdateData update_data {
             .counter = persist ? c_frames_in_flight : 1,
             .handle = handle,
@@ -535,7 +454,7 @@ private:
         int counter;
         uint64_t handle;
         UniformLocation location;
-        std::array<std::byte, c_max_uniform_value_size> data;
+        std::array<std::byte, sc_max_uniform_value_size> data;
         size_t data_size;
     };
 
@@ -552,20 +471,20 @@ private:
     std::vector<DeferredUniformUpdateData> m_deferred_uniform_updates {};
     std::vector<DeferredDescriptorWriteData> m_deferred_descriptor_writes {};
 
-    void cleanup_vk_swapchain();
+    void cleanup_vk_swapchain() const;
 
-    void cleanup_vk_debug_messenger();
+    void cleanup_vk_debug_messenger() const;
 
     void recreate_swapchain(const Window& window);
 
     void recreate_framebuffers();
 
-    Texture create_texture(Image image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
+    Texture create_texture(const Image& image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
 
     FramebufferImpl create_framebuffer_impl(
-        const vk::DispatchLoaderDynamic& loader, std::optional<std::function<void(void)>> callback);
+        const vk::DispatchLoaderDynamic& loader, std::optional<std::function<void()>> callback);
 
-    void wait_ready();
+    void wait_ready() const;
 
     DescriptorSetLayoutHandleImpl create_descriptor_set_layout(
         const vk::DispatchLoaderDynamic& loader,
@@ -598,7 +517,7 @@ private:
 
     static vk::Format find_depth_format(const vk::DispatchLoaderDynamic& loader, vk::PhysicalDevice physical_device);
 
-    void update_uniform(size_t handle, UniformLocation location, void* data_ptr, size_t size, uint32_t frame_index);
+    void update_uniform(size_t handle, UniformLocation location, const void* data_ptr, size_t size, uint32_t frame_index) const;
 
     static bool has_stencil_component(vk::Format format);
 
@@ -755,8 +674,8 @@ private:
         vk::SampleCountFlagBits samples,
         bool depth_test);
 
-    vk::PipelineLayout create_vk_pipeline_layout(
-        const vk::DispatchLoaderDynamic& loader, const std::vector<DescriptorSetLayoutHandleImpl>& layouts);
+    [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
+        const vk::DispatchLoaderDynamic& loader, const std::vector<DescriptorSetLayoutHandleImpl>& layouts) const;
 
     static vk::RenderPass create_vk_render_pass(
         const vk::DispatchLoaderDynamic& loader,
@@ -796,7 +715,7 @@ private:
         VmaAllocationCreateFlags flags = 0);
 
     static void cmd_copy_buffer(
-        vk::DispatchLoaderDynamic& loader,
+        const vk::DispatchLoaderDynamic& loader,
         vk::CommandBuffer command_buffer,
         vk::Buffer src_buffer,
         vk::Buffer dst_buffer,
