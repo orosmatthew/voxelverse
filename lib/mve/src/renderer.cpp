@@ -951,8 +951,7 @@ Renderer::~Renderer()
 #ifdef MVE_ENABLE_VALIDATION
     cleanup_vk_debug_messenger();
 #endif
-    // ReSharper disable once CppNoDiscardExpression
-    m_vk_device.waitIdle(m_vk_loader);
+    vk::Result _ = m_vk_device.waitIdle(m_vk_loader);
 
     cleanup_vk_swapchain();
 
@@ -1041,7 +1040,7 @@ void Renderer::recreate_swapchain(const Window& window)
 
     while (window_size == Vector2i(0, 0)) {
         glfwGetFramebufferSize(window.glfw_handle(), &window_size.x, &window_size.y);
-        window.wait_for_events();
+        Window::wait_for_events();
     }
 
     const vk::Result wait_result = m_vk_device.waitIdle(m_vk_loader);

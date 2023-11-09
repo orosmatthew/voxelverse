@@ -1,3 +1,5 @@
+#pragma once
+
 namespace mve {
 
 inline Vector2i::Vector2i()
@@ -10,12 +12,12 @@ inline Vector2i::Vector2i(const Vector2& vector)
     , y(static_cast<int>(vector.y))
 {
 }
-inline Vector2i::Vector2i(int x, int y)
+inline Vector2i::Vector2i(const int x, const int y)
     : x(x)
     , y(y)
 {
 }
-inline Vector2i::Vector2i(int val)
+inline Vector2i::Vector2i(const int val)
     : x(val)
     , y(val)
 {
@@ -64,7 +66,7 @@ inline Vector2i Vector2i::operator%(const Vector2i& other) const
 {
     return { x % other.x, y % other.y };
 }
-inline Vector2i Vector2i::operator%(int val) const
+inline Vector2i Vector2i::operator%(const int val) const
 {
     return { x % val, y % val };
 }
@@ -72,11 +74,11 @@ inline Vector2i Vector2i::operator*(const Vector2i& other) const
 {
     return { x * other.x, y * other.y };
 }
-inline Vector2i Vector2i::operator*(float val) const
+inline Vector2i Vector2i::operator*(const float val) const
 {
     return { x * static_cast<int>(val), y * static_cast<int>(val) };
 }
-inline Vector2i Vector2i::operator*(int val) const
+inline Vector2i Vector2i::operator*(const int val) const
 {
     return { x * val, y * val };
 }
@@ -92,11 +94,11 @@ inline Vector2i Vector2i::operator/(const Vector2i& other) const
 {
     return { x / other.x, y / other.y };
 }
-inline Vector2i Vector2i::operator/(float val) const
+inline Vector2i Vector2i::operator/(const float val) const
 {
     return { x / static_cast<int>(val), y / static_cast<int>(val) };
 }
-inline Vector2i Vector2i::operator/(int val) const
+inline Vector2i Vector2i::operator/(const int val) const
 {
     return { x / val, y / val };
 }
@@ -144,7 +146,7 @@ inline bool Vector2i::operator>=(const Vector2i& other) const
     }
     return true;
 }
-inline int& Vector2i::operator[](int index)
+inline int& Vector2i::operator[](const int index)
 {
     switch (index) {
     case 0:
@@ -155,7 +157,7 @@ inline int& Vector2i::operator[](int index)
         return x;
     }
 }
-inline int& Vector2i::operator[](Vector2iAxis axis)
+inline int& Vector2i::operator[](const Vector2iAxis axis)
 {
     switch (axis) {
     case Vector2iAxis::x:
@@ -181,7 +183,7 @@ inline Vector2i& Vector2i::operator%=(const Vector2i& other)
 
     return *this;
 }
-inline Vector2i& Vector2i::operator%=(int val)
+inline Vector2i& Vector2i::operator%=(const int val)
 {
     x %= val;
     y %= val;
@@ -195,14 +197,14 @@ inline Vector2i& Vector2i::operator*=(const Vector2i& other)
 
     return *this;
 }
-inline Vector2i& Vector2i::operator*=(float val)
+inline Vector2i& Vector2i::operator*=(const float val)
 {
     x *= static_cast<int>(val);
     y *= static_cast<int>(val);
 
     return *this;
 }
-inline Vector2i& Vector2i::operator*=(int val)
+inline Vector2i& Vector2i::operator*=(const int val)
 {
     x *= val;
     y *= val;
@@ -230,14 +232,14 @@ inline Vector2i& Vector2i::operator/=(const Vector2i& other)
 
     return *this;
 }
-inline Vector2i& Vector2i::operator/=(float val)
+inline Vector2i& Vector2i::operator/=(const float val)
 {
     x /= static_cast<int>(val);
     y /= static_cast<int>(val);
 
     return *this;
 }
-inline Vector2i& Vector2i::operator/=(int val)
+inline Vector2i& Vector2i::operator/=(const int val)
 {
     x /= val;
     y /= val;
@@ -291,12 +293,10 @@ inline Vector2iAxis min_axis(const Vector2i& vector)
 
 }
 
-namespace std {
 template <>
-struct hash<mve::Vector2i> {
-    int operator()(const mve::Vector2i& vector) const
+struct std::hash<mve::Vector2i> {
+    int operator()(const mve::Vector2i& vector) const noexcept
     {
         return (vector.x + vector.y + 1) * (vector.x + vector.y) / 2 + vector.y;
     }
 };
-}

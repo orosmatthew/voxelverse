@@ -1,66 +1,65 @@
+#pragma once
+
 namespace mve {
 
-inline Vector3 abs(Vector3 vector)
+inline Vector3 abs(const Vector3 vector)
 {
     return { abs(vector.x), abs(vector.y), abs(vector.z) };
 }
-inline Vector3 ceil(Vector3 vector)
+inline Vector3 ceil(const Vector3 vector)
 {
     return { ceil(vector.x), ceil(vector.y), ceil(vector.z) };
 }
-inline Vector3 clamp(Vector3 vector, Vector3 min, Vector3 max)
+inline Vector3 clamp(const Vector3 vector, const Vector3 min, const Vector3 max)
 {
     return { clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y), clamp(vector.z, min.z, max.z) };
 }
-inline Vector3 direction(Vector3 from, Vector3 to)
+inline Vector3 direction(const Vector3 from, const Vector3 to)
 {
     return normalize(to - from);
 }
-inline float distance_sqrd(Vector3 from, Vector3 to)
+inline float distance_sqrd(const Vector3 from, const Vector3 to)
 {
-    float diff_x = to.x - from.x;
-    float diff_y = to.y - from.y;
-    float diff_z = to.z - from.z;
+    const float diff_x = to.x - from.x;
+    const float diff_y = to.y - from.y;
+    const float diff_z = to.z - from.z;
     return sqrd(diff_x) + sqrd(diff_y) + sqrd(diff_z);
 }
-inline float distance(Vector3 from, Vector3 to)
+inline float distance(const Vector3 from, const Vector3 to)
 {
-    float diff_x = to.x - from.x;
-    float diff_y = to.y - from.y;
-    float diff_z = to.z - from.z;
+    const float diff_x = to.x - from.x;
+    const float diff_y = to.y - from.y;
+    const float diff_z = to.z - from.z;
     return sqrt(sqrd(diff_x) + sqrd(diff_y) + sqrd(diff_z));
 }
-inline Vector3 normalize(Vector3 vector)
+inline Vector3 normalize(const Vector3 vector)
 {
     Vector3 result(0.0f);
-    float length = mve::length(vector);
-
-    if (length > 0) {
-        float inverse_length = 1.0f / length;
+    if (const float length = mve::length(vector); length > 0) {
+        const float inverse_length = 1.0f / length;
         result = vector * inverse_length;
     }
-
     return result;
 }
-inline Vector3 floor(Vector3 vector)
+inline Vector3 floor(const Vector3 vector)
 {
     return { floor(vector.x), floor(vector.y), floor(vector.z) };
 }
-inline float length(Vector3 vector)
+inline float length(const Vector3 vector)
 {
     return sqrt(sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z));
 }
-inline float length_sqrd(Vector3 vector)
+inline float length_sqrd(const Vector3 vector)
 {
     return sqrd(vector.x) + sqrd(vector.y) + sqrd(vector.z);
 }
-inline Vector3 linear_interpolate(Vector3 from, Vector3 to, float weight)
+inline Vector3 linear_interpolate(const Vector3 from, const Vector3 to, const float weight)
 {
     return { linear_interpolate(from.x, to.x, weight),
              linear_interpolate(from.y, to.y, weight),
              linear_interpolate(from.z, to.z, weight) };
 }
-inline Vector3Axis max_axis(Vector3 vector)
+inline Vector3Axis max_axis(const Vector3 vector)
 {
     float max_val = vector.x;
     Vector3Axis max_axis = Vector3Axis::x;
@@ -76,7 +75,7 @@ inline Vector3Axis max_axis(Vector3 vector)
 
     return max_axis;
 }
-inline Vector3Axis min_axis(Vector3 vector)
+inline Vector3Axis min_axis(const Vector3 vector)
 {
     float min_val = vector.x;
     Vector3Axis min_axis = Vector3Axis::x;
@@ -92,15 +91,15 @@ inline Vector3Axis min_axis(Vector3 vector)
 
     return min_axis;
 }
-inline bool is_equal_approx(Vector3 a, Vector3 b)
+inline bool is_equal_approx(const Vector3 a, const Vector3 b)
 {
     return is_equal_approx(a.x, b.x) && is_equal_approx(a.y, b.y) && is_equal_approx(a.z, b.z);
 }
-inline bool is_zero_approx(Vector3 vector)
+inline bool is_zero_approx(const Vector3 vector)
 {
     return is_zero_approx(vector.x) && is_zero_approx(vector.y) && is_zero_approx(vector.z);
 }
-inline Vector3 move_toward(Vector3 from, Vector3 to, float amount)
+inline Vector3 move_toward(const Vector3 from, const Vector3 to, const float amount)
 {
     if (from.distance_to(to) >= amount) {
         return to;
@@ -109,36 +108,34 @@ inline Vector3 move_toward(Vector3 from, Vector3 to, float amount)
     result += from.direction_to(to) * amount;
     return result;
 }
-inline float dot(Vector3 a, Vector3 b)
+inline float dot(const Vector3 a, const Vector3 b)
 {
-    return (a.x * b.x + a.y * b.y + a.z * b.z);
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
-inline Vector3 cross(Vector3 a, Vector3 b)
+inline Vector3 cross(const Vector3 a, const Vector3 b)
 {
     return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x };
 }
-inline Vector3 reflect(Vector3 vector, Vector3 normal)
+inline Vector3 reflect(const Vector3 vector, const Vector3 normal)
 {
     Vector3 result;
 
-    float dot = (vector.x * normal.x + vector.y * normal.y + vector.z * normal.z);
+    const float dot = vector.x * normal.x + vector.y * normal.y + vector.z * normal.z;
 
-    result.x = vector.x - (2.0f * normal.x) * dot;
-    result.y = vector.y - (2.0f * normal.y) * dot;
-    result.z = vector.z - (2.0f * normal.z) * dot;
+    result.x = vector.x - 2.0f * normal.x * dot;
+    result.y = vector.y - 2.0f * normal.y * dot;
+    result.z = vector.z - 2.0f * normal.z * dot;
 
     return result;
 }
-inline Vector3 inverse(Vector3 vector)
+inline Vector3 inverse(const Vector3 vector)
 {
     return { 1.0f / vector.x, 1.0f / vector.y, 1.0f / vector.z };
 }
-inline Vector3 clamp_length(Vector3 vector, float min, float max)
+inline Vector3 clamp_length(const Vector3 vector, const float min, const float max)
 {
-    float length_sqr = mve::length_sqrd(vector);
-    if (length_sqr > 0.0f) {
-        float length = sqrt(length_sqr);
-        if (length < min) {
+    if (const float length_sqr = length_sqrd(vector); length_sqr > 0.0f) {
+        if (const float length = sqrt(length_sqr); length < min) {
             return normalize(vector) * min;
         }
         else if (length > max) {
@@ -147,38 +144,32 @@ inline Vector3 clamp_length(Vector3 vector, float min, float max)
     }
     return vector;
 }
-inline Vector3 round(Vector3 vector)
+inline Vector3 round(const Vector3 vector)
 {
     return { round(vector.x), round(vector.y), round(vector.z) };
 }
-float angle(Vector3 a, Vector3 b)
+float angle(const Vector3 a, const Vector3 b)
 {
-    return atan2(mve::length(mve::cross(a, b)), mve::dot(a, b));
+    return atan2(length(cross(a, b)), dot(a, b));
 }
-inline Vector3 rotate(Vector3 vector, Vector3 axis, float angle)
+inline Vector3 rotate(const Vector3 vector, Vector3 axis, float angle)
 {
-    axis = mve::normalize(axis);
+    axis = normalize(axis);
 
     angle /= 2.0f;
     float a = sin(angle);
-    float b = axis.x * a;
-    float c = axis.y * a;
-    float d = axis.z * a;
+    const float b = axis.x * a;
+    const float c = axis.y * a;
+    const float d = axis.z * a;
     a = cos(angle);
-    Vector3 w(b, c, d);
+    const Vector3 w(b, c, d);
 
-    Vector3 wv = mve::cross(w, vector);
-
-    Vector3 wwv = mve::cross(w, wv);
-
+    Vector3 wv = cross(w, vector);
+    Vector3 wwv = cross(w, wv);
     wv *= 2.0f * a;
-
     wwv *= 2.0f;
-
     Vector3 result = vector;
-
     result += wv;
-
     result += wwv;
 
     return result;
@@ -198,13 +189,13 @@ inline Vector3::Vector3()
     , z(0.0f)
 {
 }
-inline Vector3::Vector3(float val)
+inline Vector3::Vector3(const float val)
     : x(val)
     , y(val)
     , z(val)
 {
 }
-inline Vector3::Vector3(float x, float y, float z)
+inline Vector3::Vector3(const float x, const float y, const float z)
     : x(x)
     , y(y)
     , z(z)
@@ -226,21 +217,21 @@ inline Vector3 Vector3::ceil() const
 {
     return mve::ceil(*this);
 }
-inline Vector3 Vector3::clamp(Vector3 min, Vector3 max) const
+inline Vector3 Vector3::clamp(const Vector3 min, const Vector3 max) const
 {
     return mve::clamp(*this, min, max);
 }
-inline Vector3 Vector3::direction_to(Vector3 to) const
+inline Vector3 Vector3::direction_to(const Vector3 to) const
 {
-    return mve::direction(*this, to);
+    return direction(*this, to);
 }
-inline float Vector3::distance_sqrd_to(Vector3 to) const
+inline float Vector3::distance_sqrd_to(const Vector3 to) const
 {
-    return mve::distance_sqrd(*this, to);
+    return distance_sqrd(*this, to);
 }
-inline float Vector3::distance_to(Vector3 to) const
+inline float Vector3::distance_to(const Vector3 to) const
 {
-    return mve::distance(*this, to);
+    return distance(*this, to);
 }
 inline Vector3 Vector3::normalize() const
 {
@@ -258,7 +249,7 @@ inline float Vector3::length_sqrd() const
 {
     return mve::length_sqrd(*this);
 }
-inline Vector3 Vector3::linear_interpolate(Vector3 to, float weight) const
+inline Vector3 Vector3::linear_interpolate(const Vector3 to, const float weight) const
 {
     return mve::linear_interpolate(*this, to, weight);
 }
@@ -270,7 +261,7 @@ inline Vector3Axis Vector3::min_axis() const
 {
     return mve::min_axis(*this);
 }
-inline bool Vector3::is_equal_approx(Vector3 vector) const
+inline bool Vector3::is_equal_approx(const Vector3 vector) const
 {
     return mve::is_equal_approx(*this, vector);
 }
@@ -278,19 +269,19 @@ inline bool Vector3::is_zero_approx() const
 {
     return mve::is_zero_approx(*this);
 }
-inline Vector3 Vector3::move_toward(Vector3 to, float amount) const
+inline Vector3 Vector3::move_toward(const Vector3 to, const float amount) const
 {
     return mve::move_toward(*this, to, amount);
 }
-inline float Vector3::dot(Vector3 vector) const
+inline float Vector3::dot(const Vector3 vector) const
 {
     return mve::dot(*this, vector);
 }
-inline Vector3 Vector3::cross(Vector3 vector) const
+inline Vector3 Vector3::cross(const Vector3 vector) const
 {
     return mve::cross(*this, vector);
 }
-inline Vector3 Vector3::reflect(Vector3 normal) const
+inline Vector3 Vector3::reflect(const Vector3 normal) const
 {
     return mve::reflect(*this, normal);
 }
@@ -298,7 +289,7 @@ inline Vector3 Vector3::inverse() const
 {
     return mve::inverse(*this);
 }
-inline Vector3 Vector3::clamp_length(float min, float max) const
+inline Vector3 Vector3::clamp_length(const float min, const float max) const
 {
     return mve::clamp_length(*this, min, max);
 }
@@ -306,23 +297,23 @@ inline Vector3 Vector3::round() const
 {
     return mve::round(*this);
 }
-inline float Vector3::angle(Vector3 vector) const
+inline float Vector3::angle(const Vector3 vector) const
 {
     return mve::angle(*this, vector);
 }
-inline Vector3 Vector3::rotate(Vector3 axis, float angle) const
+inline Vector3 Vector3::rotate(const Vector3 axis, const float angle) const
 {
     return mve::rotate(*this, axis, angle);
 }
-inline bool Vector3::operator!=(Vector3 other) const
+inline bool Vector3::operator!=(const Vector3 other) const
 {
     return x != other.x || y != other.y || z != other.z;
 }
-inline Vector3 Vector3::operator*(Vector3 other) const
+inline Vector3 Vector3::operator*(const Vector3 other) const
 {
     return { x * other.x, y * other.y, z * other.z };
 }
-inline Vector3& Vector3::operator*=(Vector3 other)
+inline Vector3& Vector3::operator*=(const Vector3 other)
 {
     x *= other.x;
     y *= other.y;
@@ -330,11 +321,11 @@ inline Vector3& Vector3::operator*=(Vector3 other)
 
     return *this;
 }
-inline Vector3 Vector3::operator*(float val) const
+inline Vector3 Vector3::operator*(const float val) const
 {
     return { x * val, y * val, z * val };
 }
-inline Vector3& Vector3::operator*=(float val)
+inline Vector3& Vector3::operator*=(const float val)
 {
     x *= val;
     y *= val;
@@ -342,11 +333,11 @@ inline Vector3& Vector3::operator*=(float val)
 
     return *this;
 }
-inline Vector3 Vector3::operator*(int val) const
+inline Vector3 Vector3::operator*(const int val) const
 {
     return { x * static_cast<float>(val), y * static_cast<float>(val), z * static_cast<float>(val) };
 }
-inline Vector3& Vector3::operator*=(int val)
+inline Vector3& Vector3::operator*=(const int val)
 {
     x *= static_cast<float>(val);
     y *= static_cast<float>(val);
@@ -354,11 +345,11 @@ inline Vector3& Vector3::operator*=(int val)
 
     return *this;
 }
-inline Vector3 Vector3::operator+(Vector3 other) const
+inline Vector3 Vector3::operator+(const Vector3 other) const
 {
     return { x + other.x, y + other.y, z + other.z };
 }
-inline Vector3& Vector3::operator+=(Vector3 other)
+inline Vector3& Vector3::operator+=(const Vector3 other)
 {
     x += other.x;
     y += other.y;
@@ -378,11 +369,11 @@ inline Vector3& Vector3::operator-=(const Vector3& other)
 
     return *this;
 }
-inline Vector3 Vector3::operator/(Vector3 other) const
+inline Vector3 Vector3::operator/(const Vector3 other) const
 {
     return { x / other.x, y / other.y, z / other.z };
 }
-inline Vector3& Vector3::operator/=(Vector3 other)
+inline Vector3& Vector3::operator/=(const Vector3 other)
 {
     x /= other.x;
     y /= other.y;
@@ -390,11 +381,11 @@ inline Vector3& Vector3::operator/=(Vector3 other)
 
     return *this;
 }
-inline Vector3 Vector3::operator/(float val) const
+inline Vector3 Vector3::operator/(const float val) const
 {
     return { x / val, y / val, z / val };
 }
-inline Vector3& Vector3::operator/=(float val)
+inline Vector3& Vector3::operator/=(const float val)
 {
     x /= val;
     y /= val;
@@ -402,11 +393,11 @@ inline Vector3& Vector3::operator/=(float val)
 
     return *this;
 }
-inline Vector3 Vector3::operator/(int val) const
+inline Vector3 Vector3::operator/(const int val) const
 {
     return { x / static_cast<float>(val), y / static_cast<float>(val), z / static_cast<float>(val) };
 }
-inline Vector3& Vector3::operator/=(int val)
+inline Vector3& Vector3::operator/=(const int val)
 {
     x /= static_cast<float>(val);
     y /= static_cast<float>(val);
@@ -414,7 +405,7 @@ inline Vector3& Vector3::operator/=(int val)
 
     return *this;
 }
-inline bool Vector3::operator<(Vector3 other) const
+inline bool Vector3::operator<(const Vector3 other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -427,7 +418,7 @@ inline bool Vector3::operator<(Vector3 other) const
     }
     return false;
 }
-inline bool Vector3::operator<=(Vector3 other) const
+inline bool Vector3::operator<=(const Vector3 other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -440,11 +431,11 @@ inline bool Vector3::operator<=(Vector3 other) const
     }
     return true;
 }
-inline bool Vector3::operator==(Vector3 other) const
+inline bool Vector3::operator==(const Vector3 other) const
 {
     return x == other.x && y == other.y && z == other.z;
 }
-inline bool Vector3::operator>(Vector3 other) const
+inline bool Vector3::operator>(const Vector3 other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -457,7 +448,7 @@ inline bool Vector3::operator>(Vector3 other) const
     }
     return false;
 }
-inline bool Vector3::operator>=(Vector3 other) const
+inline bool Vector3::operator>=(const Vector3 other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -470,7 +461,7 @@ inline bool Vector3::operator>=(Vector3 other) const
     }
     return true;
 }
-inline float& Vector3::operator[](int index)
+inline float& Vector3::operator[](const int index)
 {
     switch (index) {
     case 0:
@@ -483,7 +474,7 @@ inline float& Vector3::operator[](int index)
         return x;
     }
 }
-inline float& Vector3::operator[](Vector3Axis axis)
+inline float& Vector3::operator[](const Vector3Axis axis)
 {
     switch (axis) {
     case Vector3Axis::x:
@@ -504,7 +495,7 @@ inline Vector3 Vector3::operator-() const
 {
     return { -x, -y, -z };
 }
-inline const float& Vector3::operator[](int index) const
+inline const float& Vector3::operator[](const int index) const
 {
     switch (index) {
     case 0:
@@ -517,7 +508,7 @@ inline const float& Vector3::operator[](int index) const
         return x;
     }
 }
-inline Vector3::Vector3(Vector3i vector)
+inline Vector3::Vector3(const Vector3i vector)
     : x(static_cast<float>(vector.x))
     , y(static_cast<float>(vector.y))
     , z(static_cast<float>(vector.z))

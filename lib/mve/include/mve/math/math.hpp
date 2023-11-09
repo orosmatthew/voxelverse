@@ -1,12 +1,10 @@
 #pragma once
 
-#include <functional>
-
 namespace mve {
 
-const float epsilon = 0.00001f;
+constexpr float epsilon = 0.00001f;
 
-const float pi = 3.14159265358979323846264338327950288f;
+constexpr float pi = 3.14159265358979323846264338327950288f;
 
 [[nodiscard]] inline bool is_equal_approx(float a, float b);
 
@@ -27,8 +25,6 @@ const float pi = 3.14159265358979323846264338327950288f;
 [[nodiscard]] inline float pow(float val, float power);
 
 [[nodiscard]] inline float sqrd(float val);
-
-[[nodiscard]] inline int squared(int val);
 
 [[nodiscard]] inline float floor(float val);
 
@@ -702,10 +698,10 @@ public:
     union {
         Vector4 data;
         struct {
-            float x;
-            float y;
-            float z;
-            float w;
+            float x {};
+            float y {};
+            float z {};
+            float w {};
         };
     };
 
@@ -896,7 +892,7 @@ public:
 
 [[nodiscard]] inline Matrix4 interpolate(Matrix4 from, Matrix4 to, float weight);
 
-[[nodiscard]] inline Matrix4 rotate(Matrix4 matrix, Vector3 axis, float angle);
+[[nodiscard]] inline Matrix4 rotate(const Matrix4& matrix, Vector3 axis, float angle);
 
 [[nodiscard]] inline Matrix4 rotate(const Matrix4& matrix, const Matrix3& basis);
 
@@ -904,9 +900,9 @@ public:
 
 [[nodiscard]] inline Matrix4 rotate_local(const Matrix4& matrix, const Matrix3& basis);
 
-[[nodiscard]] inline Matrix4 scale(Matrix4 matrix, Vector3 scale);
+[[nodiscard]] inline Matrix4 scale(const Matrix4& matrix, Vector3 scale);
 
-[[nodiscard]] inline Matrix4 translate(Matrix4 matrix, Vector3 offset);
+[[nodiscard]] inline Matrix4 translate(const Matrix4& matrix, Vector3 offset);
 
 [[nodiscard]] inline Matrix4 translate_local(const Matrix4& matrix, Vector3 offset);
 
@@ -916,7 +912,7 @@ public:
 
 [[nodiscard]] inline Matrix3 basis(const Matrix4& matrix);
 
-[[nodiscard]] inline Matrix4 frustum(float left, float right, float bottom, float top, float near, float far);
+// [[nodiscard]] inline Matrix4 frustum(float left, float right, float bottom, float top, float near, float far);
 
 [[nodiscard]] inline Matrix4 perspective(float fov_y, float aspect, float near, float far);
 

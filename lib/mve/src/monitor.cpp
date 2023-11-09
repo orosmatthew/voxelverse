@@ -19,18 +19,18 @@ mve::Vector2i mve::Monitor::size() const
 
 mve::Vector2i mve::Monitor::position() const
 {
-    mve::Vector2i pos;
-    glfwGetMonitorPos(m_monitor, &(pos.x), &(pos.y));
+    Vector2i pos;
+    glfwGetMonitorPos(m_monitor, &pos.x, &pos.y);
     return pos;
 }
 mve::Vector2i mve::Monitor::physical_size() const
 {
-    mve::Vector2i physical_size;
-    glfwGetMonitorPhysicalSize(m_monitor, &(physical_size.x), &(physical_size.y));
+    Vector2i physical_size;
+    glfwGetMonitorPhysicalSize(m_monitor, &physical_size.x, &physical_size.y);
     return physical_size;
 }
 
-GLFWmonitor* mve::Monitor::glfw_handle()
+GLFWmonitor* mve::Monitor::glfw_handle() const
 {
     return m_monitor;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 #include "mve/math/math.hpp"
 

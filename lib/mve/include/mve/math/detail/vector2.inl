@@ -1,3 +1,5 @@
+#pragma once
+
 namespace mve {
 
 inline Vector2::Vector2()
@@ -6,13 +8,13 @@ inline Vector2::Vector2()
 {
 }
 
-inline Vector2::Vector2(float scalar)
+inline Vector2::Vector2(const float scalar)
     : x(scalar)
     , y(scalar)
 {
 }
 
-inline Vector2::Vector2(float x, float y)
+inline Vector2::Vector2(const float x, const float y)
     : x(x)
     , y(y)
 {
@@ -38,7 +40,7 @@ inline Vector2 Vector2::operator-(const Vector2& other) const
     return { x - other.x, y - other.y };
 }
 
-inline Vector2 Vector2::operator*(float scalar) const
+inline Vector2 Vector2::operator*(const float scalar) const
 {
     return { x * scalar, y * scalar };
 }
@@ -50,12 +52,12 @@ inline Vector2 Vector2::normalize() const
 
 inline float Vector2::direction_sqrd_to(const Vector2& to) const
 {
-    return mve::distance_sqrd(*this, to);
+    return distance_sqrd(*this, to);
 }
 
 inline float Vector2::distance_to(const Vector2& to) const
 {
-    return mve::distance(*this, to);
+    return distance(*this, to);
 }
 inline float Vector2::length() const
 {
@@ -65,7 +67,7 @@ inline float Vector2::length_sqrd() const
 {
     return mve::length_sqrd(*this);
 }
-inline Vector2 Vector2::linear_interpolate(const Vector2& to, float weight) const
+inline Vector2 Vector2::linear_interpolate(const Vector2& to, const float weight) const
 {
     return mve::linear_interpolate(*this, to, weight);
 }
@@ -87,7 +89,7 @@ inline float Vector2::aspect_ratio() const
 }
 inline Vector2 Vector2::direction_to(const Vector2& to) const
 {
-    return mve::direction(*this, to);
+    return direction(*this, to);
 }
 inline Vector2 Vector2::floor() const
 {
@@ -109,7 +111,7 @@ inline Vector2 Vector2::operator*(const Vector2& vector) const
 {
     return { x * vector.x, y * vector.y };
 }
-inline Vector2 Vector2::operator*(int scalar) const
+inline Vector2 Vector2::operator*(const int scalar) const
 {
     return { x * static_cast<float>(scalar), y * static_cast<float>(scalar) };
 }
@@ -117,11 +119,11 @@ inline Vector2 Vector2::operator/(const Vector2& other) const
 {
     return { x / other.x, y / other.y };
 }
-inline Vector2 Vector2::operator/(float scalar) const
+inline Vector2 Vector2::operator/(const float scalar) const
 {
     return { x / scalar, y / scalar };
 }
-inline Vector2 Vector2::operator/(int scalar) const
+inline Vector2 Vector2::operator/(const int scalar) const
 {
     return { x / static_cast<float>(scalar), y / static_cast<float>(scalar) };
 }
@@ -169,7 +171,7 @@ inline bool Vector2::operator>=(const Vector2& other) const
     }
     return true;
 }
-inline float& Vector2::operator[](int index)
+inline float& Vector2::operator[](const int index)
 {
     switch (index) {
     case 0:
@@ -200,13 +202,13 @@ inline Vector2& Vector2::operator-=(const Vector2& other)
     y -= other.y;
     return *this;
 }
-inline Vector2& Vector2::operator*=(float scalar)
+inline Vector2& Vector2::operator*=(const float scalar)
 {
     x *= scalar;
     y *= scalar;
     return *this;
 }
-inline Vector2& Vector2::operator*=(int scalar)
+inline Vector2& Vector2::operator*=(const int scalar)
 {
     x *= static_cast<float>(scalar);
     y *= static_cast<float>(scalar);
@@ -224,19 +226,19 @@ inline Vector2& Vector2::operator/=(const Vector2& other)
     y /= other.y;
     return *this;
 }
-inline Vector2& Vector2::operator/=(float scalar)
+inline Vector2& Vector2::operator/=(const float scalar)
 {
     x /= scalar;
     y /= scalar;
     return *this;
 }
-inline Vector2& Vector2::operator/=(int scalar)
+inline Vector2& Vector2::operator/=(const int scalar)
 {
     x /= static_cast<float>(scalar);
     y /= static_cast<float>(scalar);
     return *this;
 }
-inline float& Vector2::operator[](Vector2Axis axis)
+inline float& Vector2::operator[](const Vector2Axis axis)
 {
     switch (axis) {
     case Vector2Axis::x:
@@ -260,7 +262,7 @@ inline Vector2 Vector2::one()
 {
     return { 1.0f, 1.0f };
 }
-inline Vector2 Vector2::move_toward(const Vector2& to, float amount) const
+inline Vector2 Vector2::move_toward(const Vector2& to, const float amount) const
 {
     return mve::move_toward(*this, to, amount);
 }
@@ -276,7 +278,7 @@ inline Vector2 Vector2::inverse() const
 {
     return mve::inverse(*this);
 }
-inline Vector2 Vector2::clamp_length(float min, float max) const
+inline Vector2 Vector2::clamp_length(const float min, const float max) const
 {
     return mve::clamp_length(*this, min, max);
 }
@@ -285,7 +287,7 @@ inline Vector2::Vector2(const Vector2i& vector)
     , y(static_cast<float>(vector.y))
 {
 }
-inline Vector2 Vector2::rotate(float angle) const
+inline Vector2 Vector2::rotate(const float angle) const
 {
     return mve::rotate(*this, angle);
 }
@@ -318,27 +320,24 @@ inline Vector2 direction(const Vector2& from, const Vector2& to)
 inline Vector2 normalize(const Vector2& vector)
 {
     Vector2 result(0.0f);
-    float length = vector.length();
-
-    if (length > 0) {
-        float inverse_length = 1.0f / length;
+    if (const float length = vector.length(); length > 0) {
+        const float inverse_length = 1.0f / length;
         result = vector * inverse_length;
     }
-
     return result;
 }
 
 inline float distance_sqrd(const Vector2& from, const Vector2& to)
 {
-    float diff_x = to.x - from.x;
-    float diff_y = to.y - from.y;
+    const float diff_x = to.x - from.x;
+    const float diff_y = to.y - from.y;
     return sqrd(diff_x) + sqrd(diff_y);
 }
 
 inline float distance(const Vector2& from, const Vector2& to)
 {
-    float diff_x = to.x - from.x;
-    float diff_y = to.y - from.y;
+    const float diff_x = to.x - from.x;
+    const float diff_y = to.y - from.y;
     return sqrt(sqrd(diff_x) + sqrd(diff_y));
 }
 
@@ -355,16 +354,16 @@ inline float length_sqrd(const Vector2& vector)
 {
     return sqrd(vector.x) + sqrd(vector.y);
 }
-inline Vector2 linear_interpolate(const Vector2& from, const Vector2& to, float weight)
+inline Vector2 linear_interpolate(const Vector2& from, const Vector2& to, const float weight)
 {
-    return (from * (1.0f - weight)) + (to * weight);
+    return from * (1.0f - weight) + to * weight;
 }
 inline Vector2Axis max_axis(const Vector2& vector)
 {
     if (vector.x > vector.y) {
         return Vector2Axis::x;
     }
-    else if (vector.y > vector.x) {
+    if (vector.y > vector.x) {
         return Vector2Axis::y;
     }
     return Vector2Axis::x;
@@ -374,7 +373,7 @@ inline Vector2Axis min_axis(const Vector2& vector)
     if (vector.x < vector.y) {
         return Vector2Axis::x;
     }
-    else if (vector.y < vector.x) {
+    if (vector.y < vector.x) {
         return Vector2Axis::y;
     }
     return Vector2Axis::x;
@@ -387,7 +386,7 @@ inline bool is_zero_approx(const Vector2& vector)
 {
     return is_zero_approx(vector.x) && is_zero_approx(vector.y);
 }
-inline Vector2 move_toward(const Vector2& from, const Vector2& to, float amount)
+inline Vector2 move_toward(const Vector2& from, const Vector2& to, const float amount)
 {
     if (from.distance_to(to) >= amount) {
         return to;
@@ -398,19 +397,19 @@ inline Vector2 move_toward(const Vector2& from, const Vector2& to, float amount)
 }
 inline float dot(const Vector2& a, const Vector2& b)
 {
-    return (a.x * b.x + a.y * b.y);
+    return a.x * b.x + a.y * b.y;
 }
 inline Vector2 reflect(const Vector2& vector, const Vector2& normal)
 {
-    float dot = mve::dot(vector, normal);
+    const float dot = mve::dot(vector, normal);
 
     Vector2 result;
-    result.x = vector.x - (2.0f * normal.x) * dot;
-    result.y = vector.y - (2.0f * normal.y) * dot;
+    result.x = vector.x - 2.0f * normal.x * dot;
+    result.y = vector.y - 2.0f * normal.y * dot;
 
     return result;
 }
-inline Vector2 rotate(const Vector2& vector, float angle)
+inline Vector2 rotate(const Vector2& vector, const float angle)
 {
     Vector2 result;
     result.x = vector.x * cos(angle) - vector.y * sin(angle);
@@ -421,12 +420,10 @@ inline Vector2 inverse(const Vector2& vector)
 {
     return { 1.0f / vector.x, 1.0f / vector.y };
 }
-inline Vector2 clamp_length(const Vector2& vector, float min, float max)
+inline Vector2 clamp_length(const Vector2& vector, const float min, const float max)
 {
-    float length_sqr = mve::length_sqrd(vector);
-    if (length_sqr > 0.0f) {
-        float length = sqrt(length_sqr);
-        if (length < min) {
+    if (const float length_sqr = length_sqrd(vector); length_sqr > 0.0f) {
+        if (const float length = sqrt(length_sqr); length < min) {
             return normalize(vector) * min;
         }
         else if (length > max) {

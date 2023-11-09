@@ -36,19 +36,20 @@ std::vector<uint32_t> Shader::spv_code() const noexcept
     return m_spv_code;
 }
 
-static ShaderDescriptorType convert_descriptor_type(SpvReflectDescriptorType type)
+static ShaderDescriptorType convert_descriptor_type(const SpvReflectDescriptorType type)
 {
     switch (type) {
-    case (SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER):
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         return ShaderDescriptorType::uniform_buffer;
-    case (SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER):
+    case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
         return ShaderDescriptorType::combined_image_sampler;
     default:
         MVE_ASSERT(false, "[Shader] Failed to convert descriptor type")
     }
 }
 
-static std::optional<ShaderBindingBlock> create_binding_block(SpvReflectBlockVariable reflect_block)
+static std::optional<ShaderBindingBlock> create_binding_block( // NOLINT(*-no-recursion)
+    SpvReflectBlockVariable reflect_block)
 {
     std::unordered_map<std::string, ShaderBindingBlock> members;
     for (uint32_t m = 0; m < reflect_block.member_count; m++) {
@@ -114,16 +115,17 @@ const std::unordered_map<uint32_t, ShaderDescriptorSet>& Shader::descriptor_sets
     return m_reflection_data.sets;
 }
 
-const bool Shader::has_descriptor_set(uint32_t set) const
+bool Shader::has_descriptor_set(const uint32_t set) const
 {
     return m_reflection_data.sets.contains(set);
 }
-const ShaderDescriptorSet& Shader::descriptor_set(uint32_t set) const
+const ShaderDescriptorSet& Shader::descriptor_set(const uint32_t set) const
 {
     return m_reflection_data.sets.at(set);
 }
 
-ShaderDescriptorSet::ShaderDescriptorSet(uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings)
+ShaderDescriptorSet::ShaderDescriptorSet(
+    const uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings)
     : m_set(set)
     , m_bindings(std::move(bindings))
 {
@@ -133,7 +135,7 @@ uint32_t ShaderDescriptorSet::set() const
     return m_set;
 }
 
-const ShaderDescriptorBinding& ShaderDescriptorSet::binding(uint32_t binding) const
+const ShaderDescriptorBinding& ShaderDescriptorSet::binding(const uint32_t binding) const
 {
     return m_bindings.at(binding);
 }
@@ -152,7 +154,7 @@ ShaderDescriptorBinding::ShaderDescriptorBinding(
     : m_name(std::move(name))
     , m_binding(binding)
     , m_type(type)
-    , m_block(block)
+    , m_block(std::move(block))
 {
 }
 std::string ShaderDescriptorBinding::name() const
@@ -181,11 +183,11 @@ const std::unordered_map<std::string, ShaderBindingBlock>& ShaderDescriptorBindi
 }
 
 ShaderBindingBlock::ShaderBindingBlock(
-    const std::string& name,
-    uint32_t size,
-    uint32_t offset,
+    std::string name,
+    const uint32_t size,
+    const uint32_t offset,
     std::unordered_map<std::string, ShaderBindingBlock> members)
-    : m_name(name)
+    : m_name(std::move(name))
     , m_size(size)
     , m_offset(offset)
     , m_members(std::move(members))
@@ -219,16 +221,15 @@ UniformLocation ShaderBindingBlock::location() const
 }
 
 UniformLocation::UniformLocation()
-    : m_initialized(false)
-    , m_value()
+    : m_value()
 {
 }
-UniformLocation::UniformLocation(uint32_t value)
+UniformLocation::UniformLocation(const uint32_t value)
     : m_initialized(true)
     , m_value(value)
 {
 }
-void UniformLocation::set(uint32_t value)
+void UniformLocation::set(const uint32_t value)
 {
     m_initialized = true;
     m_value = value;

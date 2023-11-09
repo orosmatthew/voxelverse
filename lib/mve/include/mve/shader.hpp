@@ -39,10 +39,7 @@ private:
 class ShaderBindingBlock {
 public:
     ShaderBindingBlock(
-        const std::string& name,
-        uint32_t size,
-        uint32_t offset,
-        std::unordered_map<std::string, ShaderBindingBlock> members);
+        std::string name, uint32_t size, uint32_t offset, std::unordered_map<std::string, ShaderBindingBlock> members);
 
     [[nodiscard]] std::string name() const;
 
@@ -110,24 +107,15 @@ private:
  */
 class Shader {
 public:
-    /**
-     * @brief Construct Shader from file
-     * @param file_path - file path of shader file
-     * @throws std::runtime_error - When file path is invalid
-     */
     explicit Shader(const std::filesystem::path& file_path);
 
-    /**
-     * @brief Obtain SPIR-V code from shader
-     * @return - returns byte (uint32_t) array of SPIR-V code
-     */
     [[nodiscard]] std::vector<uint32_t> spv_code() const noexcept;
 
     [[nodiscard]] const std::unordered_map<uint32_t, ShaderDescriptorSet>& descriptor_sets() const;
 
     [[nodiscard]] const ShaderDescriptorSet& descriptor_set(uint32_t set) const;
 
-    [[nodiscard]] const bool has_descriptor_set(uint32_t set) const;
+    [[nodiscard]] bool has_descriptor_set(uint32_t set) const;
 
 private:
     struct ShaderReflectionData {
@@ -142,12 +130,10 @@ private:
 
 }
 
-namespace std {
 template <>
-struct hash<mve::UniformLocation> {
-    std::size_t operator()(const mve::UniformLocation& location) const
+struct std::hash<mve::UniformLocation> {
+    std::size_t operator()(const mve::UniformLocation& location) const noexcept
     {
         return hash<uint32_t>()(location.value());
     }
 };
-}

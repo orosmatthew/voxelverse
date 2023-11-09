@@ -247,67 +247,29 @@ enum KeyModifierBits {
     num_lock = GLFW_MOD_NUM_LOCK,
 };
 
-/**
- * @brief Window class
- */
 class Window {
 public:
-    /**
-     * @brief Construct window class
-     * @param title - Title of window
-     * @param size - Initial size of window
-     */
-    Window(const std::string& title, mve::Vector2i size, bool resizable = true);
+    Window(const std::string& title, Vector2i size, bool resizable = true);
 
-    /**
-     * @brief Get GLFW window handle
-     * @return - Returns GLFW window pointer
-     */
     [[nodiscard]] GLFWwindow* glfw_handle() const;
 
-    /**
-     * @brief Get current size of window
-     * @return - Returns current window size
-     */
-    [[nodiscard]] mve::Vector2i size() const;
+    [[nodiscard]] Vector2i size() const;
 
-    /**
-     * @brief Determine if window should close such as if close button is pressed
-     * @return - Returns true if window should close
-     */
     [[nodiscard]] bool should_close() const;
 
-    /**
-     * @brief Set callback function when window is resized
-     * @param resize_callback - Resize callback. Takes ivec2 new size as parameter
-     */
-    void set_resize_callback(const std::function<void(mve::Vector2i)>& resize_callback);
+    void set_resize_callback(const std::function<void(Vector2i)>& resize_callback);
 
-    /**
-     * @brief Remove window resize callback if set
-     */
     void remove_resize_callback();
 
-    /**
-     * @brief Update window. Updates inputs and checks if resized
-     */
     void poll_events();
 
-    /**
-     * @brief Blocks until event occurs
-     */
-    void wait_for_events() const;
+    static void wait_for_events();
 
     void enable_event_waiting();
 
     void disable_event_waiting();
 
-    /**
-     * @brief Determine if keyboard key pressed
-     * @param key - Keyboard key
-     * @return - Returns true if pressed
-     */
-    bool is_key_pressed(Key key) const;
+    [[nodiscard]] bool is_key_pressed(Key key) const;
 
     [[nodiscard]] bool is_key_down(Key key) const;
 
@@ -321,9 +283,9 @@ public:
 
     [[nodiscard]] bool is_mouse_button_released(MouseButton button) const;
 
-    [[nodiscard]] mve::Vector2 mouse_pos() const;
+    [[nodiscard]] Vector2 mouse_pos() const;
 
-    [[nodiscard]] mve::Vector2 mouse_delta() const;
+    [[nodiscard]] Vector2 mouse_delta() const;
 
     void fullscreen(bool use_native = false);
 
@@ -335,19 +297,19 @@ public:
 
     void maximize();
 
-    void minimize();
+    void minimize() const;
 
-    void restore();
+    void restore() const;
 
-    void set_title(const std::string& title);
+    void set_title(const std::string& title) const;
 
-    void move_to(mve::Vector2i pos);
+    void move_to(Vector2i pos) const;
 
-    void fullscreen_to(Monitor monitor, bool use_native = false);
+    void fullscreen_to(Monitor monitor, bool use_native = false) const;
 
-    void set_min_size(mve::Vector2i size);
+    void set_min_size(Vector2i size) const;
 
-    void resize(mve::Vector2i size);
+    void resize(Vector2i size) const;
 
     [[nodiscard]] bool is_minimized() const;
 
@@ -361,9 +323,9 @@ public:
 
     [[nodiscard]] Monitor current_monitor() const;
 
-    [[nodiscard]] mve::Vector2i position() const;
+    [[nodiscard]] Vector2i position() const;
 
-    void set_clipboard_text(const std::string& text);
+    void set_clipboard_text(const std::string& text) const;
 
     [[nodiscard]] std::string clipboard_text() const;
 
@@ -375,9 +337,9 @@ public:
 
     void disable_cursor();
 
-    void set_cursor_pos(mve::Vector2 pos);
+    void set_cursor_pos(Vector2 pos) const;
 
-    mve::Vector2 mouse_scroll() const;
+    [[nodiscard]] Vector2 mouse_scroll() const;
 
     [[nodiscard]] bool is_cursor_in_window() const;
 
@@ -385,14 +347,9 @@ public:
 
     [[nodiscard]] bool is_resizable() const;
 
-    /**
-     * @brief Get cursor translation
-     * @param clamped_to_window - If true then returns value clamp inside of window
-     * @return - Returns vec2 of cursor translation
-     */
-    mve::Vector2 get_cursor_pos(bool clamped_to_window = true);
+    [[nodiscard]] Vector2 get_cursor_pos(bool clamped_to_window = true) const;
 
-    inline const std::vector<std::string> input_stream() const
+    [[nodiscard]] std::vector<std::string> input_stream() const
     {
         return m_input_stream;
     }
@@ -402,7 +359,7 @@ private:
 
     const bool m_resizable;
     UniqueGlfwWindow m_glfw_window;
-    std::optional<std::function<void(mve::Vector2i)>> m_resize_callback;
+    std::optional<std::function<void(Vector2i)>> m_resize_callback;
     bool m_hidden;
     bool m_minimized;
     bool m_maximized;
@@ -410,13 +367,13 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
-    mve::Vector2 m_current_scroll_offset {};
-    mve::Vector2 m_scroll_offset {};
-    mve::Vector2i m_pos;
-    mve::Vector2i m_size;
-    mve::Vector2i m_windowed_size;
+    Vector2 m_current_scroll_offset {};
+    Vector2 m_scroll_offset {};
+    Vector2i m_pos;
+    Vector2i m_size;
+    Vector2i m_windowed_size;
     bool m_fullscreen;
-    mve::Vector2i m_min_size;
+    Vector2i m_min_size;
     std::set<Key> m_current_keys_down {};
     std::set<Key> m_keys_down {};
     std::set<Key> m_keys_pressed {};
@@ -431,10 +388,10 @@ private:
     std::set<MouseButton> m_mouse_buttons_pressed {};
     std::set<MouseButton> m_mouse_buttons_released {};
 
-    mve::Vector2 m_current_mouse_pos;
-    mve::Vector2 m_mouse_pos_prev;
-    mve::Vector2 m_mouse_delta;
-    mve::Vector2 m_mouse_pos;
+    Vector2 m_current_mouse_pos;
+    Vector2 m_mouse_pos_prev;
+    Vector2 m_mouse_delta;
+    Vector2 m_mouse_pos;
 
     std::vector<std::string> m_current_input_stream {};
     std::vector<std::string> m_input_stream {};

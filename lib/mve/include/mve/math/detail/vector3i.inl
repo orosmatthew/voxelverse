@@ -1,23 +1,25 @@
+#pragma once
+
 namespace mve {
 
-inline Vector3i abs(Vector3i vector)
+inline Vector3i abs(const Vector3i vector)
 {
     return { abs(vector.x), abs(vector.y), abs(vector.z) };
 }
-inline Vector3i clamp(Vector3i vector, Vector3i min, Vector3i max)
+inline Vector3i clamp(const Vector3i vector, const Vector3i min, const Vector3i max)
 {
     return { clamp(vector.x, min.x, max.x), clamp(vector.y, min.y, max.y), clamp(vector.z, min.z, max.z) };
 }
-inline float length(Vector3i vector)
+inline float length(const Vector3i vector)
 {
     return sqrt(
         sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y)) + sqrd(static_cast<float>(vector.z)));
 }
-inline float length_sqrd(Vector3i vector)
+inline float length_sqrd(const Vector3i vector)
 {
     return sqrd(static_cast<float>(vector.x)) + sqrd(static_cast<float>(vector.y)) + sqrd(static_cast<float>(vector.z));
 }
-inline Vector3iAxis max_axis(Vector3i vector)
+inline Vector3iAxis max_axis(const Vector3i vector)
 {
     int max_val = vector.x;
     Vector3iAxis max_axis = Vector3iAxis::x;
@@ -30,7 +32,7 @@ inline Vector3iAxis max_axis(Vector3i vector)
     }
     return max_axis;
 }
-inline Vector3iAxis min_axis(Vector3i vector)
+inline Vector3iAxis min_axis(const Vector3i vector)
 {
     int min_val = vector.x;
     Vector3iAxis min_axis = Vector3iAxis::x;
@@ -50,19 +52,19 @@ inline Vector3i::Vector3i()
     , z(0.0f)
 {
 }
-inline Vector3i::Vector3i(Vector3 vector)
+inline Vector3i::Vector3i(const Vector3 vector)
     : x(static_cast<int>(vector.x))
     , y(static_cast<int>(vector.y))
     , z(static_cast<int>(vector.z))
 {
 }
-inline Vector3i::Vector3i(int x, int y, int z)
+inline Vector3i::Vector3i(const int x, const int y, const int z)
     : x(x)
     , y(y)
     , z(z)
 {
 }
-inline Vector3i::Vector3i(int val)
+inline Vector3i::Vector3i(const int val)
     : x(val)
     , y(val)
     , z(val)
@@ -80,7 +82,7 @@ inline Vector3i Vector3i::abs() const
 {
     return mve::abs(*this);
 }
-inline Vector3i Vector3i::clamp(Vector3i min, Vector3i max) const
+inline Vector3i Vector3i::clamp(const Vector3i min, const Vector3i max) const
 {
     return mve::clamp(*this, min, max);
 }
@@ -100,15 +102,15 @@ inline Vector3iAxis Vector3i::min_axis() const
 {
     return mve::min_axis(*this);
 }
-inline bool Vector3i::operator!=(Vector3i other) const
+inline bool Vector3i::operator!=(const Vector3i other) const
 {
     return x != other.x || y != other.y || z != other.z;
 }
-inline Vector3i Vector3i::operator%(Vector3i other) const
+inline Vector3i Vector3i::operator%(const Vector3i other) const
 {
     return { x % other.x, y % other.y, z % other.z };
 }
-inline Vector3i& Vector3i::operator%=(Vector3i other)
+inline Vector3i& Vector3i::operator%=(const Vector3i other)
 {
     x %= other.x;
     y %= other.y;
@@ -116,11 +118,11 @@ inline Vector3i& Vector3i::operator%=(Vector3i other)
 
     return *this;
 }
-inline Vector3i Vector3i::operator%(int val) const
+inline Vector3i Vector3i::operator%(const int val) const
 {
     return { x % val, y % val, z % val };
 }
-inline Vector3i& Vector3i::operator%=(int val)
+inline Vector3i& Vector3i::operator%=(const int val)
 {
     x %= val;
     y %= val;
@@ -128,11 +130,11 @@ inline Vector3i& Vector3i::operator%=(int val)
 
     return *this;
 }
-inline Vector3i Vector3i::operator*(Vector3i other) const
+inline Vector3i Vector3i::operator*(const Vector3i other) const
 {
     return { x * other.x, y * other.y, z * other.z };
 }
-inline Vector3i& Vector3i::operator*=(Vector3i other)
+inline Vector3i& Vector3i::operator*=(const Vector3i other)
 {
     x *= other.x;
     y *= other.y;
@@ -140,11 +142,11 @@ inline Vector3i& Vector3i::operator*=(Vector3i other)
 
     return *this;
 }
-inline Vector3i Vector3i::operator*(float val) const
+inline Vector3i Vector3i::operator*(const float val) const
 {
     return { x * static_cast<int>(val), y * static_cast<int>(val), z * static_cast<int>(val) };
 }
-inline Vector3i& Vector3i::operator*=(float val)
+inline Vector3i& Vector3i::operator*=(const float val)
 {
     x *= static_cast<int>(val);
     y *= static_cast<int>(val);
@@ -164,11 +166,11 @@ inline Vector3i& Vector3i::operator+=(const Vector3i& other)
 
     return *this;
 }
-inline Vector3i Vector3i::operator-(Vector3i other) const
+inline Vector3i Vector3i::operator-(const Vector3i other) const
 {
     return { x - other.x, y - other.y, z - other.z };
 }
-inline Vector3i& Vector3i::operator-=(Vector3i other)
+inline Vector3i& Vector3i::operator-=(const Vector3i other)
 {
     x -= other.x;
     y -= other.y;
@@ -176,11 +178,11 @@ inline Vector3i& Vector3i::operator-=(Vector3i other)
 
     return *this;
 }
-inline Vector3i Vector3i::operator/(Vector3i other) const
+inline Vector3i Vector3i::operator/(const Vector3i other) const
 {
     return { x / other.x, y / other.y, z / other.z };
 }
-inline Vector3i& Vector3i::operator/=(Vector3i other)
+inline Vector3i& Vector3i::operator/=(const Vector3i other)
 {
     x /= other.x;
     y /= other.y;
@@ -188,11 +190,11 @@ inline Vector3i& Vector3i::operator/=(Vector3i other)
 
     return *this;
 }
-inline Vector3i Vector3i::operator/(float val) const
+inline Vector3i Vector3i::operator/(const float val) const
 {
     return { x / static_cast<int>(val), y / static_cast<int>(val), z / static_cast<int>(val) };
 }
-inline Vector3i& Vector3i::operator/=(float val)
+inline Vector3i& Vector3i::operator/=(const float val)
 {
     x /= static_cast<int>(val);
     y /= static_cast<int>(val);
@@ -200,11 +202,11 @@ inline Vector3i& Vector3i::operator/=(float val)
 
     return *this;
 }
-inline Vector3i Vector3i::operator/(int val) const
+inline Vector3i Vector3i::operator/(const int val) const
 {
     return { x / val, y / val, z / val };
 }
-inline Vector3i& Vector3i::operator/=(int val)
+inline Vector3i& Vector3i::operator/=(const int val)
 {
     x /= val;
     y /= val;
@@ -212,7 +214,7 @@ inline Vector3i& Vector3i::operator/=(int val)
 
     return *this;
 }
-inline bool Vector3i::operator<(Vector3i other) const
+inline bool Vector3i::operator<(const Vector3i other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -225,7 +227,7 @@ inline bool Vector3i::operator<(Vector3i other) const
     }
     return false;
 }
-inline bool Vector3i::operator<=(Vector3i other) const
+inline bool Vector3i::operator<=(const Vector3i other) const
 {
     if (x != other.x) {
         return x < other.x;
@@ -238,11 +240,11 @@ inline bool Vector3i::operator<=(Vector3i other) const
     }
     return true;
 }
-inline bool Vector3i::operator==(Vector3i other) const
+inline bool Vector3i::operator==(const Vector3i other) const
 {
     return x == other.x && y == other.y && z == other.z;
 }
-inline bool Vector3i::operator>(Vector3i other) const
+inline bool Vector3i::operator>(const Vector3i other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -255,7 +257,7 @@ inline bool Vector3i::operator>(Vector3i other) const
     }
     return false;
 }
-inline bool Vector3i::operator>=(Vector3i other) const
+inline bool Vector3i::operator>=(const Vector3i other) const
 {
     if (x != other.x) {
         return x > other.x;
@@ -268,7 +270,7 @@ inline bool Vector3i::operator>=(Vector3i other) const
     }
     return true;
 }
-inline int& Vector3i::operator[](int index)
+inline int& Vector3i::operator[](const int index)
 {
     switch (index) {
     case 0:
@@ -281,7 +283,7 @@ inline int& Vector3i::operator[](int index)
         return x;
     }
 }
-inline int& Vector3i::operator[](Vector3iAxis axis)
+inline int& Vector3i::operator[](const Vector3iAxis axis)
 {
     switch (axis) {
     case Vector3iAxis::x:
@@ -305,13 +307,11 @@ inline Vector3i Vector3i::operator-() const
 
 }
 
-namespace std {
 template <>
-struct hash<mve::Vector3i> {
-    int operator()(const mve::Vector3i& vector) const
+struct std::hash<mve::Vector3i> {
+    int operator()(const mve::Vector3i& vector) const noexcept
     {
-        int cantor_y_z = (vector.y + vector.z + 1) * (vector.y + vector.z) / 2 + vector.z;
+        const int cantor_y_z = (vector.y + vector.z + 1) * (vector.y + vector.z) / 2 + vector.z;
         return (vector.x + cantor_y_z) * (vector.x + cantor_y_z) / 2 + cantor_y_z;
     }
 };
-}

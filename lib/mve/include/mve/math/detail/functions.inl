@@ -1,32 +1,37 @@
+#pragma once
+
 #include <cmath>
 
 namespace mve {
 
-inline bool is_zero_approx(float val)
+inline bool is_zero_approx(const float val)
 {
-    return mve::abs(val) < mve::epsilon;
+    return abs(val) < epsilon;
 }
 
-inline bool is_equal_approx(float a, float b)
+inline bool is_equal_approx(const float a, const float b)
 {
     if (a == b) {
         return true;
     }
-    float tolerance = mve::epsilon * mve::abs(a);
-    if (tolerance < mve::epsilon) {
-        tolerance = mve::epsilon;
+    float tolerance = epsilon * abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
     }
-    return mve::abs(a - b) < tolerance;
+    return abs(a - b) < tolerance;
 }
-inline float abs(float val)
+
+inline float abs(const float val)
 {
     return std::abs(val);
 }
-inline float ceil(float val)
+
+inline float ceil(const float val)
 {
     return std::ceil(val);
 }
-inline float clamp(float val, float min, float max)
+
+inline float clamp(const float val, const float min, const float max)
 {
     if (val < min) {
         return min;
@@ -36,44 +41,53 @@ inline float clamp(float val, float min, float max)
     }
     return val;
 }
-inline float sqrt(float val)
+
+inline float sqrt(const float val)
 {
     return std::sqrt(val);
 }
-inline float pow(float val, float power)
+
+inline float pow(const float val, const float power)
 {
     return std::pow(val, power);
 }
-inline float sqrd(float val)
+
+inline float sqrd(const float val)
 {
     return val * val;
 }
 
-inline float floor(float val)
+inline float floor(const float val)
 {
     return std::floor(val);
 }
-inline float linear_interpolate(float from, float to, float weight)
+
+inline float linear_interpolate(const float from, const float to, const float weight)
 {
-    return (from * (1.0f - weight)) + (to * weight);
+    return from * (1.0f - weight) + to * weight;
 }
-inline float sin(float val)
+
+inline float sin(const float val)
 {
     return std::sin(val);
 }
-inline float cos(float val)
+
+inline float cos(const float val)
 {
     return std::cos(val);
 }
-inline float tan(float val)
+
+inline float tan(const float val)
 {
     return std::tan(val);
 }
-inline int abs(int val)
+
+inline int abs(const int val)
 {
     return std::abs(val);
 }
-inline int clamp(int val, int min, int max)
+
+inline int clamp(const int val, const int min, const int max)
 {
     if (val < min) {
         return min;
@@ -83,57 +97,64 @@ inline int clamp(int val, int min, int max)
     }
     return val;
 }
-inline int sqrd(int val)
+
+inline int sqrd(const int val)
 {
     return val * val;
 }
-inline float round(float val)
+
+inline float round(const float val)
 {
     return std::round(val);
 }
-inline float atan(float val)
+
+inline float atan(const float val)
 {
     return std::atan(val);
 }
-inline float atan2(float a, float b)
+
+inline float atan2(const float a, const float b)
 {
     return std::atan2(a, b);
 }
-inline float radians(float degrees)
+
+inline float radians(const float degrees)
 {
     return degrees * (pi / 180.0f);
 }
-inline float degrees(float radians)
+
+inline float degrees(const float radians)
 {
     return radians * (180.0f / pi);
 }
-inline float asin(float val)
+
+inline float asin(const float val)
 {
     return std::asin(val);
 }
-inline float acos(float val)
+
+inline float acos(const float val)
 {
     return std::acos(val);
 }
-inline float min(float a, float b)
+
+inline float min(const float a, const float b)
 {
     if (a <= b) {
         return a;
     }
-    else {
-        return b;
-    }
+    return b;
 }
-inline float max(float a, float b)
+
+inline float max(const float a, const float b)
 {
     if (a >= b) {
         return a;
     }
-    else {
-        return b;
-    }
+    return b;
 }
-inline float log2(float val)
+
+inline float log2(const float val)
 {
     return std::log2f(val);
 }

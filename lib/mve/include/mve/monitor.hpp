@@ -13,13 +13,13 @@ class Monitor {
 public:
     explicit Monitor(GLFWmonitor* monitor);
 
-    [[nodiscard]] mve::Vector2i size() const;
+    [[nodiscard]] Vector2i size() const;
 
-    [[nodiscard]] mve::Vector2i position() const;
+    [[nodiscard]] Vector2i position() const;
 
-    [[nodiscard]] mve::Vector2i physical_size() const;
+    [[nodiscard]] Vector2i physical_size() const;
 
-    [[nodiscard]] GLFWmonitor* glfw_handle();
+    [[nodiscard]] GLFWmonitor* glfw_handle() const;
 
     [[nodiscard]] int refresh_rate() const;
 

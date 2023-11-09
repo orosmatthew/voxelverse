@@ -1,3 +1,5 @@
+#pragma once
+
 namespace mve {
 
 inline Matrix3::Matrix3()
@@ -14,7 +16,15 @@ inline Matrix3::Matrix3(const Vector3& col0, const Vector3& col1, const Vector3&
 }
 
 inline Matrix3::Matrix3(
-    float c0r0, float c0r1, float c0r2, float c1r0, float c1r1, float c1r2, float c2r0, float c2r1, float c2r2)
+    const float c0r0,
+    const float c0r1,
+    const float c0r2,
+    const float c1r0,
+    const float c1r1,
+    const float c1r2,
+    const float c2r0,
+    const float c2r1,
+    const float c2r2)
     : col0(Vector3(c0r0, c0r1, c0r2))
     , col1(Vector3(c1r0, c1r1, c1r2))
     , col2(Vector3(c2r0, c2r1, c2r2))
@@ -32,15 +42,15 @@ inline Vector3 Matrix3::euler() const
 {
     return mve::euler(*this);
 }
-inline Matrix3 Matrix3::from_axis_angle(const Vector3& axis, float angle)
+inline Matrix3 Matrix3::from_axis_angle(const Vector3& axis, const float angle)
 {
     Matrix3 result;
 
-    Vector3 axis_norm = axis.normalize();
+    const Vector3 axis_norm = axis.normalize();
 
-    float sin_angle = sin(angle);
-    float cos_angle = cos(angle);
-    float t = 1.0f - cos_angle;
+    const float sin_angle = sin(angle);
+    const float cos_angle = cos(angle);
+    const float t = 1.0f - cos_angle;
 
     result[0][0] = axis_norm.x * axis_norm.x * t + cos_angle;
     result[0][1] = axis_norm.y * axis_norm.x * t + axis_norm.z * sin_angle;
@@ -60,15 +70,15 @@ inline Matrix3 Matrix3::from_euler(const Vector3& euler)
 {
     float c = cos(euler.x);
     float s = sin(euler.x);
-    Matrix3 x { 1.0f, 0.0f, 0.0f, 0.0f, c, -s, 0.0f, s, c };
+    const Matrix3 x { 1.0f, 0.0f, 0.0f, 0.0f, c, -s, 0.0f, s, c };
 
     c = cos(euler.y);
     s = sin(euler.y);
-    Matrix3 y { c, 0.0f, s, 0.0f, 1.0f, 0.0f, -s, 0.0f, c };
+    const Matrix3 y { c, 0.0f, s, 0.0f, 1.0f, 0.0f, -s, 0.0f, c };
 
     c = cos(euler.z);
     s = sin(euler.z);
-    Matrix3 z { c, -s, 0.0f, s, c, 0.0f, 0.0f, 0.0f, 1.0f };
+    const Matrix3 z { c, -s, 0.0f, s, c, 0.0f, 0.0f, 0.0f, 1.0f };
 
     return x * (y * z);
 }
@@ -113,11 +123,11 @@ inline Matrix3 Matrix3::from_quaternion(const Quaternion& quaternion)
 
     return result;
 }
-inline Matrix3 Matrix3::spherical_linear_interpolate(const Matrix3& to, float weight) const
+inline Matrix3 Matrix3::spherical_linear_interpolate(const Matrix3& to, const float weight) const
 {
     return mve::spherical_linear_interpolate(*this, to, weight);
 }
-inline Matrix3 Matrix3::rotate(const Vector3& axis, float angle) const
+inline Matrix3 Matrix3::rotate(const Vector3& axis, const float angle) const
 {
     return mve::rotate(*this, axis, angle);
 }
@@ -133,7 +143,7 @@ inline bool Matrix3::is_zero_approx() const
 {
     return mve::is_zero_approx(*this);
 }
-inline Vector3& Matrix3::operator[](int index)
+inline Vector3& Matrix3::operator[](const int index)
 {
     switch (index) {
     case 0:
@@ -146,7 +156,7 @@ inline Vector3& Matrix3::operator[](int index)
         return col0;
     }
 }
-inline const Vector3& Matrix3::operator[](int index) const
+inline const Vector3& Matrix3::operator[](const int index) const
 {
     switch (index) {
     case 0:
@@ -206,7 +216,7 @@ inline void Matrix3::operator*=(const Matrix3& other)
 {
     *this = *this * other;
 }
-inline Matrix3 Matrix3::operator*(float val) const
+inline Matrix3 Matrix3::operator*(const float val) const
 {
     Matrix3 result = *this;
     result[0] *= val;
@@ -214,13 +224,13 @@ inline Matrix3 Matrix3::operator*(float val) const
     result[2] *= val;
     return result;
 }
-inline void Matrix3::operator*=(float val)
+inline void Matrix3::operator*=(const float val)
 {
     col0 *= val;
     col1 *= val;
     col2 *= val;
 }
-inline Matrix3 Matrix3::operator*(int val) const
+inline Matrix3 Matrix3::operator*(const int val) const
 {
     Matrix3 result = *this;
     result[0] *= val;
@@ -228,7 +238,7 @@ inline Matrix3 Matrix3::operator*(int val) const
     result[2] *= val;
     return result;
 }
-inline void Matrix3::operator*=(int val)
+inline void Matrix3::operator*=(const int val)
 {
     col0 *= val;
     col1 *= val;
@@ -340,9 +350,9 @@ inline Matrix4 Matrix3::with_translation(const Vector3 translation) const
 }
 inline Matrix3 Matrix3::from_scale(const Vector3& scale)
 {
-    return Matrix3::identity().scale(scale);
+    return identity().scale(scale);
 }
-inline Vector3 Matrix3::operator*(Vector3 vector) const
+inline Vector3 Matrix3::operator*(const Vector3 vector) const
 {
     const Matrix3& m = *this;
     return { m[0][0] * vector.x + m[0][1] * vector.y + m[0][2] * vector.z,
@@ -351,8 +361,8 @@ inline Vector3 Matrix3::operator*(Vector3 vector) const
 }
 inline Matrix3 Matrix3::from_direction(const Vector3& dir, const Vector3& up)
 {
-    Vector3 axis_x = up.cross(dir).normalize();
-    Vector3 axis_y = dir.cross(axis_x).normalize();
+    const Vector3 axis_x = up.cross(dir).normalize();
+    const Vector3 axis_y = dir.cross(axis_x).normalize();
 
     Matrix3 result;
 
@@ -372,8 +382,7 @@ inline Matrix3 Matrix3::from_direction(const Vector3& dir, const Vector3& up)
 inline Vector3 euler(const Matrix3& matrix)
 {
     Vector3 euler;
-    float sy = matrix[2][0];
-    if (sy < 1.0f) {
+    if (const float sy = matrix[2][0]; sy < 1.0f) {
         if (sy > -1.0f) {
             if (matrix[0][1] == 0.0f && matrix[1][0] == 0.0f && matrix[2][1] == 0.0f && matrix[1][2] == 0.0f
                 && matrix[1][1] == 1.0f) {
@@ -402,7 +411,7 @@ inline Vector3 euler(const Matrix3& matrix)
 }
 inline Vector3 scale(const Matrix3& matrix)
 {
-    Vector3 scale_abs = Vector3(
+    const Vector3 scale_abs = Vector3(
         Vector3(matrix[0][0], matrix[0][1], matrix[0][2]).length(),
         Vector3(matrix[1][0], matrix[1][1], matrix[1][2]).length(),
         Vector3(matrix[2][0], matrix[2][1], matrix[2][2]).length());
@@ -410,18 +419,21 @@ inline Vector3 scale(const Matrix3& matrix)
     if (matrix.determinant() > 0) {
         return scale_abs;
     }
-    else {
-        return -scale_abs;
-    }
+    return -scale_abs;
 }
 inline float determinant(const Matrix3& matrix)
 {
-    float a00 = matrix[0][0], a01 = matrix[1][0], a02 = matrix[2][0];
-    float a10 = matrix[0][1], a11 = matrix[1][1], a12 = matrix[2][1];
-    float a20 = matrix[0][2], a21 = matrix[1][2], a22 = matrix[2][2];
+    const float a00 = matrix[0][0];
+    const float a01 = matrix[1][0];
+    const float a02 = matrix[2][0];
+    const float a10 = matrix[0][1];
+    const float a11 = matrix[1][1];
+    const float a12 = matrix[2][1];
+    const float a20 = matrix[0][2];
+    const float a21 = matrix[1][2];
+    const float a22 = matrix[2][2];
 
-    return (a00 * a11 * a22) + (a01 * a12 * a20) + (a02 * a10 * a21) - (a02 * a11 * a20) - (a01 * a10 * a22)
-        - (a00 * a12 * a21);
+    return a00 * a11 * a22 + a01 * a12 * a20 + a02 * a10 * a21 - a02 * a11 * a20 - a01 * a10 * a22 - a00 * a12 * a21;
 }
 inline float trace(const Matrix3& matrix)
 {
@@ -445,32 +457,37 @@ inline Matrix3 transpose(const Matrix3& matrix)
 }
 inline Matrix3 inverse(const Matrix3& matrix)
 {
-    float a11 = matrix[0][0], a12 = matrix[1][0], a13 = matrix[2][0];
-    float a21 = matrix[0][1], a22 = matrix[1][1], a23 = matrix[2][1];
-    float a31 = matrix[0][2], a32 = matrix[1][2], a33 = matrix[2][2];
+    const float a11 = matrix[0][0];
+    const float a12 = matrix[1][0];
+    const float a13 = matrix[2][0];
+    const float a21 = matrix[0][1];
+    const float a22 = matrix[1][1];
+    const float a23 = matrix[2][1];
+    const float a31 = matrix[0][2];
+    const float a32 = matrix[1][2];
+    const float a33 = matrix[2][2];
 
-    float inv_det = 1.0f
-        / ((a11 * a22 * a33) + (a12 * a33 * a31) + (a13 * a21 * a32) - (a13 * a22 * a31) - (a12 * a21 * a33)
-           - (a11 * a23 * a32));
+    const float inv_det = 1.0f
+        / (a11 * a22 * a33 + a12 * a33 * a31 + a13 * a21 * a32 - a13 * a22 * a31 - a12 * a21 * a33 - a11 * a23 * a32);
 
     Matrix3 result;
 
-    result[0][0] = ((a22 * a33) - (a23 * a32)) * inv_det;
-    result[0][1] = -((a21 * a33) - (a23 * a31)) * inv_det;
-    result[0][2] = ((a21 * a32) - (a22 * a31)) * inv_det;
-    result[1][0] = -((a12 * a33) - (a13 * a32)) * inv_det;
-    result[1][1] = ((a11 * a33) - (a13 * a31)) * inv_det;
-    result[1][2] = -((a11 * a32) - (a12 * a31)) * inv_det;
-    result[2][0] = ((a12 * a23) - (a13 * a22)) * inv_det;
-    result[2][1] = -((a11 * a23) - (a13 * a21)) * inv_det;
-    result[2][2] = ((a11 * a22) - (a12 * a21)) * inv_det;
+    result[0][0] = (a22 * a33 - a23 * a32) * inv_det;
+    result[0][1] = -(a21 * a33 - a23 * a31) * inv_det;
+    result[0][2] = (a21 * a32 - a22 * a31) * inv_det;
+    result[1][0] = -(a12 * a33 - a13 * a32) * inv_det;
+    result[1][1] = (a11 * a33 - a13 * a31) * inv_det;
+    result[1][2] = -(a11 * a32 - a12 * a31) * inv_det;
+    result[2][0] = (a12 * a23 - a13 * a22) * inv_det;
+    result[2][1] = -(a11 * a23 - a13 * a21) * inv_det;
+    result[2][2] = (a11 * a22 - a12 * a21) * inv_det;
 
     return result;
 }
-inline Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& to, float weight)
+inline Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& to, const float weight)
 {
-    Quaternion from_quat = from.quaternion();
-    Quaternion to_quat = to.quaternion();
+    const Quaternion from_quat = from.quaternion();
+    const Quaternion to_quat = to.quaternion();
 
     Matrix3 matrix = from_quat.spherical_linear_interpolate(to_quat, weight).matrix();
     matrix[0] *= linear_interpolate(from[0].length(), to[0].length(), weight);
@@ -485,15 +502,15 @@ inline Matrix3 orthonormalize(const Matrix3& matrix)
     Vector3 y = matrix.col1;
     Vector3 z = matrix.col2;
 
-    x = mve::normalize(x);
-    y = (y - x * (mve::dot(x, y)));
-    y = mve::normalize(y);
-    z = (z - x * (mve::dot(x, z)) - y * (mve::dot(y, z)));
-    z = mve::normalize(z);
+    x = normalize(x);
+    y = y - x * dot(x, y);
+    y = normalize(y);
+    z = z - x * dot(x, z) - y * dot(y, z);
+    z = normalize(z);
 
     return { x, y, z };
 }
-inline Matrix3 rotate(const Matrix3& matrix, const Vector3& axis, float angle)
+inline Matrix3 rotate(const Matrix3& matrix, const Vector3& axis, const float angle)
 {
     return Matrix3::from_axis_angle(axis, angle) * matrix;
 }
@@ -534,9 +551,9 @@ inline Matrix3 look_at(const Vector3& target, const Vector3& up)
 {
     Matrix3 result;
 
-    Vector3 vz = mve::normalize(-target);
-    Vector3 vx = mve::normalize(up.cross(vz));
-    Vector3 vy = vz.cross(vx);
+    const Vector3 vz = normalize(-target);
+    const Vector3 vx = normalize(up.cross(vz));
+    const Vector3 vy = vz.cross(vx);
 
     result[0][0] = vx.x;
     result[0][1] = vy.x;
