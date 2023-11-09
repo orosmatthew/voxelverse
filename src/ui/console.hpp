@@ -7,7 +7,7 @@ class Console {
 public:
     explicit Console(TextPipeline& pipeline);
 
-    void resize(mve::Vector2i extent);
+    void resize(mve::Vector2i extent) const;
 
     void input_char(char character);
 
@@ -19,9 +19,9 @@ public:
 
     void draw() const;
 
-    void enable_cursor();
+    void enable_cursor() const;
 
-    void disable_cursor();
+    void disable_cursor() const;
 
 private:
     std::string m_input_str;

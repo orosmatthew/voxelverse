@@ -1,13 +1,11 @@
 #include "world_data.hpp"
 
-#include <cereal/archives/portable_binary.hpp>
-
 WorldData::WorldData()
     : m_save(16 * 1024 * 1024, "world_data")
 {
 }
 
-void WorldData::queue_save_chunk(mve::Vector2i pos)
+void WorldData::queue_save_chunk(const mve::Vector2i pos)
 {
     m_save_queue.insert(pos);
     if (m_save_queue.size() > 50) {

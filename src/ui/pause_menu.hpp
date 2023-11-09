@@ -12,17 +12,17 @@ public:
 
     void update(const mve::Window& window);
 
-    [[nodiscard]] inline bool exit_pressed() const
+    [[nodiscard]] bool exit_pressed() const
     {
         return m_exit_button.is_pressed();
     }
 
-    [[nodiscard]] inline bool back_pressed() const
+    [[nodiscard]] bool back_pressed() const
     {
         return m_back_button.is_pressed();
     }
 
-    [[nodiscard]] inline bool fullscreen_toggled() const
+    [[nodiscard]] bool fullscreen_toggled() const
     {
         return m_fullscreen_button.is_pressed();
     }

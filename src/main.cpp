@@ -20,7 +20,7 @@ int main()
     LOG->info("Starting");
 
     if (!std::filesystem::exists("save")) {
-        bool result = std::filesystem::create_directory("save");
+        const bool result = std::filesystem::create_directory("save");
         MVE_ASSERT(result, "[Main] Failed to create save dir")
     }
 

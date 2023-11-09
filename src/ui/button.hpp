@@ -25,37 +25,37 @@ public:
 
     void set_pressed_texture(std::shared_ptr<mve::Texture> texture);
 
-    [[nodiscard]] inline mve::Vector2 size() const
+    [[nodiscard]] mve::Vector2 size() const
     {
         return mve::Vector2(m_patch.size() * m_patch.scale());
     }
 
-    [[nodiscard]] inline mve::Vector2 position() const
+    [[nodiscard]] mve::Vector2 position() const
     {
         return m_position;
     }
 
-    [[nodiscard]] inline float scale() const
+    [[nodiscard]] float scale() const
     {
         return m_scale;
     }
 
-    [[nodiscard]] inline bool is_pressed() const
+    [[nodiscard]] bool is_pressed() const
     {
         return m_state == State::down && m_prev_state != State::down;
     }
 
-    [[nodiscard]] inline bool is_down() const
+    [[nodiscard]] bool is_down() const
     {
         return m_state == State::down;
     }
 
-    [[nodiscard]] inline bool is_released() const
+    [[nodiscard]] bool is_released() const
     {
         return m_prev_state == State::down && m_state != State::down;
     }
 
-    [[nodiscard]] inline bool is_hovering() const
+    [[nodiscard]] bool is_hovering() const
     {
         return m_state == State::hover;
     }

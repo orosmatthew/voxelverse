@@ -2,6 +2,8 @@
 
 #include "world_renderer.hpp"
 
+#include <utility>
+
 WireBoxMesh::WireBoxMesh(
     mve::Renderer& renderer,
     mve::GraphicsPipeline& pipeline,
@@ -25,13 +27,13 @@ WireBoxMesh::WireBoxMesh(
 
     std::vector<std::pair<mve::Vector3, mve::Vector3>> edges = rect3_to_edges(rect);
 
-    const float z_offset = 0.005f; // To prevent z-fighting
+    constexpr float z_offset = 0.005f; // To prevent z-fighting
     mve::Matrix4 scale = mve::Matrix4::from_basis_translation(
         mve::Matrix3::from_scale(mve::Vector3(1.0f - width + z_offset)), { 0, 0, 0 });
 
     MeshData combined_data;
-    for (auto& edge : edges) {
-        MeshData rect_mesh = create_rect_mesh(edge.first.transform(scale), edge.second.transform(scale), width);
+    for (auto& [from, to] : edges) {
+        MeshData rect_mesh = create_rect_mesh(from.transform(scale), to.transform(scale), width);
         combine_mesh_data(combined_data, rect_mesh);
     }
 
@@ -55,11 +57,11 @@ void WireBoxMesh::draw(const mve::DescriptorSet& global_set) const
         m_renderer->draw_index_buffer(m_mesh_buffers->index_buffer);
     }
 }
-void WireBoxMesh::set_position(mve::Vector3 position)
+void WireBoxMesh::set_position(const mve::Vector3 position)
 {
     m_uniform_buffer.update(m_model_location, mve::Matrix4::identity().translate(position));
 }
-WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(float length, float width, const mve::Matrix4& matrix)
+WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(const float length, const float width, const mve::Matrix4& matrix)
 {
     MeshData mesh_data;
     float hl = length / 2.0f;
@@ -95,38 +97,38 @@ WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(float length, float width, c
     mesh_data.vertices.emplace_back(-hl, -hw, -hw);
     mesh_data.vertices.emplace_back(hl, -hw, -hw);
 
-    std::transform(
-        mesh_data.vertices.cbegin(), mesh_data.vertices.cend(), mesh_data.vertices.begin(), [&](mve::Vector3 vertex) {
+    std::ranges::transform(
+        std::as_const(mesh_data.vertices), mesh_data.vertices.begin(), [&](const mve::Vector3 vertex) {
             return vertex.transform(matrix);
         });
 
     const std::array<uint32_t, 6> quad_indices = { 0, 3, 2, 0, 2, 1 };
     for (int q = 0; q < 6; q++) {
-        for (uint32_t i : quad_indices) {
-            mesh_data.indices.push_back(i + (q * 4));
+        for (const uint32_t i : quad_indices) {
+            mesh_data.indices.push_back(i + q * 4);
         }
     }
     return mesh_data;
 }
-WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(mve::Vector3 from, mve::Vector3 to, float width)
+WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(const mve::Vector3 from, const mve::Vector3 to, const float width)
 {
-    mve::Vector3 dir = (to - from).normalize().abs();
-    mve::Quaternion quat = mve::Quaternion::from_vector3_to_vector3({ 0, 0, 1 }, dir);
-    mve::Matrix3 basis = mve::Matrix3::from_quaternion(quat);
+    const mve::Vector3 dir = (to - from).normalize().abs();
+    const mve::Quaternion quat = mve::Quaternion::from_vector3_to_vector3({ 0, 0, 1 }, dir);
+    const mve::Matrix3 basis = mve::Matrix3::from_quaternion(quat);
 
-    mve::Matrix4 matrix
+    const mve::Matrix4 matrix
         = mve::Matrix4::identity().rotate(basis).rotate({ 0, 1, 0 }, mve::radians(90.0f)).translate((to + from) / 2.0f);
     MeshData rect_mesh = create_rect_mesh(from.distance_to(to) + width, width, matrix);
     return rect_mesh;
 }
 
-void WireBoxMesh::combine_mesh_data(WireBoxMesh::MeshData& data, const WireBoxMesh::MeshData& other)
+void WireBoxMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 {
-    uint32_t indices_offset = data.vertices.size();
+    const uint32_t indices_offset = data.vertices.size();
     for (const mve::Vector3& vertex : other.vertices) {
         data.vertices.push_back(vertex);
     }
-    for (uint32_t index : other.indices) {
+    for (const uint32_t index : other.indices) {
         data.indices.push_back(index + indices_offset);
     }
 }

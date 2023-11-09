@@ -12,19 +12,18 @@ App::App()
     , m_ui_pipeline(m_renderer)
     , m_text_pipeline(m_renderer, 36)
     , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
-    , m_world_framebuffer(m_renderer.create_framebuffer([this]() {
+    , m_world_framebuffer(m_renderer.create_framebuffer([this] {
         m_ui_pipeline.update_framebuffer_texture(
             m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
     }))
     , m_fixed_loop(60.0f)
     , m_begin_time(std::chrono::high_resolution_clock::now())
-    , m_current_frame_count(0)
 {
     LOG->set_level(spdlog::level::info);
     m_window.set_min_size({ 800, 600 });
     m_window.disable_cursor();
 
-    auto resize_func = [&](mve::Vector2i new_size) {
+    auto resize_func = [&](mve::Vector2i) {
         m_renderer.resize(m_window);
         m_world.resize(m_renderer.extent());
         m_ui_pipeline.resize();
@@ -61,7 +60,7 @@ void App::main_loop()
     while (!m_window.should_close() && !m_world.should_exit()) {
         m_window.poll_events();
 
-        m_fixed_loop.update(20, [&]() { m_world.fixed_update(m_window); });
+        m_fixed_loop.update(20, [&] { m_world.fixed_update(m_window); });
 
         m_world.update(m_window, m_fixed_loop.blend());
 
@@ -78,9 +77,8 @@ void App::main_loop()
 
         draw();
 
-        std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-
-        if (std::chrono::duration_cast<std::chrono::microseconds>(end_time - m_begin_time).count() >= 1000000) {
+        if (std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+            std::chrono::duration_cast<std::chrono::microseconds>(end_time - m_begin_time).count() >= 1000000) {
             m_begin_time = std::chrono::high_resolution_clock::now();
             m_frame_count = m_current_frame_count;
             m_current_frame_count = 0;

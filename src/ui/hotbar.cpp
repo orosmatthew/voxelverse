@@ -1,7 +1,6 @@
 #include "hotbar.hpp"
 
 #include "../common.hpp"
-#include "../logger.hpp"
 
 Hotbar::Hotbar(UIPipeline& ui_pipeline)
     : m_ui_pipeline(&ui_pipeline)
@@ -13,7 +12,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     , m_select_pos(0)
     , m_atlas_texture(ui_pipeline.renderer(), res_path("atlas.png"))
 {
-    mve::Vector2 size { 910, 110 };
+    const mve::Vector2 size { 910, 110 };
     mve::VertexData vertex_data(UIPipeline::vertex_layout());
     vertex_data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     vertex_data.push_back({ 1, 1, 1 });
@@ -34,7 +33,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     m_hotbar.uniform_data.descriptor_set.write_binding(m_texture_binding, m_hotbar_texture);
     m_hotbar.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
 
-    mve::Vector2 select_size { 24 * 5, 23 * 5 };
+    const mve::Vector2 select_size { 24 * 5, 23 * 5 };
     mve::VertexData select_vertex_data(UIPipeline::vertex_layout());
     select_vertex_data.push_back(mve::Vector3(-0.5f * select_size.x, -1.0f * select_size.y, 0.0f));
     select_vertex_data.push_back({ 1, 1, 1 });
@@ -64,24 +63,24 @@ void Hotbar::resize(const mve::Vector2i& extent)
     update_hotbar_select(m_select_pos);
     for (auto& [pos, item] : m_items) {
         if (item.has_value()) {
-            int first_offset_x = -20 * 5 * 4;
+            constexpr int first_offset_x = -20 * 5 * 4;
             item->element.uniform_data.buffer.update(
                 m_model_location,
                 mve::Matrix4::identity().scale(scale()).translate(
                     translation()
-                    + mve::Vector3(static_cast<float>(first_offset_x + (pos * 20 * 5)), -5 * 4, 0) * scale()));
+                    + mve::Vector3(static_cast<float>(first_offset_x + pos * 20 * 5), -5 * 4, 0) * scale()));
         }
     }
 }
 
-void Hotbar::update_hotbar_select(int pos)
+void Hotbar::update_hotbar_select(const int pos)
 {
     m_select_pos = pos;
-    int first_offset_x = -20 * 5 * 4;
+    constexpr int first_offset_x = -20 * 5 * 4;
     m_select.uniform_data.buffer.update(
         m_model_location,
         mve::Matrix4::identity().scale(scale()).translate(
-            translation() + mve::Vector3(static_cast<float>(first_offset_x + (pos * 20 * 5)), 0, 0) * scale()));
+            translation() + mve::Vector3(static_cast<float>(first_offset_x + pos * 20 * 5), 0, 0) * scale()));
 }
 mve::Vector3 Hotbar::scale() const
 {
@@ -92,24 +91,25 @@ mve::Vector3 Hotbar::translation() const
 {
     return { static_cast<float>(m_renderer_extent.x) * 0.5f, static_cast<float>(m_renderer_extent.y), 0 };
 }
-std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(uint8_t block_type)
+std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(const uint8_t block_type)
 {
-    mve::Vector2 size(14 * 5);
-    QuadUVs quad_uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
+    const mve::Vector2 size(14 * 5);
+    auto [top_left, top_right, bottom_right, bottom_left]
+        = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
 
     mve::VertexData data(UIPipeline::vertex_layout());
     data.push_back(mve::Vector3(-0.5f * size.x, -1.0f * size.y, 0.0f));
     data.push_back({ 0.0f, 0.0f, 0.0f });
-    data.push_back(quad_uvs.top_left);
+    data.push_back(top_left);
     data.push_back(mve::Vector3(0.5f * size.x, -1.0f * size.y, 0.0f));
     data.push_back({ 0.0f, 0.0f, 0.0f });
-    data.push_back(quad_uvs.top_right);
+    data.push_back(top_right);
     data.push_back(mve::Vector3(0.5f * size.x, 0.0f * size.y, 0.0f));
     data.push_back({ 0.0f, 0.0f, 0.0f });
-    data.push_back(quad_uvs.bottom_right);
+    data.push_back(bottom_right);
     data.push_back(mve::Vector3(-0.5f * size.x, 0.0f * size.y, 0.0f));
     data.push_back({ 0.0f, 0.0f, 0.0f });
-    data.push_back(quad_uvs.bottom_left);
+    data.push_back(bottom_left);
 
     return { data, { 0, 3, 2, 0, 2, 1 } };
 }
@@ -126,7 +126,7 @@ void Hotbar::draw() const
     m_ui_pipeline->draw(m_select.uniform_data.descriptor_set, m_select.vertex_buffer, m_select.index_buffer);
 }
 
-void Hotbar::set_item(int pos, uint8_t block_type)
+void Hotbar::set_item(const int pos, const uint8_t block_type)
 {
     auto [vertex_data, index_data] = create_item_mesh(block_type);
     Element element = { .uniform_data = m_ui_pipeline->create_uniform_data(),

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mve/common.hpp"
 #include "mve/renderer.hpp"
 
 struct UIUniformData {
@@ -23,31 +22,31 @@ public:
         const mve::VertexBuffer& vertex_buffer,
         const mve::IndexBuffer& index_buffer) const;
 
-    [[nodiscard]] inline mve::UniformLocation model_location() const
+    [[nodiscard]] mve::UniformLocation model_location() const
     {
         return m_vertex_shader.descriptor_set(1).binding(0).member("model").location();
     }
 
-    [[nodiscard]] inline const mve::ShaderDescriptorBinding& texture_binding() const
+    [[nodiscard]] const mve::ShaderDescriptorBinding& texture_binding() const
     {
         return m_fragment_shader.descriptor_set(1).binding(1);
     }
 
-    [[nodiscard]] inline const mve::DescriptorSet& global_descriptor_set() const
+    [[nodiscard]] const mve::DescriptorSet& global_descriptor_set() const
     {
         return m_global_descriptor_set;
     }
 
-    UIUniformData create_uniform_data();
+    [[nodiscard]] UIUniformData create_uniform_data() const;
 
     void bind() const;
 
-    inline mve::Renderer& renderer()
+    [[nodiscard]] mve::Renderer& renderer() const
     {
         return *m_renderer;
     }
 
-    static inline mve::VertexLayout vertex_layout()
+    static mve::VertexLayout vertex_layout()
     {
         return {
             mve::VertexAttributeType::vec3, // Position

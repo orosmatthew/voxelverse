@@ -7,24 +7,24 @@ class TextBuffer {
     friend TextPipeline;
 
 public:
-    inline TextBuffer()
-        : m_valid(false)
-        , m_pipeline(nullptr)
-        , m_handle(0)
-    {
-    }
+    TextBuffer() = default;
 
-    inline explicit TextBuffer(TextPipeline& pipeline)
+    explicit TextBuffer(TextPipeline& pipeline)
     {
         *this = std::move(pipeline.create_text_buffer());
     }
 
-    inline TextBuffer(TextPipeline& pipeline, std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color)
+    TextBuffer(
+        TextPipeline& pipeline,
+        const std::string_view text,
+        const mve::Vector2 pos,
+        const float scale,
+        const mve::Vector3 color)
     {
         *this = std::move(pipeline.create_text_buffer(text, pos, scale, color));
     }
 
-    inline TextBuffer(TextBuffer&& other) noexcept
+    TextBuffer(TextBuffer&& other) noexcept
         : m_valid(other.m_valid)
         , m_pipeline(other.m_pipeline)
         , m_handle(other.m_handle)
@@ -32,84 +32,84 @@ public:
         other.m_valid = false;
     }
 
-    inline ~TextBuffer()
+    ~TextBuffer()
     {
         if (m_valid) {
             m_pipeline->destroy(*this);
         }
     }
 
-    [[nodiscard]] inline size_t handle() const
+    [[nodiscard]] size_t handle() const
     {
         return m_handle;
     }
 
-    [[nodiscard]] inline bool is_valid() const
+    [[nodiscard]] bool is_valid() const
     {
         return m_valid;
     }
 
-    inline void update(std::string_view text) const
+    void update(const std::string_view text) const
     {
         m_pipeline->update_text_buffer(*this, text);
     }
 
-    inline void set_translation(mve::Vector2 pos) const
+    void set_translation(const mve::Vector2 pos) const
     {
         m_pipeline->set_text_buffer_translation(*this, pos);
     }
 
-    inline void set_color(mve::Vector3 color) const
+    void set_color(const mve::Vector3 color) const
     {
         m_pipeline->set_text_buffer_color(*this, color);
     }
 
-    inline void set_scale(float scale) const
+    void set_scale(const float scale) const
     {
         m_pipeline->set_text_buffer_scale(*this, scale);
     }
 
-    [[nodiscard]] inline float width() const
+    [[nodiscard]] float width() const
     {
         return m_pipeline->text_buffer_width(*this);
     }
 
-    inline void add_cursor(int pos)
+    void add_cursor(const int pos) const
     {
         m_pipeline->add_cursor(*this, pos);
     }
 
-    inline void set_cursor_pos(int pos)
+    void set_cursor_pos(const int pos) const
     {
         m_pipeline->set_cursor_pos(*this, pos);
     }
 
-    inline void cursor_left() const
+    void cursor_left() const
     {
         m_pipeline->cursor_left(*this);
     }
 
-    inline void cursor_right() const
+    void cursor_right() const
     {
         m_pipeline->cursor_right(*this);
     }
 
-    inline void remove_cursor()
+    void remove_cursor() const
     {
         m_pipeline->remove_cursor(*this);
     }
 
-    [[nodiscard]] inline std::optional<int> cursor_pos() const
+    [[nodiscard]] std::optional<int> cursor_pos() const
     {
         return m_pipeline->cursor_pos(*this);
     }
 
-    inline void draw() const
+    void draw() const
     {
         m_pipeline->draw(*this);
     }
 
-    inline TextBuffer& operator=(TextBuffer&& other) noexcept
+    TextBuffer& operator=(TextBuffer&& other) noexcept
     {
         if (m_valid) {
             m_pipeline->destroy(*this);
@@ -121,12 +121,12 @@ public:
         return *this;
     }
 
-    inline bool operator==(const TextBuffer& other) const
+    bool operator==(const TextBuffer& other) const
     {
         return m_valid == other.m_valid && m_pipeline == other.m_pipeline && m_handle == other.m_handle;
     }
 
-    inline bool operator<(const TextBuffer& other) const
+    bool operator<(const TextBuffer& other) const
     {
         return m_handle < other.m_handle;
     }
@@ -137,12 +137,10 @@ private:
     size_t m_handle {};
 };
 
-namespace std {
 template <>
-struct hash<TextBuffer> {
-    std::size_t operator()(const TextBuffer& text_buffer) const
+struct std::hash<TextBuffer> {
+    std::size_t operator()(const TextBuffer& text_buffer) const noexcept
     {
         return hash<size_t>()(text_buffer.handle());
     }
 };
-}

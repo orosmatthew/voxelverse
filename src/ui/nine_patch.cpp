@@ -1,12 +1,11 @@
 #include "nine_patch.hpp"
-#include "../logger.hpp"
 
 NinePatch::NinePatch(
     UIPipeline& ui_pipeline,
     const std::shared_ptr<mve::Texture>& texture,
-    NinePatchMargins margins,
-    mve::Vector2i size,
-    float scale)
+    const NinePatchMargins margins,
+    const mve::Vector2i size,
+    const float scale)
     : m_pipeline(&ui_pipeline)
     , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_scale(scale)
@@ -18,13 +17,14 @@ NinePatch::NinePatch(
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
     m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
 
-    mve::Vector2 pixel = { 1.0f / static_cast<float>(texture->size().x), 1.0f / static_cast<float>(texture->size().y) };
+    const mve::Vector2 pixel
+        = { 1.0f / static_cast<float>(texture->size().x), 1.0f / static_cast<float>(texture->size().y) };
 
-    std::array<float, 4> x_uvs = {
-        0.0f, pixel.x * static_cast<float>(margins.left), 1.0f - (pixel.x * static_cast<float>(margins.right)), 1.0f
+    const std::array x_uvs = {
+        0.0f, pixel.x * static_cast<float>(margins.left), 1.0f - pixel.x * static_cast<float>(margins.right), 1.0f
     };
-    std::array<float, 4> y_uvs = {
-        0.0f, pixel.y * static_cast<float>(margins.top), 1.0f - (pixel.y * static_cast<float>(margins.bottom)), 1.0f
+    const std::array y_uvs = {
+        0.0f, pixel.y * static_cast<float>(margins.top), 1.0f - pixel.y * static_cast<float>(margins.bottom), 1.0f
     };
 
     std::array<mve::Vector2, 16> uvs;
@@ -36,10 +36,10 @@ NinePatch::NinePatch(
         }
     }
 
-    std::array<float, 4> x_vertices = {
+    const std::array x_vertices = {
         0.0f, static_cast<float>(margins.left), static_cast<float>(size.x - margins.right), static_cast<float>(size.x)
     };
-    std::array<float, 4> y_vertices = {
+    const std::array y_vertices = {
         0.0f, static_cast<float>(margins.top), static_cast<float>(size.y - margins.bottom), static_cast<float>(size.y)
     };
 
@@ -53,7 +53,7 @@ NinePatch::NinePatch(
     }
 
     // clang-format off
-    std::vector<uint32_t> indices = {
+    const std::vector<uint32_t> indices = {
         0,   5,  1,  0,  4,  5,
         1,   6,  2,  1,  5,  6,
         2,   7,  3,  2,  6,  7,
@@ -90,7 +90,7 @@ void NinePatch::set_position(const mve::Vector2& pos)
             .scale(mve::Vector3(m_scale))
             .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
 }
-void NinePatch::set_scale(float scale)
+void NinePatch::set_scale(const float scale)
 {
     m_scale = scale;
     m_uniform_data.buffer.update(
@@ -100,7 +100,7 @@ void NinePatch::set_scale(float scale)
             .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
 }
 
-void NinePatch::update_texture(const mve::Texture& texture)
+void NinePatch::update_texture(const mve::Texture& texture) const
 {
     // TODO: This texture could be different size from original
     m_uniform_data.descriptor_set.write_binding(m_pipeline->texture_binding(), texture);

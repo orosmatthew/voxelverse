@@ -1,12 +1,9 @@
 #pragma once
 
-#include "mve/math/math.hpp"
 #include "mve/window.hpp"
-#include "player.hpp"
 #include "ui_pipeline.hpp"
 #include "util/fixed_loop.hpp"
 #include "world.hpp"
-#include "world_data.hpp"
 #include "world_renderer.hpp"
 
 namespace app {

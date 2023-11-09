@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.hpp"
-#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 #include "mve/renderer.hpp"
 

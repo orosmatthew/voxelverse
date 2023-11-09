@@ -1,6 +1,9 @@
 #include "pause_menu.hpp"
-#include "../logger.hpp"
+
+#include <mve/common.hpp>
+
 #include "../common.hpp"
+#include "../logger.hpp"
 
 PauseMenu::PauseMenu(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     : m_button_texture(std::make_shared<mve::Texture>(ui_pipeline.renderer(), res_path("button_gray.png")))
@@ -28,14 +31,12 @@ void PauseMenu::draw() const
     m_fullscreen_button.draw();
     m_exit_button.draw();
 }
-void PauseMenu::resize(mve::Vector2i extent)
+void PauseMenu::resize(const mve::Vector2i extent)
 {
-    m_back_button.set_position(
-        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, -100.0f));
+    m_back_button.set_position(mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f + mve::Vector2(0.0f, -100.0f));
     m_fullscreen_button.set_position(
-        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 0.0f));
-    m_exit_button.set_position(
-        (mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f) + mve::Vector2(0.0f, 100.0f));
+        mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f + mve::Vector2(0.0f, 0.0f));
+    m_exit_button.set_position(mve::Vector2(extent / 2.0f) - m_exit_button.size() / 2.0f + mve::Vector2(0.0f, 100.0f));
 }
 void PauseMenu::update(const mve::Window& window)
 {

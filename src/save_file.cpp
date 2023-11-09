@@ -7,7 +7,7 @@
 
 #include "mve/common.hpp"
 
-SaveFile::SaveFile(size_t max_file_size, const std::string& name)
+SaveFile::SaveFile(const size_t max_file_size, const std::string& name)
 {
     if (!std::filesystem::exists("save")) {
         std::filesystem::create_directory("save");
@@ -16,13 +16,14 @@ SaveFile::SaveFile(size_t max_file_size, const std::string& name)
     db_options.create_if_missing = true;
     db_options.compression = leveldb::kNoCompression;
     db_options.max_file_size = max_file_size;
-    leveldb::Status db_status = leveldb::DB::Open(db_options, "save/" + name, &m_db);
+    const leveldb::Status db_status = leveldb::DB::Open(db_options, "save/" + name, &m_db);
     MVE_ASSERT(db_status.ok(), "[SaveFile] Leveldb open not ok for " + name)
 }
 SaveFile::~SaveFile()
 {
     delete m_db;
 }
+// ReSharper disable once CppMemberFunctionMayBeConst
 std::optional<std::string> SaveFile::at(const std::string& key)
 {
     std::string data;
@@ -32,8 +33,8 @@ std::optional<std::string> SaveFile::at(const std::string& key)
     }
     MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to get key: " + key)
     ValueData value_data;
-    std::stringstream data_stream(data);
     {
+        std::stringstream data_stream(data);
         cereal::PortableBinaryInputArchive archive_in(data_stream);
         archive_in(value_data);
     }
@@ -44,6 +45,7 @@ std::optional<std::string> SaveFile::at(const std::string& key)
         value_data.data.data(),
         decompressed_data.data(),
         static_cast<int>(value_data.data.size()),
+        // ReSharper disable once CppRedundantCastExpression
         static_cast<int>(decompressed_data.size()));
     MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key)
     decompressed_data.resize(result_size);
@@ -55,8 +57,12 @@ void SaveFile::insert(const std::string& key, const std::string& value)
 {
 
     std::vector<char> compressed_data(LZ4_compressBound(static_cast<int>(value.size())));
-    int compressed_size = LZ4_compress_default(
-        value.data(), compressed_data.data(), static_cast<int>(value.size()), static_cast<int>(compressed_data.size()));
+    const int compressed_size = LZ4_compress_default(
+        value.data(),
+        compressed_data.data(),
+        static_cast<int>(value.size()),
+        // ReSharper disable once CppRedundantCastExpression
+        static_cast<int>(compressed_data.size()));
     MVE_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
     compressed_data.resize(compressed_size);
 
@@ -72,7 +78,7 @@ void SaveFile::insert(const std::string& key, const std::string& value)
         m_batch.Put(key, data_stream.str());
     }
     else {
-        leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, data_stream.str());
+        const leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, data_stream.str());
         MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key)
     }
 }
@@ -85,6 +91,7 @@ void SaveFile::begin_batch()
 
 void SaveFile::submit_batch()
 {
+    // ReSharper disable once CppDFAUnusedValue
     leveldb::Status db_status = m_db->Write(leveldb::WriteOptions(), &m_batch);
     clear_batch();
     m_writing_batch = false;

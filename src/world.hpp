@@ -3,9 +3,6 @@
 #include "chunk_controller.hpp"
 #include "mve/renderer.hpp"
 #include "text_pipeline.hpp"
-#include "ui/crosshair.hpp"
-#include "ui/debug_overlay.hpp"
-#include "ui/hotbar.hpp"
 #include "ui/hud.hpp"
 #include "ui/pause_menu.hpp"
 #include "world_generator.hpp"
@@ -19,7 +16,7 @@ class World {
 public:
     World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance);
 
-    inline void set_render_distance(int distance)
+    void set_render_distance(const int distance)
     {
         m_render_distance = distance;
         m_chunk_controller.set_render_distance(distance);
@@ -33,7 +30,7 @@ public:
 
     void draw();
 
-    inline void update_debug_fps(int fps)
+    void update_debug_fps(const int fps)
     {
         m_hud.update_debug_fps(fps);
     }
@@ -44,12 +41,12 @@ public:
 
     [[nodiscard]] std::optional<const ChunkData*> chunk_data_at(mve::Vector3i chunk_pos) const;
 
-    [[nodiscard]] inline const WorldData& world_data() const
+    [[nodiscard]] const WorldData& world_data() const
     {
         return m_world_data;
     }
 
-    [[nodiscard]] inline bool should_exit() const
+    [[nodiscard]] bool should_exit() const
     {
         return m_should_exit;
     }
@@ -57,7 +54,7 @@ public:
 private:
     enum class FocusState { world, console, pause };
 
-    void update_world(mve::Window& window, float blend);
+    void update_world(mve::Window& window);
 
     WorldRenderer m_world_renderer;
     WorldGenerator m_world_generator;

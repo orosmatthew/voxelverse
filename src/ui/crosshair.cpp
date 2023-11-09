@@ -6,14 +6,14 @@ Crosshair::Crosshair(UIPipeline& pipeline)
     , m_uniform_data(pipeline.create_uniform_data())
     , m_texture(pipeline.renderer().create_texture(res_path("cross.png")))
 {
-    auto transform = mve::Matrix4::identity().translate(
+    const auto transform = mve::Matrix4::identity().translate(
         { static_cast<float>(pipeline.renderer().extent().x) / 2.0f,
           static_cast<float>(pipeline.renderer().extent().y) / 2.0f,
           0.0f });
     m_uniform_data.buffer.update(pipeline.model_location(), transform);
     m_uniform_data.descriptor_set.write_binding(pipeline.texture_binding(), m_texture);
 
-    const float cross_scale = 25.0f;
+    constexpr float cross_scale = 25.0f;
     const mve::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
 
     mve::VertexData cross_data(UIPipeline::vertex_layout());
@@ -40,7 +40,7 @@ void Crosshair::draw() const
 }
 void Crosshair::resize()
 {
-    auto transform = mve::Matrix4::identity().translate(
+    const auto transform = mve::Matrix4::identity().translate(
         { static_cast<float>(m_pipeline->renderer().extent().x) / 2.0f,
           static_cast<float>(m_pipeline->renderer().extent().y) / 2.0f,
           0.0f });

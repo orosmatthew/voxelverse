@@ -1,18 +1,17 @@
 #include "chunk_data.hpp"
-#include "common.hpp"
 
 ChunkData::ChunkData()
     : m_pos(mve::Vector3i(0.0f))
 {
-//    reset_lighting();
+    //    reset_lighting();
 }
 
-ChunkData::ChunkData(mve::Vector3i chunk_pos)
+ChunkData::ChunkData(const mve::Vector3i chunk_pos)
     : m_pos(chunk_pos)
 {
-//    reset_lighting();
+    //    reset_lighting();
 }
-void ChunkData::set_block(mve::Vector3i pos, uint8_t type)
+void ChunkData::set_block(const mve::Vector3i pos, const uint8_t type)
 {
     if (m_block_data[index(pos)] == 0 && type != 0) {
         m_block_count++;
@@ -33,7 +32,7 @@ void ChunkData::set_block(mve::Vector3i pos, uint8_t type)
     //        }
     //    }
 }
-bool ChunkData::in_bounds(mve::Vector3i pos) const
+bool ChunkData::in_bounds(const mve::Vector3i pos)
 {
     return pos.x >= 0 && pos.x < 16 && pos.y >= 0 && pos.y < 16 && pos.z >= 0 && pos.z < 16;
 }

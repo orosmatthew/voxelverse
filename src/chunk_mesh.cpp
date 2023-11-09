@@ -4,7 +4,9 @@
 #include "mve/math/math.hpp"
 #include "world_renderer.hpp"
 
-ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos)
+#include <mve/common.hpp>
+
+ChunkMesh::ChunkMesh(const mve::Vector3i chunk_pos)
     : m_chunk_pos(chunk_pos)
 {
     //    create_mesh_data(chunk_pos, data);
@@ -12,34 +14,34 @@ ChunkMesh::ChunkMesh(mve::Vector3i chunk_pos)
 
 void ChunkMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 {
-    uint32_t indices_offset = data.vertices.size();
+    const uint32_t indices_offset = data.vertices.size();
     for (int i = 0; i < other.vertices.size(); i++) {
         data.vertices.push_back(other.vertices[i]);
         data.colors.push_back(other.colors[i]);
         data.uvs.push_back(other.uvs[i]);
     }
 
-    for (unsigned int index : other.indices) {
+    for (const unsigned int index : other.indices) {
         data.indices.push_back(index + indices_offset);
     }
 }
 
 void ChunkMesh::calc_block_faces(
-    uint8_t block_type,
+    const uint8_t block_type,
     MeshData& mesh,
     const WorldData& world_data,
     const ChunkData& chunk_data,
-    mve::Vector3i chunk_pos,
-    mve::Vector3i local_pos,
-    bool iterate_empty,
+    const mve::Vector3i chunk_pos,
+    const mve::Vector3i local_pos,
+    const bool iterate_empty,
     const std::array<bool, 6>& directions)
 {
     for (int f = 0; f < 6; f++) {
         if (!directions[f]) {
             continue;
         }
-        auto dir = static_cast<Direction>(f);
-        mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
+        const auto dir = static_cast<Direction>(f);
+        const mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
         std::optional<uint8_t> adj_block;
         if (WorldData::is_block_pos_local(adj_local_pos)) {
             adj_block = chunk_data.get_block(adj_local_pos);
@@ -71,14 +73,14 @@ void ChunkMesh::calc_block_faces(
     }
 }
 
-void ChunkMesh::create_mesh_data(mve::Vector3i chunk_pos, const WorldData& world_data)
+void ChunkMesh::create_mesh_data(const mve::Vector3i chunk_pos, const WorldData& world_data)
 {
     m_chunk_pos = chunk_pos;
     MeshData mesh;
     const ChunkData& chunk_data = world_data.chunk_data_at(chunk_pos);
-    for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](mve::Vector3i local_pos) {
-        uint8_t block = chunk_data.get_block(local_pos);
-        if (chunk_data.block_count() > (8 * 8 * 8)) {
+    for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const mve::Vector3i local_pos) {
+        const uint8_t block = chunk_data.get_block(local_pos);
+        if (chunk_data.block_count() > 8 * 8 * 8) {
             if (block != 0) {
                 std::array<bool, 6> directions {};
                 if (local_pos.x == 0) {
@@ -135,7 +137,7 @@ void ChunkMesh::draw(mve::Renderer& renderer) const
 }
 
 ChunkMesh::FaceData ChunkMesh::create_face_mesh(
-    uint8_t block_type, mve::Vector3 offset, Direction face, const std::array<uint8_t, 4>& lighting)
+    const uint8_t block_type, const mve::Vector3 offset, const Direction face, const std::array<uint8_t, 4>& lighting)
 {
     FaceData data;
     QuadUVs uvs;
@@ -205,16 +207,16 @@ ChunkMesh::FaceData ChunkMesh::create_face_mesh(
     return data;
 }
 
-void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::FaceData& face)
+void ChunkMesh::add_face_to_mesh(MeshData& data, const FaceData& face)
 {
-    uint32_t indices_offset = data.vertices.size();
+    const uint32_t indices_offset = data.vertices.size();
     for (int i = 0; i < face.vertices.size(); i++) {
         data.vertices.push_back(face.vertices[i]);
         data.colors.push_back(face.colors[i]);
         data.uvs.push_back(face.uvs[i]);
     }
 
-    for (unsigned int index : face.indices) {
+    for (const unsigned int index : face.indices) {
         data.indices.push_back(index + indices_offset);
     }
 }
@@ -222,11 +224,11 @@ void ChunkMesh::add_face_to_mesh(ChunkMesh::MeshData& data, const ChunkMesh::Fac
 std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
     const WorldData& data,
     const ChunkData& chunk_data,
-    mve::Vector3i chunk_pos,
-    mve::Vector3i local_block_pos,
-    Direction dir)
+    const mve::Vector3i chunk_pos,
+    const mve::Vector3i local_block_pos,
+    const Direction dir)
 {
-    uint8_t base_lighting;
+    uint8_t base_lighting = 0;
     //    mve::Vector3i world_pos = WorldData::block_local_to_world(chunk_pos, local_block_pos);
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
@@ -301,10 +303,10 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
     MVE_VAL_ASSERT(base_lighting >= 0 && base_lighting <= 15, "[ChunkMesh] Base lighting is not between 0 and 15")
 
     base_lighting = static_cast<uint8_t>(mve::clamp(base_lighting * 16, 0, 255));
-    std::array<uint8_t, 4> lighting = { base_lighting, base_lighting, base_lighting, base_lighting };
+    std::array lighting = { base_lighting, base_lighting, base_lighting, base_lighting };
 
     for (int i = 0; i < check_blocks.size(); i++) {
-        mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
+        const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
         std::optional<uint8_t> check_block;
         if (WorldData::is_block_pos_local(check_block_local)) {
             check_block = chunk_data.get_block(check_block_local);
@@ -315,7 +317,7 @@ std::array<uint8_t, 4> ChunkMesh::calc_face_lighting(
         if (!check_block.has_value()) {
             continue;
         }
-        const uint8_t occlusion_factor = 35;
+        constexpr uint8_t occlusion_factor = 35;
         static_assert(255 - static_cast<int>(occlusion_factor) * 3 > 0);
         if (check_block.value() != 0) {
             switch (i) {

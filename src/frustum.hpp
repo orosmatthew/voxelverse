@@ -5,7 +5,7 @@
 
 class Frustum {
 public:
-    inline void update_perspective(float angle, float ratio, float near_dist, float far_dist)
+    void update_perspective(const float angle, const float ratio, const float near_dist, const float far_dist)
     {
         m_ratio = ratio;
         m_angle = angle / 2.0f;
@@ -24,21 +24,21 @@ public:
         m_far_size.x = m_far_size.y * ratio;
     }
 
-    inline void update_camera(const Player& camera)
+    void update_camera(const Player& camera)
     {
         m_camera_pos = camera.position();
         // compute the Z axis of camera
         m_z_axis = (camera.position() - camera.target()).normalize();
 
         // X-axis of camera of given "up" vector and Z axis
-        m_x_axis = camera.up().cross(m_z_axis).normalize();
+        m_x_axis = Player::up().cross(m_z_axis).normalize();
 
         // the real "up" vector is the cross product of Z and X
         m_y_axis = m_z_axis.cross(m_x_axis);
 
         // compute the center of the near and far planes
-        mve::Vector3 near_center = m_camera_pos - m_z_axis * m_near_dist;
-        mve::Vector3 far_center = m_camera_pos - m_z_axis * m_far_dist;
+        const mve::Vector3 near_center = m_camera_pos - m_z_axis * m_near_dist;
+        const mve::Vector3 far_center = m_camera_pos - m_z_axis * m_far_dist;
 
         // compute the 8 corners of the frustum
         m_near_quad.top_left = near_center + m_y_axis * m_near_size.y - m_x_axis * m_near_size.x;
@@ -52,53 +52,50 @@ public:
         m_far_quad.bottom_left = far_center - m_y_axis * m_far_size.y - m_x_axis * m_far_size.x;
     }
 
-    [[nodiscard]] inline bool contains_point(mve::Vector3 point) const
+    [[nodiscard]] bool contains_point(const mve::Vector3 point) const
     {
-        mve::Vector3 point_from_center = point - m_camera_pos;
+        const mve::Vector3 point_from_center = point - m_camera_pos;
 
         // Test z
-        float point_z_val = point_from_center.dot(-m_z_axis);
+        const float point_z_val = point_from_center.dot(-m_z_axis);
         if (point_z_val > m_far_dist || point_z_val < m_near_dist)
             return false;
 
         // Test y
-        float point_y_val = point_from_center.dot(m_y_axis);
-        float y_bounds = point_z_val * m_tan_angle;
+        const float point_y_val = point_from_center.dot(m_y_axis);
+        const float y_bounds = point_z_val * m_tan_angle;
         if (point_y_val > y_bounds || point_y_val < -y_bounds)
             return false;
 
         // Test x
-        float point_x_val = point_from_center.dot(m_x_axis);
-        float x_bounds = y_bounds * m_ratio;
-        if (point_x_val > x_bounds || point_x_val < -x_bounds)
+        const float point_x_val = point_from_center.dot(m_x_axis);
+        if (const float x_bounds = y_bounds * m_ratio; point_x_val > x_bounds || point_x_val < -x_bounds)
             return false;
 
         return true;
     }
 
-    [[nodiscard]] inline bool contains_sphere(mve::Vector3 position, float radius) const
+    [[nodiscard]] bool contains_sphere(const mve::Vector3 position, const float radius) const
     {
-        float d1, d2;
-        float az, ax, ay, zz1, zz2;
         bool result = true;
 
-        mve::Vector3 pos_from_center = position - m_camera_pos;
+        const mve::Vector3 pos_from_center = position - m_camera_pos;
 
-        az = pos_from_center.dot({ -m_z_axis.x, -m_z_axis.y, -m_z_axis.z });
+        const float az = pos_from_center.dot({ -m_z_axis.x, -m_z_axis.y, -m_z_axis.z });
         if (az > m_far_dist + radius || az < m_near_dist - radius)
             return false;
 
-        ax = pos_from_center.dot(m_x_axis);
-        zz1 = az * m_tan_angle * m_ratio;
-        d1 = m_sphere_factor.x * radius;
+        const float ax = pos_from_center.dot(m_x_axis);
+        const float zz1 = az * m_tan_angle * m_ratio;
+        const float d1 = m_sphere_factor.x * radius;
         if (ax > zz1 + d1 || ax < -zz1 - d1)
-            return (false);
+            return false;
 
-        ay = pos_from_center.dot(m_y_axis);
-        zz2 = az * m_tan_angle;
-        d2 = m_sphere_factor.y * radius;
+        const float ay = pos_from_center.dot(m_y_axis);
+        const float zz2 = az * m_tan_angle;
+        const float d2 = m_sphere_factor.y * radius;
         if (ay > zz2 + d2 || ay < -zz2 - d2)
-            return (false);
+            return false;
 
         if (az > m_far_dist - radius || az < m_near_dist + radius)
             result = true;

@@ -28,19 +28,19 @@ public:
 
     void set_scale(float scale);
 
-    void update_texture(const mve::Texture& texture);
+    void update_texture(const mve::Texture& texture) const;
 
-    [[nodiscard]] inline mve::Vector2 position() const
+    [[nodiscard]] mve::Vector2 position() const
     {
         return m_position;
     }
 
-    [[nodiscard]] inline float scale() const
+    [[nodiscard]] float scale() const
     {
         return m_scale;
     }
 
-    [[nodiscard]] inline mve::Vector2i size() const
+    [[nodiscard]] mve::Vector2i size() const
     {
         return m_size;
     }

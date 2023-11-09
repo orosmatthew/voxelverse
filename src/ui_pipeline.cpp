@@ -18,13 +18,13 @@ UIPipeline::UIPipeline(mve::Renderer& renderer)
 
     mve::Matrix4 camera;
     camera = camera.translate({ 0.0f, 0.0f, 0.0f });
-    mve::Matrix4 view = camera.inverse().transpose();
+    const mve::Matrix4 view = camera.inverse().transpose();
     m_global_ubo.update(m_view_location, view);
 }
 
 void UIPipeline::resize()
 {
-    mve::Matrix4 proj = mve::ortho(
+    const mve::Matrix4 proj = mve::ortho(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
@@ -34,7 +34,7 @@ void UIPipeline::resize()
     m_global_ubo.update(m_proj_location, proj);
 }
 
-void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size)
+void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const mve::Vector2i size)
 {
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), texture);
     mve::VertexData world_data(vertex_layout());
@@ -69,7 +69,7 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, mve::Ve
         m_vertex_shader.descriptor_set(0).binding(0).member("world_size").location(), mve::Vector2(size));
 }
 
-UIUniformData UIPipeline::create_uniform_data()
+UIUniformData UIPipeline::create_uniform_data() const
 {
     UIUniformData data
         = { .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),

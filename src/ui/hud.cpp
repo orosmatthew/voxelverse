@@ -17,15 +17,15 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     m_hotbar.set_item(7, 8);
     m_hotbar.set_item(8, 9);
 }
-void HUD::resize(mve::Vector2i extent)
+void HUD::resize(const mve::Vector2i extent)
 {
     m_hotbar.resize(extent);
-    m_debug_overlay.resize(extent);
+    m_debug_overlay.resize();
     m_console.resize(extent);
     m_crosshair.resize();
 }
 
-void HUD::draw()
+void HUD::draw() const
 {
     m_crosshair.draw();
     m_hotbar.draw();

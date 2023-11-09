@@ -2,7 +2,6 @@
 
 #include "../logger.hpp"
 #include <mve/window.hpp>
-#include <utility>
 
 Button::Button(
     UIPipeline& ui_pipeline,
@@ -10,7 +9,7 @@ Button::Button(
     const std::shared_ptr<mve::Texture>& texture,
     const std::string& text,
     const mve::Vector2i& size,
-    float scale)
+    const float scale)
     : m_text_pipeline(&text_pipeline)
     , m_patch(ui_pipeline, texture, { 2, 2, 2, 2 }, size, scale)
     , m_text(text_pipeline, text, { 0, 0 }, 1.0f, { 0.0f, 0.0f, 0.0f })
@@ -34,11 +33,11 @@ void Button::set_position(const mve::Vector2& pos)
 {
     m_patch.set_position(pos);
     m_text.set_translation(
-        { (pos.x + (static_cast<float>(m_patch.size().x) * m_patch.scale()) / 2.0f) - m_text.width() / 2.0f,
-          (pos.y + (static_cast<float>(m_patch.size().y) * m_patch.scale()) / 2.0f)
+        { pos.x + static_cast<float>(m_patch.size().x) * m_patch.scale() / 2.0f - m_text.width() / 2.0f,
+          pos.y + static_cast<float>(m_patch.size().y) * m_patch.scale() / 2.0f
               - static_cast<float>(m_text_pipeline->point_size()) / 2.0f });
 }
-void Button::set_scale(float scale)
+void Button::set_scale(const float scale)
 {
     m_patch.set_scale(scale);
     m_text.set_scale(scale);

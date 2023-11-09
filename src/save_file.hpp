@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cstdint>
 #include <optional>
 #include <sstream>
 #include <string>
 
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/cereal.hpp>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <cereal/types/string.hpp>
 
 #include <leveldb/db.h>
@@ -19,7 +19,7 @@ public:
     ~SaveFile();
 
     template <typename KeyType, typename ValueType, typename... Args>
-    inline std::optional<ValueType> at(const KeyType& key, Args&&... args)
+    std::optional<ValueType> at(const KeyType& key, Args&&... args)
     {
         std::stringstream key_stream;
         {
@@ -31,8 +31,8 @@ public:
             return {};
         }
         ValueType value(std::forward<Args>(args)...);
-        std::stringstream value_stream(*value_str);
         {
+            std::stringstream value_stream(*value_str);
             cereal::PortableBinaryInputArchive archive_in(value_stream);
             archive_in(value);
         }
@@ -40,7 +40,7 @@ public:
     }
 
     template <typename KeyType>
-    inline std::optional<std::string> at(const KeyType& key)
+    std::optional<std::string> at(const KeyType& key)
     {
         std::stringstream key_stream;
         {
@@ -53,7 +53,7 @@ public:
     std::optional<std::string> at(const std::string& key);
 
     template <typename KeyType, typename ValueType>
-    inline void insert(const KeyType& key, const ValueType& value)
+    void insert(const KeyType& key, const ValueType& value)
     {
         std::stringstream key_stream;
         {

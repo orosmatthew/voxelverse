@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "BS_thread_pool.hpp"
+#include <BS_thread_pool.hpp>
 
 #include "chunk_mesh.hpp"
 #include "common.hpp"
@@ -20,7 +20,7 @@ public:
 
     void process_mesh_updates(const WorldData& world_data);
 
-    bool contains_data(mve::Vector3i position);
+    bool contains_data(mve::Vector3i position) const;
 
     void remove_data(mve::Vector3i position);
 
@@ -30,19 +30,19 @@ public:
 
     void set_selection_position(mve::Vector3 position);
 
-    inline void hide_selection()
+    void hide_selection()
     {
         m_selection_box.is_shown = false;
     }
 
-    inline void show_selection()
+    void show_selection()
     {
         m_selection_box.is_shown = true;
     }
 
     void draw(const Player& camera);
 
-    inline static mve::VertexLayout vertex_layout()
+    static mve::VertexLayout vertex_layout()
     {
         return {
             mve::VertexAttributeType::vec3, // Position

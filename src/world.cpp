@@ -5,7 +5,7 @@
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
 
-World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, int render_distance)
+World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, const int render_distance)
     : m_world_renderer(renderer)
     , m_world_generator(1)
     , m_render_distance(render_distance)
@@ -25,11 +25,12 @@ void World::fixed_update(const mve::Window& window)
     m_player.fixed_update(window, m_world_data, m_focus == FocusState::world);
 }
 
-std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
+std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, const mve::Vector3 end)
 {
-    mve::Vector3 delta = end - start;
-    int step = static_cast<int>(mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z)))));
-    mve::Vector3 increment = delta / static_cast<float>(step);
+    const mve::Vector3 delta = end - start;
+    const int step
+        = static_cast<int>(mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z)))));
+    const mve::Vector3 increment = delta / static_cast<float>(step);
     std::set<mve::Vector3i> blocks_set;
     mve::Vector3 current = start;
     for (int i = 0; i < step; i++) {
@@ -48,8 +49,8 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, mve::Vector3 end)
     }
     std::vector<mve::Vector3i> blocks;
     blocks.reserve(blocks.size());
-    std::copy(blocks_set.cbegin(), blocks_set.cend(), std::back_inserter(blocks));
-    std::sort(blocks.begin(), blocks.end(), [start](const mve::Vector3i& a, const mve::Vector3i& b) {
+    std::ranges::copy(std::as_const(blocks_set), std::back_inserter(blocks));
+    std::ranges::sort(blocks, [start](const mve::Vector3i& a, const mve::Vector3i& b) {
         return start.distance_sqrd_to(mve::Vector3(a)) < start.distance_sqrd_to(mve::Vector3(b));
     });
     return blocks;
@@ -69,8 +70,8 @@ struct RayCollision {
 
 RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
 {
-    bool inside = (ray.position.x > box.min.x) && (ray.position.x < box.max.x) && (ray.position.y > box.min.y)
-        && (ray.position.y < box.max.y) && (ray.position.z > box.min.z) && (ray.position.z < box.max.z);
+    const bool inside = ray.position.x > box.min.x && ray.position.x < box.max.x && ray.position.y > box.min.y
+        && ray.position.y < box.max.y && ray.position.z > box.min.z && ray.position.z < box.max.z;
 
     if (inside) {
         ray.direction = -ray.direction;
@@ -92,16 +93,16 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     t[7] = mve::min(mve::min(mve::max(t[0], t[1]), mve::max(t[2], t[3])), mve::max(t[4], t[5]));
 
     RayCollision collision = { false };
-    collision.hit = !((t[7] < 0) || (t[6] > t[7]));
+    collision.hit = !(t[7] < 0 || t[6] > t[7]);
     collision.distance = t[6];
-    collision.point = ray.position + (ray.direction * collision.distance);
+    collision.point = ray.position + ray.direction * collision.distance;
     collision.normal = box.min.linear_interpolate(box.max, 0.5f);
     collision.normal = collision.point - collision.normal;
     collision.normal *= 2.01f;
-    collision.normal /= (box.max - box.min);
-    collision.normal.x = (float)((int)collision.normal.x);
-    collision.normal.y = (float)((int)collision.normal.y);
-    collision.normal.z = (float)((int)collision.normal.z);
+    collision.normal /= box.max - box.min;
+    collision.normal.x = static_cast<float>(static_cast<int>(collision.normal.x));
+    collision.normal.y = static_cast<float>(static_cast<int>(collision.normal.y));
+    collision.normal.z = static_cast<float>(static_cast<int>(collision.normal.z));
     collision.normal = collision.normal.normalize();
 
     if (inside) {
@@ -111,30 +112,28 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     return collision;
 }
 
-void trigger_place_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer, uint8_t block_type)
+void trigger_place_block(
+    const Player& camera, WorldData& world_data, WorldRenderer& world_renderer, const uint8_t block_type)
 {
     std::set<mve::Vector3i> update_chunks;
-    std::vector<mve::Vector3i> blocks = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
-    Ray ray { camera.position(), camera.direction().normalize() };
-    for (mve::Vector3i block_pos : blocks) {
-        std::optional<uint8_t> block = world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() == 0) {
+    const std::vector<mve::Vector3i> blocks
+        = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
+    const Ray ray { camera.position(), camera.direction().normalize() };
+    for (const mve::Vector3i block_pos : blocks) {
+        if (std::optional<uint8_t> block = world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
-        RayCollision collision = ray_box_collision(ray, bb);
-        if (collision.hit) {
-            mve::Vector3i place_pos {
-                static_cast<int>(mve::round(static_cast<float>(block_pos.x) + collision.normal.x)),
-                static_cast<int>(mve::round(static_cast<float>(block_pos.y) + collision.normal.y)),
-                static_cast<int>(mve::round(static_cast<float>(block_pos.z) + collision.normal.z))
-            };
-            BoundingBox player_box = camera.bounding_box();
-            BoundingBox broadphase_box = swept_broadphase_box(camera.velocity(), player_box);
-            BoundingBox place_bb = { { mve::Vector3(place_pos) - mve::Vector3(0.5f) },
-                                     { mve::Vector3(place_pos) + mve::Vector3(0.5f) } };
-            if (collides(broadphase_box, place_bb)) {
+        if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
+            const mve::Vector3i place_pos { static_cast<int>(mve::round(static_cast<float>(block_pos.x) + normal.x)),
+                                            static_cast<int>(mve::round(static_cast<float>(block_pos.y) + normal.y)),
+                                            static_cast<int>(mve::round(static_cast<float>(block_pos.z) + normal.z)) };
+            const BoundingBox player_box = camera.bounding_box();
+            const BoundingBox broadphase_box = swept_broadphase_box(camera.velocity(), player_box);
+            if (const BoundingBox place_bb = { { mve::Vector3(place_pos) - mve::Vector3(0.5f) },
+                                               { mve::Vector3(place_pos) + mve::Vector3(0.5f) } };
+                collides(broadphase_box, place_bb)) {
                 break;
             }
             if (!world_data.block_at(place_pos).has_value() || world_data.block_at(place_pos).value() != 0) {
@@ -157,7 +156,7 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
             break;
         }
     }
-    for (mve::Vector3i chunk_pos : update_chunks) {
+    for (const mve::Vector3i chunk_pos : update_chunks) {
         world_renderer.push_mesh_update(chunk_pos);
     }
     world_renderer.process_mesh_updates(world_data);
@@ -166,19 +165,18 @@ void trigger_place_block(const Player& camera, WorldData& world_data, WorldRende
 void trigger_break_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer)
 {
     std::set<mve::Vector3i> update_chunks;
-    std::vector<mve::Vector3i> blocks = ray_blocks(camera.position(), camera.position() + (camera.direction() * 10.0f));
-    Ray ray { camera.position(), camera.direction().normalize() };
-    for (mve::Vector3i block_pos : blocks) {
-        std::optional<uint8_t> block = world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() == 0) {
+    const std::vector<mve::Vector3i> blocks
+        = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
+    const Ray ray { camera.position(), camera.direction().normalize() };
+    for (const mve::Vector3i block_pos : blocks) {
+        if (std::optional<uint8_t> block = world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
-        RayCollision collision = ray_box_collision(ray, bb);
-        if (collision.hit) {
-            mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
-            mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
+        if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
+            const mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
+            const mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
 
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
                 world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(block_pos) + adj_chunk);
@@ -195,13 +193,13 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             break;
         }
     }
-    for (mve::Vector3i chunk_pos : update_chunks) {
+    for (const mve::Vector3i chunk_pos : update_chunks) {
         world_renderer.push_mesh_update(chunk_pos);
     }
     world_renderer.process_mesh_updates(world_data);
 }
 
-void World::update(mve::Window& window, float blend)
+void World::update(mve::Window& window, const float blend)
 {
     if (window.is_key_pressed(mve::Key::f3)) {
         m_hud.toggle_debug();
@@ -215,7 +213,7 @@ void World::update(mve::Window& window, float blend)
 
     switch (m_focus) {
     case FocusState::world:
-        update_world(window, blend);
+        update_world(window);
         break;
     case FocusState::console:
         m_hud.update_console(window);
@@ -245,19 +243,17 @@ void World::update(mve::Window& window, float blend)
         break;
     }
 
-    std::vector<mve::Vector3i> blocks
-        = ray_blocks(m_player.position(), m_player.position() + (m_player.direction() * 10.0f));
-    Ray ray { m_player.position(), m_player.direction().normalize() };
+    const std::vector<mve::Vector3i> blocks
+        = ray_blocks(m_player.position(), m_player.position() + m_player.direction() * 10.0f);
+    const Ray ray { m_player.position(), m_player.direction().normalize() };
     m_world_renderer.hide_selection();
-    for (mve::Vector3i block_pos : blocks) {
-        std::optional<uint8_t> block = m_world_data.block_at(block_pos);
-        if (!block.has_value() || block.value() == 0) {
+    for (const mve::Vector3i block_pos : blocks) {
+        if (std::optional<uint8_t> block = m_world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
-        RayCollision collision = ray_box_collision(ray, bb);
-        if (collision.hit) {
+        if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
             m_world_renderer.show_selection();
             m_world_renderer.set_selection_position(mve::Vector3(block_pos));
             break;
@@ -268,7 +264,7 @@ void World::update(mve::Window& window, float blend)
         m_world_data, m_world_generator, m_world_renderer, chunk_pos_from_block_pos(m_player.block_position()));
 }
 
-void World::resize(mve::Vector2i extent)
+void World::resize(const mve::Vector2i extent)
 {
     m_world_renderer.resize();
     m_hud.resize(extent);
@@ -290,22 +286,20 @@ mve::Vector3i World::player_chunk_pos() const
 {
     return WorldData::chunk_pos_from_block_pos(m_player.block_position());
 }
-std::optional<const ChunkData*> World::chunk_data_at(mve::Vector3i chunk_pos) const
+std::optional<const ChunkData*> World::chunk_data_at(const mve::Vector3i chunk_pos) const
 {
     if (m_world_data.contains_chunk(chunk_pos)) {
         return &m_world_data.chunk_data_at(chunk_pos);
     }
-    else {
-        return {};
-    }
+    return {};
 }
-void World::update_world(mve::Window& window, float blend)
+void World::update_world(mve::Window& window)
 {
     if (window.is_key_pressed(mve::Key::escape)) {
         m_focus = FocusState::pause;
         window.enable_cursor();
     }
-    auto now = std::chrono::steady_clock::now();
+    const auto now = std::chrono::steady_clock::now();
     if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
         trigger_break_block(m_player, m_world_data, m_world_renderer);
         m_last_break_time = now;
@@ -334,9 +328,8 @@ void World::update_world(mve::Window& window, float blend)
         }
     }
 
-    mve::Vector2 scroll = window.mouse_scroll();
-    int scroll_y = static_cast<int>(scroll.y);
-    if (scroll_y != 0) {
+    const mve::Vector2 scroll = window.mouse_scroll();
+    if (const int scroll_y = static_cast<int>(scroll.y); scroll_y != 0) {
         for (int i = 0; i < mve::abs(scroll_y); i++) {
             if (scroll_y < 0) {
                 if (m_hud.hotbar().select_pos() + 1 > 8) {

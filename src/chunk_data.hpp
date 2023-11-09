@@ -3,16 +3,13 @@
 #include <array>
 #include <cstdint>
 #include <functional>
-#include <optional>
 
-#include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
 
 #include "common.hpp"
-#include "mve/common.hpp"
 #include "mve/math/math.hpp"
 
-inline mve::Vector3i direction_vector(Direction dir)
+inline mve::Vector3i direction_vector(const Direction dir)
 {
     switch (dir) {
     case Direction::front:
@@ -32,7 +29,7 @@ inline mve::Vector3i direction_vector(Direction dir)
     }
 }
 
-inline Direction opposite_direction(Direction dir)
+inline Direction opposite_direction(const Direction dir)
 {
     switch (dir) {
     case Direction::front:
@@ -66,7 +63,7 @@ public:
     [[nodiscard]] mve::Vector3i position() const;
 
     void set_block(mve::Vector3i pos, uint8_t type);
-    [[nodiscard]] inline uint8_t get_block(mve::Vector3i pos) const
+    [[nodiscard]] uint8_t get_block(const mve::Vector3i pos) const
     {
         return m_block_data[index(pos)];
     }
@@ -82,12 +79,12 @@ public:
     //        return m_lighting_data[index(pos)];
     //    }
 
-    [[nodiscard]] inline int block_count() const
+    [[nodiscard]] int block_count() const
     {
         return m_block_count;
     }
 
-    [[nodiscard]] bool in_bounds(mve::Vector3i pos) const;
+    [[nodiscard]] static bool in_bounds(mve::Vector3i pos);
 
     template <class Archive>
     void serialize(Archive& archive)
@@ -95,7 +92,7 @@ public:
         archive(m_pos, m_block_data, m_block_count, m_emissive_blocks);
     }
 
-    void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func)
+    void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func) const
     {
         for (const mve::Vector3i& pos : m_emissive_blocks) {
             std::invoke(func, pos);
@@ -103,38 +100,38 @@ public:
     }
 
 private:
-    static inline size_t index(mve::Vector3i pos)
+    static size_t index(const mve::Vector3i pos)
     {
         return pos.x + pos.y * sc_chunk_size + pos.z * sc_chunk_size * sc_chunk_size;
     }
 
-    static inline size_t index2(mve::Vector2i pos)
+    static size_t index2(const mve::Vector2i pos)
     {
         return pos.x + pos.y * sc_chunk_size;
     }
 
-    static inline mve::Vector3i pos(int index)
+    static mve::Vector3i pos(const int index)
     {
         mve::Vector3i vector;
         vector.x = index % sc_chunk_size;
-        vector.y = (index / sc_chunk_size) % sc_chunk_size;
+        vector.y = index / sc_chunk_size % sc_chunk_size;
         vector.z = index / (sc_chunk_size * sc_chunk_size);
         return vector;
     }
 
-    static inline mve::Vector2i pos2(int index)
+    static mve::Vector2i pos2(const int index)
     {
         mve::Vector2i vector;
         vector.x = index % sc_chunk_size;
-        vector.y = (index / sc_chunk_size) % sc_chunk_size;
+        vector.y = index / sc_chunk_size % sc_chunk_size;
         return vector;
     }
 
-    static const int sc_chunk_size = 16;
+    static constexpr int sc_chunk_size = 16;
     mve::Vector3i m_pos;
-    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_block_data = { 0 };
+    std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_block_data = { 0 };
     //    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
-    std::array<uint8_t, (sc_chunk_size * sc_chunk_size)> m_height_data = { 0 };
+    std::array<uint8_t, sc_chunk_size * sc_chunk_size> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};
 };

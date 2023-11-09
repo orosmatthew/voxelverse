@@ -54,7 +54,7 @@ namespace cereal
     size_type vectorSize;
     ar( make_size_tag( vectorSize ) );
 
-    vector.resize( static_cast<std::size_t>( vectorSize ) );
+    vector.resize(static_cast<std::size_t>(vectorSize));
     ar( binary_data( vector.data(), static_cast<std::size_t>( vectorSize ) * sizeof(T) ) );
   }
 
@@ -78,7 +78,7 @@ namespace cereal
     size_type size;
     ar( make_size_tag( size ) );
 
-    vector.resize( static_cast<std::size_t>( size ) );
+    vector.resize(static_cast<std::size_t>(size));
     for(auto && v : vector)
       ar( v );
   }
@@ -99,7 +99,7 @@ namespace cereal
     size_type size;
     ar( make_size_tag( size ) );
 
-    vector.resize( static_cast<std::size_t>( size ) );
+    vector.resize(static_cast<std::size_t>(size));
     for(auto && v : vector)
     {
       bool b;

@@ -10,53 +10,53 @@ class HUD {
 public:
     HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline);
 
-    inline void update_debug_player_block_pos(mve::Vector3i pos)
+    void update_debug_player_block_pos(const mve::Vector3i pos)
     {
         m_debug_overlay.update_player_block_pos(pos);
     }
 
-    inline void update_debug_fps(int fps)
+    void update_debug_fps(const int fps)
     {
         m_debug_overlay.update_fps(fps);
     }
 
-    inline void update_debug_gpu_name(const std::string& gpu)
+    void update_debug_gpu_name(const std::string& gpu)
     {
         m_debug_overlay.update_gpu_name(gpu);
     }
 
-    inline void update_console(const mve::Window& window)
+    void update_console(const mve::Window& window)
     {
         m_console.update_from_window(window);
     }
 
     void resize(mve::Vector2i extent);
 
-    void draw();
+    void draw() const;
 
     void toggle_debug();
 
-    [[nodiscard]] inline const Hotbar& hotbar() const
+    [[nodiscard]] const Hotbar& hotbar() const
     {
         return m_hotbar;
     }
 
-    inline Hotbar& hotbar()
+    Hotbar& hotbar()
     {
         return m_hotbar;
     }
 
-    inline void enable_console_cursor()
+    void enable_console_cursor() const
     {
         m_console.enable_cursor();
     }
 
-    inline void disable_console_cursor()
+    void disable_console_cursor() const
     {
         m_console.disable_cursor();
     }
 
-    [[nodiscard]] inline bool is_debug_enabled() const
+    [[nodiscard]] bool is_debug_enabled() const
     {
         return m_show_debug;
     }

@@ -30,7 +30,6 @@ void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
 
 WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     : m_renderer(&renderer)
-    , m_thread_pool()
     , m_vertex_shader(mve::Shader(res_path("bin/shader/simple.vert.spv")))
     , m_fragment_shader(mve::Shader(res_path("bin/shader/simple.frag.spv")))
     , m_graphics_pipeline(renderer.create_graphics_pipeline(m_vertex_shader, m_fragment_shader, vertex_layout(), true))
@@ -63,20 +62,20 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
 
     m_global_ubo.update(
         m_vertex_shader.descriptor_set(0).binding(0).member("fog_color").location(),
-        mve::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 255.0f / 255.0f, 1.0f));
+        mve::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 1.0f, 1.0f));
     m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_near").location(), 400.0f);
     m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_far").location(), 475.0f);
 }
 
 void WorldRenderer::resize()
 {
-    float angle = mve::radians(90.0f);
-    float ratio = (float)(m_renderer->extent().x) / (float)(m_renderer->extent().y);
-    float near = 0.01f;
-    float far = 10000.0f;
+    const float angle = mve::radians(90.0f);
+    const float ratio = static_cast<float>(m_renderer->extent().x) / static_cast<float>(m_renderer->extent().y);
+    constexpr float near = 0.01f;
+    constexpr float far = 10000.0f;
 
     m_frustum.update_perspective(angle, ratio, near, far);
-    mve::Matrix4 proj = mve::perspective(angle, ratio, near, far);
+    const mve::Matrix4 proj = mve::perspective(angle, ratio, near, far);
     m_global_ubo.update(m_proj_location, proj);
 }
 void WorldRenderer::set_view(const mve::Matrix4& view)
@@ -115,21 +114,21 @@ void WorldRenderer::rebuild_mesh_lookup()
         }
     }
 }
-void WorldRenderer::set_selection_position(mve::Vector3 position)
+void WorldRenderer::set_selection_position(const mve::Vector3 position)
 {
     m_selection_box.mesh.set_position(position);
 }
-bool WorldRenderer::contains_data(mve::Vector3i position)
+bool WorldRenderer::contains_data(const mve::Vector3i position) const
 {
     return m_chunk_mesh_lookup.contains(position);
 }
-void WorldRenderer::remove_data(mve::Vector3i position)
+void WorldRenderer::remove_data(const mve::Vector3i position)
 {
     m_chunk_meshes[m_chunk_mesh_lookup.at(position)].reset();
     m_chunk_mesh_lookup.erase(position);
 }
 
-uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, float width, mve::Vector3 color)
+uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, const float width, const mve::Vector3 color)
 {
     WireBoxMesh box_mesh(
         *m_renderer,
@@ -151,15 +150,15 @@ uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, float width, mv
     return count;
 }
 
-void WorldRenderer::hide_debug_box(uint64_t id)
+void WorldRenderer::hide_debug_box(const uint64_t id)
 {
     m_debug_boxes.at(id).is_shown = false;
 }
-void WorldRenderer::show_debug_box(uint64_t id)
+void WorldRenderer::show_debug_box(const uint64_t id)
 {
     m_debug_boxes.at(id).is_shown = true;
 }
-void WorldRenderer::delete_debug_box(uint64_t id)
+void WorldRenderer::delete_debug_box(const uint64_t id)
 {
     m_debug_boxes.erase(id);
 }

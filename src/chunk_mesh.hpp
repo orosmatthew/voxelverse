@@ -1,11 +1,9 @@
 #pragma once
 
 #include <array>
-#include <memory>
 
 #include "mve/math/math.hpp"
 #include "mve/renderer.hpp"
-#include "mve/shader.hpp"
 #include "world_data.hpp"
 
 class ChunkMesh {
@@ -16,7 +14,7 @@ public:
 
     void draw(mve::Renderer& renderer) const;
 
-    [[nodiscard]] inline mve::Vector3i chunk_position() const
+    [[nodiscard]] mve::Vector3i chunk_position() const
     {
         return m_chunk_pos;
     }

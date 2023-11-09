@@ -8,7 +8,7 @@
 #include "mve/common.hpp"
 #include "text_buffer.hpp"
 
-TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
+TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)
     : m_renderer(&renderer)
     , m_vert_shader(res_path("bin/shader/text.vert.spv"))
     , m_frag_shader(res_path("bin/shader/text.frag.spv"))
@@ -51,13 +51,12 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     m_cursor_vertex_buffer = renderer.create_vertex_buffer(cursor_data);
     m_cursor_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
 
-    FT_Error result;
     FT_Library font_lib;
-    result = FT_Init_FreeType(&font_lib);
+    FT_Error result = FT_Init_FreeType(&font_lib);
     MVE_ASSERT(result == 0, "[Text Pipeline] Failed to init FreeType")
 
     FT_Face font_face;
-    std::string font_path = res_path("matrix_sans_video.otf").string();
+    const std::string font_path = res_path("matrix_sans_video.otf").string();
     result = FT_New_Face(font_lib, font_path.c_str(), 0, &font_face);
     MVE_ASSERT(result == 0, "[Text Pipeline] Failed to load font")
 
@@ -92,13 +91,13 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, int point_size)
     FT_Done_Face(font_face);
     FT_Done_FreeType(font_lib);
 
-    std::byte cursor_texture_data { 255 };
+    constexpr std::byte cursor_texture_data { 255 };
     m_cursor_texture = renderer.create_texture(mve::TextureFormat::r, 1, 1, &cursor_texture_data);
 }
 
 void TextPipeline::resize()
 {
-    mve::Matrix4 proj = mve::ortho(
+    const mve::Matrix4 proj = mve::ortho(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
@@ -127,7 +126,9 @@ void TextPipeline::draw(const TextBuffer& buffer) const
     m_renderer->bind_vertex_buffer(m_vertex_buffer);
     MVE_VAL_ASSERT(
         m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Attempt to draw invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     const TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    // ReSharper disable once CppUseStructuredBinding
     for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         if (glyph.is_valid) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, glyph.descriptor_set);
@@ -144,56 +145,60 @@ void TextPipeline::draw(const TextBuffer& buffer) const
 void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set translation on invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.translation = pos;
+    // ReSharper disable once CppUseStructuredBinding
     for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
-        const FontChar& font_char = m_font_chars.at(glyph.character);
-        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * glyph.scale;
-        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * glyph.scale
-            + static_cast<float>(c_point_size);
-        float w = static_cast<float>(font_char.size.x) * glyph.scale;
-        float h = static_cast<float>(font_char.size.y) * glyph.scale;
+        const auto& [texture, size, bearing, advance] = m_font_chars.at(glyph.character);
+        float x_pos = pos.x + static_cast<float>(bearing.x) * glyph.scale;
+        float y_pos = pos.y - static_cast<float>(bearing.y - size.y) * glyph.scale + static_cast<float>(c_point_size);
+        float w = static_cast<float>(size.x) * glyph.scale;
+        float h = static_cast<float>(size.y) * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
-        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
+        pos.x += mve::floor(static_cast<float>(advance) / 64.0f) * glyph.scale;
     }
 }
-void TextPipeline::add_cursor(const TextBuffer& buffer, int pos)
+void TextPipeline::add_cursor(const TextBuffer& buffer, const int pos)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer")
-    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-    buffer_impl.cursor_pos = pos;
-    buffer_impl.cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
-                           .descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1)),
-                           .translation = buffer_impl.translation };
-    buffer_impl.cursor->ubo.update(m_text_color_location, mve::Vector3(0.0f));
-    buffer_impl.cursor->descriptor_set.write_binding(m_glyph_ubo_binding, buffer_impl.cursor->ubo);
-    buffer_impl.cursor->descriptor_set.write_binding(m_texture_binding, m_cursor_texture);
+    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color]
+        = *m_text_buffers[buffer.m_handle];
+    cursor_pos = pos;
+    cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
+               .descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1)),
+               .translation = translation };
+    cursor->ubo.update(m_text_color_location, mve::Vector3(0.0f));
+    cursor->descriptor_set.write_binding(m_glyph_ubo_binding, cursor->ubo);
+    cursor->descriptor_set.write_binding(m_texture_binding, m_cursor_texture);
     set_cursor_pos(buffer, pos);
 }
 void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set cursor position on invalid text buffer")
-    TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
-    pos = std::clamp(pos, 0, buffer_impl.text_length);
-    buffer_impl.cursor_pos = pos;
-    float x = buffer_impl.translation.x;
-    for (int i = 0; i < buffer_impl.render_glyphs.size() && i < pos; i++) {
-        x += mve::floor(static_cast<float>(m_font_chars[buffer_impl.render_glyphs[i].character].advance) / 64.0f)
-            * buffer_impl.scale;
+    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color]
+        = *m_text_buffers[buffer.m_handle];
+    pos = std::clamp(pos, 0, text_length);
+    cursor_pos = pos;
+    float x = translation.x;
+    for (int i = 0; i < render_glyphs.size() && i < pos; i++) {
+        x += mve::floor(static_cast<float>(m_font_chars[render_glyphs[i].character].advance) / 64.0f) * scale;
     }
-    mve::Matrix4 model = mve::Matrix4::identity()
-                             .scale(mve::Vector3(buffer_impl.scale * static_cast<float>(c_point_size)))
-                             .translate({ x, buffer_impl.translation.y + static_cast<float>(c_point_size), 0.1f });
-    buffer_impl.cursor->ubo.update(m_model_location, model);
+    const mve::Matrix4 model
+        = mve::Matrix4::identity()
+              .scale(mve::Vector3(scale * static_cast<float>(c_point_size)))
+              .translate({ x, translation.y + static_cast<float>(c_point_size), 0.1f });
+    cursor->ubo.update(m_model_location, model);
 }
 void TextPipeline::remove_cursor(const TextBuffer& buffer)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to remove cursor on invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.cursor.reset();
 }
@@ -203,47 +208,44 @@ std::optional<int> TextPipeline::cursor_pos(const TextBuffer& buffer)
     if (m_text_buffers[buffer.m_handle]->cursor.has_value()) {
         return m_text_buffers[buffer.m_handle]->cursor_pos;
     }
-    else {
-        return {};
-    }
+    return {};
 }
 
-void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view text)
+void TextPipeline::update_text_buffer(const TextBuffer& buffer, const std::string_view text)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Text buffer invalid")
     // TODO: Find a better way to do this
+    // ReSharper disable once CppUseStructuredBinding
     for (RenderGlyph& glyph : m_text_buffers[buffer.m_handle]->render_glyphs) {
         glyph.is_valid = false;
     }
     MVE_VAL_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
+    // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     mve::Vector2 pos = buffer_impl.translation;
     buffer_impl.text_length = static_cast<int>(text.length());
-    float scale = buffer_impl.scale;
+    const float scale = buffer_impl.scale;
     for (char c : text) {
         if (!m_font_chars.contains(c)) {
             LOG->warn("[Text Pipeline] Invalid char: {}", static_cast<uint32_t>(c));
             continue;
         }
-        const FontChar& font_char = m_font_chars.at(c);
-        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * scale;
-        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * scale
-            + static_cast<float>(c_point_size);
-        float w = static_cast<float>(font_char.size.x) * scale;
-        float h = static_cast<float>(font_char.size.y) * scale;
+        const auto& [texture, size, bearing, advance] = m_font_chars.at(c);
+        float x_pos = pos.x + static_cast<float>(bearing.x) * scale;
+        float y_pos = pos.y - static_cast<float>(bearing.y - size.y) * scale + static_cast<float>(c_point_size);
+        float w = static_cast<float>(size.x) * scale;
+        float h = static_cast<float>(size.y) * scale;
 
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
 
-        auto it = std::find_if(
-            buffer_impl.render_glyphs.begin(), buffer_impl.render_glyphs.end(), [](const RenderGlyph& glyph) {
-                return !glyph.is_valid;
-            });
-        if (it != buffer_impl.render_glyphs.end()) {
+        if (auto it
+            = std::ranges::find_if(buffer_impl.render_glyphs, [](const RenderGlyph& glyph) { return !glyph.is_valid; });
+            it != buffer_impl.render_glyphs.end()) {
             it->ubo.update(m_model_location, model);
             it->ubo.update(m_text_color_location, buffer_impl.color);
-            it->descriptor_set.write_binding(m_texture_binding, font_char.texture);
+            it->descriptor_set.write_binding(m_texture_binding, texture);
             it->character = c;
             it->translation = pos;
             it->scale = scale;
@@ -261,10 +263,10 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
                                        .scale = scale };
             render_glyph.ubo.update(m_model_location, model);
             render_glyph.ubo.update(m_text_color_location, buffer_impl.color);
-            render_glyph.descriptor_set.write_binding(m_texture_binding, font_char.texture);
+            render_glyph.descriptor_set.write_binding(m_texture_binding, texture);
             buffer_impl.render_glyphs.push_back(std::move(render_glyph));
         }
-        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * scale;
+        pos.x += mve::floor(static_cast<float>(advance) / 64.0f) * scale;
     }
     if (buffer_impl.cursor.has_value()) {
         set_cursor_pos(buffer, buffer_impl.cursor_pos);
@@ -273,49 +275,48 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, std::string_view
 
 void TextPipeline::cursor_left(const TextBuffer& buffer)
 {
-    std::optional<int> pos = cursor_pos(buffer);
-    if (pos.has_value()) {
+    if (const std::optional<int> pos = cursor_pos(buffer); pos.has_value()) {
         set_cursor_pos(buffer, *pos - 1);
     }
 }
 
 void TextPipeline::cursor_right(const TextBuffer& buffer)
 {
-    std::optional<int> pos = cursor_pos(buffer);
-    if (pos.has_value()) {
+    if (const std::optional<int> pos = cursor_pos(buffer); pos.has_value()) {
         set_cursor_pos(buffer, *pos + 1);
     }
 }
 
-void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, float scale)
+void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, const float scale)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set translation on invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.scale = scale;
     mve::Vector2 pos = buffer_impl.translation;
+    // ReSharper disable once CppUseStructuredBinding
     for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to update invalid character")
-        const FontChar& font_char = m_font_chars.at(glyph.character);
-        float x_pos = pos.x + static_cast<float>(font_char.bearing.x) * glyph.scale;
-        float y_pos = pos.y - static_cast<float>(font_char.bearing.y - font_char.size.y) * scale
-            + static_cast<float>(c_point_size);
-        float w = static_cast<float>(font_char.size.x) * glyph.scale;
-        float h = static_cast<float>(font_char.size.y) * glyph.scale;
+        const auto& [texture, size, bearing, advance] = m_font_chars.at(glyph.character);
+        float x_pos = pos.x + static_cast<float>(bearing.x) * glyph.scale;
+        float y_pos = pos.y - static_cast<float>(bearing.y - size.y) * scale + static_cast<float>(c_point_size);
+        float w = static_cast<float>(size.x) * glyph.scale;
+        float h = static_cast<float>(size.y) * glyph.scale;
         mve::Matrix4 model = mve::Matrix4::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
         glyph.translation = pos;
-        pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
+        pos.x += mve::floor(static_cast<float>(advance) / 64.0f) * glyph.scale;
     }
 }
 
-TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color)
+TextBuffer TextPipeline::create_text_buffer(
+    const std::string_view text, const mve::Vector2 pos, const float scale, const mve::Vector3 color)
 {
-    auto it
-        = std::find_if(m_text_buffers.begin(), m_text_buffers.end(), [](const std::optional<TextBufferImpl>& buffer) {
-              return !buffer.has_value();
-          });
+    const auto it = std::ranges::find_if(m_text_buffers, [](const std::optional<TextBufferImpl>& buffer) {
+        return !buffer.has_value();
+    });
     TextBuffer buffer;
     buffer.m_valid = true;
     buffer.m_pipeline = this;
@@ -341,11 +342,13 @@ TextBuffer TextPipeline::create_text_buffer(std::string_view text, mve::Vector2 
     return buffer;
 }
 
-void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 color)
+void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, const mve::Vector3 color)
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set color on invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     buffer_impl.color = color;
+    // ReSharper disable once CppUseStructuredBinding
     for (RenderGlyph& glyph : buffer_impl.render_glyphs) {
         glyph.ubo.update(m_text_color_location, color);
     }
@@ -353,10 +356,13 @@ void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 
 float TextPipeline::text_buffer_width(const TextBuffer& buffer) const
 {
     MVE_VAL_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to get width on invalid text buffer")
+    // ReSharper disable once CppUseStructuredBinding
     const TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
     mve::Vector2 pos = buffer_impl.translation;
+    // ReSharper disable once CppUseStructuredBinding
     for (const RenderGlyph& glyph : buffer_impl.render_glyphs) {
         MVE_VAL_ASSERT(m_font_chars.contains(glyph.character), "[Text Pipeline] Attempt to access invalid character")
+        // ReSharper disable once CppUseStructuredBinding
         const FontChar& font_char = m_font_chars.at(glyph.character);
         pos.x += mve::floor(static_cast<float>(font_char.advance) / 64.0f) * glyph.scale;
     }

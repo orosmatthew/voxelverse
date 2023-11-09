@@ -10,7 +10,7 @@ public:
 
     void draw() const;
 
-    void resize(mve::Vector2i extent);
+    void resize();
 
     void update_fps(int value);
 

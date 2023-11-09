@@ -1,6 +1,5 @@
 #pragma once
 
-#include <mve/common.hpp>
 #include <mve/renderer.hpp>
 
 #include "../ui_pipeline.hpp"
@@ -17,17 +16,15 @@ public:
 
     void set_item(int pos, uint8_t block_type);
 
-    [[nodiscard]] std::optional<uint8_t> item_at(int pos) const
+    [[nodiscard]] std::optional<uint8_t> item_at(const int pos) const
     {
         if (m_items.at(pos).has_value()) {
             return m_items.at(pos)->type;
         }
-        else {
-            return {};
-        }
+        return {};
     }
 
-    [[nodiscard]] inline int select_pos() const
+    [[nodiscard]] int select_pos() const
     {
         return m_select_pos;
     }
