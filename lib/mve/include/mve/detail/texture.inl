@@ -1,3 +1,5 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
@@ -20,7 +22,7 @@ inline Texture::~Texture()
         m_renderer->destroy(*this);
     }
 }
-mve::Vector2i Texture::size() const
+Vector2i Texture::size() const
 {
     return m_renderer->texture_size(*this);
 }
@@ -55,7 +57,7 @@ inline bool Texture::is_valid() const
     return m_valid;
 }
 
-inline Texture::Texture(Renderer& renderer, uint64_t handle)
+inline Texture::Texture(Renderer& renderer, const uint64_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -65,18 +67,12 @@ inline void Texture::invalidate()
 {
     m_valid = false;
 }
-inline Texture::Texture()
-    : m_valid(false)
-{
-}
 }
 
-namespace std {
 template <>
-struct hash<mve::Texture> {
-    std::size_t operator()(const mve::Texture& texture) const
+struct std::hash<mve::Texture> {
+    std::size_t operator()(const mve::Texture& texture) const noexcept
     {
         return hash<uint64_t>()(texture.handle());
     }
 };
-}

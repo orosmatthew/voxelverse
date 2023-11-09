@@ -1,3 +1,5 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
@@ -52,7 +54,7 @@ inline bool GraphicsPipeline::is_valid() const
     return m_valid;
 }
 
-inline DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet& descriptor_set)
+inline DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet& descriptor_set) const
 {
     return m_renderer->create_descriptor_set(*this, descriptor_set);
 }
@@ -61,7 +63,7 @@ inline void GraphicsPipeline::invalidate()
     m_valid = false;
 }
 
-GraphicsPipeline::GraphicsPipeline(Renderer& renderer, size_t handle)
+GraphicsPipeline::GraphicsPipeline(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -70,12 +72,10 @@ GraphicsPipeline::GraphicsPipeline(Renderer& renderer, size_t handle)
 
 }
 
-namespace std {
 template <>
-struct hash<mve::GraphicsPipeline> {
-    std::size_t operator()(const mve::GraphicsPipeline& graphics_pipeline) const
+struct std::hash<mve::GraphicsPipeline> {
+    std::size_t operator()(const mve::GraphicsPipeline& graphics_pipeline) const noexcept
     {
         return hash<uint64_t>()(graphics_pipeline.handle());
     }
 };
-}

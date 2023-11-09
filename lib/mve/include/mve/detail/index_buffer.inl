@@ -1,3 +1,5 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
@@ -55,7 +57,7 @@ inline bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
-inline IndexBuffer::IndexBuffer(Renderer& renderer, size_t handle)
+inline IndexBuffer::IndexBuffer(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -65,18 +67,13 @@ inline void IndexBuffer::invalidate()
 {
     m_valid = false;
 }
-IndexBuffer::IndexBuffer()
-    : m_valid(false)
-{
-}
+
 }
 
-namespace std {
 template <>
-struct hash<mve::IndexBuffer> {
-    std::size_t operator()(const mve::IndexBuffer& index_buffer) const
+struct std::hash<mve::IndexBuffer> {
+    std::size_t operator()(const mve::IndexBuffer& index_buffer) const noexcept
     {
         return hash<size_t>()(index_buffer.handle());
     }
 };
-}

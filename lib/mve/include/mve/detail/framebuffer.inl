@@ -1,14 +1,14 @@
-#include <utility>
+#pragma once
 
 #include "defs.hpp"
 
 namespace mve {
 
-inline Framebuffer::Framebuffer(Renderer& renderer, std::function<void(void)> callback)
+inline Framebuffer::Framebuffer(Renderer& renderer, std::function<void()> callback)
 {
     *this = renderer.create_framebuffer(std::move(callback));
 }
-inline Framebuffer::Framebuffer(Renderer& renderer, size_t handle)
+inline Framebuffer::Framebuffer(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -67,12 +67,10 @@ inline const Texture& Framebuffer::texture() const
 }
 }
 
-namespace std {
 template <>
-struct hash<mve::Framebuffer> {
-    std::size_t operator()(const mve::Framebuffer& framebuffer) const
+struct std::hash<mve::Framebuffer> {
+    std::size_t operator()(const mve::Framebuffer& framebuffer) const noexcept
     {
         return hash<size_t>()(framebuffer.handle());
     }
 };
-}

@@ -1,9 +1,11 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
 
 inline DescriptorSet::DescriptorSet(
-    Renderer& renderer, GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
+    Renderer& renderer, const GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set)
 {
     *this = std::move(renderer.create_descriptor_set(graphics_pipeline, descriptor_set));
 }
@@ -55,16 +57,17 @@ inline bool DescriptorSet::is_valid() const
     return m_valid;
 }
 inline void DescriptorSet::write_binding(
-    const ShaderDescriptorBinding& descriptor_binding, UniformBuffer& uniform_buffer)
+    const ShaderDescriptorBinding& descriptor_binding, const UniformBuffer& uniform_buffer) const
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, uniform_buffer);
 }
-inline void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
+inline void DescriptorSet::write_binding(
+    const ShaderDescriptorBinding& descriptor_binding, const Texture& texture) const
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }
 
-inline DescriptorSet::DescriptorSet(Renderer& renderer, size_t handle)
+inline DescriptorSet::DescriptorSet(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -77,13 +80,10 @@ inline void DescriptorSet::invalidate()
 
 }
 
-namespace std {
-
 template <>
-struct hash<mve::DescriptorSet> {
-    std::size_t operator()(const mve::DescriptorSet& descriptor_set) const
+struct std::hash<mve::DescriptorSet> {
+    std::size_t operator()(const mve::DescriptorSet& descriptor_set) const noexcept
     {
         return hash<uint64_t>()(descriptor_set.handle());
     }
 };
-}

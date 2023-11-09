@@ -1,3 +1,5 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
@@ -52,28 +54,28 @@ inline bool UniformBuffer::is_valid() const
 {
     return m_valid;
 }
-inline void UniformBuffer::update(UniformLocation location, mve::Matrix4 value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const Matrix4& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(UniformLocation location, mve::Matrix3 value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const Matrix3& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
 
-inline void UniformBuffer::update(UniformLocation location, mve::Vector4 value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const Vector4 value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(UniformLocation location, mve::Vector3 value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const Vector3 value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(UniformLocation location, mve::Vector2 value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const Vector2 value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(UniformLocation location, float value, bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const float value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
@@ -82,7 +84,7 @@ inline void UniformBuffer::invalidate()
     m_valid = false;
 }
 
-UniformBuffer::UniformBuffer(Renderer& renderer, size_t handle)
+UniformBuffer::UniformBuffer(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -91,12 +93,10 @@ UniformBuffer::UniformBuffer(Renderer& renderer, size_t handle)
 
 }
 
-namespace std {
 template <>
-struct hash<mve::UniformBuffer> {
-    std::size_t operator()(const mve::UniformBuffer& uniform_buffer) const
+struct std::hash<mve::UniformBuffer> {
+    std::size_t operator()(const mve::UniformBuffer& uniform_buffer) const noexcept
     {
         return hash<size_t>()(uniform_buffer.handle());
     }
 };
-}

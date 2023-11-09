@@ -1,3 +1,5 @@
+#pragma once
+
 #include "defs.hpp"
 
 namespace mve {
@@ -53,7 +55,7 @@ inline bool VertexBuffer::operator<(const VertexBuffer& other) const
     return m_handle < other.m_handle;
 }
 
-inline VertexBuffer::VertexBuffer(Renderer& renderer, size_t handle)
+inline VertexBuffer::VertexBuffer(Renderer& renderer, const size_t handle)
     : m_valid(true)
     , m_renderer(&renderer)
     , m_handle(handle)
@@ -63,19 +65,12 @@ inline void VertexBuffer::invalidate()
 {
     m_valid = false;
 }
-inline VertexBuffer::VertexBuffer()
-    : m_valid(false)
-{
 }
-}
-
-namespace std {
 
 template <>
-struct hash<mve::VertexBuffer> {
-    std::size_t operator()(const mve::VertexBuffer& vertex_buffer) const
+struct std::hash<mve::VertexBuffer> {
+    std::size_t operator()(const mve::VertexBuffer& vertex_buffer) const noexcept
     {
         return hash<uint64_t>()(vertex_buffer.handle());
     }
 };
-}
