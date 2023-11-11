@@ -38,7 +38,7 @@ set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
 
 
-add_subdirectory(external/freetype-2.13.0)
+add_subdirectory(external/freetype-2.13.2)
 add_subdirectory(external/leveldb-1.23)
 
 set(LIB_SOURCE_FILES
@@ -80,7 +80,7 @@ set(LIBS
         mve)
 
 set(LIB_INCLUDES
-        external/spdlog-1.11.0/include
+        external/spdlog-1.12.0/include
         external/whereami-ba364cd/include
         external/tinyobjloader-45f683c/include
         external/fast-noise-lite-1.1.0/include
