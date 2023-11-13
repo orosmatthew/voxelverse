@@ -6,12 +6,13 @@
 
 void ChunkController::update(
     WorldData& world_data,
-    WorldGenerator& world_generator,
+    const WorldGenerator& world_generator,
     WorldRenderer& world_renderer,
     const mve::Vector3i player_chunk)
 {
     if (const mve::Vector2i player_chunk_col = { player_chunk.x, player_chunk.y };
         player_chunk_col != m_player_chunk_col) {
+        world_data.set_player_chunk(player_chunk_col);
         m_player_chunk_col = player_chunk_col;
         sort_cols();
     }
@@ -70,6 +71,8 @@ void ChunkController::update(
 
     chunk_count = 0;
 
+    world_data.cull_chunks(static_cast<float>(m_render_distance));
+
     for (int i = static_cast<int>(m_sorted_cols.size()) - 1; i >= 0; i--) {
         const mve::Vector2i pos = m_sorted_cols[i];
         auto& [m_flags, neighbors] = m_chunk_states.at(pos);
@@ -91,7 +94,7 @@ void ChunkController::update(
         }
 
         if (contains_flag(m_flags, flag_has_data)) {
-            world_data.remove_chunk_column({ pos.x, pos.y });
+            // world_data.remove_chunk_column({ pos.x, pos.y });
         }
         for (int h = -10; h < 10; h++) {
             if (contains_flag(m_flags, flag_has_mesh)) {

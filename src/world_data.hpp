@@ -16,19 +16,7 @@ public:
 
     ~WorldData();
 
-    void remove_chunk_column(const mve::Vector2i chunk_pos)
-    {
-        if (m_save_queue.contains(chunk_pos)) {
-            process_save_queue();
-        }
-        m_chunk_columns.erase(chunk_pos);
-    }
-
-    void create_chunk_column(mve::Vector2i chunk_pos)
-    {
-        m_chunk_columns.insert({ chunk_pos, ChunkColumn(chunk_pos) });
-        queue_save_chunk(chunk_pos);
-    }
+    void create_chunk_column(mve::Vector2i chunk_pos);
 
     [[nodiscard]] std::optional<uint8_t> block_at(const mve::Vector3i block_pos) const
     {
@@ -194,15 +182,24 @@ public:
 
     void queue_save_chunk(mve::Vector2i pos);
 
+    void set_player_chunk(mve::Vector2i chunk_pos);
+
+    void cull_chunks(float distance);
+
 private:
     void process_save_queue();
 
+    void remove_chunk_column(mve::Vector2i chunk_pos);
+
+    void sort_chunks();
     //    void spread_light(const mve::Vector3i light_pos);
 
     //    void propagate_light(mve::Vector3i chunk_pos);
 
     std::set<mve::Vector2i> m_save_queue;
     SaveFile m_save;
+    mve::Vector2i m_player_chunk;
     std::unordered_map<mve::Vector2i, ChunkColumn> m_chunk_columns {};
+    std::vector<mve::Vector2i> m_sorted_chunks {};
     std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
 };

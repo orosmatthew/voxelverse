@@ -14,7 +14,7 @@ class ChunkController {
 public:
     void update(
         WorldData& world_data,
-        WorldGenerator& world_generator,
+        const WorldGenerator& world_generator,
         WorldRenderer& world_renderer,
         mve::Vector3i player_chunk);
 
