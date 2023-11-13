@@ -15,8 +15,11 @@ void WorldData::queue_save_chunk(const mve::Vector2i pos)
 }
 void WorldData::set_player_chunk(const mve::Vector2i chunk_pos)
 {
+    const mve::Vector2i prev = m_player_chunk;
     m_player_chunk = chunk_pos;
-    sort_chunks();
+    if (m_player_chunk != prev) {
+        sort_chunks();
+    }
 }
 
 void WorldData::cull_chunks(const float distance)
