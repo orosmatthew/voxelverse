@@ -17,7 +17,8 @@ add_library(mve STATIC
         src/vertex_data.cpp
         src/shader.cpp
         src/monitor.cpp
-        src/logger.cpp)
+        src/logger.cpp
+        src/descriptor_set_allocator.cpp)
 
 target_link_libraries(mve Vulkan::Vulkan glfw)
 

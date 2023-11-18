@@ -1,10 +1,18 @@
 #pragma once
 
-#include "../math/math.hpp"
 #include <filesystem>
 #include <functional>
+#include <queue>
 
-#include "../vertex_data.hpp"
+#define VMA_VULKAN_VERSION 1001000
+#include "vk_mem_alloc.h"
+#define VULKAN_HPP_NO_EXCEPTIONS
+#define VULKAN_HPP_ASSERT_ON_RESULT
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#include <vulkan/vulkan.hpp>
+
+#include <mve/math/math.hpp>
+#include <mve/vertex_data.hpp>
 
 namespace mve {
 
@@ -298,5 +306,116 @@ private:
     Renderer* m_renderer {};
     size_t m_handle {};
 };
+
+namespace detail {
+struct Image {
+    vk::Image vk_handle;
+    VmaAllocation vma_allocation;
+    uint32_t width;
+    uint32_t height;
+};
+
+struct DepthImage {
+    Image image;
+    vk::ImageView vk_image_view;
+};
+
+struct RenderImage {
+    Image image;
+    vk::ImageView vk_image_view;
+};
+
+struct TextureImpl {
+    Image image;
+    vk::ImageView vk_image_view;
+    vk::Sampler vk_sampler;
+    uint32_t mip_levels {};
+};
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphics_family;
+    std::optional<uint32_t> present_family;
+
+    [[nodiscard]] bool is_complete() const
+    {
+        return graphics_family.has_value() && present_family.has_value();
+    }
+};
+
+struct SwapchainSupportDetails {
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> present_modes;
+};
+
+using DescriptorSetLayoutHandleImpl = uint64_t;
+
+struct Buffer {
+    vk::Buffer vk_handle;
+    VmaAllocation vma_allocation {};
+};
+
+struct VertexBufferImpl {
+    Buffer buffer;
+    int vertex_count {};
+};
+
+struct IndexBufferImpl {
+    Buffer buffer;
+    size_t index_count {};
+};
+
+struct UniformBufferImpl {
+    Buffer buffer;
+    uint32_t size {};
+    std::byte* mapped_ptr {};
+};
+
+struct DescriptorSetImpl {
+    uint64_t id {};
+    vk::DescriptorSet vk_handle;
+    vk::DescriptorPool vk_pool;
+};
+
+struct FrameInFlight {
+    vk::CommandBuffer command_buffer;
+    vk::Semaphore image_available_semaphore;
+    vk::Semaphore render_finished_semaphore;
+    vk::Fence in_flight_fence;
+    std::vector<std::optional<UniformBufferImpl>> uniform_buffers {};
+    std::vector<std::optional<DescriptorSetImpl>> descriptor_sets {};
+    std::queue<uint32_t> funcs;
+};
+
+struct CurrentDrawState {
+    bool is_drawing;
+    uint32_t image_index;
+    vk::CommandBuffer command_buffer;
+    uint64_t current_pipeline;
+    uint32_t frame_index;
+};
+
+struct DeferredFunction {
+    std::function<void(uint32_t)> function;
+    int counter;
+};
+
+struct GraphicsPipelineLayoutImpl {
+    vk::PipelineLayout vk_handle;
+    std::unordered_map<uint64_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
+};
+
+struct GraphicsPipelineImpl {
+    size_t layout {};
+    vk::Pipeline pipeline;
+};
+
+struct FramebufferImpl {
+    std::vector<vk::Framebuffer> vk_framebuffers;
+    Texture texture;
+    std::optional<std::function<void()>> callback;
+    Vector2i size;
+};
+}
 
 }
