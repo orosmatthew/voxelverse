@@ -223,21 +223,29 @@ inline void transform_vertices(std::vector<mve::Vector3>& vertices, const mve::M
     });
 }
 
-inline void for_2d(const mve::Vector2i from, const mve::Vector2i to, std::function<void(mve::Vector2i)> func)
+template <typename Callable>
+concept CallableWithVector2i = requires(Callable callable, mve::Vector2i vector) { callable(vector); };
+
+template <CallableWithVector2i Callable>
+void for_2d(const mve::Vector2i from, const mve::Vector2i to, Callable callable)
 {
     for (int x = from.x; x < to.x; x++) {
         for (int y = from.y; y < to.y; y++) {
-            std::invoke(func, mve::Vector2i(x, y));
+            std::invoke(callable, mve::Vector2i(x, y));
         }
     }
 }
 
-inline void for_3d(const mve::Vector3i from, const mve::Vector3i to, std::function<void(mve::Vector3i)> func)
+template <typename Callable>
+concept CallableWithVector3i = requires(Callable callable, mve::Vector3i vector) { callable(vector); };
+
+template <CallableWithVector3i Callable>
+void for_3d(const mve::Vector3i from, const mve::Vector3i to, Callable callable)
 {
     for (int x = from.x; x < to.x; x++) {
         for (int y = from.y; y < to.y; y++) {
             for (int z = from.z; z < to.z; z++) {
-                std::invoke(func, mve::Vector3i(x, y, z));
+                std::invoke(callable, mve::Vector3i(x, y, z));
             }
         }
     }

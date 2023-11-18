@@ -34,7 +34,6 @@ private:
     enum ChunkFlagBits {
         flag_has_mesh = 1 << 0,
         flag_is_generated = 1 << 1,
-        // flag_queued_delete = 1 << 2,
         flag_queued_mesh = 1 << 2,
     };
 
