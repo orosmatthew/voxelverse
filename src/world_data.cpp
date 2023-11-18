@@ -21,18 +21,18 @@ void WorldData::set_player_chunk(const mve::Vector2i chunk_pos)
         sort_chunks();
     }
 }
-
-void WorldData::cull_chunks(const float distance)
+std::optional<mve::Vector2i> WorldData::try_cull_chunk(const float distance)
 {
-    for (size_t i = m_sorted_chunks.size() - 1; i > 0; i--) {
-        if (mve::distance(mve::Vector2(m_sorted_chunks[i]), mve::Vector2(m_player_chunk)) > distance) {
-            m_chunk_columns.erase(m_sorted_chunks[i]);
-            m_sorted_chunks.pop_back();
+    if (mve::Vector2i furthest_chunk = m_sorted_chunks[m_sorted_chunks.size() - 1];
+        mve::distance(mve::Vector2(furthest_chunk), mve::Vector2(m_player_chunk)) > distance) {
+        if (m_save_queue.contains(furthest_chunk)) {
+            process_save_queue();
         }
-        else {
-            break;
-        }
+        m_chunk_columns.erase(furthest_chunk);
+        m_sorted_chunks.pop_back();
+        return furthest_chunk;
     }
+    return {};
 }
 
 WorldData::~WorldData()
@@ -43,9 +43,7 @@ WorldData::~WorldData()
 void WorldData::create_chunk_column(mve::Vector2i chunk_pos)
 {
     m_chunk_columns.insert({ chunk_pos, ChunkColumn(chunk_pos) });
-    m_sorted_chunks.push_back(chunk_pos);
-    sort_chunks();
-    queue_save_chunk(chunk_pos);
+    insert_sorted(m_sorted_chunks, chunk_pos, compare_from_player);
 }
 
 void WorldData::process_save_queue()
@@ -71,10 +69,7 @@ void WorldData::remove_chunk_column(const mve::Vector2i chunk_pos)
 
 void WorldData::sort_chunks()
 {
-    std::ranges::sort(m_sorted_chunks, [&](const mve::Vector2i a, const mve::Vector2i b) {
-        return distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk))
-            < distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk));
-    });
+    std::ranges::sort(m_sorted_chunks, compare_from_player);
 }
 
 bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
@@ -84,8 +79,7 @@ bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
         return false;
     }
     m_chunk_columns.insert({ chunk_pos, std::move(*data) });
-    m_sorted_chunks.push_back(chunk_pos);
-    sort_chunks();
+    insert_sorted(m_sorted_chunks, chunk_pos, compare_from_player);
     return true;
 }
 

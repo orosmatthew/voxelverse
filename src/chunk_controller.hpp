@@ -33,9 +33,9 @@ public:
 private:
     enum ChunkFlagBits {
         flag_has_mesh = 1 << 0,
-        flag_has_data = 1 << 1,
-        flag_queued_delete = 1 << 2,
-        flag_queued_mesh = 1 << 3,
+        flag_is_generated = 1 << 1,
+        // flag_queued_delete = 1 << 2,
+        flag_queued_mesh = 1 << 2,
     };
 
     template <typename T, typename U>
@@ -57,11 +57,11 @@ private:
     }
 
     struct ChunkState {
-        uint8_t m_flags {};
-        int neighbors = 0;
+        uint8_t flags {};
+        int generated_neighbors = 0;
     };
 
-    void sort_cols();
+    void on_player_chunk_change();
 
     mve::Vector2i m_player_chunk_col = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     std::vector<mve::Vector2i> m_sorted_cols {};

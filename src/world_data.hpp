@@ -10,6 +10,7 @@
 #include "mve/math/math.hpp"
 #include "save_file.hpp"
 
+class WorldGenerator;
 class WorldData {
 public:
     WorldData();
@@ -184,7 +185,12 @@ public:
 
     void set_player_chunk(mve::Vector2i chunk_pos);
 
-    void cull_chunks(float distance);
+    std::optional<mve::Vector2i> try_cull_chunk(float distance);
+
+    [[nodiscard]] size_t chunk_count() const
+    {
+        return m_chunk_columns.size();
+    }
 
 private:
     void process_save_queue();
@@ -202,4 +208,10 @@ private:
     std::unordered_map<mve::Vector2i, ChunkColumn> m_chunk_columns {};
     std::vector<mve::Vector2i> m_sorted_chunks {};
     std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
+
+    std::function<bool(mve::Vector2i, mve::Vector2i)> compare_from_player
+        = [&](const mve::Vector2i a, const mve::Vector2i b) {
+              return distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk))
+                  < distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk));
+          };
 };

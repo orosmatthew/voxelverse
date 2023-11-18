@@ -349,3 +349,9 @@ inline mve::Vector3i block_local_to_world(const mve::Vector3i chunk_pos, const m
              chunk_pos.y * 16 + local_block_pos.y,
              chunk_pos.z * 16 + local_block_pos.z };
 }
+
+template <typename T, typename Pred>
+typename std::vector<T>::iterator insert_sorted(std::vector<T>& vec, T const& item, Pred pred)
+{
+    return vec.insert(std::upper_bound(vec.begin(), vec.end(), item, pred), item);
+}

@@ -11,7 +11,7 @@ App::App()
     , m_renderer(m_window, "Voxelverse", 0, 1, 0)
     , m_ui_pipeline(m_renderer)
     , m_text_pipeline(m_renderer, 36)
-    , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 8)
+    , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
     , m_world_framebuffer(m_renderer.create_framebuffer([this] {
         m_ui_pipeline.update_framebuffer_texture(
             m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
