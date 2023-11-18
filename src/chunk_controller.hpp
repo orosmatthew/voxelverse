@@ -62,6 +62,9 @@ private:
 
     void on_player_chunk_change();
 
+    inline static const std::array<mve::Vector2i, 4> sc_nbor_offsets { { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } } };
+    static constexpr int sc_full_nbors = sc_nbor_offsets.size();
+
     mve::Vector2i m_player_chunk_col = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     std::vector<mve::Vector2i> m_sorted_cols {};
     std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;

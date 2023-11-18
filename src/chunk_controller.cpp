@@ -31,19 +31,17 @@ void ChunkController::update(
                     world_data.queue_save_chunk(col_pos);
                 }
             }
-            for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i neighbor) {
-                if (neighbor == mve::Vector2i(0, 0)) {
-                    return;
-                }
+            for (mve::Vector2i offset : sc_nbor_offsets) {
                 // ReSharper disable once CppUseStructuredBinding
-                ChunkState& neighbor_state = m_chunk_states[col_pos + neighbor];
+                ChunkState& neighbor_state = m_chunk_states[col_pos + offset];
                 neighbor_state.generated_neighbors++;
-                if (contains_flag(neighbor_state.flags, flag_is_generated) && neighbor_state.generated_neighbors == 8) {
+                if (contains_flag(neighbor_state.flags, flag_is_generated)
+                    && neighbor_state.generated_neighbors == sc_full_nbors) {
                     enable_flag(neighbor_state.flags, flag_queued_mesh);
                 }
-            });
+            }
             enable_flag(flags, flag_is_generated);
-            if (neighbors == 8) {
+            if (neighbors == sc_full_nbors) {
                 enable_flag(flags, flag_queued_mesh);
             }
             chunk_count++;
@@ -73,16 +71,13 @@ void ChunkController::update(
         }
         uint8_t& flags = m_chunk_states.at(culled_chunk.value()).flags;
         if (contains_flag(flags, flag_is_generated)) {
-            for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i offset) {
-                if (offset == mve::Vector2i(0, 0)) {
-                    return;
-                }
+            for (mve::Vector2i offset : sc_nbor_offsets) {
                 if (const mve::Vector2i neighbor = culled_chunk.value() + offset; m_chunk_states.contains(neighbor)) {
                     if (--m_chunk_states.at(neighbor).generated_neighbors == 0) {
                         m_chunk_states.erase(neighbor);
                     }
                 }
-            });
+            }
             disable_flag(flags, flag_is_generated);
         }
         if (contains_flag(flags, flag_has_mesh)) {
