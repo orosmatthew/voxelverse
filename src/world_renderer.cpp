@@ -2,28 +2,16 @@
 #include "common.hpp"
 #include "mve/math/math.hpp"
 
+#include <spdlog/fmt/bundled/core.h>
+
 void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
 {
-    ChunkMesh mesh;
     if (m_chunk_mesh_lookup.contains(chunk_pos)) {
-        m_chunk_meshes[m_chunk_mesh_lookup.at(chunk_pos)] = std::move(mesh);
+        m_chunk_buffers[m_chunk_mesh_lookup.at(chunk_pos)].reset();
     }
     else {
-        std::optional<size_t> free_index;
-        for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
-            if (!m_chunk_meshes[i].has_value()) {
-                free_index = i;
-                break;
-            }
-        }
-        if (free_index.has_value()) {
-            m_chunk_meshes[*free_index] = std::move(mesh);
-            m_chunk_mesh_lookup.insert({ chunk_pos, *free_index });
-        }
-        else {
-            m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_meshes.size() });
-            m_chunk_meshes.emplace_back(std::move(mesh));
-        }
+        m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_buffers.size() });
+        m_chunk_buffers.emplace_back();
     }
     m_chunk_mesh_update_list.push_back(chunk_pos);
 }
@@ -92,8 +80,8 @@ void WorldRenderer::draw(const Player& camera)
         m_selection_box.mesh.draw(m_global_descriptor_set);
     }
 
-    for (const std::optional<ChunkMesh>& mesh : m_chunk_meshes) {
-        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3(mesh->chunk_position()) * 16.0f, 30.0f)) {
+    for (const std::optional<ChunkBuffers>& mesh : m_chunk_buffers) {
+        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3(mesh->chunk_pos()) * 16.0f, 30.0f)) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
             mesh->draw(*m_renderer);
         }
@@ -108,9 +96,9 @@ void WorldRenderer::draw(const Player& camera)
 void WorldRenderer::rebuild_mesh_lookup()
 {
     m_chunk_mesh_lookup.clear();
-    for (size_t i = 0; i < m_chunk_meshes.size(); i++) {
-        if (m_chunk_meshes[i].has_value()) {
-            m_chunk_mesh_lookup[m_chunk_meshes.at(i)->chunk_position()] = i;
+    for (size_t i = 0; i < m_chunk_buffers.size(); i++) {
+        if (m_chunk_buffers[i].has_value()) {
+            m_chunk_mesh_lookup[m_chunk_buffers.at(i)->chunk_pos()] = i;
         }
     }
 }
@@ -124,7 +112,7 @@ bool WorldRenderer::contains_data(const mve::Vector3i position) const
 }
 void WorldRenderer::remove_data(const mve::Vector3i position)
 {
-    m_chunk_meshes[m_chunk_mesh_lookup.at(position)].reset();
+    m_chunk_buffers[m_chunk_mesh_lookup.at(position)].reset();
     m_chunk_mesh_lookup.erase(position);
 }
 
@@ -171,18 +159,23 @@ void WorldRenderer::process_mesh_updates(const WorldData& world_data)
     std::erase_if(m_chunk_mesh_update_list, [&](const mve::Vector3i& chunk_pos) {
         return !m_chunk_mesh_lookup.contains(chunk_pos);
     });
+    m_temp_chunk_buffer_data.clear();
+    m_temp_chunk_buffer_data.resize(m_chunk_mesh_update_list.size());
     m_thread_pool
         .parallelize_loop(
             m_chunk_mesh_update_list.size(),
             [&](const size_t& a, const size_t& b) {
                 for (size_t i = a; i < b; i++) {
-                    ChunkMesh& mesh = *m_chunk_meshes[m_chunk_mesh_lookup[m_chunk_mesh_update_list[i]]];
-                    mesh.create_mesh_data(m_chunk_mesh_update_list[i], world_data);
+                    const mve::Vector3i chunk_pos = m_chunk_mesh_update_list[i];
+                    m_temp_chunk_buffer_data[i] = std::move(create_chunk_buffer_data(chunk_pos, world_data));
                 }
             })
         .wait();
-    for (const mve::Vector3i& chunk_pos : m_chunk_mesh_update_list) {
-        m_chunk_meshes[m_chunk_mesh_lookup[chunk_pos]]->create_buffers(*m_renderer);
+    for (const std::optional<ChunkBufferData>& buffer_data : m_temp_chunk_buffer_data) {
+        if (buffer_data.has_value()) {
+            ChunkBuffers buffers(*m_renderer, buffer_data.value());
+            m_chunk_buffers[m_chunk_mesh_lookup[buffers.chunk_pos()]] = std::move(buffers);
+        }
     }
     m_chunk_mesh_update_list.clear();
 }

@@ -5,11 +5,13 @@
 #include "text_pipeline.hpp"
 #include "ui/hud.hpp"
 #include "ui/pause_menu.hpp"
+#include "world_data.hpp"
 #include "world_generator.hpp"
 #include "world_renderer.hpp"
 
 // TODO: Make hotbar blocks 3D
 
+class ChunkData;
 class UIPipeline;
 
 class World {

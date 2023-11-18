@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
+#include "world_data.hpp"
 
 World::World(mve::Renderer& renderer, UIPipeline& ui_pipeline, TextPipeline& text_pipeline, const int render_distance)
     : m_world_renderer(renderer)

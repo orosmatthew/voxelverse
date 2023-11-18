@@ -87,8 +87,9 @@ private:
     mve::DescriptorSet m_chunk_descriptor_set;
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
+    std::vector<std::optional<ChunkBufferData>> m_temp_chunk_buffer_data {};
     std::unordered_map<mve::Vector3i, size_t> m_chunk_mesh_lookup {};
-    std::vector<std::optional<ChunkMesh>> m_chunk_meshes;
+    std::vector<std::optional<ChunkBuffers>> m_chunk_buffers {};
     Frustum m_frustum;
     SelectionBox m_selection_box;
     std::unordered_map<uint64_t, DebugBox> m_debug_boxes {};
