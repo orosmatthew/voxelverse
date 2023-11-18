@@ -22,8 +22,8 @@ void FixedLoop::update(const int max_loops, std::optional<std::function<void()>>
             std::invoke(callback.value());
         }
         update_state();
-        loop_count++;
-        if (loop_count >= max_loops) {
+        if (++loop_count >= max_loops) {
+            m_delta = 0;
             break;
         }
     }
