@@ -10,37 +10,39 @@ inline UniformBuffer::UniformBuffer(Renderer& renderer, const ShaderDescriptorBi
 }
 
 inline UniformBuffer::UniformBuffer(UniformBuffer&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 
 inline UniformBuffer::~UniformBuffer()
 {
-    if (m_valid) {
+    destroy();
+}
+inline void UniformBuffer::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
 
 inline UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 inline bool UniformBuffer::operator==(const UniformBuffer& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool UniformBuffer::operator<(const UniformBuffer& other) const
 {
@@ -52,7 +54,7 @@ inline size_t UniformBuffer::handle() const
 }
 inline bool UniformBuffer::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 inline void UniformBuffer::update(const UniformLocation location, const Matrix4& value, const bool persist)
 {
@@ -81,12 +83,11 @@ inline void UniformBuffer::update(const UniformLocation location, const float va
 }
 inline void UniformBuffer::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 
 UniformBuffer::UniformBuffer(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }

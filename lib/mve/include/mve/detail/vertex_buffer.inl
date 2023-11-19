@@ -10,16 +10,19 @@ inline VertexBuffer::VertexBuffer(Renderer& renderer, const VertexData& vertex_d
 }
 
 inline VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 
 inline VertexBuffer::~VertexBuffer()
 {
-    if (m_valid) {
+    destroy();
+}
+inline void VertexBuffer::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
@@ -29,26 +32,25 @@ inline size_t VertexBuffer::handle() const
 }
 inline bool VertexBuffer::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 
 inline VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 inline bool VertexBuffer::operator==(const VertexBuffer& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool VertexBuffer::operator<(const VertexBuffer& other) const
 {
@@ -56,14 +58,13 @@ inline bool VertexBuffer::operator<(const VertexBuffer& other) const
 }
 
 inline VertexBuffer::VertexBuffer(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }
 inline void VertexBuffer::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 }
 

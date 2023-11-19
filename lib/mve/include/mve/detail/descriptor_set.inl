@@ -11,38 +11,41 @@ inline DescriptorSet::DescriptorSet(
 }
 
 inline DescriptorSet::DescriptorSet(DescriptorSet&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 
 inline DescriptorSet::~DescriptorSet()
 {
-    if (m_valid) {
+    destroy();
+}
+
+inline void DescriptorSet::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
 
 inline DescriptorSet& DescriptorSet::operator=(DescriptorSet&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 
 inline bool DescriptorSet::operator==(const DescriptorSet& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool DescriptorSet::operator<(const DescriptorSet& other) const
 {
@@ -54,7 +57,7 @@ inline size_t DescriptorSet::handle() const
 }
 inline bool DescriptorSet::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 inline void DescriptorSet::write_binding(
     const ShaderDescriptorBinding& descriptor_binding, const UniformBuffer& uniform_buffer) const
@@ -68,14 +71,13 @@ inline void DescriptorSet::write_binding(
 }
 
 inline DescriptorSet::DescriptorSet(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }
 inline void DescriptorSet::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 
 }

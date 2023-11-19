@@ -9,41 +9,42 @@ inline Framebuffer::Framebuffer(Renderer& renderer, std::function<void()> callba
     *this = renderer.create_framebuffer(std::move(callback));
 }
 inline Framebuffer::Framebuffer(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }
 inline Framebuffer::Framebuffer(Framebuffer&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 inline Framebuffer::~Framebuffer()
 {
-    if (m_valid) {
+    destroy();
+}
+inline void Framebuffer::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
 inline Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 inline bool Framebuffer::operator==(const Framebuffer& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool Framebuffer::operator<(const Framebuffer&& other) const
 {
@@ -55,11 +56,11 @@ inline size_t Framebuffer::handle() const
 }
 inline bool Framebuffer::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 inline void Framebuffer::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 inline const Texture& Framebuffer::texture() const
 {

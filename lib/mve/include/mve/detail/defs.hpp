@@ -33,8 +33,6 @@ class VertexBuffer;
 
 class DescriptorSet {
 
-    friend Renderer;
-
 public:
     inline DescriptorSet(
         Renderer& renderer, const GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
@@ -46,6 +44,8 @@ public:
     inline DescriptorSet(DescriptorSet&& other) noexcept;
 
     inline ~DescriptorSet();
+
+    inline void destroy();
 
     DescriptorSet& operator=(const DescriptorSet&) = delete;
 
@@ -67,15 +67,11 @@ public:
     inline void write_binding(const ShaderDescriptorBinding& descriptor_binding, const Texture& texture) const;
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
 
 class Framebuffer {
-
-    friend Renderer;
-
 public:
     inline Framebuffer(Renderer& renderer, std::function<void()> callback);
 
@@ -86,6 +82,8 @@ public:
     inline Framebuffer(Framebuffer&& other) noexcept;
 
     inline ~Framebuffer();
+
+    inline void destroy();
 
     [[nodiscard]] inline const Texture& texture() const;
 
@@ -104,7 +102,6 @@ public:
     inline void invalidate();
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
@@ -125,6 +122,8 @@ public:
 
     inline ~GraphicsPipeline();
 
+    inline void destroy();
+
     GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
     inline GraphicsPipeline& operator=(GraphicsPipeline&& other) noexcept;
@@ -142,15 +141,11 @@ public:
     [[nodiscard]] inline DescriptorSet create_descriptor_set(const ShaderDescriptorSet& descriptor_set) const;
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
 
 class IndexBuffer {
-
-    friend Renderer;
-
 public:
     IndexBuffer() = default;
 
@@ -163,6 +158,8 @@ public:
     inline IndexBuffer(IndexBuffer&& other) noexcept;
 
     inline ~IndexBuffer();
+
+    inline void destroy();
 
     IndexBuffer& operator=(const IndexBuffer&) = delete;
 
@@ -179,15 +176,11 @@ public:
     inline void invalidate();
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
 
 class Texture {
-
-    friend Renderer;
-
 public:
     Texture() = default;
 
@@ -200,6 +193,8 @@ public:
     inline Texture(Texture&& other) noexcept;
 
     inline ~Texture();
+
+    inline void destroy();
 
     [[nodiscard]] inline Vector2i size() const;
 
@@ -218,15 +213,11 @@ public:
     inline void invalidate();
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     uint64_t m_handle {};
 };
 
 class UniformBuffer {
-
-    friend Renderer;
-
 public:
     inline UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding);
 
@@ -237,6 +228,8 @@ public:
     inline UniformBuffer(UniformBuffer&& other) noexcept;
 
     inline ~UniformBuffer();
+
+    inline void destroy();
 
     UniformBuffer& operator=(const UniformBuffer&) = delete;
 
@@ -265,15 +258,11 @@ public:
     inline void update(UniformLocation location, const Matrix4& value, bool persist = true);
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
 
 class VertexBuffer {
-
-    friend Renderer;
-
 public:
     VertexBuffer() = default;
 
@@ -286,6 +275,8 @@ public:
     inline VertexBuffer(VertexBuffer&& other) noexcept;
 
     inline ~VertexBuffer();
+
+    inline void destroy();
 
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
@@ -302,7 +293,6 @@ public:
     inline void invalidate();
 
 private:
-    bool m_valid = false;
     Renderer* m_renderer {};
     size_t m_handle {};
 };
@@ -310,9 +300,9 @@ private:
 namespace detail {
 struct Image {
     vk::Image vk_handle;
-    VmaAllocation vma_allocation;
-    uint32_t width;
-    uint32_t height;
+    VmaAllocation vma_allocation {};
+    uint32_t width {};
+    uint32_t height {};
 };
 
 struct DepthImage {
@@ -388,11 +378,11 @@ struct FrameInFlight {
 };
 
 struct CurrentDrawState {
-    bool is_drawing;
-    uint32_t image_index;
+    bool is_drawing {};
+    uint32_t image_index {};
     vk::CommandBuffer command_buffer;
-    uint64_t current_pipeline;
-    uint32_t frame_index;
+    uint64_t current_pipeline {};
+    uint32_t frame_index {};
 };
 
 struct DeferredFunction {

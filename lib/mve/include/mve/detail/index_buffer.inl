@@ -10,16 +10,19 @@ inline IndexBuffer::IndexBuffer(Renderer& renderer, const std::vector<uint32_t>&
 }
 
 inline IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_handle(other.m_handle)
+    : m_handle(other.m_handle)
     , m_renderer(other.m_renderer)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 
 inline IndexBuffer::~IndexBuffer()
 {
-    if (m_valid) {
+    destroy();
+}
+inline void IndexBuffer::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
@@ -31,41 +34,39 @@ inline size_t IndexBuffer::handle() const
 
 inline bool IndexBuffer::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 
 inline IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 
 inline bool IndexBuffer::operator==(const IndexBuffer& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
 inline IndexBuffer::IndexBuffer(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }
 inline void IndexBuffer::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 
 }

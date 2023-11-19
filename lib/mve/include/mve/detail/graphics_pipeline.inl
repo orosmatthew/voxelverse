@@ -12,36 +12,38 @@ inline GraphicsPipeline::GraphicsPipeline(
 
 inline GraphicsPipeline& GraphicsPipeline::operator=(GraphicsPipeline&& other) noexcept
 {
-    if (m_valid) {
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 
-    m_valid = other.m_valid;
     m_renderer = other.m_renderer;
     m_handle = other.m_handle;
 
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 
     return *this;
 }
 inline bool GraphicsPipeline::operator==(const GraphicsPipeline& other) const
 {
-    return m_valid == other.m_valid && m_renderer == other.m_renderer && m_handle == other.m_handle;
+    return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
 inline bool GraphicsPipeline::operator<(const GraphicsPipeline& other) const
 {
     return m_handle < other.m_handle;
 }
 inline GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& other) noexcept
-    : m_valid(other.m_valid)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
     , m_handle(other.m_handle)
 {
-    other.m_valid = false;
+    other.m_renderer = nullptr;
 }
 inline GraphicsPipeline::~GraphicsPipeline()
 {
-    if (m_valid) {
+    destroy();
+}
+inline void GraphicsPipeline::destroy()
+{
+    if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
@@ -51,7 +53,7 @@ inline size_t GraphicsPipeline::handle() const
 }
 inline bool GraphicsPipeline::is_valid() const
 {
-    return m_valid;
+    return m_renderer != nullptr;
 }
 
 inline DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescriptorSet& descriptor_set) const
@@ -60,12 +62,11 @@ inline DescriptorSet GraphicsPipeline::create_descriptor_set(const ShaderDescrip
 }
 inline void GraphicsPipeline::invalidate()
 {
-    m_valid = false;
+    m_renderer = nullptr;
 }
 
 GraphicsPipeline::GraphicsPipeline(Renderer& renderer, const size_t handle)
-    : m_valid(true)
-    , m_renderer(&renderer)
+    : m_renderer(&renderer)
     , m_handle(handle)
 {
 }

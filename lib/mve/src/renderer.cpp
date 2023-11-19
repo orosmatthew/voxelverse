@@ -390,7 +390,7 @@ void Renderer::begin_render_pass_framebuffer(const Framebuffer& framebuffer) con
     const auto render_pass_begin_info
         = vk::RenderPassBeginInfo()
               .setRenderPass(m_vk_render_pass_framebuffer)
-              .setFramebuffer(m_framebuffers[framebuffer.m_handle]->vk_framebuffers[m_current_draw_state.image_index])
+              .setFramebuffer(m_framebuffers[framebuffer.handle()]->vk_framebuffers[m_current_draw_state.image_index])
               .setRenderArea(vk::Rect2D().setOffset({ 0, 0 }).setExtent(m_vk_swapchain_extent))
               .setClearValueCount(clear_values.size())
               .setPClearValues(clear_values.data());
@@ -764,8 +764,8 @@ void Renderer::write_descriptor_binding(
     const DeferredDescriptorWriteData write_data {
         .counter = c_frames_in_flight,
         .data_type = DescriptorBindingType::texture,
-        .data_handle = texture.m_handle,
-        .descriptor_handle = descriptor_set.m_handle,
+        .data_handle = texture.handle(),
+        .descriptor_handle = descriptor_set.handle(),
         .binding = descriptor_binding.binding()
     };
     m_deferred_descriptor_writes.push_back(write_data);
@@ -847,7 +847,7 @@ void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer) const
 {
     constexpr vk::DeviceSize offset = 0;
     m_current_draw_state.command_buffer.bindVertexBuffers(
-        0, 1, &m_vertex_buffers[vertex_buffer.m_handle]->buffer.vk_handle, &offset, m_vk_loader);
+        0, 1, &m_vertex_buffers[vertex_buffer.handle()]->buffer.vk_handle, &offset, m_vk_loader);
 }
 
 IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
@@ -923,7 +923,7 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
 
 void Renderer::draw_index_buffer(const IndexBuffer& index_buffer)
 {
-    auto& [buffer, index_count] = *m_index_buffers[index_buffer.m_handle];
+    auto& [buffer, index_count] = *m_index_buffers[index_buffer.handle()];
     m_current_draw_state.command_buffer.bindIndexBuffer(buffer.vk_handle, 0, vk::IndexType::eUint32, m_vk_loader);
     m_current_draw_state.command_buffer.drawIndexed(index_count, 1, 0, 0, 0, m_vk_loader);
 }
@@ -1025,8 +1025,8 @@ void Renderer::write_descriptor_binding(
     const DeferredDescriptorWriteData write_data {
         .counter = c_frames_in_flight,
         .data_type = DescriptorBindingType::uniform_buffer,
-        .data_handle = uniform_buffer.m_handle,
-        .descriptor_handle = descriptor_set.m_handle,
+        .data_handle = uniform_buffer.handle(),
+        .descriptor_handle = descriptor_set.handle(),
         .binding = descriptor_binding.binding()
     };
     m_deferred_descriptor_writes.push_back(write_data);
@@ -1353,7 +1353,7 @@ void Renderer::bind_descriptor_sets(
     std::array<vk::DescriptorSet, 4> sets;
     for (uint32_t i = 0; i < num; i++) {
         sets[i] = m_frames_in_flight[m_current_draw_state.frame_index]
-                      .descriptor_sets[descriptor_sets[i]->m_handle]
+                      .descriptor_sets[descriptor_sets[i]->handle()]
                       ->vk_handle;
     }
 
@@ -1513,11 +1513,11 @@ void Renderer::end_render_pass_framebuffer() const
 }
 const Texture& Renderer::framebuffer_texture(const Framebuffer& framebuffer)
 {
-    return m_framebuffers[framebuffer.m_handle]->texture;
+    return m_framebuffers[framebuffer.handle()]->texture;
 }
 Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer) const
 {
-    return m_framebuffers[framebuffer.m_handle]->size;
+    return m_framebuffers[framebuffer.handle()]->size;
 }
 std::string Renderer::gpu_name() const
 {
@@ -1527,7 +1527,7 @@ std::string Renderer::gpu_name() const
 Vector2i Renderer::texture_size(const Texture& texture) const
 {
     MVE_VAL_ASSERT(texture.m_valid, "[Renderer] Attempt to get size on invalid texture")
-    const auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(texture.m_handle);
+    const auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(texture.handle());
     return { static_cast<int>(image.width), static_cast<int>(image.height) };
 }
 
