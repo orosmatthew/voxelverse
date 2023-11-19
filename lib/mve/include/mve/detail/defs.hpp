@@ -12,9 +12,12 @@
 #include <vulkan/vulkan.hpp>
 
 #include <mve/math/math.hpp>
+#include <mve/shader.hpp>
 #include <mve/vertex_data.hpp>
 
 namespace mve {
+
+using Handle = uint64_t;
 
 class Renderer;
 class ShaderDescriptorSet;
@@ -37,7 +40,7 @@ public:
     inline DescriptorSet(
         Renderer& renderer, const GraphicsPipeline& graphics_pipeline, const ShaderDescriptorSet& descriptor_set);
 
-    inline DescriptorSet(Renderer& renderer, size_t handle);
+    inline DescriptorSet(Renderer& renderer, Handle handle);
 
     DescriptorSet(const DescriptorSet&) = delete;
 
@@ -55,7 +58,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const DescriptorSet& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -68,14 +71,14 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 class Framebuffer {
 public:
     inline Framebuffer(Renderer& renderer, std::function<void()> callback);
 
-    inline Framebuffer(Renderer& renderer, size_t handle);
+    inline Framebuffer(Renderer& renderer, Handle handle);
 
     Framebuffer(const Framebuffer&) = delete;
 
@@ -95,7 +98,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const Framebuffer&& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -103,7 +106,7 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 class GraphicsPipeline {
@@ -114,7 +117,7 @@ public:
         const Shader& fragment_shader,
         const VertexLayout& vertex_layout);
 
-    inline GraphicsPipeline(Renderer& renderer, size_t handle);
+    inline GraphicsPipeline(Renderer& renderer, Handle handle);
 
     GraphicsPipeline(const GraphicsPipeline&) = delete;
 
@@ -132,7 +135,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const GraphicsPipeline& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -142,7 +145,7 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 class IndexBuffer {
@@ -151,7 +154,7 @@ public:
 
     inline IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices);
 
-    inline IndexBuffer(Renderer& renderer, size_t handle);
+    inline IndexBuffer(Renderer& renderer, Handle handle);
 
     IndexBuffer(const IndexBuffer&) = delete;
 
@@ -169,7 +172,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const IndexBuffer& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -177,7 +180,7 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 class Texture {
@@ -186,7 +189,7 @@ public:
 
     inline Texture(Renderer& renderer, const std::filesystem::path& path);
 
-    inline Texture(Renderer& renderer, uint64_t handle);
+    inline Texture(Renderer& renderer, Handle handle);
 
     Texture(const Texture&) = delete;
 
@@ -206,7 +209,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const Texture& other) const;
 
-    [[nodiscard]] inline uint64_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -214,14 +217,14 @@ public:
 
 private:
     Renderer* m_renderer {};
-    uint64_t m_handle {};
+    Handle m_handle {};
 };
 
 class UniformBuffer {
 public:
     inline UniformBuffer(Renderer& renderer, const ShaderDescriptorBinding& descriptor_binding);
 
-    inline UniformBuffer(Renderer& renderer, size_t handle);
+    inline UniformBuffer(Renderer& renderer, Handle handle);
 
     UniformBuffer(const UniformBuffer&) = delete;
 
@@ -239,7 +242,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const UniformBuffer& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -259,7 +262,7 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 class VertexBuffer {
@@ -268,7 +271,7 @@ public:
 
     inline VertexBuffer(Renderer& renderer, const VertexData& vertex_data);
 
-    inline VertexBuffer(Renderer& renderer, size_t handle);
+    inline VertexBuffer(Renderer& renderer, Handle handle);
 
     VertexBuffer(const VertexBuffer&) = delete;
 
@@ -286,7 +289,7 @@ public:
 
     [[nodiscard]] inline bool operator<(const VertexBuffer& other) const;
 
-    [[nodiscard]] inline size_t handle() const;
+    [[nodiscard]] inline Handle handle() const;
 
     [[nodiscard]] inline bool is_valid() const;
 
@@ -294,10 +297,16 @@ public:
 
 private:
     Renderer* m_renderer {};
-    size_t m_handle {};
+    Handle m_handle {};
 };
 
 namespace detail {
+
+static constexpr size_t max_uniform_value_size
+    = std::max({ sizeof(float), sizeof(Vector2), sizeof(Vector3), sizeof(Vector4), sizeof(Matrix3), sizeof(Matrix4) });
+
+enum class DescriptorBindingType { uniform_buffer, texture };
+
 struct Image {
     vk::Image vk_handle;
     VmaAllocation vma_allocation {};
@@ -338,8 +347,6 @@ struct SwapchainSupportDetails {
     std::vector<vk::PresentModeKHR> present_modes;
 };
 
-using DescriptorSetLayoutHandleImpl = uint64_t;
-
 struct Buffer {
     vk::Buffer vk_handle;
     VmaAllocation vma_allocation {};
@@ -362,7 +369,7 @@ struct UniformBufferImpl {
 };
 
 struct DescriptorSetImpl {
-    uint64_t id {};
+    Handle id {};
     vk::DescriptorSet vk_handle;
     vk::DescriptorPool vk_pool;
 };
@@ -381,7 +388,7 @@ struct CurrentDrawState {
     bool is_drawing {};
     uint32_t image_index {};
     vk::CommandBuffer command_buffer;
-    uint64_t current_pipeline {};
+    Handle current_pipeline {};
     uint32_t frame_index {};
 };
 
@@ -392,11 +399,11 @@ struct DeferredFunction {
 
 struct GraphicsPipelineLayoutImpl {
     vk::PipelineLayout vk_handle;
-    std::unordered_map<uint64_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
+    std::unordered_map<Handle, Handle> descriptor_set_layouts;
 };
 
 struct GraphicsPipelineImpl {
-    size_t layout {};
+    Handle layout {};
     vk::Pipeline pipeline;
 };
 
@@ -406,6 +413,23 @@ struct FramebufferImpl {
     std::optional<std::function<void()>> callback;
     Vector2i size;
 };
+
+struct DeferredUniformUpdateData {
+    int counter {};
+    Handle handle {};
+    UniformLocation location;
+    std::array<std::byte, max_uniform_value_size> data {};
+    size_t data_size {};
+};
+
+struct DeferredDescriptorWriteData {
+    int counter {};
+    DescriptorBindingType data_type {};
+    Handle data_handle {};
+    Handle descriptor_handle {};
+    uint32_t binding {};
+};
+
 }
 
 }

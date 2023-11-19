@@ -134,8 +134,24 @@ public:
     [[nodiscard]] Vector2i texture_size(const Texture& texture) const;
 
 private:
-    static constexpr size_t sc_max_uniform_value_size = std::max(
-        { sizeof(float), sizeof(Vector2), sizeof(Vector3), sizeof(Vector4), sizeof(Matrix3), sizeof(Matrix4) });
+    void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const;
+
+    template <typename T>
+    void update_uniform(UniformBuffer& uniform_buffer, const UniformLocation location, T value, const bool persist)
+    {
+        static_assert(sizeof(T) <= detail::max_uniform_value_size);
+        const uint64_t handle = uniform_buffer.handle();
+        detail::DeferredUniformUpdateData update_data {
+            .counter = persist ? c_frames_in_flight : 1,
+            .handle = handle,
+            .location = location,
+            .data = {},
+            .data_size = sizeof(T)
+        };
+        memcpy(update_data.data.data(), &value, sizeof(T));
+        m_deferred_uniform_updates.push_back(update_data);
+    }
+
     const int c_frames_in_flight;
     vk::Instance m_vk_instance;
     vk::DispatchLoaderDynamic m_vk_loader;
@@ -154,7 +170,7 @@ private:
     vk::RenderPass m_vk_render_pass_framebuffer;
     std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
     vk::CommandPool m_vk_command_pool;
-    detail::QueueFamilyIndices m_vk_queue_family_indices;
+    detail::QueueFamilyIndices m_queue_family_indices;
     VmaAllocator m_vma_allocator {};
     uint64_t m_resource_handle_count;
     detail::CurrentDrawState m_current_draw_state;
@@ -162,73 +178,24 @@ private:
     detail::DepthImage m_depth_image;
     vk::SampleCountFlagBits m_msaa_samples;
     detail::RenderImage m_color_image;
-
-    void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const;
-
     std::vector<detail::FrameInFlight> m_frames_in_flight;
-
     std::vector<std::optional<detail::VertexBufferImpl>> m_vertex_buffers;
-
     std::vector<std::optional<detail::IndexBufferImpl>> m_index_buffers;
-
-    std::unordered_map<detail::DescriptorSetLayoutHandleImpl, vk::DescriptorSetLayout> m_descriptor_set_layouts;
-
+    std::unordered_map<Handle, vk::DescriptorSetLayout> m_descriptor_set_layouts;
     std::vector<std::optional<detail::GraphicsPipelineImpl>> m_graphics_pipelines {};
-
     std::vector<std::optional<detail::GraphicsPipelineLayoutImpl>> m_graphics_pipeline_layouts {};
-
     std::vector<std::optional<detail::FramebufferImpl>> m_framebuffers {};
-
     std::unordered_map<uint64_t, detail::TextureImpl> m_textures {};
-
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, detail::DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
     std::queue<std::function<void(vk::CommandBuffer)>> m_command_buffer_deferred_functions {};
-
-    template <typename T>
-    void update_uniform(UniformBuffer& uniform_buffer, const UniformLocation location, T value, const bool persist)
-    {
-        static_assert(sizeof(T) <= sc_max_uniform_value_size);
-        const uint64_t handle = uniform_buffer.handle();
-        DeferredUniformUpdateData update_data {
-            .counter = persist ? c_frames_in_flight : 1,
-            .handle = handle,
-            .location = location,
-            .data = {},
-            .data_size = sizeof(T)
-        };
-        memcpy(update_data.data.data(), &value, sizeof(T));
-        m_deferred_uniform_updates.push_back(update_data);
-    }
-
-    struct DeferredUniformUpdateData {
-        int counter;
-        uint64_t handle;
-        UniformLocation location;
-        std::array<std::byte, sc_max_uniform_value_size> data;
-        size_t data_size;
-    };
-
-    enum class DescriptorBindingType { uniform_buffer, texture };
-
-    struct DeferredDescriptorWriteData {
-        int counter;
-        DescriptorBindingType data_type;
-        uint64_t data_handle;
-        uint64_t descriptor_handle;
-        uint32_t binding;
-    };
-
-    std::vector<DeferredUniformUpdateData> m_deferred_uniform_updates {};
-    std::vector<DeferredDescriptorWriteData> m_deferred_descriptor_writes {};
+    std::vector<detail::DeferredUniformUpdateData> m_deferred_uniform_updates {};
+    std::vector<detail::DeferredDescriptorWriteData> m_deferred_descriptor_writes {};
 
     void cleanup_vk_swapchain() const;
-
     void cleanup_vk_debug_messenger() const;
-
     void recreate_swapchain(const Window& window);
-
     void recreate_framebuffers();
 
     Texture create_texture(
@@ -239,17 +206,17 @@ private:
 
     void wait_ready() const;
 
-    detail::DescriptorSetLayoutHandleImpl create_descriptor_set_layout(
+    Handle create_descriptor_set_layout(
         const vk::DispatchLoaderDynamic& loader,
         uint32_t set,
         const Shader& vertex_shader,
         const Shader& fragment_shader);
 
-    size_t create_graphics_pipeline_layout(
+    Handle create_graphics_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const Shader& vertex_shader, const Shader& fragment_shader);
 
     void update_uniform(
-        size_t handle, UniformLocation location, const void* data_ptr, size_t size, uint32_t frame_index) const;
+        Handle handle, UniformLocation location, const void* data_ptr, size_t size, uint32_t frame_index) const;
 
     void defer_to_all_frames(std::function<void(uint32_t)> func);
 
@@ -260,15 +227,7 @@ private:
     void defer_to_command_buffer_front(const std::function<void(vk::CommandBuffer)>& func);
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
-        const vk::DispatchLoaderDynamic& loader,
-        const std::vector<detail::DescriptorSetLayoutHandleImpl>& layouts) const;
-
-    static std::vector<vk::DescriptorSet> create_vk_descriptor_sets(
-        const vk::DispatchLoaderDynamic& loader,
-        vk::Device device,
-        vk::DescriptorSetLayout layout,
-        vk::DescriptorPool pool,
-        int count);
+        const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const;
 };
 }
 

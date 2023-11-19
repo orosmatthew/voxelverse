@@ -40,8 +40,8 @@ Renderer::Renderer(
     m_vk_surface = create_vk_surface(m_vk_instance, window.glfw_handle());
     m_vk_physical_device = pick_vk_physical_device(m_vk_instance, m_vk_loader, m_vk_surface);
     m_msaa_samples = vk::SampleCountFlagBits::e4; // get_max_sample_count(m_vk_loader, m_vk_physical_device);
-    m_vk_queue_family_indices = get_vk_queue_family_indices(m_vk_loader, m_vk_physical_device, m_vk_surface);
-    m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_vk_queue_family_indices);
+    m_queue_family_indices = get_vk_queue_family_indices(m_vk_loader, m_vk_physical_device, m_vk_surface);
+    m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_queue_family_indices);
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr, m_vk_device, vkGetDeviceProcAddr);
 
     auto [capabilities, formats, present_modes]
@@ -56,15 +56,15 @@ Renderer::Renderer(
         m_vk_surface,
         m_vk_swapchain_image_format,
         m_vk_swapchain_extent,
-        m_vk_queue_family_indices);
+        m_queue_family_indices);
 
     m_vk_swapchain_images = get_vk_swapchain_images(m_vk_loader, m_vk_device, m_vk_swapchain);
 
     m_vk_swapchain_image_views = create_vk_swapchain_image_views(
         m_vk_loader, m_vk_device, m_vk_swapchain_images, m_vk_swapchain_image_format.format);
 
-    m_vk_graphics_queue = m_vk_device.getQueue(m_vk_queue_family_indices.graphics_family.value(), 0, m_vk_loader);
-    m_vk_present_queue = m_vk_device.getQueue(m_vk_queue_family_indices.present_family.value(), 0, m_vk_loader);
+    m_vk_graphics_queue = m_vk_device.getQueue(m_queue_family_indices.graphics_family.value(), 0, m_vk_loader);
+    m_vk_present_queue = m_vk_device.getQueue(m_queue_family_indices.present_family.value(), 0, m_vk_loader);
 
     VmaAllocatorCreateInfo allocatorCreateInfo = {};
     VmaVulkanFunctions func = {};
@@ -79,7 +79,7 @@ Renderer::Renderer(
 
     vmaCreateAllocator(&allocatorCreateInfo, &m_vma_allocator);
 
-    m_vk_command_pool = create_vk_command_pool(m_vk_loader, m_vk_device, m_vk_queue_family_indices);
+    m_vk_command_pool = create_vk_command_pool(m_vk_loader, m_vk_device, m_queue_family_indices);
 
     m_color_image = create_color_image(
         m_vk_loader,
@@ -131,10 +131,10 @@ Renderer::Renderer(
 }
 
 vk::PipelineLayout Renderer::create_vk_pipeline_layout(
-    const vk::DispatchLoaderDynamic& loader, const std::vector<DescriptorSetLayoutHandleImpl>& layouts) const
+    const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const
 {
     std::vector<vk::DescriptorSetLayout> vk_layouts;
-    std::ranges::transform(layouts, std::back_inserter(vk_layouts), [&](const DescriptorSetLayoutHandleImpl handle) {
+    std::ranges::transform(layouts, std::back_inserter(vk_layouts), [&](const Handle handle) {
         return m_descriptor_set_layouts.at(handle);
     });
 
@@ -265,7 +265,7 @@ void Renderer::recreate_swapchain(const Window& window)
         m_vk_surface,
         m_vk_swapchain_image_format,
         m_vk_swapchain_extent,
-        m_vk_queue_family_indices);
+        m_queue_family_indices);
 
     m_vk_swapchain_images = get_vk_swapchain_images(m_vk_loader, m_vk_device, m_vk_swapchain);
 
@@ -333,7 +333,7 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
 {
     MVE_VAL_ASSERT(vertex_buffer.is_valid(), "[Renderer] Attempted to destroy invalid vertex buffer")
     log().debug("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
-    size_t handle = vertex_buffer.handle();
+    Handle handle = vertex_buffer.handle();
     vertex_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
@@ -606,7 +606,7 @@ void Renderer::wait_ready() const
 }
 
 void Renderer::update_uniform(
-    const size_t handle,
+    const Handle handle,
     const UniformLocation location,
     const void* data_ptr,
     const size_t size,
@@ -617,7 +617,7 @@ void Renderer::update_uniform(
     memcpy(&buffer.mapped_ptr[location.value()], data_ptr, size);
 }
 
-DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
+Handle Renderer::create_descriptor_set_layout(
     const vk::DispatchLoaderDynamic& loader,
     const uint32_t set,
     const Shader& vertex_shader,
@@ -676,7 +676,7 @@ DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
         "[Renderer] Failed to create descriptor set layout")
     vk::DescriptorSetLayout vk_layout = descriptor_set_layout_result.value;
 
-    uint64_t handle = m_resource_handle_count;
+    Handle handle = m_resource_handle_count;
     m_descriptor_set_layouts.insert({ handle, vk_layout });
     m_resource_handle_count++;
 
@@ -685,16 +685,15 @@ DescriptorSetLayoutHandleImpl Renderer::create_descriptor_set_layout(
     return handle;
 }
 
-size_t Renderer::create_graphics_pipeline_layout(
+Handle Renderer::create_graphics_pipeline_layout(
     const vk::DispatchLoaderDynamic& loader, const Shader& vertex_shader, const Shader& fragment_shader)
 {
-    std::vector<DescriptorSetLayoutHandleImpl> layouts;
-    std::unordered_map<uint64_t, DescriptorSetLayoutHandleImpl> descriptor_set_layouts;
+    std::vector<Handle> layouts;
+    std::unordered_map<Handle, Handle> descriptor_set_layouts;
 
     for (uint32_t i = 0; i <= 3; i++) {
         if (vertex_shader.has_descriptor_set(i) || fragment_shader.has_descriptor_set(i)) {
-            DescriptorSetLayoutHandleImpl descriptor_set_layout
-                = create_descriptor_set_layout(loader, i, vertex_shader, fragment_shader);
+            Handle descriptor_set_layout = create_descriptor_set_layout(loader, i, vertex_shader, fragment_shader);
             layouts.push_back(descriptor_set_layout);
             descriptor_set_layouts.insert({ i, descriptor_set_layout });
         }
@@ -702,8 +701,8 @@ size_t Renderer::create_graphics_pipeline_layout(
 
     const vk::PipelineLayout vk_layout = create_vk_pipeline_layout(m_vk_loader, layouts);
 
-    std::optional<size_t> id;
-    for (size_t i = 0; i < m_graphics_pipeline_layouts.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < m_graphics_pipeline_layouts.size(); i++) {
         if (!m_graphics_pipeline_layouts[i].has_value()) {
             id = i;
             break;
@@ -825,8 +824,8 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
         });
     });
 
-    std::optional<size_t> id;
-    for (size_t i = 0; i < m_vertex_buffers.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < m_vertex_buffers.size(); i++) {
         if (!m_vertex_buffers[i].has_value()) {
             id = i;
             break;
@@ -903,8 +902,8 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
         });
     });
 
-    std::optional<size_t> id;
-    for (size_t i = 0; i < m_index_buffers.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < m_index_buffers.size(); i++) {
         if (!m_index_buffers[i].has_value()) {
             id = i;
             break;
@@ -934,7 +933,7 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
     const VertexLayout& vertex_layout,
     const bool depth_test)
 {
-    const size_t layout = create_graphics_pipeline_layout(m_vk_loader, vertex_shader, fragment_shader);
+    const Handle layout = create_graphics_pipeline_layout(m_vk_loader, vertex_shader, fragment_shader);
 
     const vk::Pipeline vk_pipeline = create_vk_graphics_pipeline(
         m_vk_loader,
@@ -947,8 +946,8 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
         m_msaa_samples,
         depth_test);
 
-    std::optional<size_t> id;
-    for (size_t i = 0; i < m_graphics_pipelines.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < m_graphics_pipelines.size(); i++) {
         if (!m_graphics_pipelines[i].has_value()) {
             id = i;
             break;
@@ -981,8 +980,8 @@ DescriptorSet Renderer::create_descriptor_set(
 
     // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& ref_frame = m_frames_in_flight.at(0);
-    std::optional<size_t> id;
-    for (size_t i = 0; i < ref_frame.descriptor_sets.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < ref_frame.descriptor_sets.size(); i++) {
         if (!ref_frame.descriptor_sets[i].has_value()) {
             id = i;
             break;
@@ -1047,8 +1046,8 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
 
     // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& ref_frame = m_frames_in_flight.at(0);
-    std::optional<size_t> id;
-    for (size_t i = 0; i < ref_frame.uniform_buffers.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < ref_frame.uniform_buffers.size(); i++) {
         if (!ref_frame.uniform_buffers[i].has_value()) {
             id = i;
             break;
@@ -1117,7 +1116,7 @@ void Renderer::destroy(Texture& texture)
 {
     MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempted to destroy invalid texture")
     log().debug("[Renderer] Destroyed texture with ID: {}", texture.handle());
-    uint64_t handle = texture.handle();
+    Handle handle = texture.handle();
     texture.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(handle);
@@ -1260,7 +1259,7 @@ void Renderer::destroy(DescriptorSet& descriptor_set)
 {
     MVE_VAL_ASSERT(descriptor_set.is_valid(), "[Renderer] Attempted to destroy invalid descriptor set")
     log().debug("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
-    uint64_t handle = descriptor_set.handle();
+    Handle handle = descriptor_set.handle();
     descriptor_set.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         std::vector<DescriptorSetImpl> sets_to_delete;
@@ -1282,17 +1281,17 @@ void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
 {
     MVE_VAL_ASSERT(graphics_pipeline.is_valid(), "[Renderer] Attempted to destroy invalid graphics pipeline")
     log().debug("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
-    size_t handle = graphics_pipeline.handle();
+    Handle handle = graphics_pipeline.handle();
     graphics_pipeline.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         // Descriptor set layouts
-        std::vector<DescriptorSetLayoutHandleImpl> deleted_descriptor_set_layout_handles;
+        std::vector<Handle> deleted_descriptor_set_layout_handles;
         for (auto& [set, set_layout] :
              m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle)->layout)->descriptor_set_layouts) {
             m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout), nullptr, m_vk_loader);
             deleted_descriptor_set_layout_handles.push_back(set_layout);
         }
-        for (DescriptorSetLayoutHandleImpl descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
+        for (Handle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
             m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
         }
 
@@ -1312,7 +1311,7 @@ void Renderer::destroy(UniformBuffer& uniform_buffer)
     MVE_VAL_ASSERT(uniform_buffer.is_valid(), "[Renderer] Attempted to destroy invalid uniform buffer")
     log().debug("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
     uniform_buffer.invalidate();
-    size_t handle = uniform_buffer.handle();
+    Handle handle = uniform_buffer.handle();
     defer_after_all_frames([this, handle](uint32_t) {
         // ReSharper disable once CppUseStructuredBinding
         for (const FrameInFlight& frame : m_frames_in_flight) {
@@ -1331,7 +1330,7 @@ void Renderer::destroy(IndexBuffer& index_buffer)
 {
     MVE_VAL_ASSERT(index_buffer.is_valid(), "[Renderer] Attempted to destroy invalid index buffer")
     log().debug("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
-    uint64_t handle = index_buffer.handle();
+    Handle handle = index_buffer.handle();
     index_buffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         vmaDestroyBuffer(
@@ -1374,8 +1373,8 @@ void Renderer::end_render_pass_present() const
 }
 Framebuffer Renderer::create_framebuffer(std::function<void()> callback)
 {
-    std::optional<size_t> id;
-    for (size_t i = 0; i < m_framebuffers.size(); i++) {
+    std::optional<Handle> id;
+    for (Handle i = 0; i < m_framebuffers.size(); i++) {
         if (!m_framebuffers[i].has_value()) {
             id = i;
             break;
@@ -1395,7 +1394,7 @@ void Renderer::destroy(Framebuffer& framebuffer)
 {
     MVE_VAL_ASSERT(framebuffer.is_valid(), "[Renderer] Attempted to destroy invalid framebuffer")
     log().debug("[Renderer] Destroyed framebuffer with ID: {}", framebuffer.handle());
-    size_t handle = framebuffer.handle();
+    Handle handle = framebuffer.handle();
     framebuffer.invalidate();
     defer_after_all_frames([this, handle](uint32_t) {
         auto& [vk_framebuffers, texture, callback, size] = m_framebuffers.at(handle).value();
@@ -1408,8 +1407,8 @@ void Renderer::destroy(Framebuffer& framebuffer)
 }
 void Renderer::recreate_framebuffers()
 {
-    std::vector<std::pair<size_t, std::optional<std::function<void()>>>> ids_to_recreate;
-    for (size_t i = 0; i < m_framebuffers.size(); i++) {
+    std::vector<std::pair<Handle, std::optional<std::function<void()>>>> ids_to_recreate;
+    for (Handle i = 0; i < m_framebuffers.size(); i++) {
         if (m_framebuffers[i].has_value()) {
             ids_to_recreate.emplace_back(i, m_framebuffers[i]->callback);
             for (const vk::Framebuffer& buffer : m_framebuffers[i]->vk_framebuffers) {
