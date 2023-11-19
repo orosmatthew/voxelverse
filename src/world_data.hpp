@@ -172,12 +172,12 @@ public:
         return height >= -160 && height < 160;
     }
 
-    void push_chunk_lighting_update(const mve::Vector3i chunk_pos)
-    {
-        if (std::ranges::find(m_chunk_lighting_update_list, chunk_pos) == m_chunk_lighting_update_list.end()) {
-            m_chunk_lighting_update_list.push_back(chunk_pos);
-        }
-    }
+    // void push_chunk_lighting_update(const mve::Vector3i chunk_pos)
+    // {
+    //     if (std::ranges::find(m_chunk_lighting_update_list, chunk_pos) == m_chunk_lighting_update_list.end()) {
+    //         m_chunk_lighting_update_list.push_back(chunk_pos);
+    //     }
+    // }
 
     //    void process_chunk_lighting_updates();
 
@@ -207,7 +207,7 @@ private:
     mve::Vector2i m_player_chunk;
     std::unordered_map<mve::Vector2i, ChunkColumn> m_chunk_columns {};
     std::vector<mve::Vector2i> m_sorted_chunks {};
-    std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
+    // std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
 
     std::function<bool(mve::Vector2i, mve::Vector2i)> compare_from_player
         = [&](const mve::Vector2i a, const mve::Vector2i b) {

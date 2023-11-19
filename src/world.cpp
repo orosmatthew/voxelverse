@@ -142,9 +142,9 @@ void trigger_place_block(
             }
             world_data.set_block(place_pos, block_type);
 
-            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
-                world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(place_pos) + adj_chunk);
-            });
+            // for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
+            //     world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(place_pos) + adj_chunk);
+            // });
             //            world_data.process_chunk_lighting_updates();
 
             update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
@@ -179,9 +179,9 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             const mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
             const mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
 
-            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
-                world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(block_pos) + adj_chunk);
-            });
+            // for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
+            //     world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(block_pos) + adj_chunk);
+            // });
 
             world_data.set_block_local(chunk_pos, local_pos, 0);
             //            world_data.process_chunk_lighting_updates();

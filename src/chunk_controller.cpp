@@ -49,7 +49,7 @@ void ChunkController::update(
 
         if (!contains_flag(flags, flag_has_mesh) && contains_flag(flags, flag_queued_mesh)) {
             for (int h = -10; h < 10; h++) {
-                world_data.push_chunk_lighting_update({ col_pos.x, col_pos.y, h });
+                // world_data.push_chunk_lighting_update({ col_pos.x, col_pos.y, h });
                 world_renderer.push_mesh_update({ col_pos.x, col_pos.y, h });
             }
             enable_flag(flags, flag_has_mesh);
