@@ -698,10 +698,10 @@ public:
     union {
         Vector4 data;
         struct {
-            float x {};
-            float y {};
-            float z {};
-            float w {};
+            float x;
+            float y;
+            float z;
+            float w;
         };
     };
 
