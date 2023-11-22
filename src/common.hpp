@@ -5,8 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <filesystem>
-#include <functional>
-#include <utility>
 #include <vector>
 
 namespace mve {
@@ -356,6 +354,47 @@ inline mve::Vector3i block_local_to_world(const mve::Vector3i chunk_pos, const m
     return { chunk_pos.x * 16 + local_block_pos.x,
              chunk_pos.y * 16 + local_block_pos.y,
              chunk_pos.z * 16 + local_block_pos.z };
+}
+
+inline mve::Vector2i chunk_col_from_block_col(const mve::Vector2i block_col)
+{
+    return { static_cast<int>(mve::floor(static_cast<float>(block_col.x) / 16.0f)),
+             static_cast<int>(mve::floor(static_cast<float>(block_col.y) / 16.0f)) };
+}
+
+inline int chunk_height_from_block_height(const int block_height)
+{
+    return static_cast<int>(mve::floor(static_cast<float>(block_height) / 16.0f));
+}
+
+inline mve::Vector2i block_local_to_world_col(const mve::Vector2i chunk_pos, const mve::Vector2i local_block_pos)
+{
+    return { chunk_pos.x * 16 + local_block_pos.x, chunk_pos.y * 16 + local_block_pos.y };
+}
+
+inline int block_height_world_to_local(const int world_block_height)
+{
+    int mod = world_block_height % 16;
+    if (mod < 0) {
+        mod = 16 + mod;
+    }
+    return mod;
+}
+
+inline bool is_block_pos_local(const mve::Vector3i block_pos)
+{
+    return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16 && block_pos.z >= 0
+        && block_pos.z < 16;
+}
+
+inline bool is_block_pos_local_col(const mve::Vector2i block_pos)
+{
+    return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16;
+}
+
+inline bool is_block_height_world_valid(const int height)
+{
+    return height >= -160 && height < 160;
 }
 
 template <typename T, typename Pred>

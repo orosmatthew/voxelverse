@@ -72,7 +72,8 @@ set(SOURCE_FILES
         src/ui/console.cpp
         src/ui/button.cpp
         src/ui/pause_menu.cpp
-        src/chunk_controller.cpp)
+        src/chunk_controller.cpp
+        src/lighting.cpp)
 
 set(LIBS
         freetype

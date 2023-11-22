@@ -90,8 +90,7 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
         }
     });
     for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
-        const mve::Vector2i world_col_pos
-            = WorldData::block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
+        const mve::Vector2i world_col_pos = block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
         if (const float rand
             = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
             rand <= 0.8f) {
@@ -102,7 +101,7 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
             if (c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x] == 0) {
                 return;
             }
-            if (!WorldData::is_block_height_world_valid(struct_pos.z + height + 1)) {
+            if (!is_block_height_world_valid(struct_pos.z + height + 1)) {
                 return;
             }
             //            if (WorldData::is_block_pos_local_col(mve::Vector2i(pos.x + struct_pos.x - 2, pos.y +
@@ -113,7 +112,7 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
                 { chunk_pos.x, chunk_pos.y, 0 },
                 { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
             world_pos.z = struct_pos.z + height + 1;
-            if (WorldData::is_block_pos_local_col({ world_pos.x, world_pos.y })) {
+            if (is_block_pos_local_col({ world_pos.x, world_pos.y })) {
                 column.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
             }
             else {

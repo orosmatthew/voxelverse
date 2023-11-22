@@ -29,12 +29,14 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
     const mve::Vector3i local_block_pos,
     const Direction dir)
 {
+    const mve::Vector3i world_pos = block_local_to_world(chunk_pos, local_block_pos);
+
     uint8_t base_lighting = 0;
-    //    mve::Vector3i world_pos = WorldData::block_local_to_world(chunk_pos, local_block_pos);
+
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
     case Direction::front:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
         check_blocks[0] = { -1, -1, 1 };
         check_blocks[1] = { 0, -1, 1 };
         check_blocks[2] = { 1, -1, 1 };
@@ -45,7 +47,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, -1, 0 };
         break;
     case Direction::back:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
         check_blocks[0] = { 1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { -1, 1, 1 };
@@ -56,7 +58,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { 1, 1, 0 };
         break;
     case Direction::left:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { -1, 0, 1 };
         check_blocks[2] = { -1, -1, 1 };
@@ -67,7 +69,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, 1, 0 };
         break;
     case Direction::right:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
         check_blocks[0] = { 1, -1, 1 };
         check_blocks[1] = { 1, 0, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -78,7 +80,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { 1, -1, 0 };
         break;
     case Direction::top:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -89,7 +91,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, 0, 1 };
         break;
     case Direction::bottom:
-        base_lighting = 15; // base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, -1)).value();
+        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, -1)).value();
         check_blocks[0] = { 1, 1, -1 };
         check_blocks[1] = { 0, 1, -1 };
         check_blocks[2] = { -1, 1, -1 };
@@ -109,7 +111,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
     for (int i = 0; i < check_blocks.size(); i++) {
         const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
         std::optional<uint8_t> check_block;
-        if (WorldData::is_block_pos_local(check_block_local)) {
+        if (is_block_pos_local(check_block_local)) {
             check_block = chunk_data.get_block(check_block_local);
         }
         else {
@@ -118,37 +120,37 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         if (!check_block.has_value()) {
             continue;
         }
-        constexpr uint8_t occlusion_factor = 35;
+        constexpr float occlusion_factor = 0.8f;
         static_assert(255 - static_cast<int>(occlusion_factor) * 3 > 0);
         if (check_block.value() != 0) {
             switch (i) {
             case 0:
-                lighting[0] -= occlusion_factor;
+                lighting[0] *= occlusion_factor;
                 break;
             case 1:
-                lighting[0] -= occlusion_factor;
-                lighting[1] -= occlusion_factor;
+                lighting[0] *= occlusion_factor;
+                lighting[1] *= occlusion_factor;
                 break;
             case 2:
-                lighting[1] -= occlusion_factor;
+                lighting[1] *= occlusion_factor;
                 break;
             case 3:
-                lighting[1] -= occlusion_factor;
-                lighting[2] -= occlusion_factor;
+                lighting[1] *= occlusion_factor;
+                lighting[2] *= occlusion_factor;
                 break;
             case 4:
-                lighting[2] -= occlusion_factor;
+                lighting[2] *= occlusion_factor;
                 break;
             case 5:
-                lighting[2] -= occlusion_factor;
-                lighting[3] -= occlusion_factor;
+                lighting[2] *= occlusion_factor;
+                lighting[3] *= occlusion_factor;
                 break;
             case 6:
-                lighting[3] -= occlusion_factor;
+                lighting[3] *= occlusion_factor;
                 break;
             case 7:
-                lighting[3] -= occlusion_factor;
-                lighting[0] -= occlusion_factor;
+                lighting[3] *= occlusion_factor;
+                lighting[0] *= occlusion_factor;
                 break;
             default:
                 MVE_ASSERT(false, "Unreachable")
@@ -261,18 +263,18 @@ void calc_chunk_block_faces(
         const auto dir = static_cast<Direction>(f);
         const mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
         std::optional<uint8_t> adj_block;
-        if (WorldData::is_block_pos_local(adj_local_pos)) {
+        if (is_block_pos_local(adj_local_pos)) {
             adj_block = chunk_data.get_block(adj_local_pos);
         }
         else {
-            adj_block = world_data.block_at(WorldData::block_local_to_world(chunk_pos, adj_local_pos));
+            adj_block = world_data.block_at(block_local_to_world(chunk_pos, adj_local_pos));
         }
         uint8_t adj_block_type = 0;
         if (adj_block.has_value()) {
             adj_block_type = *adj_block;
         }
         if (iterate_empty) {
-            if (adj_block_type != 0 && WorldData::is_block_pos_local(adj_local_pos)) {
+            if (adj_block_type != 0 && is_block_pos_local(adj_local_pos)) {
                 std::array<uint8_t, 4> face_lighting = calc_chunk_face_lighting(
                     world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
                 ChunkFaceData face = create_chunk_face_mesh(

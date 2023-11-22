@@ -1525,7 +1525,7 @@ std::string Renderer::gpu_name() const
 
 Vector2i Renderer::texture_size(const Texture& texture) const
 {
-    MVE_VAL_ASSERT(texture.m_valid, "[Renderer] Attempt to get size on invalid texture")
+    MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempt to get size on invalid texture")
     const auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(texture.handle());
     return { static_cast<int>(image.width), static_cast<int>(image.height) };
 }

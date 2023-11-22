@@ -2,6 +2,7 @@
 
 #include "chunk_data.hpp"
 #include "common.hpp"
+#include "lighting.hpp"
 #include "logger.hpp"
 #include "ui_pipeline.hpp"
 #include "world_data.hpp"
@@ -141,17 +142,19 @@ void trigger_place_block(
                 break;
             }
             world_data.set_block(place_pos, block_type);
+            const mve::Vector2i chunk_col = chunk_col_from_block_col({ place_pos.x, place_pos.y });
+            apply_sunlight(world_data.chunk_column_data_at(chunk_col));
 
             // for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
             //     world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(place_pos) + adj_chunk);
             // });
             //            world_data.process_chunk_lighting_updates();
 
-            update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos));
+            update_chunks.insert(chunk_pos_from_block_pos(block_pos));
             // TODO: Check chunks only on edges
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
-                if (world_data.contains_chunk(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
-                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
+                if (world_data.contains_chunk(chunk_pos_from_block_pos(block_pos) + surround_pos)) {
+                    update_chunks.insert(chunk_pos_from_block_pos(block_pos) + surround_pos);
                 }
             });
             break;
@@ -176,19 +179,21 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
         BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
                          { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
         if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
-            const mve::Vector3i local_pos = WorldData::block_world_to_local(block_pos);
-            const mve::Vector3i chunk_pos = WorldData::chunk_pos_from_block_pos(block_pos);
+            const mve::Vector3i local_pos = block_world_to_local(block_pos);
+            const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
 
             // for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
             //     world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(block_pos) + adj_chunk);
             // });
 
             world_data.set_block_local(chunk_pos, local_pos, 0);
+            apply_sunlight(world_data.chunk_column_data_at({ chunk_pos.x, chunk_pos.y }));
+
             //            world_data.process_chunk_lighting_updates();
             update_chunks.insert(chunk_pos);
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
-                if (world_data.contains_chunk(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos)) {
-                    update_chunks.insert(WorldData::chunk_pos_from_block_pos(block_pos) + surround_pos);
+                if (world_data.contains_chunk(chunk_pos_from_block_pos(block_pos) + surround_pos)) {
+                    update_chunks.insert(chunk_pos_from_block_pos(block_pos) + surround_pos);
                 }
             });
             break;
@@ -285,7 +290,7 @@ mve::Vector3i World::player_block_pos() const
 }
 mve::Vector3i World::player_chunk_pos() const
 {
-    return WorldData::chunk_pos_from_block_pos(m_player.block_position());
+    return chunk_pos_from_block_pos(m_player.block_position());
 }
 std::optional<const ChunkData*> World::chunk_data_at(const mve::Vector3i chunk_pos) const
 {

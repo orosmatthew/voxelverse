@@ -1,5 +1,6 @@
 #include "chunk_controller.hpp"
 
+#include "lighting.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 #include "world_generator.hpp"
@@ -48,7 +49,9 @@ void ChunkController::update(
         }
 
         if (!contains_flag(flags, flag_has_mesh) && contains_flag(flags, flag_queued_mesh)) {
+            apply_sunlight(world_data.chunk_column_data_at({ col_pos.x, col_pos.y }));
             for (int h = -10; h < 10; h++) {
+                // world_data.propagate_light({ col_pos.x, col_pos.y, h });
                 // world_data.push_chunk_lighting_update({ col_pos.x, col_pos.y, h });
                 world_renderer.push_mesh_update({ col_pos.x, col_pos.y, h });
             }

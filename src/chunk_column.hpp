@@ -24,17 +24,17 @@ public:
         return m_chunks[chunk_pos.z + 10].get_block(block_world_to_local(block_pos));
     }
 
-    //    inline void set_lighting(mve::Vector3i block_pos, uint8_t val)
-    //    {
-    //        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-    //        m_chunks[chunk_pos.z + 10].set_lighting(block_world_to_local(block_pos), val);
-    //    }
+    void set_lighting(const mve::Vector3i block_pos, const uint8_t val)
+    {
+        const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        m_chunks[chunk_pos.z + 10].set_lighting(block_world_to_local(block_pos), val);
+    }
 
-    //    inline uint8_t lighting_at(mve::Vector3i block_pos) const
-    //    {
-    //        mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-    //        return m_chunks[chunk_pos.z + 10].lighting_at(block_world_to_local(block_pos));
-    //    }
+    [[nodiscard]] uint8_t lighting_at(const mve::Vector3i block_pos) const
+    {
+        const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        return m_chunks[chunk_pos.z + 10].lighting_at(block_world_to_local(block_pos));
+    }
 
     void set_block(const mve::Vector3i block_pos, const uint8_t type)
     {
@@ -66,6 +66,11 @@ public:
     [[nodiscard]] GenLevel gen_level() const
     {
         return m_gen_level;
+    }
+
+    [[nodiscard]] mve::Vector2i pos() const
+    {
+        return m_pos;
     }
 
 private:

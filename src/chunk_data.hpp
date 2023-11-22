@@ -9,6 +9,8 @@
 #include "common.hpp"
 #include "mve/math/math.hpp"
 
+#include <mve/common.hpp>
+
 inline mve::Vector3i direction_vector(const Direction dir)
 {
     switch (dir) {
@@ -55,10 +57,10 @@ public:
 
     explicit ChunkData(mve::Vector3i chunk_pos);
 
-    //    inline void reset_lighting()
-    //    {
-    //        std::fill(m_lighting_data.begin(), m_lighting_data.end(), 15);
-    //    }
+    void reset_lighting(const uint8_t value = 0)
+    {
+        std::ranges::fill(m_lighting_data, value);
+    }
 
     [[nodiscard]] mve::Vector3i position() const;
 
@@ -68,16 +70,16 @@ public:
         return m_block_data[index(pos)];
     }
 
-    //    inline void set_lighting(mve::Vector3i pos, uint8_t val)
-    //    {
-    //        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
-    //        m_lighting_data[index(pos)] = val;
-    //    }
+    void set_lighting(const mve::Vector3i pos, const uint8_t val)
+    {
+        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+        m_lighting_data[index(pos)] = val;
+    }
 
-    //    inline uint8_t lighting_at(mve::Vector3i pos) const
-    //    {
-    //        return m_lighting_data[index(pos)];
-    //    }
+    [[nodiscard]] uint8_t lighting_at(const mve::Vector3i pos) const
+    {
+        return m_lighting_data[index(pos)];
+    }
 
     [[nodiscard]] int block_count() const
     {
@@ -89,14 +91,19 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(m_pos, m_block_data, m_block_count, m_emissive_blocks);
+        archive(m_pos, m_block_data, m_block_count, m_emissive_blocks, m_lighting_data);
     }
 
     void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func) const
     {
-        for (const mve::Vector3i& pos : m_emissive_blocks) {
-            std::invoke(func, pos);
+        for (int i = 0; i < m_lighting_data.size(); ++i) {
+            if (m_lighting_data[i] == 15) {
+                std::invoke(func, pos(i));
+            }
         }
+        // for (const mve::Vector3i& pos : m_emissive_blocks) {
+        //     std::invoke(func, pos);
+        // }
     }
 
 private:
@@ -130,7 +137,7 @@ private:
     static constexpr int sc_chunk_size = 16;
     mve::Vector3i m_pos;
     std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_block_data = { 0 };
-    //    std::array<uint8_t, (sc_chunk_size * sc_chunk_size * sc_chunk_size)> m_lighting_data = { 0 };
+    std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_lighting_data = { 0 };
     std::array<uint8_t, sc_chunk_size * sc_chunk_size> m_height_data = { 0 };
     int m_block_count = 0;
     std::vector<mve::Vector3i> m_emissive_blocks {};

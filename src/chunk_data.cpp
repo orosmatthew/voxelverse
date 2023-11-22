@@ -3,13 +3,13 @@
 ChunkData::ChunkData()
     : m_pos(mve::Vector3i(0.0f))
 {
-    //    reset_lighting();
+    reset_lighting(15);
 }
 
 ChunkData::ChunkData(const mve::Vector3i chunk_pos)
     : m_pos(chunk_pos)
 {
-    //    reset_lighting();
+    reset_lighting(15);
 }
 void ChunkData::set_block(const mve::Vector3i pos, const uint8_t type)
 {
