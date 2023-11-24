@@ -1,6 +1,5 @@
 #include "chunk_controller.hpp"
 
-#include "lighting.hpp"
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 #include "world_generator.hpp"
@@ -20,21 +19,17 @@ void ChunkController::update(
     }
 
     int chunk_count = 0;
-    for (mve::Vector2i col_pos : m_sorted_cols) {
+    for (const mve::Vector2i col_pos : m_sorted_cols) {
         auto& [flags, neighbors] = m_chunk_states.at(col_pos);
         if (!contains_flag(flags, flag_is_generated)) {
-            if (!world_data.try_load_chunk_column_from_save(col_pos)) {
-                if (!world_data.contains_column(col_pos)) {
-                    world_data.create_or_load_chunk(col_pos);
-                }
-                world_generator.generate_chunk(world_data, col_pos);
-                if (world_data.chunk_column_data_at(col_pos).gen_level() == ChunkColumn::GenLevel::generated) {
-                    world_data.queue_save_chunk(col_pos);
-                }
+            if (!world_data.contains_column(col_pos)) {
+                world_data.create_or_load_chunk(col_pos);
             }
-            for (mve::Vector2i offset : sc_nbor_offsets) {
+            world_generator.generate_chunk(world_data, col_pos);
+            world_data.queue_save_chunk(col_pos);
+            for (const mve::Vector2i offset : sc_nbor_offsets) {
                 // ReSharper disable once CppUseStructuredBinding
-                ChunkState& neighbor_state = m_chunk_states[col_pos + offset];
+                ChunkState& neighbor_state = m_chunk_states.at(col_pos + offset);
                 neighbor_state.generated_neighbors++;
                 if (contains_flag(neighbor_state.flags, flag_is_generated)
                     && neighbor_state.generated_neighbors == sc_full_nbors) {
@@ -48,8 +43,8 @@ void ChunkController::update(
             chunk_count++;
         }
 
-        if (!contains_flag(flags, flag_has_mesh) && contains_flag(flags, flag_queued_mesh)) {
-            apply_sunlight(world_data.chunk_column_data_at({ col_pos.x, col_pos.y }));
+        if (contains_flag(flags, flag_queued_mesh) && !contains_flag(flags, flag_has_mesh)) {
+            // apply_sunlight(world_data.chunk_column_data_at({ col_pos.x, col_pos.y }));
             for (int h = -10; h < 10; h++) {
                 // world_data.propagate_light({ col_pos.x, col_pos.y, h });
                 // world_data.push_chunk_lighting_update({ col_pos.x, col_pos.y, h });
@@ -99,7 +94,6 @@ void ChunkController::update(
 void ChunkController::on_player_chunk_change()
 {
     m_sorted_cols.clear();
-    m_sorted_cols.reserve(m_chunk_states.size());
     for_2d(
         mve::Vector2i(-m_render_distance, -m_render_distance)
             + mve::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),

@@ -3,6 +3,7 @@
 #include "common.hpp"
 
 #include "FastNoiseLite.h"
+#include "lighting.hpp"
 #include "world_data.hpp"
 
 WorldGenerator::WorldGenerator(int seed)
@@ -21,7 +22,9 @@ WorldGenerator::WorldGenerator(int seed)
 void WorldGenerator::generate_chunk(WorldData& world_data, const mve::Vector2i chunk_pos) const
 {
     generate_trees(world_data, chunk_pos);
-    world_data.chunk_column_data_at(chunk_pos).set_gen_level(ChunkColumn::GenLevel::generated);
+    ChunkColumn& column = world_data.chunk_column_data_at(chunk_pos);
+    apply_sunlight(column);
+    column.set_gen_level(ChunkColumn::GenLevel::generated);
 }
 
 void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos) const
@@ -74,7 +77,6 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
     for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i offset) {
         const mve::Vector2i neighbor_pos = chunk_pos + offset;
         if (!world_data.contains_column(neighbor_pos)) {
-            // TODO: URGENT: make WorldData class clean up extra chunks here!
             world_data.create_or_load_chunk(neighbor_pos);
         }
         if (ChunkColumn& neighbor_column = world_data.chunk_column_data_at(neighbor_pos);

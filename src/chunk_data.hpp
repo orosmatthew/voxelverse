@@ -91,7 +91,7 @@ public:
     template <class Archive>
     void serialize(Archive& archive)
     {
-        archive(m_pos, m_block_data, m_block_count, m_emissive_blocks, m_lighting_data);
+        archive(m_pos, m_block_data, m_lighting_data, m_block_count);
     }
 
     void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func) const
@@ -138,7 +138,5 @@ private:
     mve::Vector3i m_pos;
     std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_block_data = { 0 };
     std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_lighting_data = { 0 };
-    std::array<uint8_t, sc_chunk_size * sc_chunk_size> m_height_data = { 0 };
     int m_block_count = 0;
-    std::vector<mve::Vector3i> m_emissive_blocks {};
 };
