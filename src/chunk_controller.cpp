@@ -28,6 +28,21 @@ void ChunkController::update(
             world_generator.generate_chunk(world_data, col_pos);
             world_data.queue_save_chunk(col_pos);
             for (const mve::Vector2i offset : sc_nbor_offsets) {
+             if (!m_chunk_states.contains(col_pos + offset)) {
+                    m_chunk_states.insert({ col_pos + offset, {} });
+                    insert_sorted(m_sorted_cols, col_pos + offset, [&](const mve::Vector2i a, const mve::Vector2i b) {
+                        return distance_sqrd(
+                                   mve::Vector2(a),
+                                   mve::Vector2(
+                                       static_cast<float>(m_player_chunk_col.x),
+                                       static_cast<float>(m_player_chunk_col.y)))
+                            < distance_sqrd(
+                                   mve::Vector2(b),
+                                   mve::Vector2(
+                                       static_cast<float>(m_player_chunk_col.x),
+                                       static_cast<float>(m_player_chunk_col.y)));
+                    });
+                }
                 // ReSharper disable once CppUseStructuredBinding
                 ChunkState& neighbor_state = m_chunk_states.at(col_pos + offset);
                 neighbor_state.generated_neighbors++;
