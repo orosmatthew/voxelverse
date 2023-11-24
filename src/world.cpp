@@ -142,8 +142,17 @@ void trigger_place_block(
                 break;
             }
             world_data.set_block(place_pos, block_type);
-            const mve::Vector2i chunk_col = chunk_col_from_block_col({ place_pos.x, place_pos.y });
-            apply_sunlight(world_data.chunk_column_data_at(chunk_col));
+            const mve::Vector3i chunk_pos = chunk_pos_from_block_pos({ place_pos.x, place_pos.y, place_pos.z });
+
+            // for_3d({ 0, 0, -10 }, { 1, 1, 10 }, [&](const mve::Vector3i offset) {
+            //     world_data.chunk_data_at(chunk_pos + offset).reset_lighting(3);
+            // });
+
+            apply_sunlight(world_data.chunk_column_data_at({ chunk_pos.x, chunk_pos.y }));
+
+            // for_3d({ -1, -1, -10 }, { 2, 2, 10 }, [&](const mve::Vector3i offset) {
+            //     world_data.propagate_light(chunk_pos + offset);
+            // });
 
             // for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& adj_chunk) {
             //     world_data.push_chunk_lighting_update(WorldData::chunk_pos_from_block_pos(place_pos) + adj_chunk);
@@ -187,7 +196,14 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             // });
 
             world_data.set_block_local(chunk_pos, local_pos, 0);
+            // for_3d({ 0, 0, -10 }, { 1, 1, 10 }, [&](const mve::Vector3i offset) {
+            //     world_data.chunk_data_at(chunk_pos + offset).reset_lighting(3);
+            // });
             apply_sunlight(world_data.chunk_column_data_at({ chunk_pos.x, chunk_pos.y }));
+
+            // for_3d({ -1, -1, -10 }, { 2, 2, 10 }, [&](const mve::Vector3i offset) {
+            //     world_data.propagate_light(chunk_pos + offset);
+            // });
 
             //            world_data.process_chunk_lighting_updates();
             update_chunks.insert(chunk_pos);

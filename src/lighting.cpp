@@ -16,7 +16,7 @@ void apply_sunlight(ChunkColumn& chunk)
                 }
             }
             else {
-                chunk.set_lighting(world_pos, 10);
+                chunk.set_lighting(world_pos, 11);
             }
         }
     });

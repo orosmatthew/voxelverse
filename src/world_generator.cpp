@@ -26,6 +26,9 @@ void WorldGenerator::generate_chunk(WorldData& world_data, const mve::Vector2i c
 
 void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos) const
 {
+    if (data.gen_level() >= ChunkColumn::terrain) {
+        return;
+    }
     std::array<std::array<float, 16>, 16> heights {};
 
     for (int x = 0; x < 16; x++) {
@@ -72,7 +75,7 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
         const mve::Vector2i neighbor_pos = chunk_pos + offset;
         if (!world_data.contains_column(neighbor_pos)) {
             // TODO: URGENT: make WorldData class clean up extra chunks here!
-            world_data.create_chunk_column(neighbor_pos);
+            world_data.create_or_load_chunk(neighbor_pos);
         }
         if (ChunkColumn& neighbor_column = world_data.chunk_column_data_at(neighbor_pos);
             neighbor_column.gen_level() < ChunkColumn::GenLevel::terrain) {
@@ -80,6 +83,9 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
         }
     });
     ChunkColumn& column = world_data.chunk_column_data_at(chunk_pos);
+    if (column.gen_level() >= ChunkColumn::GenLevel::trees) {
+        return;
+    }
     std::array<std::array<int, 16>, 16> heights {};
     for_2d({ 0, 0 }, { 16, 16 }, [&](const mve::Vector2i pos) {
         for (int h = 9 * 16; h > -10 * 16; h--) {

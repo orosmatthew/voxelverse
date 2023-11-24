@@ -17,7 +17,7 @@ public:
 
     ~WorldData();
 
-    void create_chunk_column(mve::Vector2i chunk_pos);
+    void create_or_load_chunk(mve::Vector2i chunk_pos);
 
     [[nodiscard]] std::optional<uint8_t> block_at(const mve::Vector3i block_pos) const
     {
@@ -135,13 +135,13 @@ public:
     void propagate_light(mve::Vector3i chunk_pos);
 
 private:
+    void create_chunk_column(mve::Vector2i chunk_pos);
+
     void process_save_queue();
 
     void remove_chunk_column(mve::Vector2i chunk_pos);
 
     void sort_chunks();
-
-    void spread_light(mve::Vector3i light_pos);
 
     std::set<mve::Vector2i> m_save_queue;
     SaveFile m_save;

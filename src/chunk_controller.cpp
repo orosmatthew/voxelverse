@@ -25,7 +25,7 @@ void ChunkController::update(
         if (!contains_flag(flags, flag_is_generated)) {
             if (!world_data.try_load_chunk_column_from_save(col_pos)) {
                 if (!world_data.contains_column(col_pos)) {
-                    world_data.create_chunk_column(col_pos);
+                    world_data.create_or_load_chunk(col_pos);
                 }
                 world_generator.generate_chunk(world_data, col_pos);
                 if (world_data.chunk_column_data_at(col_pos).gen_level() == ChunkColumn::GenLevel::generated) {
@@ -68,7 +68,7 @@ void ChunkController::update(
 
     chunk_count = 0;
     while (std::optional<mve::Vector2i> culled_chunk
-           = world_data.try_cull_chunk(static_cast<float>(m_render_distance))) {
+           = world_data.try_cull_chunk(static_cast<float>(m_render_distance) + 3.0f)) {
         if (!m_chunk_states.contains(culled_chunk.value())) {
             continue;
         }
