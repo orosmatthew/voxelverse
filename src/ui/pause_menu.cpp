@@ -1,7 +1,5 @@
 #include "pause_menu.hpp"
 
-#include <mve/common.hpp>
-
 #include "../common.hpp"
 #include "../logger.hpp"
 
@@ -14,7 +12,7 @@ PauseMenu::PauseMenu(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     , m_fullscreen_button(ui_pipeline, text_pipeline, m_button_texture, "Toggle Fullscreen", { 100, 15 }, 5.0f)
     , m_exit_button(ui_pipeline, text_pipeline, m_button_texture, "Exit", { 100, 15 }, 5.0f)
 {
-    MVE_VAL_ASSERT(&ui_pipeline.renderer() == &text_pipeline.renderer(), "[PauseMenu] Renderers are not the same")
+    VV_DEB_ASSERT(&ui_pipeline.renderer() == &text_pipeline.renderer(), "[PauseMenu] Renderers are not the same")
 
     m_exit_button.set_hover_texture(m_button_texture_hover);
     m_exit_button.set_pressed_texture(m_button_texture_pressed);

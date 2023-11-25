@@ -13,7 +13,7 @@ ChunkData::ChunkData(const mve::Vector3i chunk_pos)
 }
 void ChunkData::set_block(const mve::Vector3i pos, const uint8_t type)
 {
-    MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
+    VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
     if (m_block_data[index(pos)] == 0 && type != 0) {
         m_block_count++;
     }

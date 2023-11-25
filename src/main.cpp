@@ -1,9 +1,7 @@
-#include <iostream>
+#include <filesystem>
 
 #include "app.hpp"
 #include "logger.hpp"
-#include "mve/common.hpp"
-#include <filesystem>
 
 #include <spdlog/spdlog.h>
 
@@ -21,7 +19,7 @@ int main()
 
     if (!std::filesystem::exists("save")) {
         const bool result = std::filesystem::create_directory("save");
-        MVE_ASSERT(result, "[Main] Failed to create save dir")
+        VV_REL_ASSERT(result, "[Main] Failed to create save dir")
     }
 
     //    try {

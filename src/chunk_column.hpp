@@ -21,34 +21,34 @@ public:
     [[nodiscard]] uint8_t get_block(const mve::Vector3i block_pos) const
     {
         const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        MVE_VAL_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
+        VV_DEB_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
         return m_chunks[chunk_pos.z + 10].get_block(block_world_to_local(block_pos));
     }
 
     void set_lighting(const mve::Vector3i block_pos, const uint8_t val)
     {
         const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        MVE_VAL_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
+        VV_DEB_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
         m_chunks[chunk_pos.z + 10].set_lighting(block_world_to_local(block_pos), val);
     }
 
     [[nodiscard]] uint8_t lighting_at(const mve::Vector3i block_pos) const
     {
         const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        MVE_VAL_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
+        VV_DEB_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
         return m_chunks[chunk_pos.z + 10].lighting_at(block_world_to_local(block_pos));
     }
 
     void set_block(const mve::Vector3i block_pos, const uint8_t type)
     {
         const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        MVE_VAL_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
+        VV_DEB_ASSERT(chunk_pos.z >= -10 && chunk_pos.z < 10, "[ChunkColumn] Invalid block position");
         m_chunks[chunk_pos.z + 10].set_block(block_world_to_local(block_pos), type);
     }
 
     [[nodiscard]] const ChunkData& chunk_data_at(const mve::Vector3i chunk_pos) const
     {
-        MVE_VAL_ASSERT(
+        VV_DEB_ASSERT(
             chunk_pos.x == m_pos.x && chunk_pos.y == m_pos.y && chunk_pos.z >= -10 && chunk_pos.z < 10,
             "[ChunkColumn] Invalid chunk position");
         return m_chunks[chunk_pos.z + 10];
@@ -56,7 +56,7 @@ public:
 
     ChunkData& chunk_data_at(const mve::Vector3i chunk_pos)
     {
-        MVE_VAL_ASSERT(
+        VV_DEB_ASSERT(
             chunk_pos.x == m_pos.x && chunk_pos.y == m_pos.y && chunk_pos.z >= -10 && chunk_pos.z < 10,
             "[ChunkColumn] Invalid chunk position");
         return m_chunks[chunk_pos.z + 10];

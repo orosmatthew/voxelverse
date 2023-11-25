@@ -9,8 +9,6 @@
 #include "common.hpp"
 #include "mve/math/math.hpp"
 
-#include <mve/common.hpp>
-
 inline mve::Vector3i direction_vector(const Direction dir)
 {
     switch (dir) {
@@ -70,20 +68,20 @@ public:
     void set_block(mve::Vector3i pos, uint8_t type);
     [[nodiscard]] uint8_t get_block(const mve::Vector3i pos) const
     {
-        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
+        VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_block_data[index(pos)];
     }
 
     void set_lighting(const mve::Vector3i pos, const uint8_t val)
     {
-        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
-        MVE_VAL_ASSERT(val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+        VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
+        VV_DEB_ASSERT(val <= 15, "[ChunkData] Lighting is not between 0 and 15")
         m_lighting_data[index(pos)] = val;
     }
 
     [[nodiscard]] uint8_t lighting_at(const mve::Vector3i pos) const
     {
-        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
+        VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_lighting_data[index(pos)];
     }
 

@@ -6,8 +6,6 @@
 #include "world_data.hpp"
 #include "world_renderer.hpp"
 
-#include <mve/common.hpp>
-
 void combine_mesh_data(ChunkMeshData& data, const ChunkMeshData& other)
 {
     const uint32_t indices_offset = data.vertices.size();
@@ -103,7 +101,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         break;
     }
 
-    MVE_VAL_ASSERT(base_lighting >= 0 && base_lighting <= 15, "[ChunkMesh] Base lighting is not between 0 and 15")
+    VV_DEB_ASSERT(base_lighting >= 0 && base_lighting <= 15, "[ChunkMesh] Base lighting is not between 0 and 15")
 
     base_lighting = static_cast<uint8_t>(mve::clamp(base_lighting * 16, 0, 255));
     std::array lighting = { base_lighting, base_lighting, base_lighting, base_lighting };
@@ -153,7 +151,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
                 lighting[0] *= occlusion_factor;
                 break;
             default:
-                MVE_ASSERT(false, "Unreachable")
+                VV_REL_ASSERT(false, "Unreachable")
             }
         }
     }
@@ -210,7 +208,7 @@ ChunkFaceData create_chunk_face_mesh(
         data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     default:
-        MVE_ASSERT(false, "Unreachable")
+        VV_REL_ASSERT(false, "Unreachable")
     }
     data.uvs[0] = uvs.top_left;
     data.uvs[1] = uvs.top_right;

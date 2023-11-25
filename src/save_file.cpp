@@ -5,7 +5,7 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <lz4.h>
 
-#include "mve/common.hpp"
+#include "common.hpp"
 
 SaveFile::SaveFile(const size_t max_file_size, const std::string& name)
 {
@@ -17,7 +17,7 @@ SaveFile::SaveFile(const size_t max_file_size, const std::string& name)
     db_options.compression = leveldb::kNoCompression;
     db_options.max_file_size = max_file_size;
     const leveldb::Status db_status = leveldb::DB::Open(db_options, "save/" + name, &m_db);
-    MVE_ASSERT(db_status.ok(), "[SaveFile] Leveldb open not ok for " + name)
+    VV_REL_ASSERT(db_status.ok(), "[SaveFile] Leveldb open not ok for " + name)
 }
 SaveFile::~SaveFile()
 {
@@ -31,7 +31,7 @@ std::optional<std::string> SaveFile::at(const std::string& key)
     if (db_status.IsNotFound()) {
         return {};
     }
-    MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to get key: " + key)
+    VV_REL_ASSERT(db_status.ok(), "[SaveFile] Failed to get key: " + key)
     ValueData value_data;
     {
         std::stringstream data_stream(data);
@@ -47,7 +47,7 @@ std::optional<std::string> SaveFile::at(const std::string& key)
         static_cast<int>(value_data.data.size()),
         // ReSharper disable once CppRedundantCastExpression
         static_cast<int>(decompressed_data.size()));
-    MVE_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key)
+    VV_REL_ASSERT(result_size >= 0, "[SaveFile] Failed to decompress data at key: " + key)
     decompressed_data.resize(result_size);
 
     return std::string(decompressed_data.begin(), decompressed_data.end());
@@ -63,7 +63,7 @@ void SaveFile::insert(const std::string& key, const std::string& value)
         static_cast<int>(value.size()),
         // ReSharper disable once CppRedundantCastExpression
         static_cast<int>(compressed_data.size()));
-    MVE_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
+    VV_REL_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
     compressed_data.resize(compressed_size);
 
     ValueData value_data = ValueData { .decompressed_size = value.size(),
@@ -79,7 +79,7 @@ void SaveFile::insert(const std::string& key, const std::string& value)
     }
     else {
         const leveldb::Status db_status = m_db->Put(leveldb::WriteOptions(), key, data_stream.str());
-        MVE_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key)
+        VV_REL_ASSERT(db_status.ok(), "[SaveFile] Failed to write key: " + key)
     }
 }
 

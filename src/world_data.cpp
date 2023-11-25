@@ -132,7 +132,7 @@ void WorldData::propagate_light(const mve::Vector3i chunk_pos)
                     : std::optional<uint8_t> {};
             }
         }
-        MVE_VAL_ASSERT(false, "Unreachable");
+        VV_DEB_ASSERT(false, "Unreachable");
         return {};
     };
 
@@ -149,7 +149,7 @@ void WorldData::propagate_light(const mve::Vector3i chunk_pos)
                     : std::optional<uint8_t> {};
             }
         }
-        MVE_VAL_ASSERT(false, "Unreachable");
+        VV_DEB_ASSERT(false, "Unreachable");
         return {};
     };
 
@@ -165,7 +165,7 @@ void WorldData::propagate_light(const mve::Vector3i chunk_pos)
                 return;
             }
         }
-        MVE_VAL_ASSERT(false, "Unreachable");
+        VV_DEB_ASSERT(false, "Unreachable");
     };
 
     for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const mve::Vector3i pos) {
