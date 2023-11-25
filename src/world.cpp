@@ -143,7 +143,7 @@ void trigger_place_block(
             world_data.set_block(place_pos, block_type);
             const mve::Vector3i chunk_pos = chunk_pos_from_block_pos({ place_pos.x, place_pos.y, place_pos.z });
 
-            world_data.refresh_lighting(chunk_pos);
+            refresh_lighting(world_data, chunk_pos);
 
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
                 if (world_renderer.contains_data(chunk_pos + surround_pos)) {
@@ -172,7 +172,7 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
 
             world_data.set_block_local(chunk_pos, local_pos, 0);
-            world_data.refresh_lighting(chunk_pos);
+            refresh_lighting(world_data, chunk_pos);
 
             for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
                 if (world_renderer.contains_data(chunk_pos + surround_pos)) {

@@ -125,10 +125,6 @@ public:
         return m_chunk_columns.size();
     }
 
-    void propagate_light(mve::Vector3i chunk_pos);
-
-    void refresh_lighting(mve::Vector3i chunk_pos);
-
 private:
     void create_chunk_column(mve::Vector2i chunk_pos);
 
