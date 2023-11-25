@@ -22,9 +22,11 @@ add_library(mve STATIC
 
 target_link_libraries(mve Vulkan::Vulkan glfw)
 
+target_include_directories(mve SYSTEM PUBLIC
+        external/vma-3.0.1/include)
+
 target_include_directories(mve PUBLIC
         external/spirv-reflect-1.3.268.0/include
-        external/vma-3.0.1/include
         external/stb-8b5f1f3/include
         include)
 

@@ -10,12 +10,8 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
-#define VMA_VULKAN_VERSION 1001000
-#include "vk_mem_alloc.h"
-#define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_ASSERT_ON_RESULT
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
+#include <mve/include_vma.hpp>
+#include <mve/include_vulkan.hpp>
 
 #include <mve/detail/defs.hpp>
 #include <mve/detail/descriptor_set_allocator.hpp>

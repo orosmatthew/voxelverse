@@ -4,10 +4,11 @@
 #include <set>
 #include <vector>
 
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define VMA_IMPLEMENTATION
+#define VMA_VULKAN_VERSION 1001000
+#include "vk_mem_alloc.h"
 
 #include <mve/common.hpp>
 #include <mve/math/math.hpp>

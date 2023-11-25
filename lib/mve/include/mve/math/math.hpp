@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace mve {
 
 constexpr float epsilon = 0.00001f;

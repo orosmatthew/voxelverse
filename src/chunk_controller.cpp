@@ -19,29 +19,19 @@ void ChunkController::update(
     }
 
     int chunk_count = 0;
-    for (const mve::Vector2i col_pos : m_sorted_cols) {
+    for (const mve::Vector2i col_pos : m_sorted_chunks_in_range) {
         auto& [flags, neighbors] = m_chunk_states.at(col_pos);
         if (!contains_flag(flags, flag_is_generated)) {
             if (!world_data.contains_column(col_pos)) {
                 world_data.create_or_load_chunk(col_pos);
             }
-            world_generator.generate_chunk(world_data, col_pos);
+            if (world_data.chunk_column_data_at(col_pos).gen_level() < ChunkColumn::generated) {
+                world_generator.generate_chunk(world_data, col_pos);
+            }
             world_data.queue_save_chunk(col_pos);
             for (const mve::Vector2i offset : sc_nbor_offsets) {
-             if (!m_chunk_states.contains(col_pos + offset)) {
+                if (!m_chunk_states.contains(col_pos + offset)) {
                     m_chunk_states.insert({ col_pos + offset, {} });
-                    insert_sorted(m_sorted_cols, col_pos + offset, [&](const mve::Vector2i a, const mve::Vector2i b) {
-                        return distance_sqrd(
-                                   mve::Vector2(a),
-                                   mve::Vector2(
-                                       static_cast<float>(m_player_chunk_col.x),
-                                       static_cast<float>(m_player_chunk_col.y)))
-                            < distance_sqrd(
-                                   mve::Vector2(b),
-                                   mve::Vector2(
-                                       static_cast<float>(m_player_chunk_col.x),
-                                       static_cast<float>(m_player_chunk_col.y)));
-                    });
                 }
                 // ReSharper disable once CppUseStructuredBinding
                 ChunkState& neighbor_state = m_chunk_states.at(col_pos + offset);
@@ -59,10 +49,7 @@ void ChunkController::update(
         }
 
         if (contains_flag(flags, flag_queued_mesh) && !contains_flag(flags, flag_has_mesh)) {
-            // apply_sunlight(world_data.chunk_column_data_at({ col_pos.x, col_pos.y }));
             for (int h = -10; h < 10; h++) {
-                // world_data.propagate_light({ col_pos.x, col_pos.y, h });
-                // world_data.push_chunk_lighting_update({ col_pos.x, col_pos.y, h });
                 world_renderer.push_mesh_update({ col_pos.x, col_pos.y, h });
             }
             enable_flag(flags, flag_has_mesh);
@@ -108,7 +95,7 @@ void ChunkController::update(
 }
 void ChunkController::on_player_chunk_change()
 {
-    m_sorted_cols.clear();
+    m_sorted_chunks_in_range.clear();
     for_2d(
         mve::Vector2i(-m_render_distance, -m_render_distance)
             + mve::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),
@@ -122,9 +109,9 @@ void ChunkController::on_player_chunk_change()
             }
         });
     for (auto& [pos, data] : m_chunk_states) {
-        m_sorted_cols.push_back(pos);
+        m_sorted_chunks_in_range.push_back(pos);
     }
-    std::ranges::sort(m_sorted_cols, [&](const mve::Vector2i& a, const mve::Vector2i& b) {
+    std::ranges::sort(m_sorted_chunks_in_range, [&](const mve::Vector2i& a, const mve::Vector2i& b) {
         return distance_sqrd(
                    mve::Vector2(a),
                    mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))

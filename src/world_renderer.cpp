@@ -2,12 +2,10 @@
 #include "common.hpp"
 #include "mve/math/math.hpp"
 
-#include <spdlog/fmt/bundled/core.h>
-
 void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
 {
     if (m_chunk_mesh_lookup.contains(chunk_pos)) {
-        m_chunk_buffers[m_chunk_mesh_lookup.at(chunk_pos)].reset();
+        m_chunk_buffers.at(m_chunk_mesh_lookup.at(chunk_pos)).reset();
     }
     else {
         m_chunk_mesh_lookup.insert({ chunk_pos, m_chunk_buffers.size() });
@@ -93,15 +91,15 @@ void WorldRenderer::draw(const Player& camera)
         }
     }
 }
-void WorldRenderer::rebuild_mesh_lookup()
-{
-    m_chunk_mesh_lookup.clear();
-    for (size_t i = 0; i < m_chunk_buffers.size(); i++) {
-        if (m_chunk_buffers[i].has_value()) {
-            m_chunk_mesh_lookup[m_chunk_buffers.at(i)->chunk_pos()] = i;
-        }
-    }
-}
+// void WorldRenderer::rebuild_mesh_lookup()
+// {
+//     m_chunk_mesh_lookup.clear();
+//     for (size_t i = 0; i < m_chunk_buffers.size(); i++) {
+//         if (m_chunk_buffers[i].has_value()) {
+//             m_chunk_mesh_lookup[m_chunk_buffers.at(i)->chunk_pos()] = i;
+//         }
+//     }
+// }
 void WorldRenderer::set_selection_position(const mve::Vector3 position)
 {
     m_selection_box.mesh.set_position(position);
@@ -112,7 +110,7 @@ bool WorldRenderer::contains_data(const mve::Vector3i position) const
 }
 void WorldRenderer::remove_data(const mve::Vector3i position)
 {
-    m_chunk_buffers[m_chunk_mesh_lookup.at(position)].reset();
+    m_chunk_buffers.at(m_chunk_mesh_lookup.at(position)).reset();
     m_chunk_mesh_lookup.erase(position);
 }
 

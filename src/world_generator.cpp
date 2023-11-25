@@ -21,9 +21,17 @@ WorldGenerator::WorldGenerator(int seed)
 
 void WorldGenerator::generate_chunk(WorldData& world_data, const mve::Vector2i chunk_pos) const
 {
-    generate_trees(world_data, chunk_pos);
+    if (world_data.contains_column(chunk_pos)) {
+        if (world_data.chunk_column_data_at(chunk_pos).gen_level() >= ChunkColumn::generated) {
+            return;
+        }
+    }
+    for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i offset) { generate_trees(world_data, chunk_pos + offset); });
     ChunkColumn& column = world_data.chunk_column_data_at(chunk_pos);
     apply_sunlight(column);
+    // for (int h = -10; h < 10; ++h) {
+    //     world_data.propagate_light({ chunk_pos.x, chunk_pos.y, h });
+    // }
     column.set_gen_level(ChunkColumn::GenLevel::generated);
 }
 

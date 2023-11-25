@@ -216,7 +216,7 @@ inline Quad transform(const Quad& quad, const mve::Matrix4& matrix)
 
 inline void transform_vertices(std::vector<mve::Vector3>& vertices, const mve::Matrix4& matrix)
 {
-    std::ranges::transform(std::as_const(vertices), vertices.begin(), [&](const mve::Vector3& vertex) {
+    std::ranges::transform(vertices, vertices.begin(), [&](const mve::Vector3& vertex) {
         return vertex.transform(matrix);
     });
 }
@@ -240,9 +240,9 @@ concept CallableWithVector3i = requires(Callable callable, mve::Vector3i vector)
 template <CallableWithVector3i Callable>
 void for_3d(const mve::Vector3i from, const mve::Vector3i to, Callable callable)
 {
-    for (int x = from.x; x < to.x; x++) {
-        for (int y = from.y; y < to.y; y++) {
-            for (int z = from.z; z < to.z; z++) {
+    for (int x = from.x; x < to.x; ++x) {
+        for (int y = from.y; y < to.y; ++y) {
+            for (int z = from.z; z < to.z; ++z) {
                 std::invoke(callable, mve::Vector3i(x, y, z));
             }
         }

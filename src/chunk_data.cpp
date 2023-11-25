@@ -13,6 +13,7 @@ ChunkData::ChunkData(const mve::Vector3i chunk_pos)
 }
 void ChunkData::set_block(const mve::Vector3i pos, const uint8_t type)
 {
+    MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
     if (m_block_data[index(pos)] == 0 && type != 0) {
         m_block_count++;
     }
@@ -20,23 +21,4 @@ void ChunkData::set_block(const mve::Vector3i pos, const uint8_t type)
         m_block_count--;
     }
     m_block_data[index(pos)] = type;
-
-    //    if (is_emissive(type)
-    //        && std::find(m_emissive_blocks.begin(), m_emissive_blocks.end(), pos) == m_emissive_blocks.end()) {
-    //        m_emissive_blocks.push_back(pos);
-    //    }
-    //    else if (type == 0) {
-    //        auto it = std::find(m_emissive_blocks.begin(), m_emissive_blocks.end(), pos);
-    //        if (it != m_emissive_blocks.end()) {
-    //            m_emissive_blocks.erase(it);
-    //        }
-    //    }
-}
-bool ChunkData::in_bounds(const mve::Vector3i pos)
-{
-    return pos.x >= 0 && pos.x < 16 && pos.y >= 0 && pos.y < 16 && pos.z >= 0 && pos.z < 16;
-}
-mve::Vector3i ChunkData::position() const
-{
-    return m_pos;
 }

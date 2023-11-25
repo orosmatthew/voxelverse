@@ -73,7 +73,7 @@ private:
         WireBoxMesh mesh;
     };
 
-    void rebuild_mesh_lookup();
+    // void rebuild_mesh_lookup();
 
     mve::Renderer* m_renderer;
     BS::thread_pool m_thread_pool;

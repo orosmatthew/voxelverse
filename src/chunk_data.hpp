@@ -62,22 +62,28 @@ public:
         std::ranges::fill(m_lighting_data, value);
     }
 
-    [[nodiscard]] mve::Vector3i position() const;
+    [[nodiscard]] mve::Vector3i position() const
+    {
+        return m_pos;
+    }
 
     void set_block(mve::Vector3i pos, uint8_t type);
     [[nodiscard]] uint8_t get_block(const mve::Vector3i pos) const
     {
+        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_block_data[index(pos)];
     }
 
     void set_lighting(const mve::Vector3i pos, const uint8_t val)
     {
-        MVE_VAL_ASSERT(val >= 0 && val <= 15, "[ChunkData] Lighting is not between 0 and 15")
+        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
+        MVE_VAL_ASSERT(val <= 15, "[ChunkData] Lighting is not between 0 and 15")
         m_lighting_data[index(pos)] = val;
     }
 
     [[nodiscard]] uint8_t lighting_at(const mve::Vector3i pos) const
     {
+        MVE_VAL_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_lighting_data[index(pos)];
     }
 
@@ -86,24 +92,10 @@ public:
         return m_block_count;
     }
 
-    [[nodiscard]] static bool in_bounds(mve::Vector3i pos);
-
     template <class Archive>
     void serialize(Archive& archive)
     {
         archive(m_pos, m_block_data, m_lighting_data, m_block_count);
-    }
-
-    void for_emissive_block(const std::function<void(const mve::Vector3i&)>& func) const
-    {
-        for (int i = 0; i < m_lighting_data.size(); ++i) {
-            if (m_lighting_data[i] == 15) {
-                std::invoke(func, pos(i));
-            }
-        }
-        // for (const mve::Vector3i& pos : m_emissive_blocks) {
-        //     std::invoke(func, pos);
-        // }
     }
 
 private:

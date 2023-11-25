@@ -25,12 +25,10 @@ public:
         if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
             return {};
         }
-        if (const auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y }); result == m_chunk_columns.end()) {
+        if (!m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y })) {
             return {};
         }
-        else {
-            return result->second.get_block(block_pos);
-        }
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).get_block(block_pos);
     }
 
     void set_lighting(const mve::Vector3i pos, const uint8_t val)
@@ -42,15 +40,10 @@ public:
     [[nodiscard]] std::optional<uint8_t> lighting_at(const mve::Vector3i block_pos) const
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+        if (!contains_chunk(chunk_pos)) {
             return {};
         }
-        if (const auto result = m_chunk_columns.find({ chunk_pos.x, chunk_pos.y }); result == m_chunk_columns.end()) {
-            return {};
-        }
-        else {
-            return result->second.lighting_at(block_pos);
-        }
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).lighting_at(block_pos);
     }
 
     [[nodiscard]] uint8_t block_at_local(mve::Vector3i chunk_pos, const mve::Vector3i block_pos) const
@@ -134,6 +127,8 @@ public:
 
     void propagate_light(mve::Vector3i chunk_pos);
 
+    void refresh_lighting(mve::Vector3i chunk_pos);
+
 private:
     void create_chunk_column(mve::Vector2i chunk_pos);
 
@@ -148,7 +143,6 @@ private:
     mve::Vector2i m_player_chunk;
     std::unordered_map<mve::Vector2i, ChunkColumn> m_chunk_columns {};
     std::vector<mve::Vector2i> m_sorted_chunks {};
-    // std::vector<mve::Vector3i> m_chunk_lighting_update_list {};
 
     std::function<bool(mve::Vector2i, mve::Vector2i)> compare_from_player
         = [&](const mve::Vector2i a, const mve::Vector2i b) {

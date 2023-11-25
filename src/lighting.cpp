@@ -10,13 +10,14 @@ void apply_sunlight(ChunkColumn& chunk)
         for (int i = 9 * 16; i >= -10 * 16; --i) {
             const mve::Vector3i world_pos { world_col.x, world_col.y, i };
             if (!covered) {
-                chunk.set_lighting(world_pos, 15);
                 if (!is_transparent(chunk.get_block(world_pos))) {
                     covered = true;
+                } else {
+                    chunk.set_lighting(world_pos, 15);
                 }
             }
             else {
-                chunk.set_lighting(world_pos, 11);
+                chunk.set_lighting(world_pos, 0);
             }
         }
     });

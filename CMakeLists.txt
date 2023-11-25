@@ -38,8 +38,8 @@ set(LEVELDB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
 set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
 
 
-add_subdirectory(external/freetype-2.13.2)
-add_subdirectory(external/leveldb-1.23)
+add_subdirectory(external/freetype-2.13.2 SYSTEM)
+add_subdirectory(external/leveldb-1.23 SYSTEM)
 
 set(LIB_SOURCE_FILES
         external/whereami-ba364cd/src/whereami.c

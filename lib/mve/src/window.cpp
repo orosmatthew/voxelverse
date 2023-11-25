@@ -475,10 +475,8 @@ void Window::set_cursor_pos(const Vector2 pos) const
 void Window::glfw_char_callback(GLFWwindow* window, const unsigned int codepoint)
 {
     auto* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
-    const auto wchar = static_cast<wchar_t>(codepoint);
-    std::wstring wstr;
-    wstr.push_back(wchar);
-    const std::string str(wstr.begin(), wstr.end());
+    std::string str;
+    str.push_back(codepoint);
     instance->m_current_input_stream.push_back(str);
 }
 bool Window::is_key_repeated(const Key key) const
