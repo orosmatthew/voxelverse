@@ -114,7 +114,7 @@ void WorldData::propagate_light(const mve::Vector3i chunk_pos)
     ChunkData& current_chunk_data = chunk_data_at(chunk_pos);
     std::array<std::optional<ChunkData*>, 26> surr_chunks {};
     for (int i = 0; i < surr_pos.size(); ++i) {
-        if (contains_chunk(chunk_pos + adjacent[i])) {
+        if (contains_chunk(chunk_pos + surr_pos[i])) {
             surr_chunks[i] = &chunk_data_at(chunk_pos + surr_pos[i]);
         }
     }
