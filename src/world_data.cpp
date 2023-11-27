@@ -1,6 +1,6 @@
 #include "world_data.hpp"
 
-#include "lighting.hpp"
+#include <ranges>
 
 WorldData::WorldData()
     : m_player_chunk(mve::Vector2i(0, 0))
@@ -39,6 +39,9 @@ std::optional<mve::Vector2i> WorldData::try_cull_chunk(const float distance)
 
 WorldData::~WorldData()
 {
+    for (auto& col : m_chunk_columns | std::views::values) {
+        queue_save_chunk(col.pos());
+    }
     process_save_queue();
 }
 
@@ -93,31 +96,3 @@ bool WorldData::try_load_chunk_column_from_save(mve::Vector2i chunk_pos)
     }
     return true;
 }
-
-
-
-// void WorldData::propagate_light(const mve::Vector3i chunk_pos)
-// {
-//     for_3d(chunk_pos - mve::Vector3i(1), chunk_pos + mve::Vector3i(2), [&](const mve::Vector3i adj_chunk_pos) {
-//         if (adj_chunk_pos.z >= -10 && adj_chunk_pos.z < 10) {
-//             if (m_chunk_columns.contains({ adj_chunk_pos.x, adj_chunk_pos.y })) {
-//                 m_chunk_columns[{ adj_chunk_pos.x, adj_chunk_pos.y }]
-//                     .chunk_data_at(adj_chunk_pos)
-//                     .for_emissive_block([&](const mve::Vector3i& local_pos) {
-//                         spread_light(block_local_to_world(adj_chunk_pos, local_pos));
-//                     });
-//             }
-//         }
-//     });
-// }
-
-// void WorldData::process_chunk_lighting_updates()
-//{
-//     //    for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
-//     //        m_chunks[chunk_pos].reset_lighting();
-//     //    }
-//     for (mve::Vector3i chunk_pos : m_chunk_lighting_update_list) {
-//         propagate_light(chunk_pos);
-//     }
-//     m_chunk_lighting_update_list.clear();
-// }

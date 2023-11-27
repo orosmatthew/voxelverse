@@ -31,6 +31,8 @@ public:
         return *this;
     }
 
+    void queue_recreate_mesh(mve::Vector2i chunk_pos);
+
 private:
     enum ChunkFlagBits {
         flag_has_mesh = 1 << 0,

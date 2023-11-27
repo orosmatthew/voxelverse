@@ -1,5 +1,7 @@
 #include "chunk_controller.hpp"
 
+#include <ranges>
+
 #include "mve/math/math.hpp"
 #include "world_data.hpp"
 #include "world_generator.hpp"
@@ -27,8 +29,8 @@ void ChunkController::update(
             }
             if (world_data.chunk_column_data_at(col_pos).gen_level() < ChunkColumn::generated) {
                 world_generator.generate_chunk(world_data, col_pos);
+                world_data.queue_save_chunk(col_pos);
             }
-            world_data.queue_save_chunk(col_pos);
             for (const mve::Vector2i offset : sc_nbor_offsets) {
                 if (!m_chunk_states.contains(col_pos + offset)) {
                     m_chunk_states.insert({ col_pos + offset, {} });
@@ -48,7 +50,7 @@ void ChunkController::update(
             chunk_count++;
         }
 
-        if (contains_flag(flags, flag_queued_mesh) && !contains_flag(flags, flag_has_mesh)) {
+        if (contains_flag(flags, flag_queued_mesh)) {
             for (int h = -10; h < 10; h++) {
                 world_renderer.push_mesh_update({ col_pos.x, col_pos.y, h });
             }
@@ -93,6 +95,17 @@ void ChunkController::update(
         }
     }
 }
+
+void ChunkController::queue_recreate_mesh(const mve::Vector2i chunk_pos)
+{
+    if (m_chunk_states.contains(chunk_pos)) {
+        if (uint8_t& flags = m_chunk_states.at(chunk_pos).flags;
+            contains_flag(flags, flag_is_generated) && contains_flag(flags, flag_has_mesh)) {
+            enable_flag(flags, flag_queued_mesh);
+        }
+    }
+}
+
 void ChunkController::on_player_chunk_change()
 {
     m_sorted_chunks_in_range.clear();
@@ -108,7 +121,7 @@ void ChunkController::on_player_chunk_change()
                 }
             }
         });
-    for (auto& [pos, data] : m_chunk_states) {
+    for (const auto& pos : m_chunk_states | std::views::keys) {
         m_sorted_chunks_in_range.push_back(pos);
     }
     std::ranges::sort(m_sorted_chunks_in_range, [&](const mve::Vector2i& a, const mve::Vector2i& b) {

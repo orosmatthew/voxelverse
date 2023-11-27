@@ -115,7 +115,7 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
 }
 
 void trigger_place_block(
-    const Player& camera, WorldData& world_data, WorldRenderer& world_renderer, const uint8_t block_type)
+    const Player& camera, ChunkController& chunk_controller, WorldData& world_data, const uint8_t block_type)
 {
     const std::vector<mve::Vector3i> blocks
         = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
@@ -145,18 +145,15 @@ void trigger_place_block(
 
             refresh_lighting(world_data, chunk_pos);
 
-            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
-                if (world_renderer.contains_data(chunk_pos + surround_pos)) {
-                    world_renderer.push_mesh_update(chunk_pos + surround_pos);
-                }
+            for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i& surround_pos) {
+                chunk_controller.queue_recreate_mesh(mve::Vector2i(chunk_pos.x, chunk_pos.y) + surround_pos);
             });
             break;
         }
     }
-    world_renderer.process_mesh_updates(world_data);
 }
 
-void trigger_break_block(const Player& camera, WorldData& world_data, WorldRenderer& world_renderer)
+void trigger_break_block(const Player& camera, ChunkController& chunk_controller, WorldData& world_data)
 {
     const std::vector<mve::Vector3i> blocks
         = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
@@ -174,15 +171,12 @@ void trigger_break_block(const Player& camera, WorldData& world_data, WorldRende
             world_data.set_block_local(chunk_pos, local_pos, 0);
             refresh_lighting(world_data, chunk_pos);
 
-            for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i& surround_pos) {
-                if (world_renderer.contains_data(chunk_pos + surround_pos)) {
-                    world_renderer.push_mesh_update(chunk_pos + surround_pos);
-                }
+            for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i& surround_pos) {
+                chunk_controller.queue_recreate_mesh(mve::Vector2i(chunk_pos.x, chunk_pos.y) + surround_pos);
             });
             break;
         }
     }
-    world_renderer.process_mesh_updates(world_data);
 }
 
 void World::update(mve::Window& window, const float blend)
@@ -287,12 +281,12 @@ void World::update_world(mve::Window& window)
     }
     const auto now = std::chrono::steady_clock::now();
     if (window.is_mouse_button_pressed(mve::MouseButton::left)) {
-        trigger_break_block(m_player, m_world_data, m_world_renderer);
+        trigger_break_block(m_player, m_chunk_controller, m_world_data);
         m_last_break_time = now;
     }
     if (window.is_mouse_button_down(mve::MouseButton::left)) {
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_break_time).count() > 200) {
-            trigger_break_block(m_player, m_world_data, m_world_renderer);
+            trigger_break_block(m_player, m_chunk_controller, m_world_data);
             m_last_break_time = now;
         }
     }
@@ -300,7 +294,7 @@ void World::update_world(mve::Window& window)
     if (window.is_mouse_button_pressed(mve::MouseButton::right)) {
         if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
             trigger_place_block(
-                m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+                m_player, m_chunk_controller, m_world_data, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
             m_last_place_time = now;
         }
     }
@@ -308,7 +302,7 @@ void World::update_world(mve::Window& window)
         if (m_hud.hotbar().item_at(m_hud.hotbar().select_pos()).has_value()) {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_place_time).count() > 200) {
                 trigger_place_block(
-                    m_player, m_world_data, m_world_renderer, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
+                    m_player, m_chunk_controller, m_world_data, *m_hud.hotbar().item_at(m_hud.hotbar().select_pos()));
                 m_last_place_time = now;
             }
         }
