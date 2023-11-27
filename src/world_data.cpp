@@ -3,8 +3,8 @@
 #include <ranges>
 
 WorldData::WorldData()
-    : m_player_chunk(mve::Vector2i(0, 0))
-    , m_save(16 * 1024 * 1024, "world_data")
+    : m_save(16 * 1024 * 1024, "world_data")
+    , m_player_chunk(mve::Vector2i(0, 0))
 {
 }
 

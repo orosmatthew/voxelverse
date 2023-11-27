@@ -123,32 +123,32 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         if (check_block.value() != 0) {
             switch (i) {
             case 0:
-                lighting[0] *= occlusion_factor;
+                lighting[0] = static_cast<uint8_t>(static_cast<float>(lighting[0]) * occlusion_factor);
                 break;
             case 1:
-                lighting[0] *= occlusion_factor;
-                lighting[1] *= occlusion_factor;
+                lighting[0] = static_cast<uint8_t>(static_cast<float>(lighting[0]) * occlusion_factor);
+                lighting[1] = static_cast<uint8_t>(static_cast<float>(lighting[1]) * occlusion_factor);
                 break;
             case 2:
-                lighting[1] *= occlusion_factor;
+                lighting[1] = static_cast<uint8_t>(static_cast<float>(lighting[1]) * occlusion_factor);
                 break;
             case 3:
-                lighting[1] *= occlusion_factor;
-                lighting[2] *= occlusion_factor;
+                lighting[1] = static_cast<uint8_t>(static_cast<float>(lighting[1]) * occlusion_factor);
+                lighting[2] = static_cast<uint8_t>(static_cast<float>(lighting[2]) * occlusion_factor);
                 break;
             case 4:
-                lighting[2] *= occlusion_factor;
+                lighting[2] = static_cast<uint8_t>(static_cast<float>(lighting[2]) * occlusion_factor);
                 break;
             case 5:
-                lighting[2] *= occlusion_factor;
-                lighting[3] *= occlusion_factor;
+                lighting[2] = static_cast<uint8_t>(static_cast<float>(lighting[2]) * occlusion_factor);
+                lighting[3] = static_cast<uint8_t>(static_cast<float>(lighting[3]) * occlusion_factor);
                 break;
             case 6:
-                lighting[3] *= occlusion_factor;
+                lighting[3] = static_cast<uint8_t>(static_cast<float>(lighting[3]) * occlusion_factor);
                 break;
             case 7:
-                lighting[3] *= occlusion_factor;
-                lighting[0] *= occlusion_factor;
+                lighting[3] = static_cast<uint8_t>(static_cast<float>(lighting[3]) * occlusion_factor);
+                lighting[0] = static_cast<uint8_t>(static_cast<float>(lighting[0]) * occlusion_factor);
                 break;
             default:
                 VV_REL_ASSERT(false, "Unreachable")

@@ -8,11 +8,11 @@ NinePatch::NinePatch(
     const float scale)
     : m_pipeline(&ui_pipeline)
     , m_uniform_data(ui_pipeline.create_uniform_data())
-    , m_scale(scale)
-    , m_position(mve::Vector2(0.0f, 0.0f))
-    , m_size(size)
     , m_texture(texture)
     , m_model_location(ui_pipeline.model_location())
+    , m_position(mve::Vector2(0.0f, 0.0f))
+    , m_scale(scale)
+    , m_size(size)
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
     m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));

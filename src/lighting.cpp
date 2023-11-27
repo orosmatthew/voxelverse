@@ -25,7 +25,7 @@ void apply_sunlight(ChunkColumn& chunk)
     });
 }
 
-void propagate_light(WorldData& world_data, mve::Vector3i chunk_pos)
+void propagate_light(WorldData& world_data, const mve::Vector3i chunk_pos)
 {
     static std::vector<std::pair<mve::Vector3i, uint8_t>> queue;
     queue.clear();
@@ -113,6 +113,7 @@ void propagate_light(WorldData& world_data, mve::Vector3i chunk_pos)
         for (const mve::Vector3i offset : adjacent) {
             const mve::Vector3i adj_pos = pos + offset;
             const std::optional<uint8_t> current_lighting = fast_lighting_at(adj_pos);
+            // ReSharper disable once CppTooWideScopeInitStatement
             const std::optional<uint8_t> block_type = fast_block_at(adj_pos);
             if (block_type.has_value() && current_lighting.has_value() && current_lighting < prev_val - 1
                 && is_transparent(block_type.value())) {

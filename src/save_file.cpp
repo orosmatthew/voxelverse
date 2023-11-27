@@ -66,8 +66,8 @@ void SaveFile::insert(const std::string& key, const std::string& value)
     VV_REL_ASSERT(compressed_size > 0, "[SaveFile] LZ4 compression error")
     compressed_data.resize(compressed_size);
 
-    ValueData value_data = ValueData { .decompressed_size = value.size(),
-                                       .data = std::string(compressed_data.begin(), compressed_data.end()) };
+    auto value_data = ValueData { .decompressed_size = value.size(),
+                                  .data = std::string(compressed_data.begin(), compressed_data.end()) };
 
     std::stringstream data_stream;
     {

@@ -1,8 +1,10 @@
 #include "wire_box_mesh.hpp"
 
-#include "world_renderer.hpp"
-
+// ReSharper disable once CppUnusedIncludeDirective
+// Needed for GCC std::as_const
 #include <utility>
+
+#include "world_renderer.hpp"
 
 WireBoxMesh::WireBoxMesh(
     mve::Renderer& renderer,

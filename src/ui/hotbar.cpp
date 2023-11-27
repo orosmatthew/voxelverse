@@ -6,11 +6,11 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     : m_ui_pipeline(&ui_pipeline)
     , m_model_location(ui_pipeline.model_location())
     , m_texture_binding(ui_pipeline.texture_binding())
+    , m_atlas_texture(ui_pipeline.renderer(), res_path("atlas.png"))
     , m_hotbar({ .uniform_data = ui_pipeline.create_uniform_data() })
     , m_select({ .uniform_data = ui_pipeline.create_uniform_data() })
     , m_renderer_extent(ui_pipeline.renderer().extent())
     , m_select_pos(0)
-    , m_atlas_texture(ui_pipeline.renderer(), res_path("atlas.png"))
 {
     const mve::Vector2 size { 910, 110 };
     mve::VertexData vertex_data(UIPipeline::vertex_layout());
