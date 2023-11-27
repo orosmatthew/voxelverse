@@ -34,6 +34,7 @@ public:
     void set_lighting(const mve::Vector3i pos, const uint8_t val)
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
+        VV_DEB_ASSERT(m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y }), "[WorldData] Invalid chunk");
         m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_lighting(pos, val);
     }
 
@@ -48,6 +49,7 @@ public:
 
     [[nodiscard]] uint8_t block_at_local(mve::Vector3i chunk_pos, const mve::Vector3i block_pos) const
     {
+        VV_DEB_ASSERT(contains_chunk(chunk_pos), "[WorldData] Invalid chunk")
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).get_block(block_pos);
     }
 
@@ -63,33 +65,39 @@ public:
     void set_block(const mve::Vector3i block_pos, const uint8_t type)
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
+        VV_DEB_ASSERT(m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y }), "[WorldData] Invalid chunk");
         m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_block(block_pos, type);
         queue_save_chunk({ chunk_pos.x, chunk_pos.y });
     }
 
     void set_block_local(mve::Vector3i chunk_pos, const mve::Vector3i block_pos, const uint8_t type)
     {
+        VV_DEB_ASSERT(m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y }), "[WorldData] Invalid chunk");
         m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).set_block(block_local_to_world(chunk_pos, block_pos), type);
         queue_save_chunk({ chunk_pos.x, chunk_pos.y });
     }
 
     ChunkColumn& chunk_column_data_at(const mve::Vector2i chunk_pos)
     {
+        VV_DEB_ASSERT(m_chunk_columns.contains(chunk_pos), "[WorldData] Invalid chunk");
         return m_chunk_columns.at(chunk_pos);
     }
 
     [[nodiscard]] const ChunkColumn& chunk_column_data_at(const mve::Vector2i chunk_pos) const
     {
+        VV_DEB_ASSERT(m_chunk_columns.contains(chunk_pos), "[WorldData] Invalid chunk");
         return m_chunk_columns.at(chunk_pos);
     }
 
     [[nodiscard]] const ChunkData& chunk_data_at(mve::Vector3i chunk_pos) const
     {
+        VV_DEB_ASSERT(m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y }), "[WorldData] Invalid chunk");
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
 
     ChunkData& chunk_data_at(mve::Vector3i chunk_pos)
     {
+        VV_DEB_ASSERT(m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y }), "[WorldData] Invalid chunk");
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).chunk_data_at(chunk_pos);
     }
 
@@ -104,15 +112,6 @@ public:
     }
 
     bool try_load_chunk_column_from_save(mve::Vector2i chunk_pos);
-
-    // void push_chunk_lighting_update(const mve::Vector3i chunk_pos)
-    // {
-    //     if (std::ranges::find(m_chunk_lighting_update_list, chunk_pos) == m_chunk_lighting_update_list.end()) {
-    //         m_chunk_lighting_update_list.push_back(chunk_pos);
-    //     }
-    // }
-
-    //    void process_chunk_lighting_updates();
 
     void queue_save_chunk(mve::Vector2i pos);
 
