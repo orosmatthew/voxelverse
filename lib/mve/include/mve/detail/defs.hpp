@@ -4,7 +4,6 @@
 #include <functional>
 #include <queue>
 
-#include <mve/include_vma.hpp>
 #include <mve/include_vulkan.hpp>
 
 #include <mve/math/math.hpp>

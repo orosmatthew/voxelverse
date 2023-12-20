@@ -6,9 +6,13 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include <mve/include_vulkan.hpp>
+
 #define VMA_IMPLEMENTATION
 #define VMA_VULKAN_VERSION 1001000
-#include "vk_mem_alloc.h"
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+#include <vk_mem_alloc.h>
 
 #include <mve/common.hpp>
 #include <mve/math/math.hpp>
@@ -34,6 +38,8 @@ Renderer::Renderer(
     , m_resource_handle_count(0)
     , m_deferred_function_id_count(0)
 {
+    const auto vkGetDeviceProcAddr
+        = reinterpret_cast<PFN_vkGetDeviceProcAddr>(vkGetInstanceProcAddr(m_vk_instance, "vkGetDeviceProcAddr"));
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr);
 #ifdef MVE_ENABLE_VALIDATION
     m_vk_debug_utils_messenger = create_vk_debug_messenger(m_vk_instance);

@@ -8,10 +8,10 @@
 #include <unordered_map>
 #include <vector>
 
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-#include <mve/include_vma.hpp>
 #include <mve/include_vulkan.hpp>
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #include <mve/detail/defs.hpp>
 #include <mve/detail/descriptor_set_allocator.hpp>
