@@ -163,6 +163,7 @@ Renderer::~Renderer()
     cleanup_vk_debug_messenger();
 #endif
     // ReSharper disable once CppDFAUnreadVariable
+    // ReSharper disable once CppDFAUnusedValue
     vk::Result _ = m_vk_device.waitIdle(m_vk_loader);
 
     cleanup_vk_swapchain();
