@@ -10,8 +10,8 @@ Currently only tested on Windows using MSVC, MinGW-GCC, and MinGW-Clang.
 
 Required Dependencies
 
-* [CMake](https://cmake.org/)
-* [Vulkan SDK](https://vulkan.lunarg.com/)
+* [CMake](https://cmake.org/) tested with version 3.28.1
+* [Vulkan SDK](https://vulkan.lunarg.com/) tested with version 1.3.268.0
 * glslangValidator (This should be callable from `PATH` and should come with Vulkan SDK)
 
 ```bash
