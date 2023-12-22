@@ -52,9 +52,7 @@ public:
 
     void end_frame(const Window& window);
 
-    void end_render_pass_present() const;
-
-    void end_render_pass_framebuffer() const;
+    void end_render_pass() const;
 
     void resize(const Window& window);
 

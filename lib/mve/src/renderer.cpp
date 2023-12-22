@@ -1381,7 +1381,7 @@ void Renderer::bind_descriptor_sets(
         m_vk_loader);
 }
 
-void Renderer::end_render_pass_present() const
+void Renderer::end_render_pass() const
 {
     m_current_draw_state.command_buffer.endRenderPass(m_vk_loader);
 }
@@ -1491,39 +1491,6 @@ FramebufferImpl Renderer::create_framebuffer_impl(
     return framebuffer_impl;
 }
 
-void Renderer::end_render_pass_framebuffer() const
-{
-    m_current_draw_state.command_buffer.endRenderPass(m_vk_loader);
-    //
-    //    auto subresource_range
-    //        = vk::ImageSubresourceRange()
-    //              .setAspectMask(vk::ImageAspectFlagBits::eColor)
-    //              .setBaseArrayLayer(0)
-    //              .setLayerCount(1)
-    //              .setLevelCount(1);
-    //
-    //    auto barrier
-    //        = vk::ImageMemoryBarrier()
-    //              .setImage(m_textures[framebuffer.texture().m_handle].image.vk_handle)
-    //              .setOldLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-    //              .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-    //              .setSrcAccessMask(vk::AccessFlagBits::eColorAttachmentWrite)
-    //              .setDstAccessMask(vk::AccessFlagBits::eShaderRead)
-    //              .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-    //              .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-    //              .setSubresourceRange(subresource_range);
-    //
-    //    m_current_draw_state.command_buffer.pipelineBarrier(
-    //        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //        vk::PipelineStageFlagBits::eFragmentShader,
-    //        {},
-    //        0,
-    //        nullptr,
-    //        0,
-    //        nullptr,
-    //        1,
-    //        &barrier);
-}
 const Texture& Renderer::framebuffer_texture(const Framebuffer& framebuffer)
 {
     return m_framebuffers[framebuffer.handle()]->texture;

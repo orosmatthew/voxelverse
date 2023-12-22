@@ -44,13 +44,13 @@ void App::draw()
 
     m_world.draw();
 
-    m_renderer.end_render_pass_framebuffer();
+    m_renderer.end_render_pass();
 
     m_renderer.begin_render_pass_present();
 
     m_ui_pipeline.draw_world();
 
-    m_renderer.end_render_pass_present();
+    m_renderer.end_render_pass();
 
     m_renderer.end_frame(m_window);
 }
