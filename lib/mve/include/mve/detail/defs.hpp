@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 #include <queue>
+#include <variant>
 
 #include <mve/include_vulkan.hpp>
 
