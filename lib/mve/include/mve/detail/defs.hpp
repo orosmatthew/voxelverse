@@ -387,11 +387,6 @@ struct CurrentDrawState {
     uint32_t frame_index {};
 };
 
-struct DeferredFunction {
-    std::function<void(uint32_t)> function;
-    int counter;
-};
-
 struct GraphicsPipelineLayoutImpl {
     vk::PipelineLayout vk_handle;
     std::unordered_map<Handle, Handle> descriptor_set_layouts;
@@ -409,12 +404,28 @@ struct FramebufferImpl {
     Vector2i size;
 };
 
+struct DeferredFunction {
+    std::function<void(uint32_t)> function;
+    int counter;
+};
+
 struct DeferredUniformUpdateData {
     int counter {};
     Handle handle {};
     UniformLocation location;
     std::array<std::byte, max_uniform_value_size> data {};
     size_t data_size {};
+};
+
+struct DeferredCopyStagingBuffer {
+    Buffer staging_buffer;
+    Buffer dst_buffer;
+    size_t buffer_size {};
+};
+
+struct DeferredDestroyBuffer {
+    Buffer buffer;
+    uint32_t frame_index {};
 };
 
 struct DeferredDescriptorWriteData {
@@ -424,6 +435,20 @@ struct DeferredDescriptorWriteData {
     Handle descriptor_handle {};
     uint32_t binding {};
 };
+
+struct DeferredCopyBufferImage {
+    uint32_t mip_levels {};
+    Buffer staging_buffer;
+    Image dst_image;
+    vk::Format image_format {};
+};
+
+using DeferredOperation = std::variant<
+    DeferredUniformUpdateData,
+    DeferredCopyStagingBuffer,
+    DeferredDestroyBuffer,
+    DeferredDescriptorWriteData,
+    DeferredCopyBufferImage>;
 
 }
 

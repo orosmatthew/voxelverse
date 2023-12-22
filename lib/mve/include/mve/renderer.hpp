@@ -137,15 +137,14 @@ private:
     {
         static_assert(sizeof(T) <= detail::max_uniform_value_size);
         const uint64_t handle = uniform_buffer.handle();
-        detail::DeferredUniformUpdateData update_data {
+        std::array<std::byte, detail::max_uniform_value_size> data; // NOLINT(*-pro-type-member-init)
+        memcpy(data.data(), &value, sizeof(T));
+        m_deferred_operations.emplace_back(detail::DeferredUniformUpdateData {
             .counter = persist ? c_frames_in_flight : 1,
             .handle = handle,
             .location = location,
-            .data = {},
-            .data_size = sizeof(T)
-        };
-        memcpy(update_data.data.data(), &value, sizeof(T));
-        m_deferred_uniform_updates.push_back(update_data);
+            .data = data,
+            .data_size = sizeof(T) });
     }
 
     const int c_frames_in_flight;
@@ -185,9 +184,7 @@ private:
     uint32_t m_deferred_function_id_count;
     std::map<uint32_t, detail::DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
-    std::queue<std::function<void(vk::CommandBuffer)>> m_command_buffer_deferred_functions {};
-    std::vector<detail::DeferredUniformUpdateData> m_deferred_uniform_updates {};
-    std::vector<detail::DeferredDescriptorWriteData> m_deferred_descriptor_writes {};
+    std::vector<detail::DeferredOperation> m_deferred_operations;
 
     void cleanup_vk_swapchain() const;
     void cleanup_vk_debug_messenger() const;
@@ -216,11 +213,7 @@ private:
 
     void defer_to_all_frames(std::function<void(uint32_t)> func);
 
-    void defer_to_next_frame(std::function<void(uint32_t)> func);
-
     void defer_after_all_frames(std::function<void(uint32_t)> func);
-
-    void defer_to_command_buffer_front(const std::function<void(vk::CommandBuffer)>& func);
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const;

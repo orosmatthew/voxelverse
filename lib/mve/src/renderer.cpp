@@ -213,6 +213,12 @@ Renderer::~Renderer()
         }
     }
 
+    for (const DeferredOperation& operation : m_deferred_operations) {
+        if (const auto deferred = std::get_if<DeferredDestroyBuffer>(&operation)) {
+            vmaDestroyBuffer(m_vma_allocator, deferred->buffer.vk_handle, deferred->buffer.vma_allocation);
+        }
+    }
+
     vmaDestroyAllocator(m_vma_allocator);
 
     for (std::optional<GraphicsPipelineImpl>& pipeline : m_graphics_pipelines) {
@@ -449,6 +455,18 @@ void Renderer::begin_frame(const Window& window)
 
     frame.command_buffer.reset(vk::CommandBufferResetFlags(), m_vk_loader);
 
+    auto it = m_deferred_operations.begin();
+    while (it != m_deferred_operations.end()) {
+        if (const auto deferred = std::get_if<DeferredDestroyBuffer>(&*it);
+            deferred != nullptr && deferred->frame_index == m_current_draw_state.frame_index) {
+            vmaDestroyBuffer(m_vma_allocator, deferred->buffer.vk_handle, deferred->buffer.vma_allocation);
+            it = m_deferred_operations.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
     while (!frame.funcs.empty()) {
         auto& [function, counter] = m_deferred_functions.at(frame.funcs.front());
         std::invoke(function, m_current_draw_state.frame_index);
@@ -475,68 +493,78 @@ void Renderer::begin_frame(const Window& window)
     }
     m_wait_frames_deferred_functions = std::move(continue_defer);
 
-    for (size_t i = 0; i < m_deferred_descriptor_writes.size(); i++) {
-        auto& [counter, data_type, data_handle, descriptor_handle, binding] = m_deferred_descriptor_writes[i];
-        vk::DescriptorBufferInfo buffer_info;
-        vk::DescriptorImageInfo image_info;
-        vk::WriteDescriptorSet descriptor_write;
-        switch (data_type) {
-        case DescriptorBindingType::uniform_buffer:
-            buffer_info
-                = vk::DescriptorBufferInfo()
-                      .setBuffer(m_frames_in_flight[m_current_draw_state.frame_index]
-                                     .uniform_buffers[data_handle]
-                                     ->buffer.vk_handle)
-                      .setOffset(0)
-                      .setRange(
-                          m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffers[data_handle]->size);
+    it = m_deferred_operations.begin();
+    while (it != m_deferred_operations.end()) {
+        if (const auto deferred_descriptor = std::get_if<DeferredDescriptorWriteData>(&*it)) {
+            auto& [counter, data_type, data_handle, descriptor_handle, binding] = *deferred_descriptor;
+            vk::DescriptorBufferInfo buffer_info;
+            vk::DescriptorImageInfo image_info;
+            vk::WriteDescriptorSet descriptor_write;
+            switch (data_type) {
+            case DescriptorBindingType::uniform_buffer:
+                buffer_info
+                    = vk::DescriptorBufferInfo()
+                          .setBuffer(m_frames_in_flight[m_current_draw_state.frame_index]
+                                         .uniform_buffers[data_handle]
+                                         ->buffer.vk_handle)
+                          .setOffset(0)
+                          .setRange(
+                              m_frames_in_flight[m_current_draw_state.frame_index].uniform_buffers[data_handle]->size);
 
-            descriptor_write
-                = vk::WriteDescriptorSet()
-                      .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
-                                     .descriptor_sets[descriptor_handle]
-                                     ->vk_handle)
-                      .setDstBinding(binding)
-                      .setDstArrayElement(0)
-                      .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-                      .setDescriptorCount(1)
-                      .setPBufferInfo(&buffer_info);
+                descriptor_write
+                    = vk::WriteDescriptorSet()
+                          .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
+                                         .descriptor_sets[descriptor_handle]
+                                         ->vk_handle)
+                          .setDstBinding(binding)
+                          .setDstArrayElement(0)
+                          .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                          .setDescriptorCount(1)
+                          .setPBufferInfo(&buffer_info);
 
-            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
-            break;
-        case DescriptorBindingType::texture:
-            image_info = vk::DescriptorImageInfo()
-                             .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                             .setImageView(m_textures[data_handle].vk_image_view)
-                             .setSampler(m_textures[data_handle].vk_sampler);
+                m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
+                break;
+            case DescriptorBindingType::texture:
+                image_info = vk::DescriptorImageInfo()
+                                 .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+                                 .setImageView(m_textures[data_handle].vk_image_view)
+                                 .setSampler(m_textures[data_handle].vk_sampler);
 
-            descriptor_write
-                = vk::WriteDescriptorSet()
-                      .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
-                                     .descriptor_sets[descriptor_handle]
-                                     ->vk_handle)
-                      .setDstBinding(binding)
-                      .setDstArrayElement(0)
-                      .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-                      .setDescriptorCount(1)
-                      .setPImageInfo(&image_info);
+                descriptor_write
+                    = vk::WriteDescriptorSet()
+                          .setDstSet(m_frames_in_flight[m_current_draw_state.frame_index]
+                                         .descriptor_sets[descriptor_handle]
+                                         ->vk_handle)
+                          .setDstBinding(binding)
+                          .setDstArrayElement(0)
+                          .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                          .setDescriptorCount(1)
+                          .setPImageInfo(&image_info);
 
-            m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
-            break;
+                m_vk_device.updateDescriptorSets(1, &descriptor_write, 0, nullptr, m_vk_loader);
+                break;
+            }
+            counter--;
+            if (counter <= 0) {
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                ++it;
+            }
         }
-        counter--;
-        if (counter <= 0) {
-            m_deferred_descriptor_writes.erase(m_deferred_descriptor_writes.begin() + static_cast<long long>(i));
-            i--;
+        else if (const auto deferred_uniform = std::get_if<DeferredUniformUpdateData>(&*it)) {
+            auto& [counter, handle, location, data, data_size] = *deferred_uniform;
+            update_uniform(handle, location, data.data(), data_size, m_current_draw_state.frame_index);
+            counter--;
+            if (counter <= 0) {
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                ++it;
+            }
         }
-    }
-    for (size_t i = 0; i < m_deferred_uniform_updates.size(); i++) {
-        auto& [counter, handle, location, data, data_size] = m_deferred_uniform_updates[i];
-        update_uniform(handle, location, data.data(), data_size, m_current_draw_state.frame_index);
-        counter--;
-        if (counter <= 0) {
-            m_deferred_uniform_updates.erase(m_deferred_uniform_updates.begin() + static_cast<long long>(i));
-            i--;
+        else {
+            ++it;
         }
     }
 
@@ -546,10 +574,77 @@ void Renderer::begin_frame(const Window& window)
     const vk::Result begin_result = m_current_draw_state.command_buffer.begin(buffer_begin_info, m_vk_loader);
     MVE_ASSERT(begin_result == vk::Result::eSuccess, "[Renderer] Failed to begin command buffer recording")
 
-    while (!m_command_buffer_deferred_functions.empty()) {
-        std::invoke(m_command_buffer_deferred_functions.front(), m_current_draw_state.command_buffer);
-        m_command_buffer_deferred_functions.pop();
+    static std::vector<DeferredOperation> temp_deferred;
+    temp_deferred.clear();
+    for (const DeferredOperation& deferred : m_deferred_operations) {
+        if (const auto deferred_copy = std::get_if<DeferredCopyStagingBuffer>(&deferred)) {
+            cmd_copy_buffer(
+                m_vk_loader,
+                m_current_draw_state.command_buffer,
+                deferred_copy->staging_buffer.vk_handle,
+                deferred_copy->dst_buffer.vk_handle,
+                deferred_copy->buffer_size);
+
+            const auto barrier
+                = vk::BufferMemoryBarrier()
+                      .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                      .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
+                      .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                      .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                      .setBuffer(deferred_copy->dst_buffer.vk_handle)
+                      .setOffset(0)
+                      .setSize(deferred_copy->buffer_size);
+
+            m_current_draw_state.command_buffer.pipelineBarrier(
+                vk::PipelineStageFlagBits::eTransfer,
+                vk::PipelineStageFlagBits::eVertexInput,
+                {},
+                0,
+                nullptr,
+                1,
+                &barrier,
+                0,
+                nullptr,
+                m_vk_loader);
+            temp_deferred.emplace_back(DeferredDestroyBuffer {
+                .buffer = deferred_copy->staging_buffer, .frame_index = m_current_draw_state.frame_index });
+        }
+        else if (const auto deferred_image = std::get_if<DeferredCopyBufferImage>(&deferred)) {
+            cmd_transition_image_layout(
+                m_vk_loader,
+                m_current_draw_state.command_buffer,
+                deferred_image->dst_image.vk_handle,
+                deferred_image->image_format,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eTransferDstOptimal,
+                deferred_image->mip_levels);
+
+            cmd_copy_buffer_to_image(
+                m_vk_loader,
+                m_current_draw_state.command_buffer,
+                deferred_image->staging_buffer.vk_handle,
+                deferred_image->dst_image.vk_handle,
+                deferred_image->dst_image.width,
+                deferred_image->dst_image.height);
+
+            cmd_generate_mipmaps(
+                m_vk_loader,
+                m_vk_physical_device,
+                m_current_draw_state.command_buffer,
+                deferred_image->dst_image.vk_handle,
+                deferred_image->image_format,
+                deferred_image->dst_image.width,
+                deferred_image->dst_image.height,
+                deferred_image->mip_levels);
+
+            temp_deferred.emplace_back(DeferredDestroyBuffer {
+                .buffer = deferred_image->staging_buffer, .frame_index = m_current_draw_state.frame_index });
+        }
+        else {
+            temp_deferred.emplace_back(deferred);
+        }
     }
+    std::swap(temp_deferred, m_deferred_operations);
 }
 
 void Renderer::end_frame(const Window& window)
@@ -738,14 +833,6 @@ void Renderer::defer_to_all_frames(std::function<void(uint32_t)> func)
     }
 }
 
-void Renderer::defer_to_next_frame(std::function<void(uint32_t)> func)
-{
-    uint32_t id = m_deferred_function_id_count;
-    m_deferred_function_id_count++;
-    m_deferred_functions.insert({ id, { std::move(func), 1 } });
-    m_frames_in_flight.at(m_current_draw_state.frame_index).funcs.push(id);
-}
-
 void Renderer::resize(const Window& window)
 {
     recreate_swapchain(window);
@@ -759,31 +846,24 @@ void Renderer::defer_after_all_frames(std::function<void(uint32_t)> func)
     m_wait_frames_deferred_functions.push(id);
 }
 
-void Renderer::defer_to_command_buffer_front(const std::function<void(vk::CommandBuffer)>& func)
-{
-    m_command_buffer_deferred_functions.push(func);
-}
-
 void Renderer::write_descriptor_binding(
     const DescriptorSet& descriptor_set, const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
-    const DeferredDescriptorWriteData write_data {
+    m_deferred_operations.emplace_back(DeferredDescriptorWriteData {
         .counter = c_frames_in_flight,
         .data_type = DescriptorBindingType::texture,
         .data_handle = texture.handle(),
         .descriptor_handle = descriptor_set.handle(),
-        .binding = descriptor_binding.binding()
-    };
-    m_deferred_descriptor_writes.push_back(write_data);
+        .binding = descriptor_binding.binding() });
 }
 
 VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
 {
-    size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
+    const size_t buffer_size = get_vertex_layout_bytes(vertex_data.layout()) * vertex_data.vertex_count();
 
     MVE_VAL_ASSERT(buffer_size != 0, "[Renderer] Attempt to allocate empty vertex buffer")
 
-    Buffer staging_buffer = create_buffer(
+    const Buffer staging_buffer = create_buffer(
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -795,41 +875,14 @@ VertexBuffer Renderer::create_vertex_buffer(const VertexData& vertex_data)
     memcpy(data, vertex_data.data_ptr(), buffer_size);
     vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-    Buffer buffer = create_buffer(
+    const Buffer buffer = create_buffer(
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
 
-    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](const vk::CommandBuffer command_buffer) {
-        cmd_copy_buffer(m_vk_loader, command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
-
-        const auto barrier
-            = vk::BufferMemoryBarrier()
-                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
-                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setBuffer(buffer.vk_handle)
-                  .setOffset(0)
-                  .setSize(buffer_size);
-
-        command_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            {},
-            0,
-            nullptr,
-            1,
-            &barrier,
-            0,
-            nullptr,
-            m_vk_loader);
-
-        defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-        });
-    });
+    m_deferred_operations.emplace_back(DeferredCopyStagingBuffer {
+        .staging_buffer = staging_buffer, .dst_buffer = buffer, .buffer_size = buffer_size });
 
     std::optional<Handle> id;
     for (Handle i = 0; i < m_vertex_buffers.size(); i++) {
@@ -858,9 +911,9 @@ void Renderer::bind_vertex_buffer(const VertexBuffer& vertex_buffer) const
 
 IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
 {
-    size_t buffer_size = sizeof(uint32_t) * indices.size();
+    const size_t buffer_size = sizeof(uint32_t) * indices.size();
 
-    Buffer staging_buffer = create_buffer(
+    const Buffer staging_buffer = create_buffer(
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -872,42 +925,15 @@ IndexBuffer Renderer::create_index_buffer(const std::vector<uint32_t>& indices)
     memcpy(data, indices.data(), buffer_size);
     vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-    Buffer buffer = create_buffer(
+    const Buffer buffer = create_buffer(
         m_vma_allocator,
         buffer_size,
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
         {});
 
-    defer_to_command_buffer_front([this, staging_buffer, buffer, buffer_size](const vk::CommandBuffer command_buffer) {
-        cmd_copy_buffer(m_vk_loader, command_buffer, staging_buffer.vk_handle, buffer.vk_handle, buffer_size);
-
-        const auto barrier
-            = vk::BufferMemoryBarrier()
-                  .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-                  .setDstAccessMask(vk::AccessFlagBits::eVertexAttributeRead)
-                  .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
-                  .setBuffer(buffer.vk_handle)
-                  .setOffset(0)
-                  .setSize(buffer_size);
-
-        command_buffer.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            {},
-            0,
-            nullptr,
-            1,
-            &barrier,
-            0,
-            nullptr,
-            m_vk_loader);
-
-        defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-        });
-    });
+    m_deferred_operations.emplace_back(DeferredCopyStagingBuffer {
+        .staging_buffer = staging_buffer, .dst_buffer = buffer, .buffer_size = buffer_size });
 
     std::optional<Handle> id;
     for (Handle i = 0; i < m_index_buffers.size(); i++) {
@@ -1028,14 +1054,12 @@ void Renderer::write_descriptor_binding(
     const ShaderDescriptorBinding& descriptor_binding,
     const UniformBuffer& uniform_buffer)
 {
-    const DeferredDescriptorWriteData write_data {
+    m_deferred_operations.emplace_back(DeferredDescriptorWriteData {
         .counter = c_frames_in_flight,
         .data_type = DescriptorBindingType::uniform_buffer,
         .data_handle = uniform_buffer.handle(),
         .descriptor_handle = descriptor_set.handle(),
-        .binding = descriptor_binding.binding()
-    };
-    m_deferred_descriptor_writes.push_back(write_data);
+        .binding = descriptor_binding.binding() });
 }
 
 void Renderer::bind_descriptor_set(DescriptorSet& descriptor_set) const
@@ -1183,26 +1207,8 @@ Texture Renderer::create_texture(const TextureFormat format, uint32_t width, uin
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         false);
 
-    defer_to_command_buffer_front([this, image, mip_levels, staging_buffer, width, height, vk_format](
-                                      const vk::CommandBuffer command_buffer) {
-        cmd_transition_image_layout(
-            m_vk_loader,
-            command_buffer,
-            image.vk_handle,
-            vk_format,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eTransferDstOptimal,
-            mip_levels);
-
-        cmd_copy_buffer_to_image(m_vk_loader, command_buffer, staging_buffer.vk_handle, image.vk_handle, width, height);
-
-        cmd_generate_mipmaps(
-            m_vk_loader, m_vk_physical_device, command_buffer, image.vk_handle, vk_format, width, height, mip_levels);
-
-        defer_to_next_frame([this, staging_buffer](uint32_t) {
-            vmaDestroyBuffer(m_vma_allocator, staging_buffer.vk_handle, staging_buffer.vma_allocation);
-        });
-    });
+    m_deferred_operations.emplace_back(DeferredCopyBufferImage {
+        .mip_levels = mip_levels, .staging_buffer = staging_buffer, .dst_image = image, .image_format = vk_format });
 
     const vk::ImageView image_view = create_image_view(
         m_vk_loader, m_vk_device, image.vk_handle, vk_format, vk::ImageAspectFlagBits::eColor, mip_levels);
