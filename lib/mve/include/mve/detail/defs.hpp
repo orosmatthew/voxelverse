@@ -377,7 +377,6 @@ struct FrameInFlight {
     vk::Fence in_flight_fence;
     std::vector<std::optional<UniformBufferImpl>> uniform_buffers {};
     std::vector<std::optional<DescriptorSetImpl>> descriptor_sets {};
-    std::queue<uint32_t> funcs;
 };
 
 struct CurrentDrawState {

@@ -209,8 +209,6 @@ private:
     void update_uniform(
         Handle handle, UniformLocation location, const void* data_ptr, size_t size, uint32_t frame_index) const;
 
-    void defer_to_all_frames(std::function<void(uint32_t)> func);
-
     void defer_after_all_frames(std::function<void(uint32_t)> func);
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(

@@ -468,16 +468,6 @@ void Renderer::begin_frame(const Window& window)
         }
     }
 
-    while (!frame.funcs.empty()) {
-        auto& [function, counter] = m_deferred_functions.at(frame.funcs.front());
-        std::invoke(function, m_current_draw_state.frame_index);
-        counter--;
-        if (counter <= 0) {
-            m_deferred_functions.erase(frame.funcs.front());
-        }
-        frame.funcs.pop();
-    }
-
     std::queue<uint32_t> continue_defer;
     while (!m_wait_frames_deferred_functions.empty()) {
         uint32_t id = m_wait_frames_deferred_functions.front();
@@ -821,17 +811,6 @@ Handle Renderer::create_graphics_pipeline_layout(
     log().debug("[Renderer] Graphics pipeline layout created with ID: {}", *id);
 
     return *id;
-}
-
-void Renderer::defer_to_all_frames(std::function<void(uint32_t)> func)
-{
-    uint32_t id = m_deferred_function_id_count;
-    m_deferred_function_id_count++;
-    m_deferred_functions.insert({ id, { std::move(func), c_frames_in_flight } });
-    // ReSharper disable once CppUseStructuredBinding
-    for (FrameInFlight& frame : m_frames_in_flight) {
-        frame.funcs.push(id);
-    }
 }
 
 void Renderer::resize(const Window& window)
