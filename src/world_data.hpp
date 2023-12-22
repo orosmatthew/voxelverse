@@ -41,7 +41,10 @@ public:
     [[nodiscard]] std::optional<uint8_t> lighting_at(const mve::Vector3i block_pos) const
     {
         mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
-        if (!contains_chunk(chunk_pos)) {
+        if (chunk_pos.z < -10 || chunk_pos.z >= 10) {
+            return {};
+        }
+        if (!m_chunk_columns.contains({ chunk_pos.x, chunk_pos.y })) {
             return {};
         }
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).lighting_at(block_pos);
@@ -53,6 +56,12 @@ public:
         return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).get_block(block_pos);
     }
 
+    [[nodiscard]] uint8_t lighting_at_local(mve::Vector3i chunk_pos, const mve::Vector3i block_pos) const
+    {
+        VV_DEB_ASSERT(contains_chunk(chunk_pos), "[WorldData] Invalid chunk")
+        return m_chunk_columns.at({ chunk_pos.x, chunk_pos.y }).lighting_at(block_pos);
+    }
+
     [[nodiscard]] std::optional<uint8_t> block_at_relative(
         const mve::Vector3i chunk_pos, const mve::Vector3i local_block_pos) const
     {
@@ -60,6 +69,15 @@ public:
             return block_at_local(chunk_pos, local_block_pos);
         }
         return block_at(block_local_to_world(chunk_pos, local_block_pos));
+    }
+
+    [[nodiscard]] std::optional<uint8_t> lighting_at_relative(
+        const mve::Vector3i chunk_pos, const mve::Vector3i local_block_pos) const
+    {
+        if (is_block_pos_local(local_block_pos)) {
+            return lighting_at_local(chunk_pos, local_block_pos);
+        }
+        return lighting_at(block_local_to_world(chunk_pos, local_block_pos));
     }
 
     void set_block(const mve::Vector3i block_pos, const uint8_t type)

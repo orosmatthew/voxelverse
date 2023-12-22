@@ -31,6 +31,12 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
 
     uint8_t base_lighting = 0;
 
+    // format of check_blocks
+    //      0 | 1 | 2
+    //      ---------
+    //      7 |   | 3
+    //      ---------
+    //      6 | 5 | 4
     std::array<mve::Vector3i, 8> check_blocks;
     switch (dir) {
     case Direction::front:
@@ -103,8 +109,94 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
 
     VV_DEB_ASSERT(base_lighting >= 0 && base_lighting <= 15, "[ChunkMesh] Base lighting is not between 0 and 15")
 
-    base_lighting = static_cast<uint8_t>(mve::clamp(base_lighting * 16, 0, 255));
-    std::array lighting = { base_lighting, base_lighting, base_lighting, base_lighting };
+    // format of adj_light
+    //      0 | 1 |        | 0 | 1      |   |        |   |
+    //      ---------    ---------    ---------    ---------
+    //      2 | 3 |        | 2 | 3      | 0 | 1    0 | 1 |
+    //      ---------    ---------    ---------    ---------
+    //        |   |        |   |        | 2 | 3    2 | 3 |
+    std::array<std::array<std::optional<int>, 4>, 4> adj_light {
+        { { std::nullopt, std::nullopt, std::nullopt, base_lighting },
+          { std::nullopt, std::nullopt, base_lighting, std::nullopt },
+          { base_lighting, std::nullopt, std::nullopt, std::nullopt },
+          { std::nullopt, base_lighting, std::nullopt, std::nullopt } }
+    };
+
+    for (int i = 0; i < check_blocks.size(); ++i) {
+        const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
+        std::optional<uint8_t> check_block;
+        if (is_block_pos_local(check_block_local)) {
+            check_block = chunk_data.get_block(check_block_local);
+        }
+        else {
+            check_block = data.block_at_relative(chunk_pos, check_block_local);
+        }
+        if (!check_block.has_value()) {
+            continue;
+        }
+        if (is_transparent(*check_block)) {
+            std::optional<uint8_t> block_light;
+            if (is_block_pos_local(check_block_local)) {
+                block_light = chunk_data.lighting_at(check_block_local);
+            }
+            else {
+                block_light = data.lighting_at_relative(chunk_pos, check_block_local);
+            }
+            if (block_light.has_value()) {
+                switch (i) {
+                case 0:
+                    adj_light[0][0] = *block_light;
+                    break;
+                case 1:
+                    adj_light[0][1] = *block_light;
+                    adj_light[1][0] = *block_light;
+                    break;
+                case 2:
+                    adj_light[1][1] = *block_light;
+                    break;
+                case 3:
+                    adj_light[1][3] = *block_light;
+                    adj_light[2][1] = *block_light;
+                    break;
+                case 4:
+                    adj_light[2][3] = *block_light;
+                    break;
+                case 5:
+                    adj_light[2][2] = *block_light;
+                    adj_light[3][3] = *block_light;
+                    break;
+                case 6:
+                    adj_light[3][2] = *block_light;
+                    break;
+                case 7:
+                    adj_light[0][2] = *block_light;
+                    adj_light[3][0] = *block_light;
+                    break;
+                default:
+                    VV_REL_ASSERT(false, "Unreachable")
+                }
+            }
+        }
+    }
+
+    auto avg_light_opts = [](const std::array<std::optional<int>, 4>& arr) -> uint8_t {
+        int total = 0;
+        int count = 0;
+        for (const std::optional<int> i : arr) {
+            if (i.has_value()) {
+                total += *i;
+                count++;
+            }
+        }
+        const int val = count == 0 ? 0 : total / count;
+        return static_cast<uint8_t>(mve::clamp(val * 16, 0, 255));
+    };
+
+    std::array lighting
+        = { avg_light_opts(adj_light[0]),
+            avg_light_opts(adj_light[1]),
+            avg_light_opts(adj_light[2]),
+            avg_light_opts(adj_light[3]) };
 
     for (int i = 0; i < check_blocks.size(); i++) {
         const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
