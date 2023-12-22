@@ -179,8 +179,6 @@ private:
     std::vector<std::optional<detail::GraphicsPipelineLayoutImpl>> m_graphics_pipeline_layouts {};
     std::vector<std::optional<detail::FramebufferImpl>> m_framebuffers {};
     std::unordered_map<uint64_t, detail::TextureImpl> m_textures {};
-    uint32_t m_deferred_function_id_count;
-    std::map<uint32_t, detail::DeferredFunction> m_deferred_functions;
     std::queue<uint32_t> m_wait_frames_deferred_functions {};
     std::vector<detail::DeferredOperation> m_deferred_operations;
 
@@ -208,8 +206,6 @@ private:
 
     void update_uniform(
         Handle handle, UniformLocation location, const void* data_ptr, size_t size, uint32_t frame_index) const;
-
-    void defer_after_all_frames(std::function<void(uint32_t)> func);
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const;

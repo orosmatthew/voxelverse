@@ -443,12 +443,54 @@ struct DeferredCopyBufferImage {
     vk::Format image_format {};
 };
 
+struct DeferredDestroyVertexBuffer {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyTexture {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyDescriptorSet {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyGraphicsPipeline {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyUniformBuffer {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyIndexBuffer {
+    Handle handle {};
+    int frame_count = 0;
+};
+
+struct DeferredDestroyFramebuffer {
+    Handle handle {};
+    int frame_count = 0;
+};
+
 using DeferredOperation = std::variant<
     DeferredUniformUpdateData,
     DeferredCopyStagingBuffer,
     DeferredDestroyBuffer,
     DeferredDescriptorWriteData,
-    DeferredCopyBufferImage>;
+    DeferredCopyBufferImage,
+    DeferredDestroyVertexBuffer,
+    DeferredDestroyTexture,
+    DeferredDestroyDescriptorSet,
+    DeferredDestroyGraphicsPipeline,
+    DeferredDestroyUniformBuffer,
+    DeferredDestroyIndexBuffer,
+    DeferredDestroyFramebuffer>;
 
 }
 

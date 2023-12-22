@@ -36,7 +36,6 @@ Renderer::Renderer(
     : c_frames_in_flight(2)
     , m_vk_instance(create_vk_instance(app_name, app_version_major, app_version_minor, app_version_patch))
     , m_resource_handle_count(0)
-    , m_deferred_function_id_count(0)
 {
     const auto vkGetDeviceProcAddr
         = reinterpret_cast<PFN_vkGetDeviceProcAddr>(vkGetInstanceProcAddr(m_vk_instance, "vkGetDeviceProcAddr"));
@@ -347,15 +346,9 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
 {
     MVE_VAL_ASSERT(vertex_buffer.is_valid(), "[Renderer] Attempted to destroy invalid vertex buffer")
     log().debug("[Renderer] Destroyed vertex buffer with ID: {}", vertex_buffer.handle());
-    Handle handle = vertex_buffer.handle();
+    const Handle handle = vertex_buffer.handle();
     vertex_buffer.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        vmaDestroyBuffer(
-            m_vma_allocator,
-            m_vertex_buffers.at(handle)->buffer.vk_handle,
-            m_vertex_buffers.at(handle)->buffer.vma_allocation);
-        m_vertex_buffers[handle].reset();
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyVertexBuffer { handle });
 }
 
 void Renderer::begin_render_pass_present() const
@@ -468,22 +461,6 @@ void Renderer::begin_frame(const Window& window)
         }
     }
 
-    std::queue<uint32_t> continue_defer;
-    while (!m_wait_frames_deferred_functions.empty()) {
-        uint32_t id = m_wait_frames_deferred_functions.front();
-        m_wait_frames_deferred_functions.pop();
-        auto& [function, counter] = m_deferred_functions.at(id);
-        counter--;
-        if (counter <= 0) {
-            std::invoke(function, m_current_draw_state.frame_index);
-            m_deferred_functions.erase(id);
-        }
-        else {
-            continue_defer.push(id);
-        }
-    }
-    m_wait_frames_deferred_functions = std::move(continue_defer);
-
     it = m_deferred_operations.begin();
     while (it != m_deferred_operations.end()) {
         if (const auto deferred_descriptor = std::get_if<DeferredDescriptorWriteData>(&*it)) {
@@ -551,6 +528,144 @@ void Renderer::begin_frame(const Window& window)
                 it = m_deferred_operations.erase(it);
             }
             else {
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_vertex_buffer = std::get_if<DeferredDestroyVertexBuffer>(&*it)) {
+            if (deferred_destroy_vertex_buffer->frame_count > c_frames_in_flight) {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_vertex_buffers.at(deferred_destroy_vertex_buffer->handle)->buffer.vk_handle,
+                    m_vertex_buffers.at(deferred_destroy_vertex_buffer->handle)->buffer.vma_allocation);
+                m_vertex_buffers[deferred_destroy_vertex_buffer->handle].reset();
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_vertex_buffer->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_texture = std::get_if<DeferredDestroyTexture>(&*it)) {
+            if (deferred_destroy_texture->frame_count > c_frames_in_flight) {
+                auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(deferred_destroy_texture->handle);
+                m_vk_device.destroy(vk_sampler, nullptr, m_vk_loader);
+                m_vk_device.destroy(vk_image_view, nullptr, m_vk_loader);
+                vmaDestroyImage(m_vma_allocator, image.vk_handle, image.vma_allocation);
+                m_textures.erase(deferred_destroy_texture->handle);
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_texture->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_descriptor_set = std::get_if<DeferredDestroyDescriptorSet>(&*it)) {
+            if (deferred_destroy_descriptor_set->frame_count > c_frames_in_flight) {
+                // TODO: Refactor this dynamic allocation
+                std::vector<DescriptorSetImpl> sets_to_delete;
+                std::ranges::transform(
+                    std::as_const(m_frames_in_flight), std::back_inserter(sets_to_delete), [&](const FrameInFlight& f) {
+                        return *f.descriptor_sets.at(deferred_destroy_descriptor_set->handle);
+                    });
+                // ReSharper disable once CppUseStructuredBinding
+                for (FrameInFlight& f : m_frames_in_flight) {
+                    f.descriptor_sets[deferred_destroy_descriptor_set->handle].reset();
+                }
+                for (DescriptorSetImpl set : sets_to_delete) {
+                    m_descriptor_set_allocator.free(m_vk_loader, m_vk_device, set);
+                }
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_descriptor_set->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_graphics_pipeline = std::get_if<DeferredDestroyGraphicsPipeline>(&*it)) {
+            if (deferred_destroy_graphics_pipeline->frame_count > c_frames_in_flight) {
+                // Descriptor set layouts
+                // TODO: remove this dynamic allocation
+                std::vector<Handle> deleted_descriptor_set_layout_handles;
+                for (auto& [set, set_layout] :
+                     m_graphics_pipeline_layouts
+                         .at(m_graphics_pipelines.at(deferred_destroy_graphics_pipeline->handle)->layout)
+                         ->descriptor_set_layouts) {
+                    m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout), nullptr, m_vk_loader);
+                    deleted_descriptor_set_layout_handles.push_back(set_layout);
+                }
+                for (Handle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
+                    m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
+                }
+
+                // Pipeline layout
+                m_vk_device.destroy(
+                    m_graphics_pipeline_layouts
+                        .at(m_graphics_pipelines.at(deferred_destroy_graphics_pipeline->handle)->layout)
+                        ->vk_handle,
+                    nullptr,
+                    m_vk_loader);
+                m_graphics_pipeline_layouts[m_graphics_pipelines.at(deferred_destroy_graphics_pipeline->handle)->layout]
+                    .reset();
+
+                // Graphics pipeline
+                m_vk_device.destroy(
+                    m_graphics_pipelines.at(deferred_destroy_graphics_pipeline->handle)->pipeline,
+                    nullptr,
+                    m_vk_loader);
+                m_graphics_pipelines[deferred_destroy_graphics_pipeline->handle].reset();
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_graphics_pipeline->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_uniform_buffer = std::get_if<DeferredDestroyUniformBuffer>(&*it)) {
+            if (deferred_destroy_uniform_buffer->frame_count > c_frames_in_flight) {
+                // ReSharper disable once CppUseStructuredBinding
+                for (const FrameInFlight& f : m_frames_in_flight) {
+                    auto [buffer, size, mapped_ptr] = *f.uniform_buffers.at(deferred_destroy_uniform_buffer->handle);
+                    vmaUnmapMemory(m_vma_allocator, buffer.vma_allocation);
+                    vmaDestroyBuffer(m_vma_allocator, buffer.vk_handle, buffer.vma_allocation);
+                }
+                // ReSharper disable once CppUseStructuredBinding
+                for (FrameInFlight& f : m_frames_in_flight) {
+                    f.uniform_buffers[deferred_destroy_uniform_buffer->handle].reset();
+                }
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_uniform_buffer->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_index_buffer = std::get_if<DeferredDestroyIndexBuffer>(&*it)) {
+            if (deferred_destroy_index_buffer->frame_count > c_frames_in_flight) {
+                vmaDestroyBuffer(
+                    m_vma_allocator,
+                    m_index_buffers.at(deferred_destroy_index_buffer->handle)->buffer.vk_handle,
+                    m_index_buffers.at(deferred_destroy_index_buffer->handle)->buffer.vma_allocation);
+                m_index_buffers[deferred_destroy_index_buffer->handle].reset();
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_index_buffer->frame_count++;
+                ++it;
+            }
+        }
+        else if (const auto deferred_destroy_framebuffer = std::get_if<DeferredDestroyFramebuffer>(&*it)) {
+            if (deferred_destroy_framebuffer->frame_count > c_frames_in_flight) {
+                auto& [vk_framebuffers, texture, callback, size]
+                    = m_framebuffers.at(deferred_destroy_framebuffer->handle).value();
+                m_textures.erase(deferred_destroy_framebuffer->handle);
+                for (const vk::Framebuffer& buffer : vk_framebuffers) {
+                    m_vk_device.destroy(buffer, nullptr, m_vk_loader);
+                }
+                m_framebuffers.at(deferred_destroy_framebuffer->handle).reset();
+                it = m_deferred_operations.erase(it);
+            }
+            else {
+                deferred_destroy_framebuffer->frame_count++;
                 ++it;
             }
         }
@@ -816,14 +931,6 @@ Handle Renderer::create_graphics_pipeline_layout(
 void Renderer::resize(const Window& window)
 {
     recreate_swapchain(window);
-}
-
-void Renderer::defer_after_all_frames(std::function<void(uint32_t)> func)
-{
-    uint32_t id = m_deferred_function_id_count;
-    m_deferred_function_id_count++;
-    m_deferred_functions.insert({ id, { std::move(func), c_frames_in_flight } });
-    m_wait_frames_deferred_functions.push(id);
 }
 
 void Renderer::write_descriptor_binding(
@@ -1127,15 +1234,9 @@ void Renderer::destroy(Texture& texture)
 {
     MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempted to destroy invalid texture")
     log().debug("[Renderer] Destroyed texture with ID: {}", texture.handle());
-    Handle handle = texture.handle();
+    const Handle handle = texture.handle();
     texture.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(handle);
-        m_vk_device.destroy(vk_sampler, nullptr, m_vk_loader);
-        m_vk_device.destroy(vk_image_view, nullptr, m_vk_loader);
-        vmaDestroyImage(m_vma_allocator, image.vk_handle, image.vma_allocation);
-        m_textures.erase(handle);
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyTexture { handle });
 }
 
 // TODO: mip-mapping
@@ -1252,51 +1353,18 @@ void Renderer::destroy(DescriptorSet& descriptor_set)
 {
     MVE_VAL_ASSERT(descriptor_set.is_valid(), "[Renderer] Attempted to destroy invalid descriptor set")
     log().debug("[Renderer] Destroyed descriptor set with ID: {}", descriptor_set.handle());
-    Handle handle = descriptor_set.handle();
+    const Handle handle = descriptor_set.handle();
     descriptor_set.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        std::vector<DescriptorSetImpl> sets_to_delete;
-        std::ranges::transform(
-            std::as_const(m_frames_in_flight), std::back_inserter(sets_to_delete), [&](const FrameInFlight& frame) {
-                return *frame.descriptor_sets.at(handle);
-            });
-        // ReSharper disable once CppUseStructuredBinding
-        for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.descriptor_sets[handle].reset();
-        }
-        for (DescriptorSetImpl set : sets_to_delete) {
-            m_descriptor_set_allocator.free(m_vk_loader, m_vk_device, set);
-        }
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyDescriptorSet { handle });
 }
 
 void Renderer::destroy(GraphicsPipeline& graphics_pipeline)
 {
     MVE_VAL_ASSERT(graphics_pipeline.is_valid(), "[Renderer] Attempted to destroy invalid graphics pipeline")
     log().debug("[Renderer] Destroyed graphics pipeline with ID: {}", graphics_pipeline.handle());
-    Handle handle = graphics_pipeline.handle();
+    const Handle handle = graphics_pipeline.handle();
     graphics_pipeline.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        // Descriptor set layouts
-        std::vector<Handle> deleted_descriptor_set_layout_handles;
-        for (auto& [set, set_layout] :
-             m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle)->layout)->descriptor_set_layouts) {
-            m_vk_device.destroy(m_descriptor_set_layouts.at(set_layout), nullptr, m_vk_loader);
-            deleted_descriptor_set_layout_handles.push_back(set_layout);
-        }
-        for (Handle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
-            m_descriptor_set_layouts.erase(descriptor_set_layout_handle);
-        }
-
-        // Pipeline layout
-        m_vk_device.destroy(
-            m_graphics_pipeline_layouts.at(m_graphics_pipelines.at(handle)->layout)->vk_handle, nullptr, m_vk_loader);
-        m_graphics_pipeline_layouts[m_graphics_pipelines.at(handle)->layout].reset();
-
-        // Graphics pipeline
-        m_vk_device.destroy(m_graphics_pipelines.at(handle)->pipeline, nullptr, m_vk_loader);
-        m_graphics_pipelines[handle].reset();
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyGraphicsPipeline { handle });
 }
 
 void Renderer::destroy(UniformBuffer& uniform_buffer)
@@ -1304,34 +1372,17 @@ void Renderer::destroy(UniformBuffer& uniform_buffer)
     MVE_VAL_ASSERT(uniform_buffer.is_valid(), "[Renderer] Attempted to destroy invalid uniform buffer")
     log().debug("[Renderer] Destroyed uniform buffer with ID: {}", uniform_buffer.handle());
     uniform_buffer.invalidate();
-    Handle handle = uniform_buffer.handle();
-    defer_after_all_frames([this, handle](uint32_t) {
-        // ReSharper disable once CppUseStructuredBinding
-        for (const FrameInFlight& frame : m_frames_in_flight) {
-            auto [buffer, size, mapped_ptr] = *frame.uniform_buffers.at(handle);
-            vmaUnmapMemory(m_vma_allocator, buffer.vma_allocation);
-            vmaDestroyBuffer(m_vma_allocator, buffer.vk_handle, buffer.vma_allocation);
-        }
-        // ReSharper disable once CppUseStructuredBinding
-        for (FrameInFlight& frame : m_frames_in_flight) {
-            frame.uniform_buffers[handle].reset();
-        }
-    });
+    const Handle handle = uniform_buffer.handle();
+    m_deferred_operations.emplace_back(DeferredDestroyUniformBuffer { handle });
 }
 
 void Renderer::destroy(IndexBuffer& index_buffer)
 {
     MVE_VAL_ASSERT(index_buffer.is_valid(), "[Renderer] Attempted to destroy invalid index buffer")
     log().debug("[Renderer] Destroyed index buffer with ID: {}", index_buffer.handle());
-    Handle handle = index_buffer.handle();
+    const Handle handle = index_buffer.handle();
     index_buffer.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        vmaDestroyBuffer(
-            m_vma_allocator,
-            m_index_buffers.at(handle)->buffer.vk_handle,
-            m_index_buffers.at(handle)->buffer.vma_allocation);
-        m_index_buffers[handle].reset();
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyIndexBuffer { handle });
 }
 
 void Renderer::bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b) const
@@ -1387,16 +1438,9 @@ void Renderer::destroy(Framebuffer& framebuffer)
 {
     MVE_VAL_ASSERT(framebuffer.is_valid(), "[Renderer] Attempted to destroy invalid framebuffer")
     log().debug("[Renderer] Destroyed framebuffer with ID: {}", framebuffer.handle());
-    Handle handle = framebuffer.handle();
+    const Handle handle = framebuffer.handle();
     framebuffer.invalidate();
-    defer_after_all_frames([this, handle](uint32_t) {
-        auto& [vk_framebuffers, texture, callback, size] = m_framebuffers.at(handle).value();
-        m_textures.erase(handle);
-        for (const vk::Framebuffer& buffer : vk_framebuffers) {
-            m_vk_device.destroy(buffer, nullptr, m_vk_loader);
-        }
-        m_framebuffers.at(handle).reset();
-    });
+    m_deferred_operations.emplace_back(DeferredDestroyFramebuffer { handle });
 }
 void Renderer::recreate_framebuffers()
 {
