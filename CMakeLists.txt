@@ -91,7 +91,7 @@ set(LIB_INCLUDES
 
 add_executable(${PROJECT_NAME})
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC RES_PATH="../res")
+target_compile_definitions(${PROJECT_NAME} PUBLIC RES_PATH="./res")
 
 if (WIN32)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
