@@ -22,7 +22,18 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-Depending on your build tool, the `voxelverse.exe` will be located somewhere in the `build/` directory
+Depending on your build tool, the `voxelverse.exe` will be located somewhere in the `build/` directory. Note that
+the `res/` directory must be in the current-working-directory (cwd) of the executable. So if you want to distribute the
+executable, you must have the executable within the same directory of `res/`.
+
+```
+|- voxelverse/
+|  |- res/
+|  |  |- bin/
+|  |  |- atlas.png
+|  |  |- ...
+|  |- voxelverse.exe
+```
 
 ## Technologies Used
 
