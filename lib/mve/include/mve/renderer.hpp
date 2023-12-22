@@ -179,7 +179,6 @@ private:
     std::vector<std::optional<detail::GraphicsPipelineLayoutImpl>> m_graphics_pipeline_layouts {};
     std::vector<std::optional<detail::FramebufferImpl>> m_framebuffers {};
     std::unordered_map<uint64_t, detail::TextureImpl> m_textures {};
-    std::queue<uint32_t> m_wait_frames_deferred_functions {};
     std::vector<detail::DeferredOperation> m_deferred_operations;
 
     void cleanup_vk_swapchain() const;
