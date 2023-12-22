@@ -128,6 +128,8 @@ void propagate_light(WorldData& world_data, const mve::Vector3i chunk_pos)
 
 void refresh_lighting(WorldData& world_data, const mve::Vector3i chunk_pos)
 {
+    // TODO: Make lighting queue and need to do whole column
+
     for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const mve::Vector3i offset) {
         if (world_data.contains_chunk(chunk_pos + offset)) {
             world_data.chunk_data_at(chunk_pos + offset).reset_lighting(0);
