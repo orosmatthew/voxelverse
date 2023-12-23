@@ -82,6 +82,7 @@ private:
         float scale;
         int text_length;
         mve::Vector3 color;
+        std::string text;
     };
 
     const mve::VertexLayout c_vertex_layout = {

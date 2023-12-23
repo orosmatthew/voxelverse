@@ -204,21 +204,14 @@ void World::update(mve::Window& window, const float blend)
         }
         break;
     case FocusState::pause:
-        if (window.is_key_pressed(mve::Key::escape)) {
-            m_focus = FocusState::world;
-            window.disable_cursor();
-        }
         m_pause_menu.update(window);
         if (m_pause_menu.exit_pressed()) {
             m_should_exit = true;
         }
-        if (m_pause_menu.back_pressed()) {
+        if (m_pause_menu.should_close()) {
             m_focus = FocusState::world;
             window.disable_cursor();
             m_last_break_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(1000);
-        }
-        if (m_pause_menu.fullscreen_toggled()) {
-            window.is_fullscreen() ? window.windowed() : window.fullscreen(true);
         }
         break;
     }

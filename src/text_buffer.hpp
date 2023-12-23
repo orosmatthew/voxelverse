@@ -49,7 +49,8 @@ public:
         return m_valid;
     }
 
-    void update(const std::string_view text) const
+    // ReSharper disable once CppMemberFunctionMayBeConst
+    void update(const std::string_view text)
     {
         m_pipeline->update_text_buffer(*this, text);
     }

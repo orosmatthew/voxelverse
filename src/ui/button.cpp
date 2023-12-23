@@ -1,6 +1,7 @@
 #include "button.hpp"
 
 #include "../logger.hpp"
+
 #include <mve/window.hpp>
 
 Button::Button(
@@ -43,6 +44,11 @@ void Button::set_scale(const float scale)
     m_text.set_scale(scale);
 }
 
+void Button::set_text(const std::string& text)
+{
+    m_text.update(text);
+}
+
 void Button::set_hover_texture(std::shared_ptr<mve::Texture> texture)
 {
     m_texture_hover = std::move(texture);
@@ -51,12 +57,12 @@ void Button::update(const mve::Window& window)
 {
     const mve::Vector2 mouse_pos = window.mouse_pos();
     const bool hover = is_pos_in_button(mouse_pos);
-    const bool down = window.is_mouse_button_down(mve::MouseButton::left);
+    const bool pressed = window.is_mouse_button_pressed(mve::MouseButton::left);
 
     m_prev_state = m_state;
     switch (m_state) {
     case State::none:
-        if (hover && down) {
+        if (hover && pressed) {
             m_state = State::down;
             m_patch.update_texture(*m_texture_pressed);
         }
@@ -70,7 +76,7 @@ void Button::update(const mve::Window& window)
             m_state = State::none;
             m_patch.update_texture(*m_texture);
         }
-        else if (down) {
+        else if (pressed) {
             m_state = State::down;
             m_patch.update_texture(*m_texture_pressed);
         }
@@ -80,7 +86,7 @@ void Button::update(const mve::Window& window)
             m_state = State::none;
             m_patch.update_texture(*m_texture);
         }
-        else if (!down) {
+        else if (!pressed) {
             m_state = State::hover;
             m_patch.update_texture(*m_texture_hover);
         }

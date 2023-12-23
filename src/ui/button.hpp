@@ -19,6 +19,8 @@ public:
 
     void set_scale(float scale);
 
+    void set_text(const std::string& text);
+
     void update(const mve::Window& window);
 
     void set_hover_texture(std::shared_ptr<mve::Texture> texture);

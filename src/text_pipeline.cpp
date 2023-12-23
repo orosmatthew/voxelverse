@@ -165,7 +165,7 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
 void TextPipeline::add_cursor(const TextBuffer& buffer, const int pos)
 {
     VV_DEB_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to add cursor on invalid text buffer")
-    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color]
+    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color, text]
         = *m_text_buffers[buffer.m_handle];
     cursor_pos = pos;
     cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
@@ -179,7 +179,7 @@ void TextPipeline::add_cursor(const TextBuffer& buffer, const int pos)
 void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
 {
     VV_DEB_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set cursor position on invalid text buffer")
-    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color]
+    auto& [render_glyphs, cursor, cursor_pos, translation, scale, text_length, color, text]
         = *m_text_buffers[buffer.m_handle];
     pos = std::clamp(pos, 0, text_length);
     cursor_pos = pos;
@@ -220,6 +220,9 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, const std::strin
     VV_DEB_ASSERT(m_text_buffers.at(buffer.m_handle).has_value(), "[Text Pipeline] Text buffer invalid")
     // ReSharper disable once CppUseStructuredBinding
     TextBufferImpl& buffer_impl = *m_text_buffers[buffer.m_handle];
+    if (buffer_impl.text == text) {
+        return;
+    }
     mve::Vector2 pos = buffer_impl.translation;
     buffer_impl.text_length = static_cast<int>(text.length());
     const float scale = buffer_impl.scale;
