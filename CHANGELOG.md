@@ -2,12 +2,12 @@
 
 ## 0.2.0
 
-**Features**
+**New Features**
 
 * Add options menu
 * Add MSAA option
 
-**Bugs**
+**Fixed Bugs**
 
 * Fix button behavior
 
