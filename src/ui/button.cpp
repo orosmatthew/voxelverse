@@ -32,6 +32,7 @@ void Button::draw() const
 }
 void Button::set_position(const mve::Vector2& pos)
 {
+    m_position = pos;
     m_patch.set_position(pos);
     m_text.set_translation(
         { pos.x + static_cast<float>(m_patch.size().x) * m_patch.scale() / 2.0f - m_text.width() / 2.0f,
@@ -47,6 +48,10 @@ void Button::set_scale(const float scale)
 void Button::set_text(const std::string& text)
 {
     m_text.update(text);
+    m_text.set_translation(
+        { m_position.x + static_cast<float>(m_patch.size().x) * m_patch.scale() / 2.0f - m_text.width() / 2.0f,
+          m_position.y + static_cast<float>(m_patch.size().y) * m_patch.scale() / 2.0f
+              - static_cast<float>(m_text_pipeline->point_size()) / 2.0f });
 }
 
 void Button::set_hover_texture(std::shared_ptr<mve::Texture> texture)
@@ -57,12 +62,17 @@ void Button::update(const mve::Window& window)
 {
     const mve::Vector2 mouse_pos = window.mouse_pos();
     const bool hover = is_pos_in_button(mouse_pos);
+    const bool down = window.is_mouse_button_down(mve::MouseButton::left);
     const bool pressed = window.is_mouse_button_pressed(mve::MouseButton::left);
 
     m_prev_state = m_state;
     switch (m_state) {
     case State::none:
         if (hover && pressed) {
+            m_state = State::pressed;
+            m_patch.update_texture(*m_texture_pressed);
+        }
+        else if (hover && down) {
             m_state = State::down;
             m_patch.update_texture(*m_texture_pressed);
         }
@@ -77,7 +87,7 @@ void Button::update(const mve::Window& window)
             m_patch.update_texture(*m_texture);
         }
         else if (pressed) {
-            m_state = State::down;
+            m_state = State::pressed;
             m_patch.update_texture(*m_texture_pressed);
         }
         break;
@@ -86,7 +96,21 @@ void Button::update(const mve::Window& window)
             m_state = State::none;
             m_patch.update_texture(*m_texture);
         }
-        else if (!pressed) {
+        else if (!down) {
+            m_state = State::hover;
+            m_patch.update_texture(*m_texture_hover);
+        }
+        break;
+    case State::pressed:
+        if (!hover) {
+            m_state = State::none;
+            m_patch.update_texture(*m_texture);
+        }
+        else if (down) {
+            m_state = State::down;
+            m_patch.update_texture(*m_texture_pressed);
+        }
+        else {
             m_state = State::hover;
             m_patch.update_texture(*m_texture_hover);
         }

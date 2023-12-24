@@ -65,7 +65,7 @@ void PauseMenu::update(mve::Window& window, mve::Renderer& renderer)
 
         if (m_options_button.is_pressed()) {
             m_state = State::options;
-            resize(m_extent);
+            m_options_menu.resize(m_extent);
         }
         m_should_close = m_back_button.is_pressed() || window.is_key_pressed(mve::Key::escape);
     }

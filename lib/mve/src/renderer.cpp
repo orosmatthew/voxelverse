@@ -50,6 +50,8 @@ Renderer::Renderer(
     m_vk_device = create_vk_logical_device(m_vk_loader, m_vk_physical_device, m_queue_family_indices);
     m_vk_loader = vk::DispatchLoaderDynamic(m_vk_instance, vkGetInstanceProcAddr, m_vk_device, vkGetDeviceProcAddr);
 
+    m_max_msaa_samples = vk_samples_to_msaa(get_max_sample_count(m_vk_loader, m_vk_physical_device));
+
     auto [capabilities, formats, present_modes]
         = get_vk_swapchain_support_details(m_vk_loader, m_vk_physical_device, m_vk_surface);
 
@@ -1295,7 +1297,7 @@ void Renderer::destroy(Texture& texture)
 Texture Renderer::create_texture(const TextureFormat format, uint32_t width, uint32_t height, const std::byte* data)
 {
     MVE_VAL_ASSERT(width != 0 && height != 0, "[Renderer] Attempt to create texture with 0 width or height")
-    uint32_t mip_levels = 1;
+    constexpr uint32_t mip_levels = 1;
 
     vk::Format vk_format {};
     size_t size = width * height * sizeof(std::byte);
@@ -1317,7 +1319,7 @@ Texture Renderer::create_texture(const TextureFormat format, uint32_t width, uin
         break;
     }
 
-    Buffer staging_buffer = create_buffer(
+    const Buffer staging_buffer = create_buffer(
         m_vma_allocator,
         size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -1329,7 +1331,7 @@ Texture Renderer::create_texture(const TextureFormat format, uint32_t width, uin
     memcpy(data_ptr, data, size);
     vmaUnmapMemory(m_vma_allocator, staging_buffer.vma_allocation);
 
-    Image image = create_image(
+    const Image image = create_image(
         m_vma_allocator,
         width,
         height,
@@ -1586,14 +1588,48 @@ Vector2i Renderer::texture_size(const Texture& texture) const
     return { static_cast<int>(image.width), static_cast<int>(image.height) };
 }
 
-void Renderer::set_msaa_samples(const Window& window, const vk::SampleCountFlagBits samples)
+Msaa Renderer::max_msaa_samples() const
+{
+    return m_max_msaa_samples;
+}
+
+void Renderer::set_msaa_samples(const Window& window, const Msaa samples)
 {
     const vk::Result wait_result = m_vk_device.waitIdle(m_vk_loader);
     MVE_ASSERT(wait_result == vk::Result::eSuccess, "[Renderer] Failed to wait idle for setting MSAA")
-    m_msaa_samples = samples;
+    vk::SampleCountFlagBits vk_samples {};
+    switch (samples) {
+    case Msaa::samples_1:
+        vk_samples = vk::SampleCountFlagBits::e1;
+        break;
+    case Msaa::samples_2:
+        vk_samples = vk::SampleCountFlagBits::e2;
+        break;
+    case Msaa::samples_4:
+        vk_samples = vk::SampleCountFlagBits::e4;
+        break;
+    case Msaa::samples_8:
+        vk_samples = vk::SampleCountFlagBits::e8;
+        break;
+    case Msaa::samples_16:
+        vk_samples = vk::SampleCountFlagBits::e16;
+        break;
+    case Msaa::samples_32:
+        vk_samples = vk::SampleCountFlagBits::e32;
+        break;
+    case Msaa::samples_64:
+        vk_samples = vk::SampleCountFlagBits::e64;
+        break;
+    }
+    m_msaa_samples = vk_samples;
     recreate_render_passes();
     recreate_graphics_pipelines();
     recreate_swapchain(window);
+}
+
+Msaa Renderer::current_msaa_samples() const
+{
+    return vk_samples_to_msaa(m_msaa_samples);
 }
 
 }

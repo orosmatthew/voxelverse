@@ -44,7 +44,7 @@ public:
 
     [[nodiscard]] bool is_pressed() const
     {
-        return m_state == State::down && m_prev_state != State::down;
+        return m_state == State::pressed;
     }
 
     [[nodiscard]] bool is_down() const
@@ -65,7 +65,7 @@ public:
 private:
     [[nodiscard]] bool is_pos_in_button(const mve::Vector2& pos) const;
 
-    enum class State { none, hover, down };
+    enum class State { none, hover, pressed, down };
     TextPipeline* m_text_pipeline;
     NinePatch m_patch;
     TextBuffer m_text;

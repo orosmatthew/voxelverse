@@ -1516,4 +1516,25 @@ inline vk::CommandPool create_vk_command_pool(
     return command_pool_result.value;
 }
 
+inline Msaa vk_samples_to_msaa(const vk::SampleCountFlagBits vk_samples)
+{
+    switch (vk_samples) {
+    case vk::SampleCountFlagBits::e1:
+        return Msaa::samples_1;
+    case vk::SampleCountFlagBits::e2:
+        return Msaa::samples_2;
+    case vk::SampleCountFlagBits::e4:
+        return Msaa::samples_4;
+    case vk::SampleCountFlagBits::e8:
+        return Msaa::samples_8;
+    case vk::SampleCountFlagBits::e16:
+        return Msaa::samples_16;
+    case vk::SampleCountFlagBits::e32:
+        return Msaa::samples_32;
+    case vk::SampleCountFlagBits::e64:
+        return Msaa::samples_64;
+    }
+    MVE_ASSERT(false, "Unreachable");
+}
+
 }

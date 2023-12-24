@@ -3,6 +3,7 @@
 #include <mve/window.hpp>
 
 #include "../common.hpp"
+#include "../logger.hpp"
 #include "../ui_pipeline.hpp"
 
 OptionsMenu::OptionsMenu(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
@@ -48,10 +49,37 @@ void OptionsMenu::update(mve::Window& window, mve::Renderer& renderer)
     if (m_fullscreen_button.is_pressed()) {
         window.is_fullscreen() ? window.windowed() : window.fullscreen(true);
     }
-    m_back_button.update(window);
-    m_should_close = m_back_button.is_pressed() || window.is_key_pressed(mve::Key::escape);
     m_aa_button.update(window);
     if (m_aa_button.is_pressed()) {
-        renderer.set_msaa_samples(window, vk::SampleCountFlagBits::e1);
+        int new_msaa_i = static_cast<int>(renderer.current_msaa_samples()) + 1;
+        if (new_msaa_i > static_cast<int>(renderer.max_msaa_samples())) {
+            new_msaa_i = 0;
+        }
+        renderer.set_msaa_samples(window, static_cast<mve::Msaa>(new_msaa_i));
     }
+    switch (renderer.current_msaa_samples()) {
+    case mve::Msaa::samples_1:
+        m_aa_button.set_text("MSAA: Off");
+        break;
+    case mve::Msaa::samples_2:
+        m_aa_button.set_text("MSAA: 2x");
+        break;
+    case mve::Msaa::samples_4:
+        m_aa_button.set_text("MSAA: 4x");
+        break;
+    case mve::Msaa::samples_8:
+        m_aa_button.set_text("MSAA: 8x");
+        break;
+    case mve::Msaa::samples_16:
+        m_aa_button.set_text("MSAA: 16x");
+        break;
+    case mve::Msaa::samples_32:
+        m_aa_button.set_text("MSAA: 32x");
+        break;
+    case mve::Msaa::samples_64:
+        m_aa_button.set_text("MSAA: 64x");
+        break;
+    }
+    m_back_button.update(window);
+    m_should_close = m_back_button.is_pressed() || window.is_key_pressed(mve::Key::escape);
 }

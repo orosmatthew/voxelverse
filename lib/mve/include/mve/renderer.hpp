@@ -2,9 +2,7 @@
 
 #include <filesystem>
 #include <functional>
-#include <map>
 #include <optional>
-#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -24,6 +22,7 @@ class Window;
 class ShaderDescriptorSet;
 
 enum class TextureFormat { r, rg, rgb, rgba };
+enum class Msaa { samples_1, samples_2, samples_4, samples_8, samples_16, samples_32, samples_64 };
 
 class Renderer {
 public:
@@ -127,7 +126,11 @@ public:
 
     [[nodiscard]] Vector2i texture_size(const Texture& texture) const;
 
-    void set_msaa_samples(const Window& window, vk::SampleCountFlagBits samples);
+    [[nodiscard]] Msaa max_msaa_samples() const;
+
+    void set_msaa_samples(const Window& window, Msaa samples);
+
+    [[nodiscard]] Msaa current_msaa_samples() const;
 
 private:
     void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const;
@@ -165,6 +168,7 @@ private:
     vk::RenderPass m_vk_render_pass_framebuffer;
     std::vector<vk::Framebuffer> m_vk_swapchain_framebuffers;
     vk::CommandPool m_vk_command_pool;
+    Msaa m_max_msaa_samples;
     detail::QueueFamilyIndices m_queue_family_indices;
     VmaAllocator m_vma_allocator {};
     uint64_t m_resource_handle_count;
