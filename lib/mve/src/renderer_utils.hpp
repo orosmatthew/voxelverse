@@ -319,48 +319,6 @@ inline void end_single_submit(
     device.freeCommandBuffers(pool, 1, &command_buffer, loader);
 }
 
-inline DepthImage create_depth_image(
-    const vk::DispatchLoaderDynamic& loader,
-    const vk::PhysicalDevice physical_device,
-    const vk::Device device,
-    const vk::CommandPool pool,
-    const vk::Queue queue,
-    const VmaAllocator allocator,
-    const vk::Extent2D extent,
-    const vk::SampleCountFlagBits samples)
-{
-    const vk::Format depth_format = find_depth_format(loader, physical_device);
-
-    const Image depth_image = create_image(
-        allocator,
-        extent.width,
-        extent.height,
-        1,
-        samples,
-        depth_format,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        true);
-
-    const vk::ImageView depth_image_view
-        = create_image_view(loader, device, depth_image.vk_handle, depth_format, vk::ImageAspectFlagBits::eDepth, 1);
-
-    const vk::CommandBuffer command_buffer = begin_single_submit(loader, device, pool);
-
-    cmd_transition_image_layout(
-        loader,
-        command_buffer,
-        depth_image.vk_handle,
-        depth_format,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        1);
-
-    end_single_submit(loader, device, pool, command_buffer, queue);
-
-    return { depth_image, depth_image_view };
-}
-
 inline RenderImage create_color_image(
     const vk::DispatchLoaderDynamic& loader,
     const vk::Device device,

@@ -26,7 +26,7 @@ public:
 
     void fixed_update(const mve::Window& window);
 
-    void update(mve::Window& window, float blend);
+    void update(mve::Window& window, float blend, mve::Renderer& renderer);
 
     void resize(mve::Vector2i extent);
 

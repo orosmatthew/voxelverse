@@ -13,7 +13,7 @@ public:
 
     void resize(mve::Vector2i extent);
 
-    void update(mve::Window& window);
+    void update(mve::Window& window, mve::Renderer& renderer);
 
     [[nodiscard]] bool exit_pressed() const
     {

@@ -127,6 +127,8 @@ public:
 
     [[nodiscard]] Vector2i texture_size(const Texture& texture) const;
 
+    void set_msaa_samples(const Window& window, vk::SampleCountFlagBits samples);
+
 private:
     void bind_descriptor_sets(uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const;
 
@@ -185,6 +187,8 @@ private:
     void cleanup_vk_debug_messenger() const;
     void recreate_swapchain(const Window& window);
     void recreate_framebuffers();
+    void recreate_render_passes();
+    void recreate_graphics_pipelines();
 
     Texture create_texture(
         const detail::Image& image, vk::ImageView image_view, vk::Sampler sampler, uint32_t mip_levels);
@@ -208,6 +212,8 @@ private:
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const;
+
+    detail::DepthImage create_depth_image() const;
 };
 }
 

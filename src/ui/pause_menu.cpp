@@ -56,7 +56,7 @@ void PauseMenu::resize(const mve::Vector2i extent)
     }
 }
 
-void PauseMenu::update(mve::Window& window)
+void PauseMenu::update(mve::Window& window, mve::Renderer& renderer)
 {
     if (m_state == State::pause) {
         m_back_button.update(window);
@@ -70,7 +70,7 @@ void PauseMenu::update(mve::Window& window)
         m_should_close = m_back_button.is_pressed() || window.is_key_pressed(mve::Key::escape);
     }
     else if (m_state == State::options) {
-        m_options_menu.update(window);
+        m_options_menu.update(window, renderer);
         if (m_options_menu.should_close()) {
             m_state = State::pause;
             resize(m_extent);

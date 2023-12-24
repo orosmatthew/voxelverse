@@ -94,15 +94,7 @@ Renderer::Renderer(
         m_vk_swapchain_extent,
         m_vk_swapchain_image_format.format,
         m_msaa_samples);
-    m_depth_image = create_depth_image(
-        m_vk_loader,
-        m_vk_physical_device,
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        m_vma_allocator,
-        m_vk_swapchain_extent,
-        m_msaa_samples);
+    m_depth_image = create_depth_image();
 
     m_vk_render_pass = create_vk_render_pass(
         m_vk_loader,
@@ -154,6 +146,27 @@ vk::PipelineLayout Renderer::create_vk_pipeline_layout(
         = m_vk_device.createPipelineLayout(pipeline_layout_info, nullptr, loader);
     MVE_ASSERT(pipeline_layout_result.result == vk::Result::eSuccess, "[Renderer] Failed to create pipline layout")
     return pipeline_layout_result.value;
+}
+
+DepthImage Renderer::create_depth_image() const
+{
+    const vk::Format depth_format = find_depth_format(m_vk_loader, m_vk_physical_device);
+
+    const Image depth_image = create_image(
+        m_vma_allocator,
+        m_vk_swapchain_extent.width,
+        m_vk_swapchain_extent.height,
+        1,
+        m_msaa_samples,
+        depth_format,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        true);
+
+    const vk::ImageView depth_image_view = create_image_view(
+        m_vk_loader, m_vk_device, depth_image.vk_handle, depth_format, vk::ImageAspectFlagBits::eDepth, 1);
+
+    return { depth_image, depth_image_view };
 }
 
 Renderer::~Renderer()
@@ -251,6 +264,46 @@ Renderer::~Renderer()
     m_vk_instance.destroy(nullptr, m_vk_loader);
 }
 
+void Renderer::recreate_render_passes()
+{
+    m_vk_device.destroy(m_vk_render_pass, nullptr, m_vk_loader);
+    m_vk_device.destroy(m_vk_render_pass_framebuffer, nullptr, m_vk_loader);
+
+    m_vk_render_pass = create_vk_render_pass(
+        m_vk_loader,
+        m_vk_device,
+        m_vk_swapchain_image_format.format,
+        find_depth_format(m_vk_loader, m_vk_physical_device),
+        m_msaa_samples);
+
+    m_vk_render_pass_framebuffer = create_vk_render_pass_framebuffer(
+        m_vk_loader,
+        m_vk_device,
+        m_vk_swapchain_image_format.format,
+        find_depth_format(m_vk_loader, m_vk_physical_device),
+        m_msaa_samples);
+}
+
+void Renderer::recreate_graphics_pipelines()
+{
+    for (std::optional<GraphicsPipelineImpl>& pipeline : m_graphics_pipelines) {
+        if (pipeline.has_value()) {
+            m_vk_device.destroy(pipeline->pipeline, nullptr, m_vk_loader);
+
+            pipeline->pipeline = create_vk_graphics_pipeline(
+                m_vk_loader,
+                m_vk_device,
+                pipeline->vertex_shader,
+                pipeline->fragment_shader,
+                m_graphics_pipeline_layouts.at(pipeline->layout)->vk_handle,
+                m_vk_render_pass,
+                pipeline->vertex_layout,
+                m_msaa_samples,
+                pipeline->depth_test);
+        }
+    }
+}
+
 void Renderer::recreate_swapchain(const Window& window)
 {
     Vector2i window_size;
@@ -293,15 +346,7 @@ void Renderer::recreate_swapchain(const Window& window)
         m_vk_swapchain_image_format.format,
         m_msaa_samples);
 
-    m_depth_image = create_depth_image(
-        m_vk_loader,
-        m_vk_physical_device,
-        m_vk_device,
-        m_vk_command_pool,
-        m_vk_graphics_queue,
-        m_vma_allocator,
-        m_vk_swapchain_extent,
-        m_msaa_samples);
+    m_depth_image = create_depth_image();
 
     m_vk_swapchain_framebuffers = create_vk_framebuffers(
         m_vk_loader,
@@ -807,7 +852,6 @@ void Renderer::wait_ready() const
 {
     // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& frame = m_frames_in_flight[m_current_draw_state.frame_index];
-
     const vk::Result fence_wait_result
         = m_vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX, m_vk_loader);
     MVE_ASSERT(fence_wait_result == vk::Result::eSuccess, "[Renderer] Failed waiting for frame (fences)")
@@ -1077,7 +1121,15 @@ GraphicsPipeline Renderer::create_graphics_pipeline(
         id = m_graphics_pipelines.size();
         m_graphics_pipelines.emplace_back();
     }
-    m_graphics_pipelines[*id] = { .layout = layout, .pipeline = vk_pipeline };
+
+    m_graphics_pipelines[*id] = GraphicsPipelineImpl {
+        .layout = layout,
+        .pipeline = vk_pipeline,
+        .vertex_shader = vertex_shader,
+        .fragment_shader = fragment_shader,
+        .vertex_layout = vertex_layout,
+        .depth_test = depth_test
+    };
 
     log().debug("[Renderer] Graphics pipeline created with ID: {}", *id);
 
@@ -1532,6 +1584,16 @@ Vector2i Renderer::texture_size(const Texture& texture) const
     MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempt to get size on invalid texture")
     const auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(texture.handle());
     return { static_cast<int>(image.width), static_cast<int>(image.height) };
+}
+
+void Renderer::set_msaa_samples(const Window& window, const vk::SampleCountFlagBits samples)
+{
+    const vk::Result wait_result = m_vk_device.waitIdle(m_vk_loader);
+    MVE_ASSERT(wait_result == vk::Result::eSuccess, "[Renderer] Failed to wait idle for setting MSAA")
+    m_msaa_samples = samples;
+    recreate_render_passes();
+    recreate_graphics_pipelines();
+    recreate_swapchain(window);
 }
 
 }

@@ -179,7 +179,7 @@ void trigger_break_block(const Player& camera, ChunkController& chunk_controller
     }
 }
 
-void World::update(mve::Window& window, const float blend)
+void World::update(mve::Window& window, const float blend, mve::Renderer& renderer)
 {
     if (window.is_key_pressed(mve::Key::f3)) {
         m_hud.toggle_debug();
@@ -204,7 +204,7 @@ void World::update(mve::Window& window, const float blend)
         }
         break;
     case FocusState::pause:
-        m_pause_menu.update(window);
+        m_pause_menu.update(window, renderer);
         if (m_pause_menu.exit_pressed()) {
             m_should_exit = true;
         }

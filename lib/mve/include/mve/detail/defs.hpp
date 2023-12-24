@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <functional>
-#include <queue>
 #include <variant>
 
 #include <mve/include_vulkan.hpp>
@@ -395,6 +394,10 @@ struct GraphicsPipelineLayoutImpl {
 struct GraphicsPipelineImpl {
     Handle layout {};
     vk::Pipeline pipeline;
+    Shader vertex_shader;
+    Shader fragment_shader;
+    VertexLayout vertex_layout;
+    bool depth_test;
 };
 
 struct FramebufferImpl {

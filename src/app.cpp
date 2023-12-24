@@ -62,7 +62,7 @@ void App::main_loop()
 
         m_fixed_loop.update(5, [&] { m_world.fixed_update(m_window); });
 
-        m_world.update(m_window, m_fixed_loop.blend());
+        m_world.update(m_window, m_fixed_loop.blend(), m_renderer);
 
         if (m_window.is_key_pressed(mve::Key::enter) && m_window.is_key_down(mve::Key::left_alt)) {
             if (!m_window.is_fullscreen()) {
