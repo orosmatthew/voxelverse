@@ -3,7 +3,7 @@
 #include <mve/window.hpp>
 
 #include "../common.hpp"
-#include "../logger.hpp"
+#include "../options.hpp"
 #include "../ui_pipeline.hpp"
 
 OptionsMenu::OptionsMenu(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
@@ -82,4 +82,8 @@ void OptionsMenu::update(mve::Window& window, mve::Renderer& renderer)
     }
     m_back_button.update(window);
     m_should_close = m_back_button.is_pressed() || window.is_key_pressed(mve::Key::escape);
+    if (m_should_close) {
+        const Options options { .fullscreen = window.is_fullscreen(), .msaa = renderer.current_msaa_samples() };
+        set_options(options);
+    }
 }

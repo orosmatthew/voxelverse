@@ -6,6 +6,7 @@
 
 * Add options menu
 * Add MSAA option
+* Options are saved
 
 **Fixed Bugs**
 

@@ -3,3 +3,4 @@ build*/
 save/
 .idea/
 res/bin
+options.json

@@ -74,7 +74,8 @@ set(SOURCE_FILES
         src/ui/pause_menu.cpp
         src/chunk_controller.cpp
         src/lighting.cpp
-        src/ui/options_menu.cpp)
+        src/ui/options_menu.cpp
+        src/options.cpp)
 
 set(LIBS
         freetype
@@ -88,7 +89,8 @@ set(LIB_INCLUDES
         external/fast-noise-lite-1.1.0/include
         external/cereal-1.3.2/include
         external/lz4-1.9.4/include
-        external/thread-pool-3.5.0/include)
+        external/thread-pool-3.5.0/include
+        external/nlohmann-json-3.11.3/include)
 
 add_executable(${PROJECT_NAME})
 

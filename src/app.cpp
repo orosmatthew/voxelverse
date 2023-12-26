@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "logger.hpp"
+#include "options.hpp"
 
 namespace app {
 
@@ -34,6 +35,15 @@ App::App()
     m_window.set_resize_callback(resize_func);
 
     std::invoke(resize_func, m_window.size());
+
+    auto [fullscreen, msaa] = load_options();
+    if (fullscreen) {
+        m_window.fullscreen(true);
+    }
+    else {
+        m_window.windowed();
+    }
+    m_renderer.set_msaa_samples(m_window, msaa);
 }
 
 void App::draw()
@@ -85,6 +95,9 @@ void App::main_loop()
         }
         m_current_frame_count++;
     }
+
+    const Options options { .fullscreen = m_window.is_fullscreen(), .msaa = m_renderer.current_msaa_samples() };
+    set_options(options);
 }
 
 }
