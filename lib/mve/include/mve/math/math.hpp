@@ -10,6 +10,10 @@ constexpr float pi = 3.14159265358979323846264338327950288f;
 
 [[nodiscard]] inline bool is_equal_approx(float a, float b);
 
+[[nodiscard]] inline bool approx_gte(float a, float b);
+
+[[nodiscard]] inline bool approx_lte(float a, float b);
+
 [[nodiscard]] inline bool is_zero_approx(float val);
 
 [[nodiscard]] inline float abs(float val);

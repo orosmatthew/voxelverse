@@ -21,6 +21,30 @@ inline bool is_equal_approx(const float a, const float b)
     return abs(a - b) < tolerance;
 }
 
+inline bool approx_gte(const float a, const float b)
+{
+    if (a > b) {
+        return true;
+    }
+    float tolerance = epsilon * abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
+    }
+    return abs(a - b) < tolerance;
+}
+
+inline bool approx_lte(const float a, const float b)
+{
+    if (a < b) {
+        return true;
+    }
+    float tolerance = epsilon * abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
+    }
+    return abs(a - b) < tolerance;
+}
+
 inline float abs(const float val)
 {
     return std::abs(val);
