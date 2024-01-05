@@ -1,9 +1,9 @@
 #include "world.hpp"
 
+#include "../common/logger.hpp"
 #include "chunk_data.hpp"
 #include "common.hpp"
 #include "lighting.hpp"
-#include "logger.hpp"
 #include "ui_pipeline.hpp"
 #include "world_data.hpp"
 

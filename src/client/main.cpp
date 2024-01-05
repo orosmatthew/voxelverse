@@ -2,12 +2,12 @@
 
 #include <spdlog/spdlog.h>
 
+#include "../common/logger.hpp"
 #include "app.hpp"
-#include "logger.hpp"
 
 int main()
 {
-    initLogger();
+    init_logger();
 
 #ifdef NDEBUG
     LOG->set_level(spdlog::level::info);

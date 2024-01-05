@@ -5,7 +5,8 @@
 #include <freetype2/ft2build.h>
 #include FT_FREETYPE_H
 
-#include "logger.hpp"
+#include "../common/assert.hpp"
+#include "../common/logger.hpp"
 #include "text_buffer.hpp"
 
 TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)

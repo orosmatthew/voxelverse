@@ -4,8 +4,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include "common.hpp"
-#include "logger.hpp"
+#include "../common/assert.hpp"
+#include "../common/logger.hpp"
 
 using json = nlohmann::json;
 

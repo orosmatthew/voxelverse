@@ -2,12 +2,12 @@
 
 #include <array>
 #include <cstdint>
-#include <functional>
 
 #include <cereal/types/vector.hpp>
 
 #include <mve/math/math.hpp>
 
+#include "../common/assert.hpp"
 #include "common.hpp"
 
 inline mve::Vector3i direction_vector(const Direction dir)

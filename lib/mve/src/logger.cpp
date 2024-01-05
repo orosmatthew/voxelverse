@@ -6,7 +6,7 @@
 
 std::optional<spdlog::logger> g_logger;
 
-static void initLogger()
+static void init_logger()
 {
     std::vector<spdlog::sink_ptr> sinks;
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
@@ -16,7 +16,7 @@ static void initLogger()
 spdlog::logger& log()
 {
     if (!g_logger.has_value()) {
-        initLogger();
+        init_logger();
     }
     return g_logger.value();
 }

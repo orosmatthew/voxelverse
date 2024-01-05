@@ -5,6 +5,7 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <lz4.h>
 
+#include "../common/assert.hpp"
 #include "common.hpp"
 
 SaveFile::SaveFile(const size_t max_file_size, const std::string& name)

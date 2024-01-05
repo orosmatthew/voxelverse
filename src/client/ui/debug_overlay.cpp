@@ -1,6 +1,5 @@
 #include "debug_overlay.hpp"
 
-#include "../logger.hpp"
 #include "../world_data.hpp"
 
 DebugOverlay::DebugOverlay(TextPipeline& text_pipeline)

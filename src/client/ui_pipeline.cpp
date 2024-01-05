@@ -2,8 +2,8 @@
 
 #include <mve/math/math.hpp>
 
+#include "../common/logger.hpp"
 #include "common.hpp"
-#include "logger.hpp"
 
 UIPipeline::UIPipeline(mve::Renderer& renderer)
     : m_renderer(&renderer)

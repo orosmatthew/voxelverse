@@ -8,19 +8,6 @@
 
 #include <mve/math/math.hpp>
 
-// #define VV_ENABLE_CHECKS
-
-#define VV_REL_ASSERT(expr, msg) \
-    if (!(expr)) { \
-        throw std::runtime_error(msg); \
-    }
-
-#ifdef VV_ENABLE_CHECKS
-#define VV_DEB_ASSERT(expr, msg) VV_REL_ASSERT(expr, msg)
-#else
-#define VV_DEB_ASSERT(expr, msg)
-#endif
-
 namespace mve {
 template <class Archive>
 void serialize(Archive& archive, Vector2i& v)

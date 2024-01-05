@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "logger.hpp"
+#include "../common/logger.hpp"
 #include "options.hpp"
 
 namespace app {

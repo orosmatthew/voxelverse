@@ -11,4 +11,4 @@
 /**
  * @brief Initialize logger
  */
-void initLogger();
+void init_logger();

@@ -1,7 +1,8 @@
 #include "pause_menu.hpp"
 
+#include "../../common/assert.hpp"
+#include "../../common/logger.hpp"
 #include "../common.hpp"
-#include "../logger.hpp"
 
 PauseMenu::PauseMenu(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     : m_button_texture(std::make_shared<mve::Texture>(ui_pipeline.renderer(), res_path("button_gray.png")))

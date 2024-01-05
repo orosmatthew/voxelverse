@@ -51,7 +51,7 @@ add_subdirectory(lib/mve)
 
 set(SOURCE_FILES
         src/client/app.cpp
-        src/client/logger.cpp
+        src/common/logger.cpp
         src/client/util.cpp
         src/common/fixed_loop.cpp
         src/client/chunk_mesh.cpp
@@ -76,13 +76,14 @@ set(SOURCE_FILES
         src/client/chunk_controller.cpp
         src/client/lighting.cpp
         src/client/ui/options_menu.cpp
-        src/client/options.cpp)
+        src/client/options.cpp
+        src/server/server.cpp)
 
 set(LIBS
+        enet
         freetype
         leveldb
-        mve
-        enet)
+        mve)
 
 set(LIB_INCLUDES
         external/spdlog-1.12.0/include
@@ -92,7 +93,8 @@ set(LIB_INCLUDES
         external/cereal-1.3.2/include
         external/lz4-1.9.4/include
         external/thread-pool-3.5.0/include
-        external/nlohmann-json-3.11.3/include)
+        external/nlohmann-json-3.11.3/include
+        external/enet-1.3.17/include)
 
 add_executable(${PROJECT_NAME})
 
