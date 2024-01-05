@@ -920,9 +920,9 @@ public:
 
 // [[nodiscard]] inline Matrix4 frustum(float left, float right, float bottom, float top, float near, float far);
 
-[[nodiscard]] inline Matrix4 perspective(float fov_y, float aspect, float near, float far);
+[[nodiscard]] inline Matrix4 perspective(float fov_y, float aspect, float front, float back);
 
-[[nodiscard]] inline Matrix4 ortho(float left, float right, float bottom, float top, float near, float far);
+[[nodiscard]] inline Matrix4 ortho(float left, float right, float bottom, float top, float front, float back);
 
 [[nodiscard]] inline Matrix4 look_at(Vector3 eye, Vector3 target, Vector3 up);
 

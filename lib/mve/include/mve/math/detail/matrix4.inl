@@ -413,26 +413,26 @@ inline Vector3 scale(const Matrix4& matrix)
 {
     return matrix.basis().scale();
 }
-inline Matrix4 perspective(const float fov_y, const float aspect, const float near, const float far)
+inline Matrix4 perspective(const float fov_y, const float aspect, const float front, const float back)
 {
-    const float top = near * tan(fov_y * 0.5f);
+    const float top = front * tan(fov_y * 0.5f);
     const float bottom = -top;
     const float right = top * aspect;
     const float left = -right;
 
     const float right_left = right - left;
     const float top_bottom = top - bottom;
-    const float far_near = far - near;
+    const float far_near = back - front;
 
     Matrix4 result = Matrix4::zero();
 
-    result[0][0] = near * 2.0f / right_left;
-    result[1][1] = -(near * 2.0f) / top_bottom;
+    result[0][0] = front * 2.0f / right_left;
+    result[1][1] = -(front * 2.0f) / top_bottom;
     result[2][0] = (right + left) / right_left;
     result[2][1] = (top + bottom) / top_bottom;
-    result[2][2] = -(far + near) / far_near;
+    result[2][2] = -(back + front) / far_near;
     result[2][3] = -1.0f;
-    result[3][2] = -(far * near * 2.0f) / far_near;
+    result[3][2] = -(back * front * 2.0f) / far_near;
 
     return result;
 }
@@ -500,11 +500,11 @@ inline Vector3 euler(const Matrix4& matrix)
     return matrix.basis().euler();
 }
 inline Matrix4 ortho(
-    const float left, const float right, const float bottom, const float top, const float near, const float far)
+    const float left, const float right, const float bottom, const float top, const float front, const float back)
 {
     const float rl = right - left;
     const float tb = top - bottom;
-    const float fn = far - near;
+    const float bf = back - front;
 
     Matrix4 result;
     result[0][0] = 2.0f / rl;
@@ -517,11 +517,11 @@ inline Matrix4 ortho(
     result[1][3] = 0.0f;
     result[2][0] = 0.0f;
     result[2][1] = 0.0f;
-    result[2][2] = -2.0f / fn;
+    result[2][2] = -2.0f / bf;
     result[2][3] = 0.0f;
     result[3][0] = -(left + right) / rl;
     result[3][1] = -(top + bottom) / tb;
-    result[3][2] = -(far + near) / fn;
+    result[3][2] = -(back + front) / bf;
     result[3][3] = 1.0f;
 
     return result;

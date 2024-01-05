@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 function(add_shaders TARGET)
     find_program(GLSLANGVALIDATOR glslangValidator)
     foreach (SHADER ${ARGN})
-        set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/shader/${SHADER})
+        set(current-shader-path ${CMAKE_CURRENT_SOURCE_DIR}/src/client/shader/${SHADER})
         set(current-output-path ${CMAKE_CURRENT_SOURCE_DIR}/res/bin/shader/${SHADER}.spv)
 
         # Add a custom command to compile GLSL to SPIR-V using glslangvalidator.
@@ -40,6 +40,7 @@ set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/freetype-2.13.2 SYSTEM)
 add_subdirectory(external/leveldb-1.23 SYSTEM)
+add_subdirectory(external/enet-1.3.17 SYSTEM)
 
 set(LIB_SOURCE_FILES
         external/whereami-ba364cd/src/whereami.c
@@ -49,38 +50,39 @@ set(LIB_SOURCE_FILES
 add_subdirectory(lib/mve)
 
 set(SOURCE_FILES
-        src/app.cpp
-        src/logger.cpp
-        src/util.cpp
-        src/util/fixed_loop.cpp
-        src/chunk_mesh.cpp
-        src/chunk_data.cpp
-        src/world_generator.cpp
-        src/world_data.cpp
-        src/world_renderer.cpp
-        src/player.cpp
-        src/ui_pipeline.cpp
-        src/wire_box_mesh.cpp
-        src/world.cpp
-        src/save_file.cpp
-        src/ui/nine_patch.cpp
-        src/ui/hotbar.cpp
-        src/ui/crosshair.cpp
-        src/text_pipeline.cpp
-        src/ui/debug_overlay.cpp
-        src/ui/hud.cpp
-        src/ui/console.cpp
-        src/ui/button.cpp
-        src/ui/pause_menu.cpp
-        src/chunk_controller.cpp
-        src/lighting.cpp
-        src/ui/options_menu.cpp
-        src/options.cpp)
+        src/client/app.cpp
+        src/client/logger.cpp
+        src/client/util.cpp
+        src/common/fixed_loop.cpp
+        src/client/chunk_mesh.cpp
+        src/client/chunk_data.cpp
+        src/client/world_generator.cpp
+        src/client/world_data.cpp
+        src/client/world_renderer.cpp
+        src/client/player.cpp
+        src/client/ui_pipeline.cpp
+        src/client/wire_box_mesh.cpp
+        src/client/world.cpp
+        src/client/save_file.cpp
+        src/client/ui/nine_patch.cpp
+        src/client/ui/hotbar.cpp
+        src/client/ui/crosshair.cpp
+        src/client/text_pipeline.cpp
+        src/client/ui/debug_overlay.cpp
+        src/client/ui/hud.cpp
+        src/client/ui/console.cpp
+        src/client/ui/button.cpp
+        src/client/ui/pause_menu.cpp
+        src/client/chunk_controller.cpp
+        src/client/lighting.cpp
+        src/client/ui/options_menu.cpp
+        src/client/options.cpp)
 
 set(LIBS
         freetype
         leveldb
-        mve)
+        mve
+        enet)
 
 set(LIB_INCLUDES
         external/spdlog-1.12.0/include
@@ -105,7 +107,7 @@ endif ()
 target_sources(${PROJECT_NAME} PRIVATE
         ${LIB_SOURCE_FILES}
         ${SOURCE_FILES}
-        src/main.cpp)
+        src/client/main.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
