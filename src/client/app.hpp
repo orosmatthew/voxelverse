@@ -14,14 +14,22 @@ class App {
 public:
     App();
 
+    ~App();
+
+    App(const App& other) = delete;
+    App& operator=(const App& other) = delete;
+
     void main_loop();
 
 private:
+    void handle_networking() const;
+
     void draw();
 
     mve::Window m_window;
     mve::Renderer m_renderer;
     Server m_server;
+    ENetHost* m_client;
     UIPipeline m_ui_pipeline;
     TextPipeline m_text_pipeline;
     World m_world;

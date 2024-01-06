@@ -10,6 +10,13 @@ namespace app {
 App::App()
     : m_window("Voxelverse", mve::Vector2i(800, 600))
     , m_renderer(m_window, "Voxelverse", 0, 1, 0)
+    , m_server(false)
+    , m_client(enet_host_create(
+          nullptr, // client
+          1, // outgoing connections
+          2, // channels to be used
+          0, // incoming bandwith
+          0)) // outgoing bandwith
     , m_ui_pipeline(m_renderer)
     , m_text_pipeline(m_renderer, 36)
     , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
@@ -44,6 +51,28 @@ App::App()
         m_window.windowed();
     }
     m_renderer.set_msaa_samples(m_window, msaa);
+
+    ENetAddress address;
+    enet_address_set_host_ip(&address, "127.0.0.1");
+    address.port = c_server_port;
+    ENetPeer* peer = enet_host_connect(m_client, &address, 2, 0);
+    VV_REL_ASSERT(peer != nullptr, "[App] No available peers for initiating an ENet connection");
+    ENetEvent event;
+    if (enet_host_service(m_client, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
+        LOG->info("[App] Connected to server");
+    }
+    else {
+        enet_peer_reset(peer);
+        LOG->error("[App] Failed to connect to server;");
+    }
+    enet_host_flush(m_client);
+}
+
+App::~App()
+{
+    enet_host_flush(m_client);
+    enet_host_destroy(m_client);
+    enet_deinitialize();
 }
 
 void App::draw()
@@ -68,6 +97,8 @@ void App::draw()
 void App::main_loop()
 {
     while (!m_window.should_close() && !m_world.should_exit()) {
+        handle_networking();
+
         m_window.poll_events();
 
         m_fixed_loop.update(5, [&] { m_world.fixed_update(m_window); });
@@ -98,6 +129,26 @@ void App::main_loop()
 
     const Options options { .fullscreen = m_window.is_fullscreen(), .msaa = m_renderer.current_msaa_samples() };
     set_options(options);
+}
+
+void App::handle_networking() const
+{
+    ENetEvent event;
+    std::string buffer;
+    while (enet_host_service(m_client, &event, 0) > 0) {
+        switch (event.type) {
+        case ENET_EVENT_TYPE_DISCONNECT:
+            LOG->info("[App] Disconnected from server");
+            break;
+        case ENET_EVENT_TYPE_RECEIVE:
+            buffer = std::string(event.packet->data, event.packet->data + event.packet->dataLength);
+            LOG->info("[App] Receieved packet: {}", buffer);
+            enet_packet_destroy(event.packet);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 }
