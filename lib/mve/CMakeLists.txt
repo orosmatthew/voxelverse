@@ -30,4 +30,4 @@ target_include_directories(mve PUBLIC
         external/stb-8b5f1f3/include
         include)
 
-target_include_directories(mve PRIVATE external/spdlog-1.12.0/include)
+target_include_directories(mve PRIVATE external/spdlog-1.13.0/include)
