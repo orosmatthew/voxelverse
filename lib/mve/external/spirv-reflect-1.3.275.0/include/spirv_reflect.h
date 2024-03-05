@@ -22,6 +22,7 @@ VERSION HISTORY
 
 */
 
+// clang-format off
 /*!
 
  @file spirv_reflect.h
@@ -153,6 +154,8 @@ typedef enum SpvReflectDecorationFlagBits {
   SPV_REFLECT_DECORATION_PATCH                  = 0x00000400,
   SPV_REFLECT_DECORATION_PER_VERTEX             = 0x00000800,
   SPV_REFLECT_DECORATION_PER_TASK               = 0x00001000,
+  SPV_REFLECT_DECORATION_WEIGHT_TEXTURE         = 0x00002000,
+  SPV_REFLECT_DECORATION_BLOCK_MATCH_TEXTURE    = 0x00004000,
 } SpvReflectDecorationFlagBits;
 
 typedef uint32_t SpvReflectDecorationFlags;
@@ -217,6 +220,8 @@ typedef enum SpvReflectFormat {
 enum SpvReflectVariableFlagBits{
   SPV_REFLECT_VARIABLE_FLAGS_NONE   = 0x00000000,
   SPV_REFLECT_VARIABLE_FLAGS_UNUSED = 0x00000001,
+  // If variable points to a copy of the PhysicalStorageBuffer struct
+  SPV_REFLECT_VARIABLE_FLAGS_PHYSICAL_POINTER_COPY = 0x00000002,
 };
 
 typedef uint32_t SpvReflectVariableFlags;
@@ -358,6 +363,10 @@ typedef struct SpvReflectTypeDescription {
   // If underlying type is a struct (ex. array of structs)
   // this gives access to the OpTypeStruct
   struct SpvReflectTypeDescription* struct_type_description;
+
+  // Some pointers to SpvReflectTypeDescription are really
+  // just copies of another reference to the same OpType
+  uint32_t                          copied;
 
   // @deprecated use struct_type_description instead
   uint32_t                          member_count;
@@ -2337,3 +2346,5 @@ inline SpvReflectResult ShaderModule::ChangeOutputVariableLocation(
 } // namespace spv_reflect
 #endif // defined(__cplusplus) && !defined(SPIRV_REFLECT_DISABLE_CPP_WRAPPER)
 #endif // SPIRV_REFLECT_H
+
+// clang-format on
