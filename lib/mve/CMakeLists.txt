@@ -8,7 +8,7 @@ find_package(Vulkan REQUIRED)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/glfw-3.3.8)
+add_subdirectory(external/glfw-3.4)
 
 add_library(mve STATIC
         external/spirv-reflect-1.3.268.0/src/spirv_reflect.cpp
