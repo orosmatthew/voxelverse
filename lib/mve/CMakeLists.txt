@@ -27,7 +27,7 @@ target_include_directories(mve SYSTEM PUBLIC
 
 target_include_directories(mve PUBLIC
         external/spirv-reflect-1.3.275.0/include
-        external/stb-8b5f1f3/include
+        external/stb-image-2.29/include
         include)
 
 target_include_directories(mve PRIVATE external/spdlog-1.13.0/include)
