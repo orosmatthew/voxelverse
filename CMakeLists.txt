@@ -84,6 +84,9 @@ set(LIBS
         freetype
         leveldb
         mve)
+if (WIN32)
+    list(APPEND LIBS winmm.lib Ws2_32.lib)
+endif ()
 
 set(LIB_INCLUDES
         external/spdlog-1.12.0/include

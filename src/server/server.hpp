@@ -2,6 +2,7 @@
 
 #include <thread>
 
+#define NOMINMAX
 #include <enet/enet.h>
 
 constexpr int c_server_port = 27878;
