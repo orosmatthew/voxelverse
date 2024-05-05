@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace mve {
 
 inline Vector2i::Vector2i()

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace mve {
 
 inline Vector3i abs(const Vector3i vector)
