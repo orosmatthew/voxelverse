@@ -17,8 +17,8 @@ DescriptorSetAllocator::DescriptorSetAllocator()
                 { vk::DescriptorType::eStorageBufferDynamic, 1.0f },
                 { vk::DescriptorType::eInputAttachment, 0.5f } })
     , m_max_sets_per_pool(1000)
-    , m_current_pool_index(0)
     , m_id_count(0)
+    , m_current_pool_index(0)
 {
 }
 

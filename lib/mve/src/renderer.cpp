@@ -1294,7 +1294,8 @@ void Renderer::destroy(Texture& texture)
 }
 
 // TODO: mip-mapping
-Texture Renderer::create_texture(const TextureFormat format, uint32_t width, uint32_t height, const std::byte* data)
+Texture Renderer::create_texture(
+    const TextureFormat format, const uint32_t width, const uint32_t height, const std::byte* data)
 {
     MVE_VAL_ASSERT(width != 0 && height != 0, "[Renderer] Attempt to create texture with 0 width or height")
     constexpr uint32_t mip_levels = 1;

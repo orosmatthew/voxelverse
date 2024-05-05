@@ -127,11 +127,12 @@ inline Vector4 inverse(const Vector4 vector)
 inline Vector4 clamp_length(const Vector4 vector, const float min, const float max)
 {
     if (const float length_sqr = length_sqrd(vector); length_sqr > 0.0f) {
+        const auto norm = normalize(vector);
         if (const float length = sqrt(length_sqr); length < min) {
-            return normalize(vector) * min;
+            return norm * min;
         }
         else if (length > max) {
-            return normalize(vector) * max;
+            return norm * max;
         }
     }
     return vector;

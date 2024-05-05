@@ -9,18 +9,18 @@ namespace mve {
 
 Window::Window(const std::string& title, const Vector2i size, const bool resizable)
     : m_resizable(resizable)
-    , m_fullscreen(false)
     , m_hidden(false)
     , m_minimized(false)
     , m_maximized(false)
     , m_focused(true)
-    , m_min_size(0, 0)
     , m_cursor_hidden(false)
     , m_cursor_in_window(true)
     , m_event_waiting(false)
-    , m_mouse_delta(0.0f)
-    , m_mouse_pos_prev(0.0f)
+    , m_fullscreen(false)
+    , m_min_size(0, 0)
     , m_current_mouse_pos(0.0f)
+    , m_mouse_pos_prev(0.0f)
+    , m_mouse_delta(0.0f)
     , m_mouse_pos(0.0f)
 {
     m_windowed_size = m_size;
@@ -476,7 +476,7 @@ void Window::glfw_char_callback(GLFWwindow* window, const unsigned int codepoint
 {
     auto* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
     std::string str;
-    str.push_back(codepoint);
+    str.push_back(static_cast<char>(codepoint));
     instance->m_current_input_stream.push_back(str);
 }
 bool Window::is_key_repeated(const Key key) const

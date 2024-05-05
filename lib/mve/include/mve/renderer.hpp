@@ -217,7 +217,7 @@ private:
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const;
 
-    detail::DepthImage create_depth_image() const;
+    [[nodiscard]] detail::DepthImage create_depth_image() const;
 };
 }
 
