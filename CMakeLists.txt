@@ -40,7 +40,7 @@ set(LEVELDB_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/freetype-2.13.2 SYSTEM)
 add_subdirectory(external/leveldb-1.23 SYSTEM)
-add_subdirectory(external/enet-1.3.17 SYSTEM)
+add_subdirectory(external/enet-1.3.18 SYSTEM)
 
 set(LIB_SOURCE_FILES
         external/whereami-ba364cd/src/whereami.c
@@ -97,7 +97,7 @@ set(LIB_INCLUDES
         external/lz4-1.9.4/include
         external/thread-pool-3.5.0/include
         external/nlohmann-json-3.11.3/include
-        external/enet-1.3.17/include)
+        external/enet-1.3.18/include)
 
 add_executable(${PROJECT_NAME})
 
