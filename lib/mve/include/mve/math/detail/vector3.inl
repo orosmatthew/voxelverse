@@ -55,9 +55,7 @@ inline float length_sqrd(const Vector3 vector)
 }
 inline Vector3 linear_interpolate(const Vector3 from, const Vector3 to, const float weight)
 {
-    return { linear_interpolate(from.x, to.x, weight),
-             linear_interpolate(from.y, to.y, weight),
-             linear_interpolate(from.z, to.z, weight) };
+    return { lerp(from.x, to.x, weight), lerp(from.y, to.y, weight), lerp(from.z, to.z, weight) };
 }
 inline Vector3Axis max_axis(const Vector3 vector)
 {

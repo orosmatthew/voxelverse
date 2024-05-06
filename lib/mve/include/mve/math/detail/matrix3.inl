@@ -490,9 +490,9 @@ inline Matrix3 spherical_linear_interpolate(const Matrix3& from, const Matrix3& 
     const Quaternion to_quat = to.quaternion();
 
     Matrix3 matrix = from_quat.spherical_linear_interpolate(to_quat, weight).matrix();
-    matrix[0] *= linear_interpolate(from[0].length(), to[0].length(), weight);
-    matrix[1] *= linear_interpolate(from[1].length(), to[1].length(), weight);
-    matrix[2] *= linear_interpolate(from[2].length(), to[2].length(), weight);
+    matrix[0] *= lerp(from[0].length(), to[0].length(), weight);
+    matrix[1] *= lerp(from[1].length(), to[1].length(), weight);
+    matrix[2] *= lerp(from[2].length(), to[2].length(), weight);
 
     return matrix;
 }

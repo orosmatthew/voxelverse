@@ -1,66 +1,184 @@
 #pragma once
 
-#include <functional>
+#include <algorithm>
+#include <cmath>
 
 namespace mve {
 
-constexpr float epsilon = 0.00001f;
+constexpr double epsilon = 0.00001;
 
-constexpr float pi = 3.14159265358979323846264338327950288f;
+constexpr double pi = 3.14159265358979323846264338327950288;
 
-[[nodiscard]] inline bool is_equal_approx(float a, float b);
+template <typename Number>
+Number abs(const Number value)
+{
+    return std::abs(value);
+}
 
-[[nodiscard]] inline bool approx_gte(float a, float b);
+template <typename Number>
+bool is_zero_approx(const Number value, Number epsilon = mve::epsilon)
+{
+    return mve::abs(value) < epsilon;
+}
 
-[[nodiscard]] inline bool approx_lte(float a, float b);
+template <typename Number>
+bool is_equal_approx(const Number a, const Number b, Number epsilon = mve::epsilon)
+{
+    if (a == b) {
+        return true;
+    }
+    Number tolerance = epsilon * mve::abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
+    }
+    return mve::abs(a - b) < tolerance;
+}
 
-[[nodiscard]] inline bool is_zero_approx(float val);
+template <typename Number>
+bool approx_gte(const Number a, const Number b, Number epsilon = mve::epsilon)
+{
+    if (a > b) {
+        return true;
+    }
+    Number tolerance = epsilon * mve::abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
+    }
+    return mve::abs(a - b) < tolerance;
+}
 
-[[nodiscard]] inline float abs(float val);
+template <typename Number>
+bool approx_lte(const Number a, const Number b, Number epsilon = mve::epsilon)
+{
+    if (a < b) {
+        return true;
+    }
+    Number tolerance = epsilon * mve::abs(a);
+    if (tolerance < epsilon) {
+        tolerance = epsilon;
+    }
+    return mve::abs(a - b) < tolerance;
+}
 
-[[nodiscard]] inline int abs(int val);
+template <typename Number>
+Number ceil(const Number value)
+{
+    return std::ceil(value);
+}
 
-[[nodiscard]] inline float ceil(float val);
+template <typename Number>
+Number clamp(const Number value, const Number min, const Number max)
+{
+    return std::clamp(value, min, max);
+}
 
-[[nodiscard]] inline float clamp(float val, float min, float max);
+template <typename Number>
+Number sqrt(const Number value)
+{
+    return std::sqrt(value);
+}
 
-[[nodiscard]] inline int clamp(int val, int min, int max);
+template <typename Number>
+Number pow(const float base, const float power)
+{
+    return std::pow(base, power);
+}
 
-[[nodiscard]] inline float sqrt(float val);
+template <typename Number>
+Number sqrd(const Number value)
+{
+    return value * value;
+}
 
-[[nodiscard]] inline float pow(float val, float power);
+template <typename Number>
+Number floor(const Number value)
+{
+    return std::floor(value);
+}
 
-[[nodiscard]] inline float sqrd(float val);
+template <typename Number>
+Number lerp(const Number from, const Number to, const Number weight)
+{
+    return from * (1.0f - weight) + to * weight;
+}
 
-[[nodiscard]] inline float floor(float val);
+template <typename Number>
+Number sin(const Number value)
+{
+    return std::sin(value);
+}
 
-[[nodiscard]] inline float sin(float val);
+template <typename Number>
+Number cos(const Number value)
+{
+    return std::cos(value);
+}
 
-[[nodiscard]] inline float asin(float val);
+template <typename Number>
+Number tan(const Number value)
+{
+    return std::tan(value);
+}
 
-[[nodiscard]] inline float cos(float val);
+template <typename Number>
+Number round(const Number value)
+{
+    return std::round(value);
+}
 
-[[nodiscard]] inline float acos(float val);
+template <typename Number>
+Number atan(const Number value)
+{
+    return std::atan(value);
+}
 
-[[nodiscard]] inline float tan(float val);
+template <typename Number>
+Number atan2(const Number a, const Number b)
+{
+    return std::atan2(a, b);
+}
 
-[[nodiscard]] inline float atan(float val);
+template <typename Number>
+Number radians(const Number degrees, Number pi = mve::pi)
+{
+    return degrees * (pi / 180.0);
+}
 
-[[nodiscard]] inline float atan2(float a, float b);
+template <typename Number>
+Number degrees(const Number radians, Number pi = mve::pi)
+{
+    return radians * (180.0 / pi);
+}
 
-[[nodiscard]] inline float round(float val);
+template <typename Number>
+Number asin(const Number value)
+{
+    return std::asin(value);
+}
 
-[[nodiscard]] inline float radians(float degrees);
+template <typename Number>
+Number acos(const Number value)
+{
+    return std::acos(value);
+}
 
-[[nodiscard]] inline float degrees(float radians);
+template <typename Number>
+Number min(const Number a, const Number b)
+{
+    return std::min(a, b);
+}
 
-[[nodiscard]] inline float linear_interpolate(float from, float to, float weight);
+template <typename Number>
+Number max(const Number a, const Number b)
+{
+    return std::max(a, b);
+}
 
-[[nodiscard]] inline float min(float a, float b);
-
-[[nodiscard]] inline float max(float a, float b);
-
-[[nodiscard]] inline float log2(float val);
+template <typename Number>
+Number log2(const Number value)
+{
+    return std::log2f(value);
+}
 
 class Matrix3;
 class Matrix4;
@@ -72,7 +190,7 @@ class Vector3i;
 class Vector4;
 class Vector4i;
 
-enum class Vector4iAxis { x, y, z, w };
+enum class Axis4 { x, y, z, w };
 
 class Vector4i {
 public:
@@ -81,100 +199,321 @@ public:
     int z;
     int w;
 
-    inline Vector4i();
+    Vector4i()
+        : x(0)
+        , y(0)
+        , z(0)
+        , w(0)
+    {
+    }
 
     inline explicit Vector4i(const Vector4& vector);
 
-    inline Vector4i(int x, int y, int z, int w);
+    Vector4i(const int x, const int y, const int z, const int w)
+        : x(x)
+        , y(y)
+        , z(z)
+        , w(w)
+    {
+    }
 
-    inline explicit Vector4i(int val);
+    static Vector4i all(const int value)
+    {
+        return { value, value, value, value };
+    }
 
-    static inline Vector4i zero();
+    static Vector4i zero()
+    {
+        return { 0, 0, 0, 0 };
+    }
 
-    static inline Vector4i one();
+    static Vector4i one()
+    {
+        return { 1, 1, 1, 1 };
+    }
 
-    [[nodiscard]] inline Vector4i abs() const;
+    [[nodiscard]] Vector4i abs() const
+    {
+        return { mve::abs(x), mve::abs(y), mve::abs(z), mve::abs(w) };
+    }
 
-    [[nodiscard]] inline Vector4i clamp(Vector4i min, Vector4i max) const;
+    [[nodiscard]] Vector4i clamped(const Vector4i min, const Vector4i max) const
+    {
+        return { clamp(x, min.x, max.x), clamp(y, min.y, max.y), clamp(z, min.z, max.z), clamp(w, min.w, max.w) };
+    }
 
-    [[nodiscard]] inline float length() const;
+    template <typename Number>
+    [[nodiscard]] Number length_sqrd() const
+    {
+        return sqrd(static_cast<Number>(x)) + sqrd(static_cast<Number>(y)) + sqrd(static_cast<Number>(z))
+            + sqrd(static_cast<Number>(w));
+    }
 
-    [[nodiscard]] inline float length_sqrd() const;
+    template <typename Number>
+    [[nodiscard]] Number length() const
+    {
+        return mve::sqrt(length_sqrd<Number>());
+    }
 
-    [[nodiscard]] inline Vector4iAxis max_axis() const;
+    [[nodiscard]] Axis4 max_axis() const
+    {
+        int max_val = x;
+        auto max_axis = Axis4::x;
+        if (y > max_val) {
+            max_val = y;
+            max_axis = Axis4::y;
+        }
+        if (z > max_val) {
+            max_val = z;
+            max_axis = Axis4::z;
+        }
+        if (w > max_val) {
+            max_axis = Axis4::w;
+        }
+        return max_axis;
+    }
 
-    [[nodiscard]] inline Vector4iAxis min_axis() const;
+    [[nodiscard]] Axis4 min_axis() const
+    {
+        int min_val = x;
+        auto min_axis = Axis4::x;
+        if (y < min_val) {
+            min_val = y;
+            min_axis = Axis4::y;
+        }
+        if (z < min_val) {
+            min_val = z;
+            min_axis = Axis4::z;
+        }
+        if (w < min_val) {
+            min_axis = Axis4::w;
+        }
+        return min_axis;
+    }
 
-    [[nodiscard]] inline bool operator!=(Vector4i other) const;
+    [[nodiscard]] bool operator!=(const Vector4i other) const
+    {
+        return x != other.x || y != other.y || z != other.z || w != other.w;
+    }
 
-    [[nodiscard]] inline Vector4i operator%(Vector4i other) const;
+    [[nodiscard]] Vector4i operator%(const Vector4i other) const
+    {
+        return { x % other.x, y & other.y, z % other.z, w % other.w };
+    }
 
-    inline Vector4i& operator%=(Vector4i other);
+    Vector4i& operator%=(const Vector4i other)
+    {
+        x %= other.x;
+        y %= other.y;
+        z %= other.z;
+        w %= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator%(int val) const;
+    [[nodiscard]] Vector4i operator%(const int value) const
+    {
+        return { x % value, y % value, z % value, w % value };
+    }
 
-    inline Vector4i& operator%=(int val);
+    Vector4i& operator%=(const int value)
+    {
+        x %= value;
+        y %= value;
+        z %= value;
+        w %= value;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator*(Vector4i other) const;
+    [[nodiscard]] Vector4i operator*(const Vector4i other) const
+    {
+        return { x * other.x, y * other.y, z * other.z, w * other.w };
+    }
 
-    inline Vector4i& operator*=(Vector4i other);
+    Vector4i& operator*=(const Vector4i other)
+    {
+        x *= other.x;
+        y *= other.y;
+        z *= other.z;
+        w *= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator*(float val) const;
+    template <typename Number>
+    [[nodiscard]] Vector4i operator*(const Number value) const
+    {
+        return { x * static_cast<Number>(value),
+                 y * static_cast<Number>(value),
+                 z * static_cast<Number>(value),
+                 w * static_cast<Number>(value) };
+    }
 
-    inline Vector4i& operator*=(float val);
+    template <typename Number>
+    Vector4i& operator*=(Number value)
+    {
+        x *= static_cast<int>(value);
+        y *= static_cast<int>(value);
+        z *= static_cast<int>(value);
+        w *= static_cast<int>(value);
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator+(Vector4i other) const;
+    [[nodiscard]] Vector4i operator+(const Vector4i other) const
+    {
+        return { x + other.x, y + other.y, z + other.z, w + other.w };
+    }
 
-    inline Vector4i& operator+=(Vector4i other);
+    Vector4i& operator+=(const Vector4i other)
+    {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+        w += other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator-(Vector4i other) const;
+    [[nodiscard]] Vector4i operator-(const Vector4i other) const
+    {
+        return { x - other.x, y - other.y, z - other.z, w - other.w };
+    }
 
-    inline Vector4i& operator-=(Vector4i other);
+    Vector4i& operator-=(const Vector4i other)
+    {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        w -= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator/(Vector4i other) const;
+    [[nodiscard]] Vector4i operator/(const Vector4i other) const
+    {
+        return { x / other.x, y / other.y, z / other.z, w / other.w };
+    }
 
-    inline Vector4i& operator/=(Vector4i other);
+    Vector4i& operator/=(const Vector4i other)
+    {
+        x /= other.x;
+        y /= other.y;
+        z /= other.z;
+        w /= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator/(float val) const;
+    template <typename Number>
+    [[nodiscard]] Vector4i operator/(Number value) const
+    {
+        return { x / static_cast<Number>(value),
+                 y / static_cast<Number>(value),
+                 z / static_cast<Number>(value),
+                 w / static_cast<Number>(value) };
+    }
 
-    inline Vector4i& operator/=(float val);
+    template <typename Number>
+    Vector4i& operator/=(Number val)
+    {
+        x /= static_cast<Number>(val);
+        y /= static_cast<Number>(val);
+        z /= static_cast<Number>(val);
+        w /= static_cast<Number>(val);
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4i operator/(int val) const;
+    [[nodiscard]] bool operator<(const Vector4i other) const
+    {
+        if (x != other.x) {
+            return x < other.x;
+        }
+        if (y != other.y) {
+            return y < other.y;
+        }
+        if (z != other.z) {
+            return z < other.z;
+        }
+        if (w != other.w) {
+            return w < other.w;
+        }
+        return false;
+    }
 
-    inline Vector4i& operator/=(int val);
+    [[nodiscard]] bool operator<=(const Vector4i other) const
+    {
+        return *this < other || *this == other;
+    }
 
-    [[nodiscard]] inline bool operator<(Vector4i other) const;
+    [[nodiscard]] bool operator==(const Vector4i other) const
+    {
+        return x == other.x && y == other.y && z == other.z && w == other.w;
+    }
 
-    [[nodiscard]] inline bool operator<=(Vector4i other) const;
+    [[nodiscard]] bool operator>(const Vector4i other) const
+    {
+        if (x != other.x) {
+            return x > other.x;
+        }
+        if (y != other.y) {
+            return y > other.y;
+        }
+        if (z != other.z) {
+            return z > other.z;
+        }
+        if (w != other.w) {
+            return w > other.w;
+        }
+        return false;
+    }
 
-    [[nodiscard]] inline bool operator==(Vector4i other) const;
+    [[nodiscard]] bool operator>=(const Vector4i other) const
+    {
+        return *this > other || *this == other;
+    }
 
-    [[nodiscard]] inline bool operator>(Vector4i other) const;
+    [[nodiscard]] int& operator[](const int index)
+    {
+        switch (index) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        default:
+            return x;
+        }
+    }
 
-    [[nodiscard]] inline bool operator>=(Vector4i other) const;
+    [[nodiscard]] int& operator[](const Axis4 axis)
+    {
+        switch (axis) {
+        case Axis4::x:
+            return x;
+        case Axis4::y:
+            return y;
+        case Axis4::z:
+            return z;
+        case Axis4::w:
+            return w;
+        default:
+            return x;
+        }
+    }
 
-    [[nodiscard]] inline int& operator[](int index);
+    [[nodiscard]] Vector4i operator+() const
+    {
+        return { x, y, z, w };
+    }
 
-    [[nodiscard]] inline int& operator[](Vector4iAxis axis);
+    [[nodiscard]] Vector4i operator-() const
+    {
+        return { -x, -y, -z, -w };
+    }
 
-    [[nodiscard]] inline Vector4i operator+() const;
-
-    [[nodiscard]] inline Vector4i operator-() const;
-
-    [[nodiscard]] inline explicit operator bool() const;
+    [[nodiscard]] explicit operator bool() const
+    {
+        return x != 0 || y != 0 || z != 0 || w != 0;
+    }
 };
-
-[[nodiscard]] inline Vector4i abs(Vector4i vector);
-
-[[nodiscard]] inline Vector4i clamp(Vector4i vector, Vector4i min, Vector4i max);
-
-[[nodiscard]] inline float length(Vector4i vector);
-
-[[nodiscard]] inline float length_sqrd(Vector4i vector);
-
-[[nodiscard]] inline Vector4iAxis max_axis(Vector4i vector);
-
-[[nodiscard]] inline Vector4iAxis min_axis(Vector4i vector);
 
 enum class Vector4Axis { x, y, z, w };
 
@@ -1245,7 +1584,6 @@ public:
 
 }
 
-#include "detail/functions.inl"
 #include "detail/matrix3.inl"
 #include "detail/matrix4.inl"
 #include "detail/quaternion.inl"

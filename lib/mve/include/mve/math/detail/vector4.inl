@@ -60,10 +60,10 @@ inline float length_sqrd(const Vector4 vector)
 }
 inline Vector4 linear_interpolate(const Vector4 from, const Vector4 to, const float weight)
 {
-    return { linear_interpolate(from.x, to.x, weight),
-             linear_interpolate(from.y, to.y, weight),
-             linear_interpolate(from.z, to.z, weight),
-             linear_interpolate(from.w, to.w, weight) };
+    return { lerp(from.x, to.x, weight),
+             lerp(from.y, to.y, weight),
+             lerp(from.z, to.z, weight),
+             lerp(from.w, to.w, weight) };
 }
 inline Vector4Axis min_axis(const Vector4 vector)
 {
