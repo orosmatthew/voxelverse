@@ -268,7 +268,7 @@ inline float angle(const Quaternion& from, const Quaternion& to)
 }
 inline float dot(const Quaternion& a, const Quaternion& b)
 {
-    return dot(a.data, b.data);
+    return a.data.dot(b.data);
 }
 inline Vector3 euler(const Quaternion& quaternion)
 {

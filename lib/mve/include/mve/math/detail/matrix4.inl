@@ -471,13 +471,13 @@ inline Matrix4 translate(const Matrix4& matrix, const Vector3 offset)
 }
 inline bool is_equal_approx(Matrix4 a, Matrix4 b)
 {
-    return is_equal_approx(a[0], b[0]) && is_equal_approx(a[1], b[1]) && is_equal_approx(a[2], b[2])
-        && is_equal_approx(a[3], b[3]);
+    return a[0].is_equal_approx(b[0]) && a[1].is_equal_approx(b[1]) && a[2].is_equal_approx(b[2])
+        && a[3].is_equal_approx(b[3]);
 }
 inline bool is_zero_approx(Matrix4 matrix)
 {
-    return is_zero_approx(matrix[0]) && is_zero_approx(matrix[1]) && is_zero_approx(matrix[2])
-        && is_zero_approx(matrix[3]);
+    return matrix[0].is_zero_approx() && matrix[1].is_zero_approx() && matrix[2].is_zero_approx()
+        && matrix[3].is_zero_approx();
 }
 inline Matrix4 rotate_local(const Matrix4& matrix, const Vector3& axis, const float angle)
 {

@@ -515,8 +515,6 @@ public:
     }
 };
 
-enum class Vector4Axis { x, y, z, w };
-
 class Vector4 {
 public:
     float x;
@@ -524,146 +522,438 @@ public:
     float z;
     float w;
 
-    inline Vector4();
+    Vector4()
+        : x(0.0f)
+        , y(0.0f)
+        , z(0.0f)
+        , w(0.0f)
+    {
+    }
 
-    inline explicit Vector4(float val);
+    static Vector4 all(const float value)
+    {
+        return { value, value, value, value };
+    }
 
-    inline Vector4(float x, float y, float z, float w);
+    Vector4(const float x, const float y, const float z, const float w)
+        : x(x)
+        , y(y)
+        , z(z)
+        , w(w)
+    {
+    }
 
-    static inline Vector4 zero();
+    static Vector4 zero()
+    {
+        return { 0.0f, 0.0f, 0.0f, 0.0f };
+    }
 
-    static inline Vector4 one();
+    static Vector4 one()
+    {
+        return { 1.0f, 1.0f, 1.0f, 1.0f };
+    }
 
-    [[nodiscard]] inline Vector4 abs() const;
+    [[nodiscard]] Vector4 abs() const
+    {
+        return { mve::abs(x), mve::abs(y), mve::abs(z), mve::abs(w) };
+    }
 
-    [[nodiscard]] inline Vector4 ceil() const;
+    [[nodiscard]] Vector4 ceil() const
+    {
+        return { mve::ceil(x), mve::ceil(y), mve::ceil(z), mve::ceil(w) };
+    }
 
-    [[nodiscard]] inline Vector4 clamp(Vector4 min, Vector4 max) const;
+    [[nodiscard]] Vector4 clamp(const Vector4 min, const Vector4 max) const
+    {
+        return { mve::clamp(x, min.x, max.x),
+                 mve::clamp(y, min.y, max.y),
+                 mve::clamp(z, min.z, max.z),
+                 mve::clamp(w, min.w, max.w) };
+    }
 
-    [[nodiscard]] inline Vector4 direction_to(Vector4 to) const;
+    [[nodiscard]] Vector4 normalized() const
+    {
+        Vector4 result;
+        if (const float len = length(); len > 0) {
+            const float inverse_length = 1.0f / len;
+            result = *this * inverse_length;
+        }
+        return result;
+    }
 
-    [[nodiscard]] inline float distance_sqrd_to(Vector4 to) const;
+    [[nodiscard]] Vector4 direction_to(const Vector4 to) const
+    {
+        return (to - *this).normalized();
+    }
 
-    [[nodiscard]] inline float distance_to(Vector4 to) const;
+    [[nodiscard]] float distance_sqrd_to(const Vector4 to) const
+    {
+        const float diff_x = to.x - x;
+        const float diff_y = to.y - y;
+        const float diff_z = to.z - z;
+        const float diff_w = to.w - w;
+        return sqrd(diff_x) + sqrd(diff_y) + sqrd(diff_z) + sqrd(diff_w);
+    }
 
-    [[nodiscard]] inline Vector4 normalize() const;
+    [[nodiscard]] float distance_to(const Vector4 to) const
+    {
+        return sqrt(distance_sqrd_to(to));
+    }
 
-    [[nodiscard]] inline Vector4 floor() const;
+    [[nodiscard]] Vector4 floor() const
+    {
+        return { mve::floor(x), mve::floor(y), mve::floor(z), mve::floor(w) };
+    }
 
-    [[nodiscard]] inline float length() const;
+    [[nodiscard]] float length_sqrd() const
+    {
+        return sqrd(x) + sqrd(y) + sqrd(z) + sqrd(w);
+    }
 
-    [[nodiscard]] inline float length_sqrd() const;
+    [[nodiscard]] float length() const
+    {
+        return sqrt(length_sqrd());
+    }
 
-    [[nodiscard]] inline Vector4 linear_interpolate(Vector4 to, float weight) const;
+    [[nodiscard]] Vector4 lerp(const Vector4 to, const float weight) const
+    {
+        return { mve::lerp(x, to.x, weight),
+                 mve::lerp(y, to.y, weight),
+                 mve::lerp(z, to.z, weight),
+                 mve::lerp(w, to.w, weight) };
+    }
 
-    [[nodiscard]] inline Vector4Axis min_axis() const;
+    [[nodiscard]] Axis4 min_axis() const
+    {
+        float min_val = x;
+        auto min_axis = Axis4::x;
+        if (y < min_val) {
+            min_val = y;
+            min_axis = Axis4::y;
+        }
+        if (z < min_val) {
+            min_val = z;
+            min_axis = Axis4::z;
+        }
+        if (w < min_val) {
+            min_axis = Axis4::w;
+        }
+        return min_axis;
+    }
 
-    [[nodiscard]] inline Vector4Axis max_axis() const;
+    [[nodiscard]] Axis4 max_axis() const
+    {
+        float max_val = x;
+        auto max_axis = Axis4::x;
+        if (y > max_val) {
+            max_val = y;
+            max_axis = Axis4::y;
+        }
+        if (z > max_val) {
+            max_val = z;
+            max_axis = Axis4::z;
+        }
+        if (w > max_val) {
+            max_axis = Axis4::w;
+        }
+        return max_axis;
+    }
 
-    [[nodiscard]] inline bool is_equal_approx(Vector4 vector) const;
+    [[nodiscard]] bool is_equal_approx(const Vector4 other) const
+    {
+        return mve::is_equal_approx(x, other.x) && mve::is_equal_approx(y, other.y) && mve::is_equal_approx(z, other.z)
+            && mve::is_equal_approx(w, other.w);
+    }
 
-    [[nodiscard]] inline bool is_zero_approx() const;
+    [[nodiscard]] bool is_zero_approx() const
+    {
+        return mve::is_zero_approx(x) && mve::is_zero_approx(y) && mve::is_zero_approx(z) && mve::is_zero_approx(w);
+    }
 
-    [[nodiscard]] inline float dot(Vector4 vector) const;
+    [[nodiscard]] float dot(const Vector4 other) const
+    {
+        return x * other.x + y * other.y + z * other.z + w * other.w;
+    }
 
-    [[nodiscard]] inline Vector4 inverse() const;
+    [[nodiscard]] Vector4 inverse() const
+    {
+        return { 1.0f / x, 1.0f / y, 1.0f / z, 1.0f / w };
+    }
 
-    [[nodiscard]] inline Vector4 clamp_length(float min, float max) const;
+    [[nodiscard]] Vector4 length_clamped(const float min, const float max) const
+    {
+        auto result = *this;
+        if (const float length_sqr = length_sqrd(); length_sqr > 0.0f) {
+            result = normalized();
+            if (const float length = sqrt(length_sqr); length < min) {
+                return result * min;
+            }
+            else if (length > max) {
+                return result * max;
+            }
+        }
+        return result;
+    }
 
-    [[nodiscard]] inline Vector4 round() const;
+    [[nodiscard]] Vector4 rounded() const
+    {
+        return { round(x), round(y), round(z), round(w) };
+    }
 
-    [[nodiscard]] inline bool operator!=(Vector4 other) const;
+    [[nodiscard]] bool operator!=(const Vector4 other) const
+    {
+        return x != other.x || y != other.y || z != other.z || w != other.w;
+    }
 
-    [[nodiscard]] inline Vector4 operator*(Vector4 other) const;
+    [[nodiscard]] Vector4 operator*(const Vector4 other) const
+    {
+        return { x * other.x, y * other.y, z * other.z, w * other.w };
+    }
 
-    inline Vector4& operator*=(Vector4 other);
+    Vector4& operator*=(const Vector4 other)
+    {
+        x *= other.x;
+        y *= other.y;
+        z *= other.z;
+        w *= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator*(float val) const;
+    [[nodiscard]] Vector4 operator*(const float value) const
+    {
+        return { x * value, y * value, z * value, w * value };
+    }
 
-    inline Vector4& operator*=(float val);
+    Vector4& operator*=(const float value)
+    {
+        x *= value;
+        y *= value;
+        z *= value;
+        w *= value;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator*(int val) const;
+    [[nodiscard]] Vector4 operator*(const int value) const
+    {
+        return { x * static_cast<float>(value),
+                 y * static_cast<float>(value),
+                 z * static_cast<float>(value),
+                 w * static_cast<float>(value) };
+    }
 
-    inline Vector4& operator*=(int val);
+    Vector4& operator*=(const int value)
+    {
+        x *= static_cast<float>(value);
+        y *= static_cast<float>(value);
+        z *= static_cast<float>(value);
+        w *= static_cast<float>(value);
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator+(Vector4 other) const;
+    [[nodiscard]] Vector4 operator+(const Vector4 other) const
+    {
+        return { x + other.x, y + other.y, z + other.z, w + other.w };
+    }
 
-    inline Vector4& operator+=(Vector4 other);
+    Vector4& operator+=(const Vector4 other)
+    {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+        w += other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator-(Vector4 other) const;
+    [[nodiscard]] Vector4 operator-(Vector4 other) const
+    {
+        return { x - other.x, y - other.y, z - other.z, w - other.w };
+    }
 
-    inline Vector4& operator-=(Vector4 other);
+    Vector4& operator-=(const Vector4 other)
+    {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        w -= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator/(Vector4 other) const;
+    [[nodiscard]] Vector4 operator/(const Vector4 other) const
+    {
+        return { x / other.x, y / other.y, z / other.z, w / other.w };
+    }
 
-    inline Vector4& operator/=(Vector4 other);
+    Vector4& operator/=(const Vector4 other)
+    {
+        x /= other.x;
+        y /= other.y;
+        z /= other.z;
+        w /= other.w;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator/(float val) const;
+    [[nodiscard]] Vector4 operator/(const float value) const
+    {
+        return { x / value, y / value, z / value, w / value };
+    }
 
-    inline Vector4& operator/=(float val);
+    Vector4& operator/=(const float value)
+    {
+        x /= value;
+        y /= value;
+        z /= value;
+        w /= value;
+        return *this;
+    }
 
-    [[nodiscard]] inline Vector4 operator/(int val) const;
+    [[nodiscard]] Vector4 operator/(const int val) const
+    {
+        return { x / static_cast<float>(val),
+                 y / static_cast<float>(val),
+                 z / static_cast<float>(val),
+                 w / static_cast<float>(val) };
+    }
 
-    inline Vector4& operator/=(int val);
+    Vector4& operator/=(const int val)
+    {
+        x /= static_cast<float>(val);
+        y /= static_cast<float>(val);
+        z /= static_cast<float>(val);
+        w /= static_cast<float>(val);
+        return *this;
+    }
 
-    [[nodiscard]] inline bool operator<(Vector4 other) const;
+    [[nodiscard]] bool operator<(const Vector4 other) const
+    {
+        if (x != other.x) {
+            return x < other.x;
+        }
+        if (y != other.y) {
+            return y < other.y;
+        }
+        if (z != other.z) {
+            return z < other.z;
+        }
+        if (w != other.w) {
+            return w < other.w;
+        }
+        return false;
+    }
 
-    [[nodiscard]] inline bool operator<=(Vector4 other) const;
+    [[nodiscard]] bool operator<=(const Vector4 other) const
+    {
+        if (x != other.x) {
+            return x < other.x;
+        }
+        if (y != other.y) {
+            return y < other.y;
+        }
+        if (z != other.z) {
+            return z < other.z;
+        }
+        if (w != other.w) {
+            return w < other.w;
+        }
+        return true;
+    }
 
-    [[nodiscard]] inline bool operator==(Vector4 other) const;
+    [[nodiscard]] bool operator==(const Vector4 other) const
+    {
+        return x == other.x && y == other.y && z == other.z && w == other.w;
+    }
 
-    [[nodiscard]] inline bool operator>(Vector4 other) const;
+    [[nodiscard]] bool operator>(const Vector4 other) const
+    {
+        if (x != other.x) {
+            return x > other.x;
+        }
+        if (y != other.y) {
+            return y > other.y;
+        }
+        if (z != other.z) {
+            return z > other.z;
+        }
+        if (w != other.w) {
+            return w > other.w;
+        }
+        return false;
+    }
 
-    [[nodiscard]] inline bool operator>=(Vector4 other) const;
+    [[nodiscard]] bool operator>=(const Vector4 other) const
+    {
+        if (x != other.x) {
+            return x > other.x;
+        }
+        if (y != other.y) {
+            return y > other.y;
+        }
+        if (z != other.z) {
+            return z > other.z;
+        }
+        if (w != other.w) {
+            return w > other.w;
+        }
+        return true;
+    }
 
-    [[nodiscard]] inline float& operator[](int index);
+    [[nodiscard]] float& operator[](const int index)
+    {
+        switch (index) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        default:
+            return x;
+        }
+    }
 
-    [[nodiscard]] inline const float& operator[](int index) const;
+    [[nodiscard]] const float& operator[](const int index) const
+    {
+        switch (index) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        case 3:
+            return w;
+        default:
+            return x;
+        }
+    }
 
-    [[nodiscard]] inline float& operator[](Vector4Axis axis);
+    [[nodiscard]] float& operator[](const Axis4 axis)
+    {
+        switch (axis) {
+        case Axis4::x:
+            return x;
+        case Axis4::y:
+            return y;
+        case Axis4::z:
+            return z;
+        case Axis4::w:
+            return w;
+        default:
+            return x;
+        }
+    }
 
-    [[nodiscard]] inline Vector4 operator+() const;
+    [[nodiscard]] Vector4 operator+() const
+    {
+        return { x, y, z, w };
+    }
 
-    [[nodiscard]] inline Vector4 operator-() const;
+    [[nodiscard]] Vector4 operator-() const
+    {
+        return { -x, -y, -z, -w };
+    }
 };
-
-[[nodiscard]] inline Vector4 abs(Vector4 vector);
-
-[[nodiscard]] inline Vector4 ceil(Vector4 vector);
-
-[[nodiscard]] inline Vector4 clamp(Vector4 vector, Vector4 min, Vector4 max);
-
-[[nodiscard]] inline Vector4 direction(Vector4 from, Vector4 to);
-
-[[nodiscard]] inline float distance_sqrd(Vector4 from, Vector4 to);
-
-[[nodiscard]] inline float distance(Vector4 from, Vector4 to);
-
-[[nodiscard]] inline Vector4 normalize(Vector4 vector);
-
-[[nodiscard]] inline Vector4 floor(Vector4 vector);
-
-[[nodiscard]] inline float length(Vector4 vector);
-
-[[nodiscard]] inline float length_sqrd(Vector4 vector);
-
-[[nodiscard]] inline Vector4 linear_interpolate(Vector4 from, Vector4 to, float weight);
-
-[[nodiscard]] inline Vector4Axis min_axis(Vector4 vector);
-
-[[nodiscard]] inline Vector4Axis max_axis(Vector4 vector);
-
-[[nodiscard]] inline bool is_equal_approx(Vector4 a, Vector4 b);
-
-[[nodiscard]] inline bool is_zero_approx(Vector4 vector);
-
-[[nodiscard]] inline float dot(Vector4 a, Vector4 b);
-
-[[nodiscard]] inline Vector4 inverse(Vector4 vector);
-
-[[nodiscard]] inline Vector4 clamp_length(Vector4 vector, float min, float max);
-
-[[nodiscard]] inline Vector4 round(Vector4 vector);
 
 enum class Vector3iAxis { x, y, z };
 
@@ -1591,5 +1881,4 @@ public:
 #include "detail/vector2i.inl"
 #include "detail/vector3.inl"
 #include "detail/vector3i.inl"
-#include "detail/vector4.inl"
 #include "detail/vector4i.inl"
