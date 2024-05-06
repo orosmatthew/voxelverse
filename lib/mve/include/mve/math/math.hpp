@@ -245,8 +245,8 @@ public:
     template <typename Number>
     [[nodiscard]] Number length_sqrd() const
     {
-        return sqrd(static_cast<Number>(x)) + sqrd(static_cast<Number>(y)) + sqrd(static_cast<Number>(z))
-            + sqrd(static_cast<Number>(w));
+        return mve::sqrd(static_cast<Number>(x)) + mve::sqrd(static_cast<Number>(y)) + mve::sqrd(static_cast<Number>(z))
+            + mve::sqrd(static_cast<Number>(w));
     }
 
     template <typename Number>
