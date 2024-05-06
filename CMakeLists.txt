@@ -92,7 +92,7 @@ set(LIB_INCLUDES
         external/spdlog-1.12.0/include
         external/whereami-ba364cd/include
         external/tinyobjloader-45f683c/include
-        external/fast-noise-lite-1.1.0/include
+        external/fast-noise-lite-1.1.1/include
         external/cereal-1.3.2/include
         external/lz4-1.9.4/include
         external/thread-pool-3.5.0/include
