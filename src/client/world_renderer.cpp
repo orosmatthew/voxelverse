@@ -161,16 +161,14 @@ void WorldRenderer::process_mesh_updates(const WorldData& world_data)
     });
     m_temp_chunk_buffer_data.clear();
     m_temp_chunk_buffer_data.resize(m_chunk_mesh_update_list.size());
-    m_thread_pool
-        .parallelize_loop(
-            m_chunk_mesh_update_list.size(),
-            [&](const size_t& a, const size_t& b) {
-                for (size_t i = a; i < b; i++) {
-                    const mve::Vector3i chunk_pos = m_chunk_mesh_update_list[i];
-                    m_temp_chunk_buffer_data[i] = std::move(create_chunk_buffer_data(chunk_pos, world_data));
-                }
-            })
-        .wait();
+    const BS::multi_future<void> tasks = m_thread_pool.submit_blocks<size_t>(
+        0, m_chunk_mesh_update_list.size(), [&](const auto begin, const auto end) {
+            for (auto i = begin; i < end; ++i) {
+                const mve::Vector3i chunk_pos = m_chunk_mesh_update_list[i];
+                m_temp_chunk_buffer_data[i] = std::move(create_chunk_buffer_data(chunk_pos, world_data));
+            }
+        });
+    tasks.wait();
     for (const std::optional<ChunkBufferData>& buffer_data : m_temp_chunk_buffer_data) {
         if (buffer_data.has_value()) {
             ChunkBuffers buffers(*m_renderer, buffer_data.value());

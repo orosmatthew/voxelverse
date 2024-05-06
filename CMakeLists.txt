@@ -95,7 +95,7 @@ set(LIB_INCLUDES
         external/fast-noise-lite-1.1.1/include
         external/cereal-1.3.2/include
         external/lz4-1.9.4/include
-        external/thread-pool-3.5.0/include
+        external/thread-pool-4.1.0/include
         external/nlohmann-json-3.11.3/include
         external/enet-1.3.18/include)
 
