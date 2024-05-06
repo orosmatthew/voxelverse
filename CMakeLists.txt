@@ -89,7 +89,7 @@ if (WIN32)
 endif ()
 
 set(LIB_INCLUDES
-        external/spdlog-1.12.0/include
+        external/spdlog-1.14.1/include
         external/whereami-ba364cd/include
         external/tinyobjloader-45f683c/include
         external/fast-noise-lite-1.1.1/include
