@@ -29,17 +29,17 @@ public:
     {
         m_camera_pos = camera.position();
         // compute the Z axis of camera
-        m_z_axis = (camera.position() - camera.target()).normalize();
+        m_z_axis = (camera.position() - camera.target()).normalized();
 
         // X-axis of camera of given "up" vector and Z axis
-        m_x_axis = Player::up().cross(m_z_axis).normalize();
+        m_x_axis = Player::up().cross(m_z_axis).normalized();
 
         // the real "up" vector is the cross product of Z and X
         m_y_axis = m_z_axis.cross(m_x_axis);
 
         // compute the center of the near and far planes
-        const mve::Vector3 near_center = m_camera_pos - m_z_axis * m_near_dist;
-        const mve::Vector3 far_center = m_camera_pos - m_z_axis * m_far_dist;
+        const mve::Vector3f near_center = m_camera_pos - m_z_axis * m_near_dist;
+        const mve::Vector3f far_center = m_camera_pos - m_z_axis * m_far_dist;
 
         // compute the 8 corners of the frustum
         m_near_quad.top_left = near_center + m_y_axis * m_near_size.y - m_x_axis * m_near_size.x;
@@ -53,9 +53,9 @@ public:
         m_far_quad.bottom_left = far_center - m_y_axis * m_far_size.y - m_x_axis * m_far_size.x;
     }
 
-    [[nodiscard]] bool contains_point(const mve::Vector3 point) const
+    [[nodiscard]] bool contains_point(const mve::Vector3f point) const
     {
-        const mve::Vector3 point_from_center = point - m_camera_pos;
+        const mve::Vector3f point_from_center = point - m_camera_pos;
 
         // Test z
         const float point_z_val = point_from_center.dot(-m_z_axis);
@@ -76,11 +76,11 @@ public:
         return true;
     }
 
-    [[nodiscard]] bool contains_sphere(const mve::Vector3 position, const float radius) const
+    [[nodiscard]] bool contains_sphere(const mve::Vector3f position, const float radius) const
     {
         bool result = true;
 
-        const mve::Vector3 pos_from_center = position - m_camera_pos;
+        const mve::Vector3f pos_from_center = position - m_camera_pos;
 
         const float az = pos_from_center.dot({ -m_z_axis.x, -m_z_axis.y, -m_z_axis.z });
         if (az > m_far_dist + radius || az < m_near_dist - radius)
@@ -110,24 +110,24 @@ public:
 
 private:
     struct Quad {
-        mve::Vector3 top_left;
-        mve::Vector3 top_right;
-        mve::Vector3 bottom_right;
-        mve::Vector3 bottom_left;
+        mve::Vector3f top_left;
+        mve::Vector3f top_right;
+        mve::Vector3f bottom_right;
+        mve::Vector3f bottom_left;
     };
 
     Quad m_near_quad;
     Quad m_far_quad;
-    mve::Vector3 m_x_axis;
-    mve::Vector3 m_y_axis;
-    mve::Vector3 m_z_axis;
-    mve::Vector3 m_camera_pos;
+    mve::Vector3f m_x_axis;
+    mve::Vector3f m_y_axis;
+    mve::Vector3f m_z_axis;
+    mve::Vector3f m_camera_pos;
     float m_near_dist {};
     float m_far_dist {};
     float m_ratio {};
     float m_angle {};
     float m_tan_angle {};
-    mve::Vector2 m_sphere_factor;
-    mve::Vector2 m_near_size;
-    mve::Vector2 m_far_size;
+    mve::Vector2f m_sphere_factor;
+    mve::Vector2f m_near_size;
+    mve::Vector2f m_far_size;
 };

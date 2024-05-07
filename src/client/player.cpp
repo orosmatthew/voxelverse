@@ -6,9 +6,9 @@
 #include <mve/math/math.hpp>
 
 Player::Player()
-    : m_body_transform(mve::Matrix4::identity().translate({ 0, 0, 2 }))
-    , m_head_transform(mve::Matrix4::identity())
-    , m_prev_pos(mve::Vector3(0, 0, 0))
+    : m_body_transform(mve::Matrix4f::identity().translate({ 0, 0, 2 }))
+    , m_head_transform(mve::Matrix4f::identity())
+    , m_prev_pos(mve::Vector3f(0, 0, 0))
     , m_friction(0.3f)
     , m_acceleration(0.035f)
     , m_max_speed(0.72f)
@@ -28,7 +28,7 @@ Player::Player()
 
 void Player::update(const mve::Window& window, const bool capture_input)
 {
-    const mve::Vector2 mouse_delta = capture_input ? window.mouse_delta() : mve::Vector2::zero();
+    const mve::Vector2f mouse_delta = capture_input ? window.mouse_delta() : mve::Vector2f::zero();
     m_body_transform = m_body_transform.rotate_local({ 0, 0, 1 }, -mouse_delta.x * 0.001f);
     m_head_transform = m_head_transform.rotate_local({ 1, 0, 0 }, -mouse_delta.y * 0.001f);
     mve::Vector3 head_euler = m_head_transform.euler();
@@ -41,12 +41,12 @@ void Player::update(const mve::Window& window, const bool capture_input)
         }
     }
     if (head_euler.x < mve::radians(0.1f)) {
-        m_head_transform = mve::Matrix4::from_basis_translation(
-            mve::Matrix3::from_euler({ mve::radians(0.1f), 0, 0 }), m_head_transform.translation());
+        m_head_transform = mve::Matrix4f::from_basis_translation(
+            mve::Matrix3f::from_euler({ mve::radians(0.1f), 0, 0 }), m_head_transform.translation());
     }
     if (head_euler.x > mve::radians(179.9f)) {
-        m_head_transform = mve::Matrix4::from_basis_translation(
-            mve::Matrix3::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
+        m_head_transform = mve::Matrix4f::from_basis_translation(
+            mve::Matrix3f::from_euler({ mve::radians(179.9f), 0, 0 }), m_head_transform.translation());
     }
     if (capture_input && window.is_key_pressed(mve::Key::space)) {
         if (const auto now = std::chrono::steady_clock::now();
@@ -68,7 +68,7 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
 {
     m_prev_pos = m_body_transform.translation();
     const bool on_ground = is_on_ground(data);
-    mve::Vector3 dir(0.0f);
+    mve::Vector3f dir;
     if (capture_input) {
         if (window.is_key_down(mve::Key::w)) {
             dir.y += 1.0f;
@@ -115,23 +115,23 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
         }
     }
     if (!m_is_flying) {
-        if (on_ground && dir != mve::Vector3(0.0f)) {
-            m_velocity += dir.normalize() * m_acceleration
+        if (on_ground && dir != mve::Vector3f::zero()) {
+            m_velocity += dir.normalized() * m_acceleration
                 * mve::clamp(m_max_speed - mve::Vector2(m_velocity.x, m_velocity.y).length(), 0.0f, 1.0f);
         }
-        else if (!on_ground && dir != mve::Vector3(0.0f)) {
+        else if (!on_ground && dir != mve::Vector3f::zero()) {
             m_velocity
-                += dir.normalize() * m_acceleration * 0.1f * mve::clamp(m_max_speed - m_velocity.length(), 0.0f, 1.0f);
+                += dir.normalized() * m_acceleration * 0.1f * mve::clamp(m_max_speed - m_velocity.length(), 0.0f, 1.0f);
         }
     }
     else {
         if (capture_input && window.is_key_down(mve::Key::left_control)) {
             m_velocity
-                += dir.normalize() * m_acceleration * mve::clamp(30.0f - m_velocity.length(), 0.0f, 1.0f) * 10.0f;
+                += dir.normalized() * m_acceleration * mve::clamp(30.0f - m_velocity.length(), 0.0f, 1.0f) * 10.0f;
         }
         else {
             m_velocity
-                += dir.normalize() * m_acceleration * mve::clamp(m_max_speed - m_velocity.length(), 0.0f, 1.0f) * 1.5f;
+                += dir.normalized() * m_acceleration * mve::clamp(m_max_speed - m_velocity.length(), 0.0f, 1.0f) * 1.5f;
         }
     }
 
@@ -142,19 +142,19 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
     }
 }
 
-mve::Vector3 Player::move_and_slide(
-    BoundingBox box, mve::Matrix4& transform, const mve::Vector3 velocity, const WorldData& data)
+mve::Vector3f Player::move_and_slide(
+    BoundingBox box, mve::Matrix4f& transform, const mve::Vector3f velocity, const WorldData& data)
 {
-    auto detect_collision = [](const mve::Vector3 vel, const BoundingBox& bbox, const WorldData& world_data) {
+    auto detect_collision = [](const mve::Vector3f vel, const BoundingBox& bbox, const WorldData& world_data) {
         const BoundingBox broadphase_box = swept_broadphase_box(vel, bbox);
-        SweptBoundingBoxCollision min_collision { .time = 1.0f, .normal = mve::Vector3(0.0f) };
-        const auto min_neighbor = mve::Vector3i(broadphase_box.min.round());
-        const mve::Vector3i max_neighbor = mve::Vector3i(broadphase_box.max.round()) + mve::Vector3i(1, 1, 2);
+        SweptBoundingBoxCollision min_collision { .time = 1.0f, .normal = mve::Vector3f::zero() };
+        const auto min_neighbor = mve::Vector3i(broadphase_box.min.rounded());
+        const mve::Vector3i max_neighbor = mve::Vector3i(broadphase_box.max.rounded()) + mve::Vector3i(1, 1, 2);
         for_3d(min_neighbor, max_neighbor, [&](const mve::Vector3i neighbor) {
             const mve::Vector3i block_pos = neighbor - mve::Vector3i(0, 0, 1);
             const std::optional<uint8_t> block = world_data.block_at(block_pos);
-            if (const BoundingBox block_bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f) },
-                                             { mve::Vector3(block_pos) + mve::Vector3(0.5f) } };
+            if (const BoundingBox block_bb { { mve::Vector3f(block_pos) - mve::Vector3f::all(0.5f) },
+                                             { mve::Vector3f(block_pos) + mve::Vector3f::all(0.5f) } };
                 block.has_value() && block.value() != 0 && collides(block_bb, broadphase_box)) {
                 if (const SweptBoundingBoxCollision collision = swept_bounding_box(vel, bbox, block_bb);
                     collision.time < min_collision.time) {
@@ -207,8 +207,8 @@ bool Player::is_on_ground(const WorldData& data) const
     bool is_on_ground = false;
     for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i neighbor) {
         const BoundingBox block_bb {
-            { mve::Vector3(block_pos + mve::Vector3i(neighbor.x, neighbor.y, -1)) - mve::Vector3(0.5f) },
-            { mve::Vector3(block_pos + mve::Vector3i(neighbor.x, neighbor.y, -1)) + mve::Vector3(0.5f) }
+            { mve::Vector3f(block_pos + mve::Vector3i(neighbor.x, neighbor.y, -1)) - mve::Vector3f::all(0.5f) },
+            { mve::Vector3f(block_pos + mve::Vector3i(neighbor.x, neighbor.y, -1)) + mve::Vector3f::all(0.5f) }
         };
         if (const std::optional<uint8_t> block = data.block_at(block_pos + mve::Vector3i(neighbor.x, neighbor.y, -1));
             block.has_value() && block.value() != 0 && collides(bb, block_bb)) {

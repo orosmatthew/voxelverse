@@ -98,17 +98,17 @@ public:
 
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist = true);
 
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector2 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector2f value, bool persist = true);
 
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector3 value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector3f value, bool persist = true);
 
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector4 value, bool persist = true);
-
-    void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix3& value, bool persist = true);
+    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector4f value, bool persist = true);
 
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix4& value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix3f& value, bool persist = true);
+
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix4f& value, bool persist = true);
 
     void bind_descriptor_set(DescriptorSet& descriptor_set) const;
 

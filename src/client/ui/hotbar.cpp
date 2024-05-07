@@ -31,7 +31,7 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     m_hotbar.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
     m_hotbar.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_hotbar.uniform_data.descriptor_set.write_binding(m_texture_binding, m_hotbar_texture);
-    m_hotbar.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
+    m_hotbar.uniform_data.buffer.update(m_model_location, mve::Matrix4f::identity());
 
     const mve::Vector2 select_size { 24 * 5, 23 * 5 };
     mve::VertexData select_vertex_data(UIPipeline::vertex_layout());
@@ -52,23 +52,23 @@ Hotbar::Hotbar(UIPipeline& ui_pipeline)
     m_select.vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(select_vertex_data);
     m_select.index_buffer = ui_pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
     m_select.uniform_data.descriptor_set.write_binding(m_texture_binding, m_select_texture);
-    m_select.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
+    m_select.uniform_data.buffer.update(m_model_location, mve::Matrix4f::identity());
 }
 
 void Hotbar::resize(const mve::Vector2i& extent)
 {
     m_renderer_extent = extent;
     m_hotbar.uniform_data.buffer.update(
-        m_model_location, mve::Matrix4::identity().scale(scale()).translate(translation()));
+        m_model_location, mve::Matrix4f::identity().scale(scale()).translate(translation()));
     update_hotbar_select(m_select_pos);
     for (auto& [pos, item] : m_items) {
         if (item.has_value()) {
             constexpr int first_offset_x = -20 * 5 * 4;
             item->element.uniform_data.buffer.update(
                 m_model_location,
-                mve::Matrix4::identity().scale(scale()).translate(
+                mve::Matrix4f::identity().scale(scale()).translate(
                     translation()
-                    + mve::Vector3(static_cast<float>(first_offset_x + pos * 20 * 5), -5 * 4, 0) * scale()));
+                    + mve::Vector3f(static_cast<float>(first_offset_x + pos * 20 * 5), -5 * 4, 0) * scale()));
         }
     }
 }
@@ -79,21 +79,21 @@ void Hotbar::update_hotbar_select(const int pos)
     constexpr int first_offset_x = -20 * 5 * 4;
     m_select.uniform_data.buffer.update(
         m_model_location,
-        mve::Matrix4::identity().scale(scale()).translate(
-            translation() + mve::Vector3(static_cast<float>(first_offset_x + pos * 20 * 5), 0, 0) * scale()));
+        mve::Matrix4f::identity().scale(scale()).translate(
+            translation() + mve::Vector3f(static_cast<float>(first_offset_x + pos * 20 * 5), 0, 0) * scale()));
 }
-mve::Vector3 Hotbar::scale() const
+mve::Vector3f Hotbar::scale() const
 {
-    return (mve::Vector3(static_cast<float>(m_renderer_extent.x)) / 1000.0f)
-        .clamp(mve::Vector3(0.1), mve::Vector3(1.0f));
+    return (mve::Vector3f::all(static_cast<float>(m_renderer_extent.x)) / 1000.0f)
+        .clamp(mve::Vector3f::all(0.1), mve::Vector3f::all(1.0f));
 }
-mve::Vector3 Hotbar::translation() const
+mve::Vector3f Hotbar::translation() const
 {
     return { static_cast<float>(m_renderer_extent.x) * 0.5f, static_cast<float>(m_renderer_extent.y), 0 };
 }
 std::pair<mve::VertexData, std::vector<uint32_t>> Hotbar::create_item_mesh(const uint8_t block_type)
 {
-    const mve::Vector2 size(14 * 5);
+    const auto size = mve::Vector2f::all(14 * 5);
     auto [top_left, top_right, bottom_right, bottom_left]
         = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
 
@@ -133,6 +133,6 @@ void Hotbar::set_item(const int pos, const uint8_t block_type)
                         .vertex_buffer = m_ui_pipeline->renderer().create_vertex_buffer(vertex_data),
                         .index_buffer = m_ui_pipeline->renderer().create_index_buffer(index_data) };
     element.uniform_data.descriptor_set.write_binding(m_texture_binding, m_atlas_texture);
-    element.uniform_data.buffer.update(m_model_location, mve::Matrix4::identity());
+    element.uniform_data.buffer.update(m_model_location, mve::Matrix4f::identity());
     m_items[pos] = { block_type, std::move(element) };
 }

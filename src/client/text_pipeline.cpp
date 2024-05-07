@@ -38,7 +38,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)
 
     m_global_ubo.update(
         m_vert_shader.descriptor_set(0).binding(0).member("view").location(),
-        mve::Matrix4::identity().translate({ 0.0f, 0.0f, -1.0f }));
+        mve::Matrix4f::identity().translate({ 0.0f, 0.0f, -1.0f }));
 
     mve::VertexData cursor_data(c_vertex_layout);
     cursor_data.push_back({ -0.05f, -1.0f, 0.0f });
@@ -98,7 +98,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)
 
 void TextPipeline::resize()
 {
-    const mve::Matrix4 proj = mve::ortho(
+    const auto proj = mve::Matrix4f::from_ortho(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
@@ -142,7 +142,7 @@ void TextPipeline::draw(const TextBuffer& buffer) const
     }
 }
 
-void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos)
+void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2f pos)
 {
     VV_DEB_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set translation on invalid text buffer")
     // ReSharper disable once CppUseStructuredBinding
@@ -156,7 +156,7 @@ void TextPipeline::set_text_buffer_translation(const TextBuffer& buffer, mve::Ve
         float y_pos = pos.y - static_cast<float>(bearing.y - size.y) * glyph.scale + static_cast<float>(c_point_size);
         float w = static_cast<float>(size.x) * glyph.scale;
         float h = static_cast<float>(size.y) * glyph.scale;
-        mve::Matrix4 model = mve::Matrix4::identity();
+        mve::Matrix4f model = mve::Matrix4f::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
@@ -173,7 +173,7 @@ void TextPipeline::add_cursor(const TextBuffer& buffer, const int pos)
     cursor = { .ubo = m_renderer->create_uniform_buffer(m_glyph_ubo_binding),
                .descriptor_set = m_pipeline.create_descriptor_set(m_vert_shader.descriptor_set(1)),
                .translation = translation };
-    cursor->ubo.update(m_text_color_location, mve::Vector3(0.0f));
+    cursor->ubo.update(m_text_color_location, mve::Vector3f::zero());
     cursor->descriptor_set.write_binding(m_glyph_ubo_binding, cursor->ubo);
     cursor->descriptor_set.write_binding(m_texture_binding, m_cursor_texture);
     set_cursor_pos(buffer, pos);
@@ -189,9 +189,9 @@ void TextPipeline::set_cursor_pos(const TextBuffer& buffer, int pos)
     for (int i = 0; i < render_glyphs.size() && i < pos; i++) {
         x += mve::floor(static_cast<float>(m_font_chars[render_glyphs[i].character].advance) / 64.0f) * scale;
     }
-    const mve::Matrix4 model
-        = mve::Matrix4::identity()
-              .scale(mve::Vector3(scale * static_cast<float>(c_point_size)))
+    const mve::Matrix4f model
+        = mve::Matrix4f::identity()
+              .scale(mve::Vector3f::all(scale * static_cast<float>(c_point_size)))
               .translate({ x, translation.y + static_cast<float>(c_point_size), 0.1f });
     cursor->ubo.update(m_model_location, model);
 }
@@ -239,7 +239,7 @@ void TextPipeline::update_text_buffer(const TextBuffer& buffer, const std::strin
         float w = static_cast<float>(size.x) * scale;
         float h = static_cast<float>(size.y) * scale;
 
-        mve::Matrix4 model = mve::Matrix4::identity();
+        mve::Matrix4 model = mve::Matrix4f::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
 
@@ -305,7 +305,7 @@ void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, const float s
         float y_pos = pos.y - static_cast<float>(bearing.y - size.y) * scale + static_cast<float>(c_point_size);
         float w = static_cast<float>(size.x) * glyph.scale;
         float h = static_cast<float>(size.y) * glyph.scale;
-        mve::Matrix4 model = mve::Matrix4::identity();
+        mve::Matrix4 model = mve::Matrix4f::identity();
         model = model.scale({ w, h, 1.0f });
         model = model.translate({ x_pos, y_pos, 0.0f });
         glyph.ubo.update(m_model_location, model);
@@ -315,7 +315,7 @@ void TextPipeline::set_text_buffer_scale(const TextBuffer& buffer, const float s
 }
 
 TextBuffer TextPipeline::create_text_buffer(
-    const std::string_view text, const mve::Vector2 pos, const float scale, const mve::Vector3 color)
+    const std::string_view text, const mve::Vector2f pos, const float scale, const mve::Vector3f color)
 {
     const auto it = std::ranges::find_if(m_text_buffers, [](const std::optional<TextBufferImpl>& buffer) {
         return !buffer.has_value();
@@ -345,7 +345,7 @@ TextBuffer TextPipeline::create_text_buffer(
     return buffer;
 }
 
-void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, const mve::Vector3 color)
+void TextPipeline::set_text_buffer_color(const TextBuffer& buffer, const mve::Vector3f color)
 {
     VV_DEB_ASSERT(buffer.m_valid, "[Text Pipeline] Attempt to set color on invalid text buffer")
     // ReSharper disable once CppUseStructuredBinding

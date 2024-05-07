@@ -17,15 +17,15 @@ UIPipeline::UIPipeline(mve::Renderer& renderer)
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
 
-    mve::Matrix4 camera;
+    mve::Matrix4f camera;
     camera = camera.translate({ 0.0f, 0.0f, 0.0f });
-    const mve::Matrix4 view = camera.inverse().transpose();
+    const mve::Matrix4f view = camera.inverse().transposed();
     m_global_ubo.update(m_view_location, view);
 }
 
 void UIPipeline::resize()
 {
-    const mve::Matrix4 proj = mve::ortho(
+    const auto proj = mve::Matrix4f::from_ortho(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
@@ -59,7 +59,7 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const m
                       .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };
         world.descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), world.uniform_buffer);
         world.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
-        world.uniform_buffer.update(world.model_location, mve::Matrix4::identity());
+        world.uniform_buffer.update(world.model_location, mve::Matrix4f::identity());
         m_world = std::move(world);
     }
     else {
@@ -67,7 +67,7 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const m
         m_world->descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
     }
     m_global_ubo.update(
-        m_vertex_shader.descriptor_set(0).binding(0).member("world_size").location(), mve::Vector2(size));
+        m_vertex_shader.descriptor_set(0).binding(0).member("world_size").location(), mve::Vector2f(size));
 }
 
 UIUniformData UIPipeline::create_uniform_data() const

@@ -1259,29 +1259,29 @@ void Renderer::update_uniform(
     update_uniform<float>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector2 value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector2f value, const bool persist)
 {
-    update_uniform<Vector2>(uniform_buffer, location, value, persist);
+    update_uniform<Vector2f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector3 value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector3f value, const bool persist)
 {
-    update_uniform<Vector3>(uniform_buffer, location, value, persist);
+    update_uniform<Vector3f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector4 value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector4f value, const bool persist)
 {
-    update_uniform<Vector4>(uniform_buffer, location, value, persist);
+    update_uniform<Vector4f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix3& value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix3f& value, const bool persist)
 {
-    update_uniform<Matrix3>(uniform_buffer, location, value, persist);
+    update_uniform<Matrix3f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix4& value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix4f& value, const bool persist)
 {
-    update_uniform<Matrix4>(uniform_buffer, location, value, persist);
+    update_uniform<Matrix4f>(uniform_buffer, location, value, persist);
 }
 
 void Renderer::destroy(Texture& texture)

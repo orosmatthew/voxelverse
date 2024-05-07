@@ -15,7 +15,8 @@ NinePatch::NinePatch(
     , m_size(size)
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
-    m_uniform_data.buffer.update(ui_pipeline.model_location(), mve::Matrix4::identity().scale(mve::Vector3(scale)));
+    m_uniform_data.buffer.update(
+        ui_pipeline.model_location(), mve::Matrix4f::identity().scale(mve::Vector3f::all(scale)));
 
     const mve::Vector2 pixel
         = { 1.0f / static_cast<float>(texture->size().x), 1.0f / static_cast<float>(texture->size().y) };
@@ -27,7 +28,7 @@ NinePatch::NinePatch(
         0.0f, pixel.y * static_cast<float>(margins.top), 1.0f - pixel.y * static_cast<float>(margins.bottom), 1.0f
     };
 
-    std::array<mve::Vector2, 16> uvs;
+    std::array<mve::Vector2f, 16> uvs;
     int uv_index = 0;
     for (float y : y_uvs) {
         for (float x : x_uvs) {
@@ -43,7 +44,7 @@ NinePatch::NinePatch(
         0.0f, static_cast<float>(margins.top), static_cast<float>(size.y - margins.bottom), static_cast<float>(size.y)
     };
 
-    std::array<mve::Vector2, 16> vertices;
+    std::array<mve::Vector2f, 16> vertices;
     int vertex_count = 0;
     for (float y : y_vertices) {
         for (float x : x_vertices) {
@@ -81,13 +82,13 @@ void NinePatch::draw() const
     m_pipeline->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
 }
 
-void NinePatch::set_position(const mve::Vector2& pos)
+void NinePatch::set_position(const mve::Vector2f& pos)
 {
     m_position = pos;
     m_uniform_data.buffer.update(
         m_model_location,
-        mve::Matrix4::identity()
-            .scale(mve::Vector3(m_scale))
+        mve::Matrix4f::identity()
+            .scale(mve::Vector3f::all(m_scale))
             .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
 }
 void NinePatch::set_scale(const float scale)
@@ -95,8 +96,8 @@ void NinePatch::set_scale(const float scale)
     m_scale = scale;
     m_uniform_data.buffer.update(
         m_model_location,
-        mve::Matrix4::identity()
-            .scale(mve::Vector3(m_scale))
+        mve::Matrix4f::identity()
+            .scale(mve::Vector3f::all(m_scale))
             .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
 }
 

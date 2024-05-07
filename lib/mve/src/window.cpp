@@ -18,10 +18,6 @@ Window::Window(const std::string& title, const Vector2i size, const bool resizab
     , m_event_waiting(false)
     , m_fullscreen(false)
     , m_min_size(0, 0)
-    , m_current_mouse_pos(0.0f)
-    , m_mouse_pos_prev(0.0f)
-    , m_mouse_delta(0.0f)
-    , m_mouse_pos(0.0f)
 {
     m_windowed_size = m_size;
     glfwInit();
@@ -109,7 +105,7 @@ void Window::poll_events()
     m_mouse_buttons_down = m_current_mouse_buttons_down;
 
     m_scroll_offset = m_current_scroll_offset;
-    m_current_scroll_offset = Vector2(0);
+    m_current_scroll_offset = Vector2f::zero();
 
     std::swap(m_current_input_stream, m_input_stream);
     m_current_input_stream.clear();
@@ -118,7 +114,7 @@ void Window::poll_events()
     m_current_keys_repeated.clear();
 }
 
-Vector2 Window::mouse_scroll() const
+Vector2f Window::mouse_scroll() const
 {
     return m_scroll_offset;
 }
@@ -138,11 +134,11 @@ void Window::remove_resize_callback()
     m_resize_callback.reset();
 }
 
-Vector2 Window::get_cursor_pos(const bool clamped_to_window) const
+Vector2f Window::get_cursor_pos(const bool clamped_to_window) const
 {
     double glfw_cursor_pos[2];
     glfwGetCursorPos(m_glfw_window.get(), &glfw_cursor_pos[0], &glfw_cursor_pos[1]);
-    Vector2 mouse_pos_val;
+    Vector2f mouse_pos_val;
     if (clamped_to_window) {
         const Vector2i window_size = size();
         mouse_pos_val.x = clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
@@ -454,11 +450,11 @@ bool Window::is_mouse_button_released(const MouseButton button) const
 {
     return m_mouse_buttons_released.contains(button);
 }
-Vector2 Window::mouse_pos() const
+Vector2f Window::mouse_pos() const
 {
     return m_mouse_pos;
 }
-Vector2 Window::mouse_delta() const
+Vector2f Window::mouse_delta() const
 {
     return m_mouse_delta;
 }
@@ -468,7 +464,7 @@ void Window::glfw_scroll_callback(GLFWwindow* window, const double offset_x, con
     instance->m_current_scroll_offset.x += static_cast<float>(offset_x);
     instance->m_current_scroll_offset.y += static_cast<float>(offset_y);
 }
-void Window::set_cursor_pos(const Vector2 pos) const
+void Window::set_cursor_pos(const Vector2f pos) const
 {
     glfwSetCursorPos(m_glfw_window.get(), pos.x, pos.y);
 }

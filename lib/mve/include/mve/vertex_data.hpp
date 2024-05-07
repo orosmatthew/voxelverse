@@ -23,11 +23,11 @@ public:
 
     void push_back(float value);
 
-    void push_back(Vector2 value);
+    void push_back(Vector2f value);
 
-    void push_back(Vector3 value);
+    void push_back(Vector3f value);
 
-    void push_back(Vector4 value);
+    void push_back(Vector4f value);
 
     [[nodiscard]] VertexAttributeType next_type() const noexcept;
 

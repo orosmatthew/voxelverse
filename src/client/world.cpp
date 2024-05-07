@@ -27,12 +27,12 @@ void World::fixed_update(const mve::Window& window)
     m_player.fixed_update(window, m_world_data, m_focus == FocusState::world);
 }
 
-std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, const mve::Vector3 end)
+std::vector<mve::Vector3i> ray_blocks(mve::Vector3f start, const mve::Vector3f end)
 {
-    const mve::Vector3 delta = end - start;
+    const mve::Vector3f delta = end - start;
     const int step
         = static_cast<int>(mve::ceil(mve::max(mve::abs(delta.x), mve::max(mve::abs(delta.y), mve::abs(delta.z)))));
-    const mve::Vector3 increment = delta / static_cast<float>(step);
+    const mve::Vector3f increment = delta / static_cast<float>(step);
     std::set<mve::Vector3i> blocks_set;
     mve::Vector3 current = start;
     for (int i = 0; i < step; i++) {
@@ -53,21 +53,21 @@ std::vector<mve::Vector3i> ray_blocks(mve::Vector3 start, const mve::Vector3 end
     blocks.reserve(blocks.size());
     std::ranges::copy(std::as_const(blocks_set), std::back_inserter(blocks));
     std::ranges::sort(blocks, [start](const mve::Vector3i& a, const mve::Vector3i& b) {
-        return start.distance_sqrd_to(mve::Vector3(a)) < start.distance_sqrd_to(mve::Vector3(b));
+        return start.distance_sqrd_to(mve::Vector3f(a)) < start.distance_sqrd_to(mve::Vector3f(b));
     });
     return blocks;
 }
 
 struct Ray {
-    mve::Vector3 position;
-    mve::Vector3 direction;
+    mve::Vector3f position;
+    mve::Vector3f direction;
 };
 
 struct RayCollision {
     bool hit;
     float distance;
-    mve::Vector3 point;
-    mve::Vector3 normal;
+    mve::Vector3f point;
+    mve::Vector3f normal;
 };
 
 RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
@@ -98,14 +98,14 @@ RayCollision ray_box_collision(Ray ray, const BoundingBox& box)
     collision.hit = !(t[7] < 0 || t[6] > t[7]);
     collision.distance = t[6];
     collision.point = ray.position + ray.direction * collision.distance;
-    collision.normal = box.min.linear_interpolate(box.max, 0.5f);
+    collision.normal = box.min.lerp(box.max, 0.5f);
     collision.normal = collision.point - collision.normal;
     collision.normal *= 2.01f;
     collision.normal /= box.max - box.min;
     collision.normal.x = static_cast<float>(static_cast<int>(collision.normal.x));
     collision.normal.y = static_cast<float>(static_cast<int>(collision.normal.y));
     collision.normal.z = static_cast<float>(static_cast<int>(collision.normal.z));
-    collision.normal = collision.normal.normalize();
+    collision.normal = collision.normal.normalized();
 
     if (inside) {
         collision.distance *= -1.0f;
@@ -119,21 +119,21 @@ void trigger_place_block(
 {
     const std::vector<mve::Vector3i> blocks
         = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
-    const Ray ray { camera.position(), camera.direction().normalize() };
+    const Ray ray { camera.position(), camera.direction().normalized() };
     for (const mve::Vector3i block_pos : blocks) {
         if (std::optional<uint8_t> block = world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
-        BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
-                         { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+        BoundingBox bb { { mve::Vector3f(block_pos) - mve::Vector3f(0.5f, 0.5f, 0.5f) },
+                         { mve::Vector3f(block_pos) + mve::Vector3f(0.5f, 0.5f, 0.5f) } };
         if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
             const mve::Vector3i place_pos { static_cast<int>(mve::round(static_cast<float>(block_pos.x) + normal.x)),
                                             static_cast<int>(mve::round(static_cast<float>(block_pos.y) + normal.y)),
                                             static_cast<int>(mve::round(static_cast<float>(block_pos.z) + normal.z)) };
             const BoundingBox player_box = camera.bounding_box();
             const BoundingBox broadphase_box = swept_broadphase_box(camera.velocity(), player_box);
-            if (const BoundingBox place_bb = { { mve::Vector3(place_pos) - mve::Vector3(0.5f) },
-                                               { mve::Vector3(place_pos) + mve::Vector3(0.5f) } };
+            if (const BoundingBox place_bb = { { mve::Vector3f(place_pos) - mve::Vector3f::all(0.5f) },
+                                               { mve::Vector3f(place_pos) + mve::Vector3f::all(0.5f) } };
                 collides(broadphase_box, place_bb)) {
                 break;
             }
@@ -157,13 +157,13 @@ void trigger_break_block(const Player& camera, ChunkController& chunk_controller
 {
     const std::vector<mve::Vector3i> blocks
         = ray_blocks(camera.position(), camera.position() + camera.direction() * 10.0f);
-    const Ray ray { camera.position(), camera.direction().normalize() };
+    const Ray ray { camera.position(), camera.direction().normalized() };
     for (const mve::Vector3i block_pos : blocks) {
         if (std::optional<uint8_t> block = world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
-        BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
-                         { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+        BoundingBox bb { { mve::Vector3f(block_pos) - mve::Vector3f(0.5f, 0.5f, 0.5f) },
+                         { mve::Vector3f(block_pos) + mve::Vector3f(0.5f, 0.5f, 0.5f) } };
         if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
             const mve::Vector3i local_pos = block_world_to_local(block_pos);
             const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
@@ -218,17 +218,17 @@ void World::update(mve::Window& window, const float blend, mve::Renderer& render
 
     const std::vector<mve::Vector3i> blocks
         = ray_blocks(m_player.position(), m_player.position() + m_player.direction() * 10.0f);
-    const Ray ray { m_player.position(), m_player.direction().normalize() };
+    const Ray ray { m_player.position(), m_player.direction().normalized() };
     m_world_renderer.hide_selection();
     for (const mve::Vector3i block_pos : blocks) {
         if (std::optional<uint8_t> block = m_world_data.block_at(block_pos); !block.has_value() || block.value() == 0) {
             continue;
         }
-        BoundingBox bb { { mve::Vector3(block_pos) - mve::Vector3(0.5f, 0.5f, 0.5f) },
-                         { mve::Vector3(block_pos) + mve::Vector3(0.5f, 0.5f, 0.5f) } };
+        BoundingBox bb { { mve::Vector3f(block_pos) - mve::Vector3f(0.5f, 0.5f, 0.5f) },
+                         { mve::Vector3f(block_pos) + mve::Vector3f(0.5f, 0.5f, 0.5f) } };
         if (auto [hit, distance, point, normal] = ray_box_collision(ray, bb); hit) {
             m_world_renderer.show_selection();
-            m_world_renderer.set_selection_position(mve::Vector3(block_pos));
+            m_world_renderer.set_selection_position(mve::Vector3f(block_pos));
             break;
         }
     }

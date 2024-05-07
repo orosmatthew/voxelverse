@@ -22,19 +22,19 @@ void serialize(Archive& archive, Vector3i& v)
 }
 
 template <class Archive>
-void serialize(Archive& archive, Matrix4& m)
+void serialize(Archive& archive, Matrix4f& m)
 {
     archive(m.col0, m.col1, m.col2, m.col3);
 }
 
 template <class Archive>
-void serialize(Archive& archive, Vector4& v)
+void serialize(Archive& archive, Vector4f& v)
 {
     archive(v.x, v.y, v.z, v.w);
 }
 
 template <class Archive>
-void serialize(Archive& archive, Vector3& v)
+void serialize(Archive& archive, Vector3f& v)
 {
     archive(v.x, v.y, v.z);
 }
@@ -46,41 +46,41 @@ inline std::filesystem::path res_path(const std::filesystem::path& path)
 }
 
 struct Quad {
-    mve::Vector3 top_left;
-    mve::Vector3 top_right;
-    mve::Vector3 bottom_right;
-    mve::Vector3 bottom_left;
+    mve::Vector3f top_left;
+    mve::Vector3f top_right;
+    mve::Vector3f bottom_right;
+    mve::Vector3f bottom_left;
 };
 
 struct BoundingBox {
-    mve::Vector3 min;
-    mve::Vector3 max;
+    mve::Vector3f min;
+    mve::Vector3f max;
 };
 
 struct Rect3 {
-    mve::Vector3 pos;
-    mve::Vector3 size;
+    mve::Vector3f pos;
+    mve::Vector3f size;
 };
 
-inline std::vector<std::pair<mve::Vector3, mve::Vector3>> rect3_to_edges(const Rect3& rect)
+inline std::vector<std::pair<mve::Vector3f, mve::Vector3f>> rect3_to_edges(const Rect3& rect)
 {
-    std::vector<std::pair<mve::Vector3, mve::Vector3>> edges;
+    std::vector<std::pair<mve::Vector3f, mve::Vector3f>> edges;
     edges.reserve(12);
 
     // Extract position and size of rectangle
-    const mve::Vector3& p = rect.pos;
-    const mve::Vector3& s = rect.size;
+    const mve::Vector3f& p = rect.pos;
+    const mve::Vector3f& s = rect.size;
 
     // Define corners of rectangle
     const std::array corners
-        = { mve::Vector3(p.x, p.y, p.z),
-            mve::Vector3(p.x, p.y, p.z + s.z),
-            mve::Vector3(p.x, p.y + s.y, p.z),
-            mve::Vector3(p.x, p.y + s.y, p.z + s.z),
-            mve::Vector3(p.x + s.x, p.y, p.z),
-            mve::Vector3(p.x + s.x, p.y, p.z + s.z),
-            mve::Vector3(p.x + s.x, p.y + s.y, p.z),
-            mve::Vector3(p.x + s.x, p.y + s.y, p.z + s.z) };
+        = { mve::Vector3f(p.x, p.y, p.z),
+            mve::Vector3f(p.x, p.y, p.z + s.z),
+            mve::Vector3f(p.x, p.y + s.y, p.z),
+            mve::Vector3f(p.x, p.y + s.y, p.z + s.z),
+            mve::Vector3f(p.x + s.x, p.y, p.z),
+            mve::Vector3f(p.x + s.x, p.y, p.z + s.z),
+            mve::Vector3f(p.x + s.x, p.y + s.y, p.z),
+            mve::Vector3f(p.x + s.x, p.y + s.y, p.z + s.z) };
 
     // Define edges of rectangle
     edges.emplace_back(corners[0], corners[1]);
@@ -115,7 +115,7 @@ inline BoundingBox rect3_to_bounding_box(const Rect3& rect)
     return { min, max };
 }
 
-inline BoundingBox swept_broadphase_box(const mve::Vector3 vel, const BoundingBox& box)
+inline BoundingBox swept_broadphase_box(const mve::Vector3f vel, const BoundingBox& box)
 {
     BoundingBox broadphase_box;
     broadphase_box.min.x = vel.x > 0.0f ? box.min.x : box.min.x + vel.x;
@@ -129,13 +129,13 @@ inline BoundingBox swept_broadphase_box(const mve::Vector3 vel, const BoundingBo
 
 struct SweptBoundingBoxCollision {
     float time {};
-    mve::Vector3 normal;
+    mve::Vector3f normal;
 };
 
-inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3 vel, const BoundingBox& b1, const BoundingBox& b2)
+inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3f vel, const BoundingBox& b1, const BoundingBox& b2)
 {
-    mve::Vector3 inv_entry;
-    mve::Vector3 inv_exit;
+    mve::Vector3f inv_entry;
+    mve::Vector3f inv_exit;
 
     auto [pos1, size1] = bounding_box_to_rect3(b1);
     auto [pos2, size2] = bounding_box_to_rect3(b2);
@@ -151,8 +151,8 @@ inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3 vel, const Boun
         }
     }
 
-    mve::Vector3 entry;
-    mve::Vector3 exit;
+    mve::Vector3f entry;
+    mve::Vector3f exit;
 
     for (int i = 0; i < 3; i++) {
         if (vel[i] == 0.0f) {
@@ -172,13 +172,13 @@ inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3 vel, const Boun
     SweptBoundingBoxCollision collision;
     if (entry_time > exit_time || entry.x < 0.0f && entry.y < 0.0f && entry.z < 0.0f || entry.x > 1.0f || entry.y > 1.0f
         || entry.z > 1.0f) {
-        collision.normal = mve::Vector3(0.0f);
+        collision.normal = mve::Vector3f::zero();
         collision.time = 1.0f;
         return collision;
     }
     // If collision
-    collision.normal = mve::Vector3(0.0f);
-    const mve::Vector3Axis max_axis = entry.max_axis();
+    collision.normal = mve::Vector3f::zero();
+    const mve::Axis3 max_axis = entry.max_axis();
     collision.normal[max_axis] = inv_entry[max_axis] < 0.0f ? 1.0f : -1.0f;
     collision.time = entry_time;
     return collision;
@@ -205,7 +205,7 @@ inline bool collides(const BoundingBox& a, const BoundingBox& b)
     return collision;
 }
 
-inline Quad transform(const Quad& quad, const mve::Matrix4& matrix)
+inline Quad transform(const Quad& quad, const mve::Matrix4f& matrix)
 {
     return {
         quad.top_left.transform(matrix),
@@ -215,9 +215,9 @@ inline Quad transform(const Quad& quad, const mve::Matrix4& matrix)
     };
 }
 
-inline void transform_vertices(std::vector<mve::Vector3>& vertices, const mve::Matrix4& matrix)
+inline void transform_vertices(std::vector<mve::Vector3f>& vertices, const mve::Matrix4f& matrix)
 {
-    std::ranges::transform(vertices, vertices.begin(), [&](const mve::Vector3& vertex) {
+    std::ranges::transform(vertices, vertices.begin(), [&](const mve::Vector3f& vertex) {
         return vertex.transform(matrix);
     });
 }
@@ -251,15 +251,15 @@ void for_3d(const mve::Vector3i from, const mve::Vector3i to, Callable callable)
 }
 
 struct QuadUVs {
-    mve::Vector2 top_left;
-    mve::Vector2 top_right;
-    mve::Vector2 bottom_right;
-    mve::Vector2 bottom_left;
+    mve::Vector2f top_left;
+    mve::Vector2f top_right;
+    mve::Vector2f bottom_right;
+    mve::Vector2f bottom_left;
 };
 
 inline QuadUVs uvs_from_atlas(const mve::Vector2i atlas_size, const mve::Vector2i pos)
 {
-    const mve::Vector2 atlas_unit
+    const auto atlas_unit
         = mve::Vector2(1.0f / static_cast<float>(atlas_size.x), 1.0f / static_cast<float>(atlas_size.y));
 
     QuadUVs uvs;

@@ -42,7 +42,7 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
     m_chunk_ubo.update(
-        m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4::identity());
+        m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4f::identity());
     m_chunk_ubo.update(m_vertex_shader.descriptor_set(1).binding(0).member("fog_influence").location(), 1.0f);
     m_chunk_descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), m_chunk_ubo);
     m_frustum = {};
@@ -63,10 +63,10 @@ void WorldRenderer::resize()
     constexpr float far = 10000.0f;
 
     m_frustum.update_perspective(angle, ratio, near, far);
-    const mve::Matrix4 proj = mve::perspective(angle, ratio, near, far);
+    const auto proj = mve::Matrix4f::from_perspective(angle, ratio, near, far);
     m_global_ubo.update(m_proj_location, proj);
 }
-void WorldRenderer::set_view(const mve::Matrix4& view)
+void WorldRenderer::set_view(const mve::Matrix4f& view)
 {
     m_global_ubo.update(m_view_location, view);
 }
@@ -81,7 +81,7 @@ void WorldRenderer::draw(const Player& camera)
     }
 
     for (const std::optional<ChunkBuffers>& mesh : m_chunk_buffers) {
-        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3(mesh->chunk_pos()) * 16.0f, 30.0f)) {
+        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3f(mesh->chunk_pos()) * 16.0f, 30.0f)) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
             mesh->draw(*m_renderer);
         }
@@ -102,7 +102,7 @@ void WorldRenderer::draw(const Player& camera)
 //         }
 //     }
 // }
-void WorldRenderer::set_selection_position(const mve::Vector3 position)
+void WorldRenderer::set_selection_position(const mve::Vector3f position)
 {
     m_selection_box.mesh.set_position(position);
 }
@@ -116,7 +116,7 @@ void WorldRenderer::remove_data(const mve::Vector3i position)
     m_chunk_mesh_lookup.erase(position);
 }
 
-uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, const float width, const mve::Vector3 color)
+uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, const float width, const mve::Vector3f color)
 {
     WireBoxMesh box_mesh(
         *m_renderer,

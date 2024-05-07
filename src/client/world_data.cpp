@@ -26,7 +26,7 @@ void WorldData::set_player_chunk(const mve::Vector2i chunk_pos)
 std::optional<mve::Vector2i> WorldData::try_cull_chunk(const float distance)
 {
     if (mve::Vector2i furthest_chunk = m_sorted_chunks[m_sorted_chunks.size() - 1];
-        mve::distance(mve::Vector2(furthest_chunk), mve::Vector2(m_player_chunk)) > distance) {
+        mve::Vector2f(furthest_chunk).distance_to(mve::Vector2f(m_player_chunk)) > distance) {
         if (m_save_queue.contains(furthest_chunk)) {
             process_save_queue();
         }

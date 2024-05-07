@@ -7,7 +7,7 @@ Crosshair::Crosshair(UIPipeline& pipeline)
     , m_uniform_data(pipeline.create_uniform_data())
     , m_texture(pipeline.renderer().create_texture(res_path("cross.png")))
 {
-    const auto transform = mve::Matrix4::identity().translate(
+    const auto transform = mve::Matrix4f::identity().translate(
         { static_cast<float>(pipeline.renderer().extent().x) / 2.0f,
           static_cast<float>(pipeline.renderer().extent().y) / 2.0f,
           0.0f });
@@ -41,7 +41,7 @@ void Crosshair::draw() const
 }
 void Crosshair::resize()
 {
-    const auto transform = mve::Matrix4::identity().translate(
+    const auto transform = mve::Matrix4f::identity().translate(
         { static_cast<float>(m_pipeline->renderer().extent().x) / 2.0f,
           static_cast<float>(m_pipeline->renderer().extent().y) / 2.0f,
           0.0f });

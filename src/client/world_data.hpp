@@ -160,7 +160,7 @@ private:
 
     std::function<bool(mve::Vector2i, mve::Vector2i)> compare_from_player
         = [&](const mve::Vector2i a, const mve::Vector2i b) {
-              return distance_sqrd(mve::Vector2(a), mve::Vector2(m_player_chunk))
-                  < distance_sqrd(mve::Vector2(b), mve::Vector2(m_player_chunk));
+              return mve::Vector2f(a).distance_sqrd_to(mve::Vector2f(m_player_chunk))
+                  < mve::Vector2f(b).distance_sqrd_to(mve::Vector2f(m_player_chunk));
           };
 };

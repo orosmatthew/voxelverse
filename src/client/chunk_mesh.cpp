@@ -253,7 +253,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
 }
 
 ChunkFaceData create_chunk_face_mesh(
-    const uint8_t block_type, const mve::Vector3 offset, const Direction face, const std::array<uint8_t, 4>& lighting)
+    const uint8_t block_type, const mve::Vector3f offset, const Direction face, const std::array<uint8_t, 4>& lighting)
 {
     ChunkFaceData data;
     QuadUVs uvs;
@@ -369,7 +369,7 @@ void calc_chunk_block_faces(
                 std::array<uint8_t, 4> face_lighting = calc_chunk_face_lighting(
                     world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
                 ChunkFaceData face = create_chunk_face_mesh(
-                    adj_block_type, mve::Vector3(adj_local_pos), opposite_direction(dir), face_lighting);
+                    adj_block_type, mve::Vector3f(adj_local_pos), opposite_direction(dir), face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -377,7 +377,7 @@ void calc_chunk_block_faces(
             if (adj_block_type == 0 || is_transparent(adj_block_type)) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_chunk_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
-                ChunkFaceData face = create_chunk_face_mesh(block_type, mve::Vector3(local_pos), dir, face_lighting);
+                ChunkFaceData face = create_chunk_face_mesh(block_type, mve::Vector3f(local_pos), dir, face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -430,7 +430,7 @@ std::optional<ChunkBufferData> create_chunk_buffer_data(const mve::Vector3i chun
 
     mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i) + mve::Vector3(chunk_pos) * 16.0f);
+        vertex_data.push_back(mesh.vertices.at(i) + mve::Vector3f(chunk_pos) * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
         vertex_data.push_back(1.0f);

@@ -12,7 +12,7 @@ public:
 
     TextBuffer create_text_buffer();
 
-    TextBuffer create_text_buffer(std::string_view text, mve::Vector2 pos, float scale, mve::Vector3 color);
+    TextBuffer create_text_buffer(std::string_view text, mve::Vector2f pos, float scale, mve::Vector3f color);
 
     void update_text_buffer(const TextBuffer& buffer, std::string_view text);
 
@@ -28,11 +28,11 @@ public:
 
     void remove_cursor(const TextBuffer& buffer);
 
-    void set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2 pos);
+    void set_text_buffer_translation(const TextBuffer& buffer, mve::Vector2f pos);
 
     void set_text_buffer_scale(const TextBuffer& buffer, float scale);
 
-    void set_text_buffer_color(const TextBuffer& buffer, mve::Vector3 color);
+    void set_text_buffer_color(const TextBuffer& buffer, mve::Vector3f color);
 
     [[nodiscard]] float text_buffer_width(const TextBuffer& buffer) const;
 
@@ -63,14 +63,14 @@ private:
         mve::UniformBuffer ubo;
         mve::DescriptorSet descriptor_set;
         char character;
-        mve::Vector2 translation;
+        mve::Vector2f translation;
         float scale;
     };
 
     struct Cursor {
         mve::UniformBuffer ubo;
         mve::DescriptorSet descriptor_set;
-        mve::Vector2 translation;
+        mve::Vector2f translation;
         float scale;
     };
 
@@ -78,10 +78,10 @@ private:
         std::vector<RenderGlyph> render_glyphs;
         std::optional<Cursor> cursor;
         int cursor_pos;
-        mve::Vector2 translation;
+        mve::Vector2f translation;
         float scale;
         int text_length;
-        mve::Vector3 color;
+        mve::Vector3f color;
         std::string text;
     };
 

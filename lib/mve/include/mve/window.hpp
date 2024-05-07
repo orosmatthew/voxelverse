@@ -283,9 +283,9 @@ public:
 
     [[nodiscard]] bool is_mouse_button_released(MouseButton button) const;
 
-    [[nodiscard]] Vector2 mouse_pos() const;
+    [[nodiscard]] Vector2f mouse_pos() const;
 
-    [[nodiscard]] Vector2 mouse_delta() const;
+    [[nodiscard]] Vector2f mouse_delta() const;
 
     void fullscreen(bool use_native = false);
 
@@ -337,9 +337,9 @@ public:
 
     void disable_cursor();
 
-    void set_cursor_pos(Vector2 pos) const;
+    void set_cursor_pos(Vector2f pos) const;
 
-    [[nodiscard]] Vector2 mouse_scroll() const;
+    [[nodiscard]] Vector2f mouse_scroll() const;
 
     [[nodiscard]] bool is_cursor_in_window() const;
 
@@ -347,7 +347,7 @@ public:
 
     [[nodiscard]] bool is_resizable() const;
 
-    [[nodiscard]] Vector2 get_cursor_pos(bool clamped_to_window = true) const;
+    [[nodiscard]] Vector2f get_cursor_pos(bool clamped_to_window = true) const;
 
     [[nodiscard]] std::vector<std::string> input_stream() const
     {
@@ -367,8 +367,8 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
-    Vector2 m_current_scroll_offset {};
-    Vector2 m_scroll_offset {};
+    Vector2f m_current_scroll_offset {};
+    Vector2f m_scroll_offset {};
     Vector2i m_pos;
     Vector2i m_size;
     Vector2i m_windowed_size;
@@ -388,10 +388,10 @@ private:
     std::set<MouseButton> m_mouse_buttons_pressed {};
     std::set<MouseButton> m_mouse_buttons_released {};
 
-    Vector2 m_current_mouse_pos;
-    Vector2 m_mouse_pos_prev;
-    Vector2 m_mouse_delta;
-    Vector2 m_mouse_pos;
+    Vector2f m_current_mouse_pos;
+    Vector2f m_mouse_pos_prev;
+    Vector2f m_mouse_delta;
+    Vector2f m_mouse_pos;
 
     std::vector<std::string> m_current_input_stream {};
     std::vector<std::string> m_input_stream {};

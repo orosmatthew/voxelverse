@@ -245,15 +245,15 @@ public:
 
     inline void update(UniformLocation location, float value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector2 value, bool persist = true);
+    inline void update(UniformLocation location, Vector2f value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector3 value, bool persist = true);
+    inline void update(UniformLocation location, Vector3f value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector4 value, bool persist = true);
+    inline void update(UniformLocation location, Vector4f value, bool persist = true);
 
-    inline void update(UniformLocation location, const Matrix3& value, bool persist = true);
+    inline void update(UniformLocation location, const Matrix3f& value, bool persist = true);
 
-    inline void update(UniformLocation location, const Matrix4& value, bool persist = true);
+    inline void update(UniformLocation location, const Matrix4f& value, bool persist = true);
 
 private:
     Renderer* m_renderer {};
@@ -298,7 +298,7 @@ private:
 namespace detail {
 
 static constexpr size_t max_uniform_value_size
-    = std::max({ sizeof(float), sizeof(Vector2), sizeof(Vector3), sizeof(Vector4), sizeof(Matrix3), sizeof(Matrix4) });
+    = std::max({ sizeof(float), sizeof(Vector2f), sizeof(Vector3f), sizeof(Vector4f), sizeof(Matrix3f), sizeof(Matrix4f) });
 
 enum class DescriptorBindingType { uniform_buffer, texture };
 

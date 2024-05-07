@@ -30,7 +30,7 @@ void Button::draw() const
     m_patch.draw();
     m_text.draw();
 }
-void Button::set_position(const mve::Vector2& pos)
+void Button::set_position(const mve::Vector2f& pos)
 {
     m_position = pos;
     m_patch.set_position(pos);
@@ -121,7 +121,7 @@ void Button::set_pressed_texture(std::shared_ptr<mve::Texture> texture)
 {
     m_texture_pressed = std::move(texture);
 }
-bool Button::is_pos_in_button(const mve::Vector2& pos) const
+bool Button::is_pos_in_button(const mve::Vector2f& pos) const
 {
     return pos.x >= m_patch.position().x && pos.y >= m_patch.position().y
         && pos.x <= m_patch.position().x + static_cast<float>(m_patch.size().x) * m_patch.scale()

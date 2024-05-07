@@ -14,9 +14,9 @@ public:
         const mve::ShaderDescriptorBinding& uniform_buffer_binding,
         const BoundingBox& box,
         float width,
-        mve::Vector3 color);
+        mve::Vector3f color);
 
-    void set_position(mve::Vector3 position);
+    void set_position(mve::Vector3f position);
 
     void draw(const mve::DescriptorSet& global_set) const;
 
@@ -26,13 +26,13 @@ private:
         mve::IndexBuffer index_buffer;
     };
     struct MeshData {
-        std::vector<mve::Vector3> vertices;
+        std::vector<mve::Vector3f> vertices;
         std::vector<uint32_t> indices;
     };
 
-    static MeshData create_rect_mesh(float length, float width, const mve::Matrix4& matrix);
+    static MeshData create_rect_mesh(float length, float width, const mve::Matrix4f& matrix);
 
-    static MeshData create_rect_mesh(mve::Vector3 from, mve::Vector3 to, float width);
+    static MeshData create_rect_mesh(mve::Vector3f from, mve::Vector3f to, float width);
 
     static void combine_mesh_data(MeshData& data, const MeshData& other);
 

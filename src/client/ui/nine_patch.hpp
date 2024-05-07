@@ -24,13 +24,13 @@ public:
 
     void draw() const;
 
-    void set_position(const mve::Vector2& pos);
+    void set_position(const mve::Vector2f& pos);
 
     void set_scale(float scale);
 
     void update_texture(const mve::Texture& texture) const;
 
-    [[nodiscard]] mve::Vector2 position() const
+    [[nodiscard]] mve::Vector2f position() const
     {
         return m_position;
     }
@@ -52,7 +52,7 @@ private:
     mve::IndexBuffer m_index_buffer;
     std::shared_ptr<mve::Texture> m_texture;
     mve::UniformLocation m_model_location;
-    mve::Vector2 m_position;
+    mve::Vector2f m_position;
     float m_scale;
     mve::Vector2i m_size;
 };

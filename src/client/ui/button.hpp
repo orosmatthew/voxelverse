@@ -15,7 +15,7 @@ public:
 
     void draw() const;
 
-    void set_position(const mve::Vector2& pos);
+    void set_position(const mve::Vector2f& pos);
 
     void set_scale(float scale);
 
@@ -27,12 +27,12 @@ public:
 
     void set_pressed_texture(std::shared_ptr<mve::Texture> texture);
 
-    [[nodiscard]] mve::Vector2 size() const
+    [[nodiscard]] mve::Vector2f size() const
     {
-        return mve::Vector2(m_patch.size() * m_patch.scale());
+        return mve::Vector2f(m_patch.size() * m_patch.scale());
     }
 
-    [[nodiscard]] mve::Vector2 position() const
+    [[nodiscard]] mve::Vector2f position() const
     {
         return m_position;
     }
@@ -63,13 +63,13 @@ public:
     }
 
 private:
-    [[nodiscard]] bool is_pos_in_button(const mve::Vector2& pos) const;
+    [[nodiscard]] bool is_pos_in_button(const mve::Vector2f& pos) const;
 
     enum class State { none, hover, pressed, down };
     TextPipeline* m_text_pipeline;
     NinePatch m_patch;
     TextBuffer m_text;
-    mve::Vector2 m_position;
+    mve::Vector2f m_position;
     std::shared_ptr<mve::Texture> m_texture;
     std::shared_ptr<mve::Texture> m_texture_pressed;
     std::shared_ptr<mve::Texture> m_texture_hover;

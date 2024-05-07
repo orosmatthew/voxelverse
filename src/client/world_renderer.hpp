@@ -24,11 +24,11 @@ public:
 
     void remove_data(mve::Vector3i position);
 
-    void set_view(const mve::Matrix4& view);
+    void set_view(const mve::Matrix4f& view);
 
     void resize();
 
-    void set_selection_position(mve::Vector3 position);
+    void set_selection_position(mve::Vector3f position);
 
     void hide_selection()
     {
@@ -52,7 +52,7 @@ public:
         };
     }
 
-    uint64_t create_debug_box(const BoundingBox& box, float width, mve::Vector3 color);
+    uint64_t create_debug_box(const BoundingBox& box, float width, mve::Vector3f color);
 
     void hide_debug_box(uint64_t id);
 

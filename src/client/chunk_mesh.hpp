@@ -7,16 +7,16 @@
 
 class WorldData;
 struct ChunkFaceData {
-    std::array<mve::Vector3, 4> vertices;
-    std::array<mve::Vector3, 4> colors;
-    std::array<mve::Vector2, 4> uvs;
+    std::array<mve::Vector3f, 4> vertices;
+    std::array<mve::Vector3f, 4> colors;
+    std::array<mve::Vector2f, 4> uvs;
     std::array<uint32_t, 6> indices {};
 };
 
 struct ChunkMeshData {
-    std::vector<mve::Vector3> vertices;
-    std::vector<mve::Vector3> colors;
-    std::vector<mve::Vector2> uvs;
+    std::vector<mve::Vector3f> vertices;
+    std::vector<mve::Vector3f> colors;
+    std::vector<mve::Vector2f> uvs;
     std::vector<uint32_t> indices;
 };
 

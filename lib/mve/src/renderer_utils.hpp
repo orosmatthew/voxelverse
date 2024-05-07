@@ -936,15 +936,15 @@ inline std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_desc
             break;
         case VertexAttributeType::vec2:
             description.setFormat(vk::Format::eR32G32Sfloat);
-            offset += sizeof(Vector2);
+            offset += sizeof(Vector2f);
             break;
         case VertexAttributeType::vec3:
             description.setFormat(vk::Format::eR32G32B32Sfloat);
-            offset += sizeof(Vector3);
+            offset += sizeof(Vector3f);
             break;
         case VertexAttributeType::vec4:
             description.setFormat(vk::Format::eR32G32B32A32Sfloat);
-            offset += sizeof(Vector4);
+            offset += sizeof(Vector4f);
             break;
         }
 

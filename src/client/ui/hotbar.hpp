@@ -57,7 +57,7 @@ private:
     mve::Vector2i m_renderer_extent;
     int m_select_pos;
 
-    [[nodiscard]] mve::Vector3 scale() const;
-    [[nodiscard]] mve::Vector3 translation() const;
+    [[nodiscard]] mve::Vector3f scale() const;
+    [[nodiscard]] mve::Vector3f translation() const;
     static std::pair<mve::VertexData, std::vector<uint32_t>> create_item_mesh(uint8_t block_type);
 };

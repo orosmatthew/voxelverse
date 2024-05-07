@@ -124,11 +124,9 @@ void ChunkController::on_player_chunk_change()
         m_sorted_chunks_in_range.push_back(pos);
     }
     std::ranges::sort(m_sorted_chunks_in_range, [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-        return distance_sqrd(
-                   mve::Vector2(a),
-                   mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))
-            < distance_sqrd(
-                   mve::Vector2(b),
-                   mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)));
+        return mve::Vector2f(a).distance_sqrd_to(
+                   mve::Vector2f(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))
+            < mve::Vector2f(b).distance_sqrd_to(
+                mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)));
     });
 }
