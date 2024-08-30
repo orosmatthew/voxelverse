@@ -26,9 +26,9 @@ ModelData load_model(const std::filesystem::path& path)
     vertex_layout.push_back(VertexAttributeType::vec2); // Texture coord
 
     struct Vertex {
-        Vector3f position;
-        Vector3f color;
-        Vector2f texture_coord;
+        nnm::Vector3f position;
+        nnm::Vector3f color;
+        nnm::Vector2f texture_coord;
 
         bool operator==(const Vertex& other) const
         {

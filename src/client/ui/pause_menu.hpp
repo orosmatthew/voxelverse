@@ -11,7 +11,7 @@ public:
 
     void draw() const;
 
-    void resize(mve::Vector2i extent);
+    void resize(nnm::Vector2i extent);
 
     void update(mve::Window& window, mve::Renderer& renderer);
 
@@ -31,7 +31,7 @@ private:
     std::shared_ptr<mve::Texture> m_button_texture;
     std::shared_ptr<mve::Texture> m_button_texture_hover;
     std::shared_ptr<mve::Texture> m_button_texture_pressed;
-    mve::Vector2i m_extent;
+    nnm::Vector2i m_extent;
     Button m_back_button;
     Button m_options_button;
     Button m_exit_button;

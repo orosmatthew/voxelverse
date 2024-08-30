@@ -32,14 +32,14 @@ void OptionsMenu::draw() const
     m_back_button.draw();
 }
 
-void OptionsMenu::resize(const mve::Vector2i extent)
+void OptionsMenu::resize(const nnm::Vector2i extent)
 {
     m_fullscreen_button.set_position(
-        mve::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + mve::Vector2(0.0f, -100.0f));
+        nnm::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + nnm::Vector2(0.0f, -100.0f));
     m_aa_button.set_position(
-        mve::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + mve::Vector2(0.0f, 0.0f));
+        nnm::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + nnm::Vector2(0.0f, 0.0f));
     m_back_button.set_position(
-        mve::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + mve::Vector2(0.0f, 100.0f));
+        nnm::Vector2f(extent / 2.0f) - m_fullscreen_button.size() / 2.0f + nnm::Vector2(0.0f, 100.0f));
 }
 
 void OptionsMenu::update(mve::Window& window, mve::Renderer& renderer)

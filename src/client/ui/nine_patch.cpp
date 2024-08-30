@@ -4,21 +4,21 @@ NinePatch::NinePatch(
     UIPipeline& ui_pipeline,
     const std::shared_ptr<mve::Texture>& texture,
     const NinePatchMargins margins,
-    const mve::Vector2i size,
+    const nnm::Vector2i size,
     const float scale)
     : m_pipeline(&ui_pipeline)
     , m_uniform_data(ui_pipeline.create_uniform_data())
     , m_texture(texture)
     , m_model_location(ui_pipeline.model_location())
-    , m_position(mve::Vector2(0.0f, 0.0f))
+    , m_position(nnm::Vector2(0.0f, 0.0f))
     , m_scale(scale)
     , m_size(size)
 {
     m_uniform_data.descriptor_set.write_binding(ui_pipeline.texture_binding(), *texture);
     m_uniform_data.buffer.update(
-        ui_pipeline.model_location(), mve::Matrix4f::identity().scale(mve::Vector3f::all(scale)));
+        ui_pipeline.model_location(), nnm::Transform3f().scale(nnm::Vector3f::all(scale)).matrix);
 
-    const mve::Vector2 pixel
+    const nnm::Vector2 pixel
         = { 1.0f / static_cast<float>(texture->size().x), 1.0f / static_cast<float>(texture->size().y) };
 
     const std::array x_uvs = {
@@ -28,7 +28,7 @@ NinePatch::NinePatch(
         0.0f, pixel.y * static_cast<float>(margins.top), 1.0f - pixel.y * static_cast<float>(margins.bottom), 1.0f
     };
 
-    std::array<mve::Vector2f, 16> uvs;
+    std::array<nnm::Vector2f, 16> uvs;
     int uv_index = 0;
     for (float y : y_uvs) {
         for (float x : x_uvs) {
@@ -44,7 +44,7 @@ NinePatch::NinePatch(
         0.0f, static_cast<float>(margins.top), static_cast<float>(size.y - margins.bottom), static_cast<float>(size.y)
     };
 
-    std::array<mve::Vector2f, 16> vertices;
+    std::array<nnm::Vector2f, 16> vertices;
     int vertex_count = 0;
     for (float y : y_vertices) {
         for (float x : x_vertices) {
@@ -69,8 +69,8 @@ NinePatch::NinePatch(
 
     mve::VertexData vertex_data(UIPipeline::vertex_layout());
     for (int i = 0; i < 16; i++) {
-        vertex_data.push_back(mve::Vector3(vertices[i].x, vertices[i].y, 0.0f));
-        vertex_data.push_back(mve::Vector3(1.0f, 1.0f, 1.0f));
+        vertex_data.push_back(nnm::Vector3(vertices[i].x, vertices[i].y, 0.0f));
+        vertex_data.push_back(nnm::Vector3(1.0f, 1.0f, 1.0f));
         vertex_data.push_back(uvs[i]);
     }
     m_vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
@@ -82,23 +82,25 @@ void NinePatch::draw() const
     m_pipeline->draw(m_uniform_data.descriptor_set, m_vertex_buffer, m_index_buffer);
 }
 
-void NinePatch::set_position(const mve::Vector2f& pos)
+void NinePatch::set_position(const nnm::Vector2f& pos)
 {
     m_position = pos;
     m_uniform_data.buffer.update(
         m_model_location,
-        mve::Matrix4f::identity()
-            .scale(mve::Vector3f::all(m_scale))
-            .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
+        nnm::Transform3f()
+            .scale(nnm::Vector3f::all(m_scale))
+            .translate(nnm::Vector3(m_position.x, m_position.y, 0.0f))
+            .matrix);
 }
 void NinePatch::set_scale(const float scale)
 {
     m_scale = scale;
     m_uniform_data.buffer.update(
         m_model_location,
-        mve::Matrix4f::identity()
-            .scale(mve::Vector3f::all(m_scale))
-            .translate(mve::Vector3(m_position.x, m_position.y, 0.0f)));
+        nnm::Transform3f()
+            .scale(nnm::Vector3f::all(m_scale))
+            .translate(nnm::Vector3(m_position.x, m_position.y, 0.0f))
+            .matrix);
 }
 
 void NinePatch::update_texture(const mve::Texture& texture) const

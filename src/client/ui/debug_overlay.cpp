@@ -56,12 +56,12 @@ void DebugOverlay::update_gpu_name(const std::string& gpu)
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "gpu: %s", gpu.data());
     m_gpu_text.update(m_str_buffer.data());
 }
-void DebugOverlay::update_player_block_pos(const mve::Vector3i pos)
+void DebugOverlay::update_player_block_pos(const nnm::Vector3i pos)
 {
     std::snprintf(m_str_buffer.data(), m_str_buffer.size(), "block: [%d, %d, %d]", pos.x, pos.y, pos.z);
     m_player_block_text.update(m_str_buffer.data());
 
-    const mve::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
+    const nnm::Vector3i chunk_pos = chunk_pos_from_block_pos(pos);
     std::snprintf(
         m_str_buffer.data(), m_str_buffer.size(), "chunk: [%d, %d, %d]", chunk_pos.x, chunk_pos.y, chunk_pos.z);
     m_player_chunk_text.update(m_str_buffer.data());

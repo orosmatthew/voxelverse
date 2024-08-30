@@ -56,24 +56,24 @@ inline bool UniformBuffer::is_valid() const
 {
     return m_renderer != nullptr;
 }
-inline void UniformBuffer::update(const UniformLocation location, const Matrix4f& value, const bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const nnm::Matrix4f& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(const UniformLocation location, const Matrix3f& value, const bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const nnm::Matrix3f& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
 
-inline void UniformBuffer::update(const UniformLocation location, const Vector4f value, const bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const nnm::Vector4f value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(const UniformLocation location, const Vector3f value, const bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const nnm::Vector3f value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
-inline void UniformBuffer::update(const UniformLocation location, const Vector2f value, const bool persist)
+inline void UniformBuffer::update(const UniformLocation location, const nnm::Vector2f value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }

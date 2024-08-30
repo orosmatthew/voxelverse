@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "math/math.hpp"
+#include <nnm/nnm.hpp>
 
 namespace mve {
 
@@ -23,11 +23,11 @@ public:
 
     void push_back(float value);
 
-    void push_back(Vector2f value);
+    void push_back(nnm::Vector2f value);
 
-    void push_back(Vector3f value);
+    void push_back(nnm::Vector3f value);
 
-    void push_back(Vector4f value);
+    void push_back(nnm::Vector4f value);
 
     [[nodiscard]] VertexAttributeType next_type() const noexcept;
 

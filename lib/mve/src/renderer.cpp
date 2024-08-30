@@ -15,7 +15,7 @@
 #include <vk_mem_alloc.h>
 
 #include <mve/common.hpp>
-#include <mve/math/math.hpp>
+#include <nnm/nnm.hpp>
 #include <mve/vertex_data.hpp>
 #include <mve/window.hpp>
 
@@ -308,10 +308,10 @@ void Renderer::recreate_graphics_pipelines()
 
 void Renderer::recreate_swapchain(const Window& window)
 {
-    Vector2i window_size;
+    nnm::Vector2i window_size;
     glfwGetFramebufferSize(window.glfw_handle(), &window_size.x, &window_size.y);
 
-    while (window_size == Vector2i(0, 0)) {
+    while (window_size == nnm::Vector2i(0, 0)) {
         glfwGetFramebufferSize(window.glfw_handle(), &window_size.x, &window_size.y);
         Window::wait_for_events();
     }
@@ -845,7 +845,7 @@ void Renderer::end_frame(const Window& window)
     m_current_draw_state.is_drawing = false;
 }
 
-Vector2i Renderer::extent() const
+nnm::Vector2i Renderer::extent() const
 {
     return { static_cast<int>(m_vk_swapchain_extent.width), static_cast<int>(m_vk_swapchain_extent.height) };
 }
@@ -1259,29 +1259,29 @@ void Renderer::update_uniform(
     update_uniform<float>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector2f value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const nnm::Vector2f value, const bool persist)
 {
-    update_uniform<Vector2f>(uniform_buffer, location, value, persist);
+    update_uniform<nnm::Vector2f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector3f value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const nnm::Vector3f value, const bool persist)
 {
-    update_uniform<Vector3f>(uniform_buffer, location, value, persist);
+    update_uniform<nnm::Vector3f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Vector4f value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const nnm::Vector4f value, const bool persist)
 {
-    update_uniform<Vector4f>(uniform_buffer, location, value, persist);
+    update_uniform<nnm::Vector4f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix3f& value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const nnm::Matrix3f& value, const bool persist)
 {
-    update_uniform<Matrix3f>(uniform_buffer, location, value, persist);
+    update_uniform<nnm::Matrix3f>(uniform_buffer, location, value, persist);
 }
 void Renderer::update_uniform(
-    UniformBuffer& uniform_buffer, const UniformLocation location, const Matrix4f& value, const bool persist)
+    UniformBuffer& uniform_buffer, const UniformLocation location, const nnm::Matrix4f& value, const bool persist)
 {
-    update_uniform<Matrix4f>(uniform_buffer, location, value, persist);
+    update_uniform<nnm::Matrix4f>(uniform_buffer, location, value, persist);
 }
 
 void Renderer::destroy(Texture& texture)
@@ -1573,7 +1573,7 @@ const Texture& Renderer::framebuffer_texture(const Framebuffer& framebuffer)
 {
     return m_framebuffers[framebuffer.handle()]->texture;
 }
-Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer) const
+nnm::Vector2i Renderer::framebuffer_size(const Framebuffer& framebuffer) const
 {
     return m_framebuffers[framebuffer.handle()]->size;
 }
@@ -1582,7 +1582,7 @@ std::string Renderer::gpu_name() const
     return m_vk_physical_device.getProperties(m_vk_loader).deviceName;
 }
 
-Vector2i Renderer::texture_size(const Texture& texture) const
+nnm::Vector2i Renderer::texture_size(const Texture& texture) const
 {
     MVE_VAL_ASSERT(texture.is_valid(), "[Renderer] Attempt to get size on invalid texture")
     const auto& [image, vk_image_view, vk_sampler, mip_levels] = m_textures.at(texture.handle());

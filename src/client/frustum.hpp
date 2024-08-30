@@ -1,6 +1,8 @@
 #pragma once
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
 
 #include "player.hpp"
 
@@ -14,9 +16,9 @@ public:
         m_far_dist = far_dist;
 
         // compute width and height of the near and far quads
-        m_tan_angle = mve::tan(m_angle);
-        m_sphere_factor.y = 1.0f / mve::cos(m_angle);
-        m_sphere_factor.x = 1.0f / mve::cos(mve::atan(m_tan_angle * ratio));
+        m_tan_angle = nnm::tan(m_angle);
+        m_sphere_factor.y = 1.0f / nnm::cos(m_angle);
+        m_sphere_factor.x = 1.0f / nnm::cos(nnm::atan(m_tan_angle * ratio));
 
         m_near_size.y = m_near_dist * m_tan_angle;
         m_near_size.x = m_near_size.y * ratio;
@@ -29,17 +31,17 @@ public:
     {
         m_camera_pos = camera.position();
         // compute the Z axis of camera
-        m_z_axis = (camera.position() - camera.target()).normalized();
+        m_z_axis = (camera.position() - camera.target()).normalize();
 
         // X-axis of camera of given "up" vector and Z axis
-        m_x_axis = Player::up().cross(m_z_axis).normalized();
+        m_x_axis = Player::up().cross(m_z_axis).normalize();
 
         // the real "up" vector is the cross product of Z and X
         m_y_axis = m_z_axis.cross(m_x_axis);
 
         // compute the center of the near and far planes
-        const mve::Vector3f near_center = m_camera_pos - m_z_axis * m_near_dist;
-        const mve::Vector3f far_center = m_camera_pos - m_z_axis * m_far_dist;
+        const nnm::Vector3f near_center = m_camera_pos - m_z_axis * m_near_dist;
+        const nnm::Vector3f far_center = m_camera_pos - m_z_axis * m_far_dist;
 
         // compute the 8 corners of the frustum
         m_near_quad.top_left = near_center + m_y_axis * m_near_size.y - m_x_axis * m_near_size.x;
@@ -53,9 +55,9 @@ public:
         m_far_quad.bottom_left = far_center - m_y_axis * m_far_size.y - m_x_axis * m_far_size.x;
     }
 
-    [[nodiscard]] bool contains_point(const mve::Vector3f point) const
+    [[nodiscard]] bool contains_point(const nnm::Vector3f point) const
     {
-        const mve::Vector3f point_from_center = point - m_camera_pos;
+        const nnm::Vector3f point_from_center = point - m_camera_pos;
 
         // Test z
         const float point_z_val = point_from_center.dot(-m_z_axis);
@@ -76,11 +78,11 @@ public:
         return true;
     }
 
-    [[nodiscard]] bool contains_sphere(const mve::Vector3f position, const float radius) const
+    [[nodiscard]] bool contains_sphere(const nnm::Vector3f position, const float radius) const
     {
         bool result = true;
 
-        const mve::Vector3f pos_from_center = position - m_camera_pos;
+        const nnm::Vector3f pos_from_center = position - m_camera_pos;
 
         const float az = pos_from_center.dot({ -m_z_axis.x, -m_z_axis.y, -m_z_axis.z });
         if (az > m_far_dist + radius || az < m_near_dist - radius)
@@ -110,24 +112,24 @@ public:
 
 private:
     struct Quad {
-        mve::Vector3f top_left;
-        mve::Vector3f top_right;
-        mve::Vector3f bottom_right;
-        mve::Vector3f bottom_left;
+        nnm::Vector3f top_left;
+        nnm::Vector3f top_right;
+        nnm::Vector3f bottom_right;
+        nnm::Vector3f bottom_left;
     };
 
     Quad m_near_quad;
     Quad m_far_quad;
-    mve::Vector3f m_x_axis;
-    mve::Vector3f m_y_axis;
-    mve::Vector3f m_z_axis;
-    mve::Vector3f m_camera_pos;
+    nnm::Vector3f m_x_axis;
+    nnm::Vector3f m_y_axis;
+    nnm::Vector3f m_z_axis;
+    nnm::Vector3f m_camera_pos;
     float m_near_dist {};
     float m_far_dist {};
     float m_ratio {};
     float m_angle {};
     float m_tan_angle {};
-    mve::Vector2f m_sphere_factor;
-    mve::Vector2f m_near_size;
-    mve::Vector2f m_far_size;
+    nnm::Vector2f m_sphere_factor;
+    nnm::Vector2f m_near_size;
+    nnm::Vector2f m_far_size;
 };

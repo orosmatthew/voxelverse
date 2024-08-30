@@ -10,8 +10,8 @@ inline IndexBuffer::IndexBuffer(Renderer& renderer, const std::vector<uint32_t>&
 }
 
 inline IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
-    : m_handle(other.m_handle)
-    , m_renderer(other.m_renderer)
+    : m_renderer(other.m_renderer)
+    , m_handle(other.m_handle)
 {
     other.m_renderer = nullptr;
 }

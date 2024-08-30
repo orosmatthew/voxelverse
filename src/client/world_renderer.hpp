@@ -4,10 +4,11 @@
 
 #include <BS_thread_pool.hpp>
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
 
 #include "chunk_mesh.hpp"
-#include "common.hpp"
 #include "frustum.hpp"
 #include "player.hpp"
 #include "wire_box_mesh.hpp"
@@ -16,19 +17,19 @@ class WorldRenderer {
 public:
     explicit WorldRenderer(mve::Renderer& renderer);
 
-    void push_mesh_update(mve::Vector3i chunk_pos);
+    void push_mesh_update(nnm::Vector3i chunk_pos);
 
     void process_mesh_updates(const WorldData& world_data);
 
-    bool contains_data(mve::Vector3i position) const;
+    bool contains_data(nnm::Vector3i position) const;
 
-    void remove_data(mve::Vector3i position);
+    void remove_data(nnm::Vector3i position);
 
-    void set_view(const mve::Matrix4f& view);
+    void set_view(const nnm::Matrix4f& view);
 
     void resize();
 
-    void set_selection_position(mve::Vector3f position);
+    void set_selection_position(nnm::Vector3f position);
 
     void hide_selection()
     {
@@ -52,7 +53,7 @@ public:
         };
     }
 
-    uint64_t create_debug_box(const BoundingBox& box, float width, mve::Vector3f color);
+    uint64_t create_debug_box(const BoundingBox& box, float width, nnm::Vector3f color);
 
     void hide_debug_box(uint64_t id);
 
@@ -88,10 +89,10 @@ private:
     mve::UniformLocation m_view_location;
     mve::UniformLocation m_proj_location;
     std::vector<std::optional<ChunkBufferData>> m_temp_chunk_buffer_data {};
-    std::unordered_map<mve::Vector3i, size_t> m_chunk_mesh_lookup {};
+    std::unordered_map<nnm::Vector3i, size_t> m_chunk_mesh_lookup {};
     std::vector<std::optional<ChunkBuffers>> m_chunk_buffers {};
     Frustum m_frustum;
     SelectionBox m_selection_box;
     std::unordered_map<uint64_t, DebugBox> m_debug_boxes {};
-    std::vector<mve::Vector3i> m_chunk_mesh_update_list {};
+    std::vector<nnm::Vector3i> m_chunk_mesh_update_list {};
 };

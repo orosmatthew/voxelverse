@@ -26,6 +26,7 @@ target_include_directories(mve SYSTEM PUBLIC
         external/vma-3.1.0/include)
 
 target_include_directories(mve PUBLIC
+        external/nnm-0.2.0/include
         external/spirv-reflect-1.3.290.0/include
         external/stb-image-2.30/include
         include)

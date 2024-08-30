@@ -7,7 +7,7 @@ class Console {
 public:
     explicit Console(TextPipeline& pipeline);
 
-    void resize(mve::Vector2i extent) const;
+    void resize(nnm::Vector2i extent) const;
 
     void input_char(char character);
 

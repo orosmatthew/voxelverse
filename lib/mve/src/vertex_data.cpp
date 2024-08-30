@@ -15,13 +15,13 @@ int get_vertex_layout_bytes(const VertexLayout& vertex_layout)
             byte_count += sizeof(float);
             break;
         case VertexAttributeType::vec2:
-            byte_count += sizeof(Vector2f);
+            byte_count += sizeof(nnm::Vector2f);
             break;
         case VertexAttributeType::vec3:
-            byte_count += sizeof(Vector3f);
+            byte_count += sizeof(nnm::Vector3f);
             break;
         case VertexAttributeType::vec4:
-            byte_count += sizeof(Vector4f);
+            byte_count += sizeof(nnm::Vector4f);
             break;
         }
     }
@@ -43,7 +43,7 @@ void VertexData::push_back(const float value)
     m_data_count++;
 }
 
-void VertexData::push_back(Vector2f value)
+void VertexData::push_back(nnm::Vector2f value)
 {
     MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec2, "[VertexData] Invalid type: vec2")
 
@@ -53,7 +53,7 @@ void VertexData::push_back(Vector2f value)
     m_data_count++;
 }
 
-void VertexData::push_back(Vector3f value)
+void VertexData::push_back(nnm::Vector3f value)
 {
     MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec3, "[VertexData] Invalid type: vec3")
 
@@ -64,7 +64,7 @@ void VertexData::push_back(Vector3f value)
     m_data_count++;
 }
 
-void VertexData::push_back(Vector4f value)
+void VertexData::push_back(nnm::Vector4f value)
 {
     MVE_VAL_ASSERT(next_type() == VertexAttributeType::vec4, "[VertexData] Invalid type: vec4")
 

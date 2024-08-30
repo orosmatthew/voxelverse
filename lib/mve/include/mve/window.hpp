@@ -7,8 +7,8 @@
 #include <string>
 
 #include "GLFW/glfw3.h"
+#include <nnm/nnm.hpp>
 
-#include "math/math.hpp"
 #include "monitor.hpp"
 
 namespace mve {
@@ -249,15 +249,15 @@ enum KeyModifierBits {
 
 class Window {
 public:
-    Window(const std::string& title, Vector2i size, bool resizable = true);
+    Window(const std::string& title, nnm::Vector2i size, bool resizable = true);
 
     [[nodiscard]] GLFWwindow* glfw_handle() const;
 
-    [[nodiscard]] Vector2i size() const;
+    [[nodiscard]] nnm::Vector2i size() const;
 
     [[nodiscard]] bool should_close() const;
 
-    void set_resize_callback(const std::function<void(Vector2i)>& resize_callback);
+    void set_resize_callback(const std::function<void(nnm::Vector2i)>& resize_callback);
 
     void remove_resize_callback();
 
@@ -283,9 +283,9 @@ public:
 
     [[nodiscard]] bool is_mouse_button_released(MouseButton button) const;
 
-    [[nodiscard]] Vector2f mouse_pos() const;
+    [[nodiscard]] nnm::Vector2f mouse_pos() const;
 
-    [[nodiscard]] Vector2f mouse_delta() const;
+    [[nodiscard]] nnm::Vector2f mouse_delta() const;
 
     void fullscreen(bool use_native = false);
 
@@ -303,13 +303,13 @@ public:
 
     void set_title(const std::string& title) const;
 
-    void move_to(Vector2i pos) const;
+    void move_to(nnm::Vector2i pos) const;
 
     void fullscreen_to(Monitor monitor, bool use_native = false) const;
 
-    void set_min_size(Vector2i size) const;
+    void set_min_size(nnm::Vector2i size) const;
 
-    void resize(Vector2i size) const;
+    void resize(nnm::Vector2i size) const;
 
     [[nodiscard]] bool is_minimized() const;
 
@@ -323,7 +323,7 @@ public:
 
     [[nodiscard]] Monitor current_monitor() const;
 
-    [[nodiscard]] Vector2i position() const;
+    [[nodiscard]] nnm::Vector2i position() const;
 
     void set_clipboard_text(const std::string& text) const;
 
@@ -337,9 +337,9 @@ public:
 
     void disable_cursor();
 
-    void set_cursor_pos(Vector2f pos) const;
+    void set_cursor_pos(nnm::Vector2f pos) const;
 
-    [[nodiscard]] Vector2f mouse_scroll() const;
+    [[nodiscard]] nnm::Vector2f mouse_scroll() const;
 
     [[nodiscard]] bool is_cursor_in_window() const;
 
@@ -347,7 +347,7 @@ public:
 
     [[nodiscard]] bool is_resizable() const;
 
-    [[nodiscard]] Vector2f get_cursor_pos(bool clamped_to_window = true) const;
+    [[nodiscard]] nnm::Vector2f get_cursor_pos(bool clamped_to_window = true) const;
 
     [[nodiscard]] std::vector<std::string> input_stream() const
     {
@@ -359,7 +359,7 @@ private:
 
     const bool m_resizable;
     UniqueGlfwWindow m_glfw_window;
-    std::optional<std::function<void(Vector2i)>> m_resize_callback;
+    std::optional<std::function<void(nnm::Vector2i)>> m_resize_callback;
     bool m_hidden;
     bool m_minimized;
     bool m_maximized;
@@ -367,13 +367,13 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
-    Vector2f m_current_scroll_offset {};
-    Vector2f m_scroll_offset {};
-    Vector2i m_pos;
-    Vector2i m_size;
-    Vector2i m_windowed_size;
+    nnm::Vector2f m_current_scroll_offset {};
+    nnm::Vector2f m_scroll_offset {};
+    nnm::Vector2i m_pos;
+    nnm::Vector2i m_size;
+    nnm::Vector2i m_windowed_size;
     bool m_fullscreen;
-    Vector2i m_min_size;
+    nnm::Vector2i m_min_size;
     std::set<Key> m_current_keys_down {};
     std::set<Key> m_keys_down {};
     std::set<Key> m_keys_pressed {};
@@ -388,10 +388,10 @@ private:
     std::set<MouseButton> m_mouse_buttons_pressed {};
     std::set<MouseButton> m_mouse_buttons_released {};
 
-    Vector2f m_current_mouse_pos;
-    Vector2f m_mouse_pos_prev;
-    Vector2f m_mouse_delta;
-    Vector2f m_mouse_pos;
+    nnm::Vector2f m_current_mouse_pos;
+    nnm::Vector2f m_mouse_pos_prev;
+    nnm::Vector2f m_mouse_delta;
+    nnm::Vector2f m_mouse_pos;
 
     std::vector<std::string> m_current_input_stream {};
     std::vector<std::string> m_input_stream {};

@@ -12,7 +12,7 @@ public:
 
     void draw() const;
 
-    void resize(mve::Vector2i extent);
+    void resize(nnm::Vector2i extent);
 
     void update(mve::Window& window, mve::Renderer& renderer);
 

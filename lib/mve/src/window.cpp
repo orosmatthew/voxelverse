@@ -3,11 +3,11 @@
 #include <stdexcept>
 
 #include <mve/common.hpp>
-#include <mve/math/math.hpp>
+#include <nnm/nnm.hpp>
 
 namespace mve {
 
-Window::Window(const std::string& title, const Vector2i size, const bool resizable)
+Window::Window(const std::string& title, const nnm::Vector2i size, const bool resizable)
     : m_resizable(resizable)
     , m_hidden(false)
     , m_minimized(false)
@@ -57,11 +57,11 @@ void Window::glfw_framebuffer_resize_callback(GLFWwindow* window, const int widt
     glfwGetFramebufferSize(window, &instance->m_size.x, &instance->m_size.y);
 
     if (instance->m_resize_callback.has_value()) {
-        (*instance->m_resize_callback)(Vector2i(width, height));
+        (*instance->m_resize_callback)(nnm::Vector2i(width, height));
     }
 }
 
-Vector2i Window::size() const
+nnm::Vector2i Window::size() const
 {
     return m_size;
 }
@@ -105,7 +105,7 @@ void Window::poll_events()
     m_mouse_buttons_down = m_current_mouse_buttons_down;
 
     m_scroll_offset = m_current_scroll_offset;
-    m_current_scroll_offset = Vector2f::zero();
+    m_current_scroll_offset = nnm::Vector2f::zero();
 
     std::swap(m_current_input_stream, m_input_stream);
     m_current_input_stream.clear();
@@ -114,7 +114,7 @@ void Window::poll_events()
     m_current_keys_repeated.clear();
 }
 
-Vector2f Window::mouse_scroll() const
+nnm::Vector2f Window::mouse_scroll() const
 {
     return m_scroll_offset;
 }
@@ -124,7 +124,7 @@ void Window::wait_for_events()
     glfwWaitEvents();
 }
 
-void Window::set_resize_callback(const std::function<void(Vector2i)>& resize_callback)
+void Window::set_resize_callback(const std::function<void(nnm::Vector2i)>& resize_callback)
 {
     m_resize_callback = resize_callback;
 }
@@ -134,15 +134,15 @@ void Window::remove_resize_callback()
     m_resize_callback.reset();
 }
 
-Vector2f Window::get_cursor_pos(const bool clamped_to_window) const
+nnm::Vector2f Window::get_cursor_pos(const bool clamped_to_window) const
 {
     double glfw_cursor_pos[2];
     glfwGetCursorPos(m_glfw_window.get(), &glfw_cursor_pos[0], &glfw_cursor_pos[1]);
-    Vector2f mouse_pos_val;
+    nnm::Vector2f mouse_pos_val;
     if (clamped_to_window) {
-        const Vector2i window_size = size();
-        mouse_pos_val.x = clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
-        mouse_pos_val.y = clamp(static_cast<float>(glfw_cursor_pos[1]), 0.0f, static_cast<float>(window_size.y));
+        const nnm::Vector2i window_size = size();
+        mouse_pos_val.x = nnm::clamp(static_cast<float>(glfw_cursor_pos[0]), 0.0f, static_cast<float>(window_size.x));
+        mouse_pos_val.y = nnm::clamp(static_cast<float>(glfw_cursor_pos[1]), 0.0f, static_cast<float>(window_size.y));
     }
     return { mouse_pos_val };
 }
@@ -155,12 +155,12 @@ Monitor Window::current_monitor() const
     if (m_fullscreen) {
         return Monitor(glfwGetWindowMonitor(m_glfw_window.get()));
     }
-    Vector2i pos;
+    nnm::Vector2i pos;
     glfwGetWindowPos(m_glfw_window.get(), &pos.x, &pos.y);
 
     for (int i = 0; i < monitor_count; i++) {
-        Vector2i workarea_pos;
-        Vector2i workarea_size;
+        nnm::Vector2i workarea_pos;
+        nnm::Vector2i workarea_size;
 
         GLFWmonitor* monitor = monitors[i];
         glfwGetMonitorWorkarea(monitor, &workarea_pos.x, &workarea_pos.y, &workarea_size.x, &workarea_size.y);
@@ -251,14 +251,14 @@ void Window::set_title(const std::string& title) const
     glfwSetWindowTitle(m_glfw_window.get(), title.c_str());
 }
 
-void Window::move_to(const Vector2i pos) const
+void Window::move_to(const nnm::Vector2i pos) const
 {
     glfwSetWindowPos(m_glfw_window.get(), pos.x, pos.y);
 }
 
 void Window::fullscreen_to(const Monitor monitor, const bool use_native) const
 {
-    Vector2i monitor_size;
+    nnm::Vector2i monitor_size;
     if (m_resizable && use_native) {
         monitor_size = monitor.size();
     }
@@ -269,7 +269,7 @@ void Window::fullscreen_to(const Monitor monitor, const bool use_native) const
         m_glfw_window.get(), monitor.glfw_handle(), 0, 0, monitor_size.x, monitor_size.y, GLFW_DONT_CARE);
 }
 
-void Window::set_min_size(const Vector2i size) const
+void Window::set_min_size(const nnm::Vector2i size) const
 {
     if (size.x > m_size.x || size.y > m_size.y) {
         resize(size);
@@ -277,12 +277,12 @@ void Window::set_min_size(const Vector2i size) const
     glfwSetWindowSizeLimits(m_glfw_window.get(), size.x, size.y, GLFW_DONT_CARE, GLFW_DONT_CARE);
 }
 
-void Window::resize(const Vector2i size) const
+void Window::resize(const nnm::Vector2i size) const
 {
     glfwSetWindowSize(m_glfw_window.get(), size.x, size.y);
 }
 
-Vector2i Window::position() const
+nnm::Vector2i Window::position() const
 {
     if (!m_fullscreen) {
         return m_pos;
@@ -398,7 +398,7 @@ void Window::windowed()
 
 void Window::fullscreen(const bool use_native)
 {
-    Vector2i monitor_size;
+    nnm::Vector2i monitor_size;
     if (!m_fullscreen) {
         m_windowed_size = m_size;
         glfwGetWindowPos(m_glfw_window.get(), &m_pos.x, &m_pos.y);
@@ -436,7 +436,7 @@ void Window::glfw_mouse_button_callback(GLFWwindow* window, int button, const in
 void Window::glfw_cursor_pos_callback(GLFWwindow* window, const double pos_x, const double pos_y)
 {
     auto* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
-    instance->m_current_mouse_pos = Vector2(static_cast<float>(pos_x), static_cast<float>(pos_y));
+    instance->m_current_mouse_pos = nnm::Vector2(static_cast<float>(pos_x), static_cast<float>(pos_y));
 }
 bool Window::is_mouse_button_down(const MouseButton button) const
 {
@@ -450,11 +450,11 @@ bool Window::is_mouse_button_released(const MouseButton button) const
 {
     return m_mouse_buttons_released.contains(button);
 }
-Vector2f Window::mouse_pos() const
+nnm::Vector2f Window::mouse_pos() const
 {
     return m_mouse_pos;
 }
-Vector2f Window::mouse_delta() const
+nnm::Vector2f Window::mouse_delta() const
 {
     return m_mouse_delta;
 }
@@ -464,7 +464,7 @@ void Window::glfw_scroll_callback(GLFWwindow* window, const double offset_x, con
     instance->m_current_scroll_offset.x += static_cast<float>(offset_x);
     instance->m_current_scroll_offset.y += static_cast<float>(offset_y);
 }
-void Window::set_cursor_pos(const Vector2f pos) const
+void Window::set_cursor_pos(const nnm::Vector2f pos) const
 {
     glfwSetCursorPos(m_glfw_window.get(), pos.x, pos.y);
 }

@@ -25,7 +25,7 @@ inline void Texture::destroy()
         m_renderer->destroy(*this);
     }
 }
-Vector2i Texture::size() const
+nnm::Vector2i Texture::size() const
 {
     return m_renderer->texture_size(*this);
 }

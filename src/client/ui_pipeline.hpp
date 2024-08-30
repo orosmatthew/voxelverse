@@ -13,7 +13,7 @@ public:
 
     void resize();
 
-    void update_framebuffer_texture(const mve::Texture& texture, mve::Vector2i size);
+    void update_framebuffer_texture(const mve::Texture& texture, nnm::Vector2i size);
 
     void draw_world() const;
 

@@ -4,9 +4,10 @@
 #include <functional>
 #include <variant>
 
+
 #include <mve/include_vulkan.hpp>
 
-#include <mve/math/math.hpp>
+#include <nnm/nnm.hpp>
 #include <mve/shader.hpp>
 #include <mve/vertex_data.hpp>
 
@@ -194,7 +195,7 @@ public:
 
     inline void destroy();
 
-    [[nodiscard]] inline Vector2i size() const;
+    [[nodiscard]] inline nnm::Vector2i size() const;
 
     Texture& operator=(const Texture&) = delete;
 
@@ -245,15 +246,15 @@ public:
 
     inline void update(UniformLocation location, float value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector2f value, bool persist = true);
+    inline void update(UniformLocation location, nnm::Vector2f value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector3f value, bool persist = true);
+    inline void update(UniformLocation location, nnm::Vector3f value, bool persist = true);
 
-    inline void update(UniformLocation location, Vector4f value, bool persist = true);
+    inline void update(UniformLocation location, nnm::Vector4f value, bool persist = true);
 
-    inline void update(UniformLocation location, const Matrix3f& value, bool persist = true);
+    inline void update(UniformLocation location, const nnm::Matrix3f& value, bool persist = true);
 
-    inline void update(UniformLocation location, const Matrix4f& value, bool persist = true);
+    inline void update(UniformLocation location, const nnm::Matrix4f& value, bool persist = true);
 
 private:
     Renderer* m_renderer {};
@@ -297,8 +298,13 @@ private:
 
 namespace detail {
 
-static constexpr size_t max_uniform_value_size
-    = std::max({ sizeof(float), sizeof(Vector2f), sizeof(Vector3f), sizeof(Vector4f), sizeof(Matrix3f), sizeof(Matrix4f) });
+static constexpr size_t max_uniform_value_size = std::max(
+    { sizeof(float),
+      sizeof(nnm::Vector2f),
+      sizeof(nnm::Vector3f),
+      sizeof(nnm::Vector4f),
+      sizeof(nnm::Matrix3f),
+      sizeof(nnm::Matrix4f) });
 
 enum class DescriptorBindingType { uniform_buffer, texture };
 
@@ -404,7 +410,7 @@ struct FramebufferImpl {
     std::vector<vk::Framebuffer> vk_framebuffers;
     Texture texture;
     std::optional<std::function<void()>> callback;
-    Vector2i size;
+    nnm::Vector2i size;
 };
 
 struct DeferredFunction {

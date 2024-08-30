@@ -5,7 +5,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "math/math.hpp"
+#include <nnm/nnm.hpp>
 
 namespace mve {
 
@@ -13,11 +13,11 @@ class Monitor {
 public:
     explicit Monitor(GLFWmonitor* monitor);
 
-    [[nodiscard]] Vector2i size() const;
+    [[nodiscard]] nnm::Vector2i size() const;
 
-    [[nodiscard]] Vector2i position() const;
+    [[nodiscard]] nnm::Vector2i position() const;
 
-    [[nodiscard]] Vector2i physical_size() const;
+    [[nodiscard]] nnm::Vector2i physical_size() const;
 
     [[nodiscard]] GLFWmonitor* glfw_handle() const;
 

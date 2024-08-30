@@ -1,9 +1,10 @@
 #include "chunk_mesh.hpp"
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
 
 #include "chunk_data.hpp"
-#include "common.hpp"
 #include "world_data.hpp"
 #include "world_renderer.hpp"
 
@@ -24,11 +25,11 @@ void combine_mesh_data(ChunkMeshData& data, const ChunkMeshData& other)
 std::array<uint8_t, 4> calc_chunk_face_lighting(
     const WorldData& data,
     const ChunkData& chunk_data,
-    const mve::Vector3i chunk_pos,
-    const mve::Vector3i local_block_pos,
+    const nnm::Vector3i chunk_pos,
+    const nnm::Vector3i local_block_pos,
     const Direction dir)
 {
-    const mve::Vector3i world_pos = block_local_to_world(chunk_pos, local_block_pos);
+    const nnm::Vector3i world_pos = block_local_to_world(chunk_pos, local_block_pos);
 
     uint8_t base_lighting = 0;
 
@@ -38,10 +39,10 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
     //      7 |   | 3
     //      ---------
     //      6 | 5 | 4
-    std::array<mve::Vector3i, 8> check_blocks;
+    std::array<nnm::Vector3i, 8> check_blocks;
     switch (dir) {
     case Direction::front:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, -1, 0)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(0, -1, 0)).value();
         check_blocks[0] = { -1, -1, 1 };
         check_blocks[1] = { 0, -1, 1 };
         check_blocks[2] = { 1, -1, 1 };
@@ -52,7 +53,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, -1, 0 };
         break;
     case Direction::back:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 1, 0)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(0, 1, 0)).value();
         check_blocks[0] = { 1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { -1, 1, 1 };
@@ -63,7 +64,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { 1, 1, 0 };
         break;
     case Direction::left:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(-1, 0, 0)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(-1, 0, 0)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { -1, 0, 1 };
         check_blocks[2] = { -1, -1, 1 };
@@ -74,7 +75,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, 1, 0 };
         break;
     case Direction::right:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(1, 0, 0)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(1, 0, 0)).value();
         check_blocks[0] = { 1, -1, 1 };
         check_blocks[1] = { 1, 0, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -85,7 +86,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { 1, -1, 0 };
         break;
     case Direction::top:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, 1)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(0, 0, 1)).value();
         check_blocks[0] = { -1, 1, 1 };
         check_blocks[1] = { 0, 1, 1 };
         check_blocks[2] = { 1, 1, 1 };
@@ -96,7 +97,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
         check_blocks[7] = { -1, 0, 1 };
         break;
     case Direction::bottom:
-        base_lighting = data.lighting_at(world_pos + mve::Vector3i(0, 0, -1)).value();
+        base_lighting = data.lighting_at(world_pos + nnm::Vector3i(0, 0, -1)).value();
         check_blocks[0] = { 1, 1, -1 };
         check_blocks[1] = { 0, 1, -1 };
         check_blocks[2] = { -1, 1, -1 };
@@ -124,7 +125,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
     };
 
     for (int i = 0; i < check_blocks.size(); ++i) {
-        const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
+        const nnm::Vector3i check_block_local = local_block_pos + check_blocks[i];
         std::optional<uint8_t> check_block;
         if (is_block_pos_local(check_block_local)) {
             check_block = chunk_data.get_block(check_block_local);
@@ -190,7 +191,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
             }
         }
         const int val = count == 0 ? 0 : total / count;
-        return static_cast<uint8_t>(mve::clamp(val * 16, 0, 255));
+        return static_cast<uint8_t>(nnm::clamp(val * 16, 0, 255));
     };
 
     std::array lighting
@@ -200,7 +201,7 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
             avg_light_opts(adj_light[3]) };
 
     for (int i = 0; i < check_blocks.size(); i++) {
-        const mve::Vector3i check_block_local = local_block_pos + check_blocks[i];
+        const nnm::Vector3i check_block_local = local_block_pos + check_blocks[i];
         std::optional<uint8_t> check_block;
         if (is_block_pos_local(check_block_local)) {
             check_block = chunk_data.get_block(check_block_local);
@@ -253,52 +254,52 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
 }
 
 ChunkFaceData create_chunk_face_mesh(
-    const uint8_t block_type, const mve::Vector3f offset, const Direction face, const std::array<uint8_t, 4>& lighting)
+    const uint8_t block_type, const nnm::Vector3f offset, const Direction face, const std::array<uint8_t, 4>& lighting)
 {
     ChunkFaceData data;
     QuadUVs uvs;
     switch (face) {
     case Direction::front:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::front));
-        data.vertices[0] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
-        data.vertices[1] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
-        data.vertices[2] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
-        data.vertices[3] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(-0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::back:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::back));
-        data.vertices[0] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[1] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[2] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
-        data.vertices[3] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::left:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::left));
-        data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[1] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
-        data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
-        data.vertices[3] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(-0.5f, 0.5f, -0.5f) + offset;
         break;
     case Direction::right:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::right));
-        data.vertices[0] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
-        data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[2] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
-        data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     case Direction::top:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::top));
-        data.vertices[0] = mve::Vector3(-0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[1] = mve::Vector3(0.5f, 0.5f, 0.5f) + offset;
-        data.vertices[2] = mve::Vector3(0.5f, -0.5f, 0.5f) + offset;
-        data.vertices[3] = mve::Vector3(-0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(-0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(0.5f, 0.5f, 0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(0.5f, -0.5f, 0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(-0.5f, -0.5f, 0.5f) + offset;
         break;
     case Direction::bottom:
         uvs = uvs_from_atlas({ 4, 4 }, block_uv(block_type, Direction::bottom));
-        data.vertices[0] = mve::Vector3(0.5f, 0.5f, -0.5f) + offset;
-        data.vertices[1] = mve::Vector3(-0.5f, 0.5f, -0.5f) + offset;
-        data.vertices[2] = mve::Vector3(-0.5f, -0.5f, -0.5f) + offset;
-        data.vertices[3] = mve::Vector3(0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[0] = nnm::Vector3(0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[1] = nnm::Vector3(-0.5f, 0.5f, -0.5f) + offset;
+        data.vertices[2] = nnm::Vector3(-0.5f, -0.5f, -0.5f) + offset;
+        data.vertices[3] = nnm::Vector3(0.5f, -0.5f, -0.5f) + offset;
         break;
     default:
         VV_REL_ASSERT(false, "Unreachable")
@@ -319,7 +320,8 @@ ChunkFaceData create_chunk_face_mesh(
     data.colors[3] = { static_cast<float>(lighting[3]) / 255.0f,
                        static_cast<float>(lighting[3]) / 255.0f,
                        static_cast<float>(lighting[3]) / 255.0f };
-    data.indices = { 0, 3, 2, 0, 2, 1 };
+    // data.indices = { 0, 3, 2, 0, 2, 1 };
+    data.indices = { 0, 2, 3, 0, 1, 2 };
     return data;
 }
 
@@ -342,8 +344,8 @@ void calc_chunk_block_faces(
     ChunkMeshData& mesh,
     const WorldData& world_data,
     const ChunkData& chunk_data,
-    const mve::Vector3i chunk_pos,
-    const mve::Vector3i local_pos,
+    const nnm::Vector3i chunk_pos,
+    const nnm::Vector3i local_pos,
     const bool iterate_empty,
     const std::array<bool, 6>& directions = { true, true, true, true, true, true })
 {
@@ -352,7 +354,7 @@ void calc_chunk_block_faces(
             continue;
         }
         const auto dir = static_cast<Direction>(f);
-        const mve::Vector3i adj_local_pos = local_pos + direction_vector(dir);
+        const nnm::Vector3i adj_local_pos = local_pos + direction_vector(dir);
         std::optional<uint8_t> adj_block;
         if (is_block_pos_local(adj_local_pos)) {
             adj_block = chunk_data.get_block(adj_local_pos);
@@ -369,7 +371,7 @@ void calc_chunk_block_faces(
                 std::array<uint8_t, 4> face_lighting = calc_chunk_face_lighting(
                     world_data, chunk_data, chunk_pos, adj_local_pos, opposite_direction(dir));
                 ChunkFaceData face = create_chunk_face_mesh(
-                    adj_block_type, mve::Vector3f(adj_local_pos), opposite_direction(dir), face_lighting);
+                    adj_block_type, nnm::Vector3f(adj_local_pos), opposite_direction(dir), face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
@@ -377,18 +379,18 @@ void calc_chunk_block_faces(
             if (adj_block_type == 0 || is_transparent(adj_block_type)) {
                 std::array<uint8_t, 4> face_lighting
                     = calc_chunk_face_lighting(world_data, chunk_data, chunk_pos, local_pos, dir);
-                ChunkFaceData face = create_chunk_face_mesh(block_type, mve::Vector3f(local_pos), dir, face_lighting);
+                ChunkFaceData face = create_chunk_face_mesh(block_type, nnm::Vector3f(local_pos), dir, face_lighting);
                 add_face_to_mesh(mesh, face);
             }
         }
     }
 }
 
-std::optional<ChunkBufferData> create_chunk_buffer_data(const mve::Vector3i chunk_pos, const WorldData& world_data)
+std::optional<ChunkBufferData> create_chunk_buffer_data(const nnm::Vector3i chunk_pos, const WorldData& world_data)
 {
     ChunkMeshData mesh;
     const ChunkData& chunk_data = world_data.chunk_data_at(chunk_pos);
-    for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const mve::Vector3i local_pos) {
+    for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const nnm::Vector3i local_pos) {
         const uint8_t block = chunk_data.get_block(local_pos);
         if (chunk_data.block_count() > 8 * 8 * 8) {
             if (block != 0) {
@@ -430,7 +432,7 @@ std::optional<ChunkBufferData> create_chunk_buffer_data(const mve::Vector3i chun
 
     mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i) + mve::Vector3f(chunk_pos) * 16.0f);
+        vertex_data.push_back(mesh.vertices.at(i) + nnm::Vector3f(chunk_pos) * 16.0f);
         vertex_data.push_back(mesh.colors.at(i));
         vertex_data.push_back(mesh.uvs.at(i));
         vertex_data.push_back(1.0f);

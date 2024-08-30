@@ -11,21 +11,21 @@ int mve::Monitor::count()
     return monitor_count;
 }
 
-mve::Vector2i mve::Monitor::size() const
+nnm::Vector2i mve::Monitor::size() const
 {
     const GLFWvidmode* mode = glfwGetVideoMode(m_monitor);
     return { mode->width, mode->height };
 }
 
-mve::Vector2i mve::Monitor::position() const
+nnm::Vector2i mve::Monitor::position() const
 {
-    Vector2i pos;
+    nnm::Vector2i pos;
     glfwGetMonitorPos(m_monitor, &pos.x, &pos.y);
     return pos;
 }
-mve::Vector2i mve::Monitor::physical_size() const
+nnm::Vector2i mve::Monitor::physical_size() const
 {
-    Vector2i physical_size;
+    nnm::Vector2i physical_size;
     glfwGetMonitorPhysicalSize(m_monitor, &physical_size.x, &physical_size.y);
     return physical_size;
 }

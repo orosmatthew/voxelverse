@@ -2,26 +2,29 @@
 
 #include <array>
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
+
 #include <mve/renderer.hpp>
 
 class WorldData;
 struct ChunkFaceData {
-    std::array<mve::Vector3f, 4> vertices;
-    std::array<mve::Vector3f, 4> colors;
-    std::array<mve::Vector2f, 4> uvs;
+    std::array<nnm::Vector3f, 4> vertices;
+    std::array<nnm::Vector3f, 4> colors;
+    std::array<nnm::Vector2f, 4> uvs;
     std::array<uint32_t, 6> indices {};
 };
 
 struct ChunkMeshData {
-    std::vector<mve::Vector3f> vertices;
-    std::vector<mve::Vector3f> colors;
-    std::vector<mve::Vector2f> uvs;
+    std::vector<nnm::Vector3f> vertices;
+    std::vector<nnm::Vector3f> colors;
+    std::vector<nnm::Vector2f> uvs;
     std::vector<uint32_t> indices;
 };
 
 struct ChunkBufferData {
-    mve::Vector3i chunk_pos;
+    nnm::Vector3i chunk_pos;
     mve::VertexData vertex_data;
     std::vector<uint32_t> index_data;
 };
@@ -35,7 +38,7 @@ public:
     {
     }
 
-    [[nodiscard]] mve::Vector3i chunk_pos() const
+    [[nodiscard]] nnm::Vector3i chunk_pos() const
     {
         return m_chunk_pos;
     }
@@ -47,9 +50,9 @@ public:
     }
 
 private:
-    mve::Vector3i m_chunk_pos;
+    nnm::Vector3i m_chunk_pos;
     mve::VertexBuffer m_vertex_buffer;
     mve::IndexBuffer m_index_buffer;
 };
 
-std::optional<ChunkBufferData> create_chunk_buffer_data(mve::Vector3i chunk_pos, const WorldData& world_data);
+std::optional<ChunkBufferData> create_chunk_buffer_data(nnm::Vector3i chunk_pos, const WorldData& world_data);

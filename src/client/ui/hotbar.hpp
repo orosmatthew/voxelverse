@@ -8,7 +8,7 @@ class Hotbar {
 public:
     explicit Hotbar(UIPipeline& ui_pipeline);
 
-    void resize(const mve::Vector2i& extent);
+    void resize(const nnm::Vector2i& extent);
 
     void update_hotbar_select(int pos);
 
@@ -54,10 +54,10 @@ private:
     Element m_select;
     std::unordered_map<int, std::optional<Item>> m_items;
 
-    mve::Vector2i m_renderer_extent;
+    nnm::Vector2i m_renderer_extent;
     int m_select_pos;
 
-    [[nodiscard]] mve::Vector3f scale() const;
-    [[nodiscard]] mve::Vector3f translation() const;
+    [[nodiscard]] nnm::Vector3f scale() const;
+    [[nodiscard]] nnm::Vector3f translation() const;
     static std::pair<mve::VertexData, std::vector<uint32_t>> create_item_mesh(uint8_t block_type);
 };

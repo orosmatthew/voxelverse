@@ -5,7 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
 
 class WorldData;
 class WorldGenerator;
@@ -17,7 +19,7 @@ public:
         WorldData& world_data,
         const WorldGenerator& world_generator,
         WorldRenderer& world_renderer,
-        mve::Vector3i player_chunk);
+        nnm::Vector3i player_chunk);
 
     ChunkController& set_render_distance(const int dist)
     {
@@ -31,7 +33,7 @@ public:
         return *this;
     }
 
-    void queue_recreate_mesh(mve::Vector2i chunk_pos);
+    void queue_recreate_mesh(nnm::Vector2i chunk_pos);
 
 private:
     enum ChunkFlagBits {
@@ -65,12 +67,12 @@ private:
 
     void on_player_chunk_change();
 
-    inline static const std::array<mve::Vector2i, 4> sc_nbor_offsets { { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } } };
+    inline static const std::array<nnm::Vector2i, 4> sc_nbor_offsets { { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } } };
     static constexpr int sc_full_nbors = sc_nbor_offsets.size();
 
-    mve::Vector2i m_player_chunk_col = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
-    std::vector<mve::Vector2i> m_sorted_chunks_in_range {};
-    std::unordered_map<mve::Vector2i, ChunkState> m_chunk_states;
+    nnm::Vector2i m_player_chunk_col = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
+    std::vector<nnm::Vector2i> m_sorted_chunks_in_range {};
+    std::unordered_map<nnm::Vector2i, ChunkState> m_chunk_states;
     int m_render_distance = 0;
     int m_mesh_updates_per_frame = 0;
 };

@@ -1,9 +1,10 @@
 #include "ui_pipeline.hpp"
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
+
+#include <nnm/nnm.hpp>
 
 #include "../common/logger.hpp"
-#include "common.hpp"
 
 UIPipeline::UIPipeline(mve::Renderer& renderer)
     : m_renderer(&renderer)
@@ -17,38 +18,38 @@ UIPipeline::UIPipeline(mve::Renderer& renderer)
 {
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
 
-    mve::Matrix4f camera;
+    nnm::Transform3f camera;
     camera = camera.translate({ 0.0f, 0.0f, 0.0f });
-    const mve::Matrix4f view = camera.inverse().transposed();
-    m_global_ubo.update(m_view_location, view);
+    const nnm::Transform3f view = camera.unchecked_inverse();
+    m_global_ubo.update(m_view_location, view.matrix);
 }
 
 void UIPipeline::resize()
 {
-    const auto proj = mve::Matrix4f::from_ortho(
+    const auto proj = nnm::Transform3f::from_projection_orthographic(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
         static_cast<float>(m_renderer->extent().y),
         -1000.0f,
         1000.0f);
-    m_global_ubo.update(m_proj_location, proj);
+    m_global_ubo.update(m_proj_location, proj.matrix);
 }
 
-void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const mve::Vector2i size)
+void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const nnm::Vector2i size)
 {
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), texture);
     mve::VertexData world_data(vertex_layout());
-    world_data.push_back(mve::Vector3(0.0f, 0.0f, 0.0f));
+    world_data.push_back(nnm::Vector3(0.0f, 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 0.0f });
-    world_data.push_back(mve::Vector3(static_cast<float>(size.x), 0.0f, 0.0f));
+    world_data.push_back(nnm::Vector3(static_cast<float>(size.x), 0.0f, 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 0.0f });
-    world_data.push_back(mve::Vector3(static_cast<float>(size.x), static_cast<float>(size.y), 0.0f));
+    world_data.push_back(nnm::Vector3(static_cast<float>(size.x), static_cast<float>(size.y), 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 1.0f, 1.0f });
-    world_data.push_back(mve::Vector3(0.0f, static_cast<float>(size.y), 0.0f));
+    world_data.push_back(nnm::Vector3(0.0f, static_cast<float>(size.y), 0.0f));
     world_data.push_back({ 1, 1, 1 });
     world_data.push_back({ 0.0f, 1.0f });
     if (!m_world.has_value()) {
@@ -59,7 +60,7 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const m
                       .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };
         world.descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), world.uniform_buffer);
         world.descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
-        world.uniform_buffer.update(world.model_location, mve::Matrix4f::identity());
+        world.uniform_buffer.update(world.model_location, nnm::Matrix4f::identity());
         m_world = std::move(world);
     }
     else {
@@ -67,7 +68,7 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const m
         m_world->descriptor_set.write_binding(m_fragment_shader.descriptor_set(1).binding(1), texture);
     }
     m_global_ubo.update(
-        m_vertex_shader.descriptor_set(0).binding(0).member("world_size").location(), mve::Vector2f(size));
+        m_vertex_shader.descriptor_set(0).binding(0).member("world_size").location(), nnm::Vector2f(size));
 }
 
 UIUniformData UIPipeline::create_uniform_data() const

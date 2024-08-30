@@ -8,7 +8,7 @@ Console::Console(TextPipeline& pipeline)
     m_input_text.set_color({ 1.0f, 1.0f, 1.0f });
 }
 
-void Console::resize(const mve::Vector2i extent) const
+void Console::resize(const nnm::Vector2i extent) const
 {
     float x = 0.0f + 8.0f;
     float y = static_cast<float>(extent.y) - 150.0f;

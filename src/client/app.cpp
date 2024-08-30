@@ -8,7 +8,7 @@
 namespace app {
 
 App::App()
-    : m_window("Voxelverse", mve::Vector2i(800, 600))
+    : m_window("Voxelverse", nnm::Vector2i(800, 600))
     , m_renderer(m_window, "Voxelverse", 0, 1, 0)
     , m_server(false)
     , m_client(enet_host_create(
@@ -31,7 +31,7 @@ App::App()
     m_window.set_min_size({ 800, 600 });
     m_window.disable_cursor();
 
-    auto resize_func = [&](mve::Vector2i) {
+    auto resize_func = [&](nnm::Vector2i) {
         m_renderer.resize(m_window);
         m_world.resize(m_renderer.extent());
         m_ui_pipeline.resize();

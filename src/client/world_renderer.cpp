@@ -1,10 +1,10 @@
 #include "world_renderer.hpp"
 
-#include <mve/math/math.hpp>
-
 #include "common.hpp"
 
-void WorldRenderer::push_mesh_update(mve::Vector3i chunk_pos)
+#include <nnm/nnm.hpp>
+
+void WorldRenderer::push_mesh_update(nnm::Vector3i chunk_pos)
 {
     if (m_chunk_mesh_lookup.contains(chunk_pos)) {
         m_chunk_buffers.at(m_chunk_mesh_lookup.at(chunk_pos)).reset();
@@ -42,7 +42,7 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
     m_global_descriptor_set.write_binding(m_vertex_shader.descriptor_set(0).binding(0), m_global_ubo);
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), *m_block_texture);
     m_chunk_ubo.update(
-        m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), mve::Matrix4f::identity());
+        m_vertex_shader.descriptor_set(1).binding(0).member("model").location(), nnm::Matrix4f::identity());
     m_chunk_ubo.update(m_vertex_shader.descriptor_set(1).binding(0).member("fog_influence").location(), 1.0f);
     m_chunk_descriptor_set.write_binding(m_vertex_shader.descriptor_set(1).binding(0), m_chunk_ubo);
     m_frustum = {};
@@ -50,23 +50,23 @@ WorldRenderer::WorldRenderer(mve::Renderer& renderer)
 
     m_global_ubo.update(
         m_vertex_shader.descriptor_set(0).binding(0).member("fog_color").location(),
-        mve::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 1.0f, 1.0f));
+        nnm::Vector4(142.0f / 255.0f, 186.0f / 255.0f, 1.0f, 1.0f));
     m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_near").location(), 400.0f);
     m_global_ubo.update(m_vertex_shader.descriptor_set(0).binding(0).member("fog_far").location(), 475.0f);
 }
 
 void WorldRenderer::resize()
 {
-    const float angle = mve::radians(90.0f);
+    constexpr float angle = nnm::radians(90.0f);
     const float ratio = static_cast<float>(m_renderer->extent().x) / static_cast<float>(m_renderer->extent().y);
     constexpr float near = 0.01f;
     constexpr float far = 10000.0f;
 
     m_frustum.update_perspective(angle, ratio, near, far);
-    const auto proj = mve::Matrix4f::from_perspective(angle, ratio, near, far);
-    m_global_ubo.update(m_proj_location, proj);
+    const auto proj = nnm::Transform3f::from_projection_perspective_right_hand_0to1(angle, ratio, near, far);
+    m_global_ubo.update(m_proj_location, proj.matrix);
 }
-void WorldRenderer::set_view(const mve::Matrix4f& view)
+void WorldRenderer::set_view(const nnm::Matrix4f& view)
 {
     m_global_ubo.update(m_view_location, view);
 }
@@ -81,7 +81,9 @@ void WorldRenderer::draw(const Player& camera)
     }
 
     for (const std::optional<ChunkBuffers>& mesh : m_chunk_buffers) {
-        if (mesh.has_value() && m_frustum.contains_sphere(mve::Vector3f(mesh->chunk_pos()) * 16.0f, 30.0f)) {
+        // TODO: Fix frustum culling
+        // if (mesh.has_value() && m_frustum.contains_sphere(nnm::Vector3f(mesh->chunk_pos()) * 16.0f, 30.0f)) {
+        if (mesh.has_value()) {
             m_renderer->bind_descriptor_sets(m_global_descriptor_set, m_chunk_descriptor_set);
             mesh->draw(*m_renderer);
         }
@@ -102,21 +104,21 @@ void WorldRenderer::draw(const Player& camera)
 //         }
 //     }
 // }
-void WorldRenderer::set_selection_position(const mve::Vector3f position)
+void WorldRenderer::set_selection_position(const nnm::Vector3f position)
 {
     m_selection_box.mesh.set_position(position);
 }
-bool WorldRenderer::contains_data(const mve::Vector3i position) const
+bool WorldRenderer::contains_data(const nnm::Vector3i position) const
 {
     return m_chunk_mesh_lookup.contains(position);
 }
-void WorldRenderer::remove_data(const mve::Vector3i position)
+void WorldRenderer::remove_data(const nnm::Vector3i position)
 {
     m_chunk_buffers.at(m_chunk_mesh_lookup.at(position)).reset();
     m_chunk_mesh_lookup.erase(position);
 }
 
-uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, const float width, const mve::Vector3f color)
+uint64_t WorldRenderer::create_debug_box(const BoundingBox& box, const float width, const nnm::Vector3f color)
 {
     WireBoxMesh box_mesh(
         *m_renderer,
@@ -156,7 +158,7 @@ void WorldRenderer::delete_all_debug_boxes()
 }
 void WorldRenderer::process_mesh_updates(const WorldData& world_data)
 {
-    std::erase_if(m_chunk_mesh_update_list, [&](const mve::Vector3i& chunk_pos) {
+    std::erase_if(m_chunk_mesh_update_list, [&](const nnm::Vector3i& chunk_pos) {
         return !m_chunk_mesh_lookup.contains(chunk_pos);
     });
     m_temp_chunk_buffer_data.clear();
@@ -164,7 +166,7 @@ void WorldRenderer::process_mesh_updates(const WorldData& world_data)
     const BS::multi_future<void> tasks = m_thread_pool.submit_blocks<size_t>(
         0, m_chunk_mesh_update_list.size(), [&](const auto begin, const auto end) {
             for (auto i = begin; i < end; ++i) {
-                const mve::Vector3i chunk_pos = m_chunk_mesh_update_list[i];
+                const nnm::Vector3i chunk_pos = m_chunk_mesh_update_list[i];
                 m_temp_chunk_buffer_data[i] = std::move(create_chunk_buffer_data(chunk_pos, world_data));
             }
         });

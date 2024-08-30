@@ -29,7 +29,7 @@ public:
 
     void update(mve::Window& window, float blend, mve::Renderer& renderer);
 
-    void resize(mve::Vector2i extent);
+    void resize(nnm::Vector2i extent);
 
     void draw();
 
@@ -38,11 +38,11 @@ public:
         m_hud.update_debug_fps(fps);
     }
 
-    [[nodiscard]] mve::Vector3i player_block_pos() const;
+    [[nodiscard]] nnm::Vector3i player_block_pos() const;
 
-    [[nodiscard]] mve::Vector3i player_chunk_pos() const;
+    [[nodiscard]] nnm::Vector3i player_chunk_pos() const;
 
-    [[nodiscard]] std::optional<const ChunkData*> chunk_data_at(mve::Vector3i chunk_pos) const;
+    [[nodiscard]] std::optional<const ChunkData*> chunk_data_at(nnm::Vector3i chunk_pos) const;
 
     [[nodiscard]] const WorldData& world_data() const
     {

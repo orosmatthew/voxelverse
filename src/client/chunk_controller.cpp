@@ -10,9 +10,9 @@ void ChunkController::update(
     WorldData& world_data,
     const WorldGenerator& world_generator,
     WorldRenderer& world_renderer,
-    const mve::Vector3i player_chunk)
+    const nnm::Vector3i player_chunk)
 {
-    if (const mve::Vector2i player_chunk_col = { player_chunk.x, player_chunk.y };
+    if (const nnm::Vector2i player_chunk_col = { player_chunk.x, player_chunk.y };
         player_chunk_col != m_player_chunk_col) {
         world_data.set_player_chunk(player_chunk_col);
         m_player_chunk_col = player_chunk_col;
@@ -20,7 +20,7 @@ void ChunkController::update(
     }
 
     int chunk_count = 0;
-    for (const mve::Vector2i col_pos : m_sorted_chunks_in_range) {
+    for (const nnm::Vector2i col_pos : m_sorted_chunks_in_range) {
         auto& [flags, neighbors] = m_chunk_states.at(col_pos);
         if (!contains_flag(flags, flag_is_generated)) {
             if (!world_data.contains_column(col_pos)) {
@@ -30,7 +30,7 @@ void ChunkController::update(
                 world_generator.generate_chunk(world_data, col_pos);
                 world_data.queue_save_chunk(col_pos);
             }
-            for (const mve::Vector2i offset : sc_nbor_offsets) {
+            for (const nnm::Vector2i offset : sc_nbor_offsets) {
                 if (!m_chunk_states.contains(col_pos + offset)) {
                     m_chunk_states.insert({ col_pos + offset, {} });
                 }
@@ -65,15 +65,15 @@ void ChunkController::update(
     world_renderer.process_mesh_updates(world_data);
 
     chunk_count = 0;
-    while (std::optional<mve::Vector2i> culled_chunk
+    while (std::optional<nnm::Vector2i> culled_chunk
            = world_data.try_cull_chunk(static_cast<float>(m_render_distance) + 3.0f)) {
         if (!m_chunk_states.contains(culled_chunk.value())) {
             continue;
         }
         uint8_t& flags = m_chunk_states.at(culled_chunk.value()).flags;
         if (contains_flag(flags, flag_is_generated)) {
-            for (mve::Vector2i offset : sc_nbor_offsets) {
-                if (const mve::Vector2i neighbor = culled_chunk.value() + offset; m_chunk_states.contains(neighbor)) {
+            for (nnm::Vector2i offset : sc_nbor_offsets) {
+                if (const nnm::Vector2i neighbor = culled_chunk.value() + offset; m_chunk_states.contains(neighbor)) {
                     if (--m_chunk_states.at(neighbor).generated_neighbors == 0) {
                         m_chunk_states.erase(neighbor);
                     }
@@ -95,7 +95,7 @@ void ChunkController::update(
     }
 }
 
-void ChunkController::queue_recreate_mesh(const mve::Vector2i chunk_pos)
+void ChunkController::queue_recreate_mesh(const nnm::Vector2i chunk_pos)
 {
     if (m_chunk_states.contains(chunk_pos)) {
         if (uint8_t& flags = m_chunk_states.at(chunk_pos).flags;
@@ -109,12 +109,12 @@ void ChunkController::on_player_chunk_change()
 {
     m_sorted_chunks_in_range.clear();
     for_2d(
-        mve::Vector2i(-m_render_distance, -m_render_distance)
-            + mve::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),
-        mve::Vector2i(m_render_distance, m_render_distance) + mve::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),
-        [&](const mve::Vector2i pos) {
-            if (mve::abs(mve::sqrd(pos.x - m_player_chunk_col.x) + mve::sqrd(pos.y - m_player_chunk_col.y))
-                <= mve::sqrd(m_render_distance)) {
+        nnm::Vector2i(-m_render_distance, -m_render_distance)
+            + nnm::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),
+        nnm::Vector2i(m_render_distance, m_render_distance) + nnm::Vector2i(m_player_chunk_col.x, m_player_chunk_col.y),
+        [&](const nnm::Vector2i pos) {
+            if (nnm::abs(nnm::sqrd(pos.x - m_player_chunk_col.x) + nnm::sqrd(pos.y - m_player_chunk_col.y))
+                <= nnm::sqrd(m_render_distance)) {
                 if (!m_chunk_states.contains(pos)) {
                     m_chunk_states[pos] = {};
                 }
@@ -123,10 +123,10 @@ void ChunkController::on_player_chunk_change()
     for (const auto& pos : m_chunk_states | std::views::keys) {
         m_sorted_chunks_in_range.push_back(pos);
     }
-    std::ranges::sort(m_sorted_chunks_in_range, [&](const mve::Vector2i& a, const mve::Vector2i& b) {
-        return mve::Vector2f(a).distance_sqrd_to(
-                   mve::Vector2f(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))
-            < mve::Vector2f(b).distance_sqrd_to(
-                mve::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)));
+    std::ranges::sort(m_sorted_chunks_in_range, [&](const nnm::Vector2i& a, const nnm::Vector2i& b) {
+        return nnm::Vector2f(a).distance_sqrd(
+                   nnm::Vector2f(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)))
+            < nnm::Vector2f(b).distance_sqrd(
+                nnm::Vector2(static_cast<float>(m_player_chunk_col.x), static_cast<float>(m_player_chunk_col.y)));
     });
 }

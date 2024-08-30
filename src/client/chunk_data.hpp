@@ -3,14 +3,18 @@
 #include <array>
 #include <cstdint>
 
+// ReSharper disable once CppUnusedIncludeDirective
+#include <cereal/types/array.hpp>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <cereal/types/vector.hpp>
 
-#include <mve/math/math.hpp>
-
-#include "../common/assert.hpp"
 #include "common.hpp"
 
-inline mve::Vector3i direction_vector(const Direction dir)
+#include <nnm/nnm.hpp>
+
+#include "../common/assert.hpp"
+
+inline nnm::Vector3i direction_vector(const Direction dir)
 {
     switch (dir) {
     case Direction::front:
@@ -54,33 +58,33 @@ class ChunkData {
 public:
     ChunkData();
 
-    explicit ChunkData(mve::Vector3i chunk_pos);
+    explicit ChunkData(nnm::Vector3i chunk_pos);
 
     void reset_lighting(const uint8_t value = 0)
     {
         std::ranges::fill(m_lighting_data, value);
     }
 
-    [[nodiscard]] mve::Vector3i position() const
+    [[nodiscard]] nnm::Vector3i position() const
     {
         return m_pos;
     }
 
-    void set_block(mve::Vector3i pos, uint8_t type);
-    [[nodiscard]] uint8_t get_block(const mve::Vector3i pos) const
+    void set_block(nnm::Vector3i pos, uint8_t type);
+    [[nodiscard]] uint8_t get_block(const nnm::Vector3i pos) const
     {
         VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_block_data[index(pos)];
     }
 
-    void set_lighting(const mve::Vector3i pos, const uint8_t val)
+    void set_lighting(const nnm::Vector3i pos, const uint8_t val)
     {
         VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         VV_DEB_ASSERT(val <= 15, "[ChunkData] Lighting is not between 0 and 15")
         m_lighting_data[index(pos)] = val;
     }
 
-    [[nodiscard]] uint8_t lighting_at(const mve::Vector3i pos) const
+    [[nodiscard]] uint8_t lighting_at(const nnm::Vector3i pos) const
     {
         VV_DEB_ASSERT(is_block_pos_local(pos), "[ChunkData] Invalid local block position");
         return m_lighting_data[index(pos)];
@@ -98,35 +102,35 @@ public:
     }
 
 private:
-    static size_t index(const mve::Vector3i pos)
+    static size_t index(const nnm::Vector3i pos)
     {
         return pos.x + pos.y * sc_chunk_size + pos.z * sc_chunk_size * sc_chunk_size;
     }
 
-    static size_t index2(const mve::Vector2i pos)
+    static size_t index2(const nnm::Vector2i pos)
     {
         return pos.x + pos.y * sc_chunk_size;
     }
 
-    static mve::Vector3i pos(const int index)
+    static nnm::Vector3i pos(const int index)
     {
-        mve::Vector3i vector;
+        nnm::Vector3i vector;
         vector.x = index % sc_chunk_size;
         vector.y = index / sc_chunk_size % sc_chunk_size;
         vector.z = index / (sc_chunk_size * sc_chunk_size);
         return vector;
     }
 
-    static mve::Vector2i pos2(const int index)
+    static nnm::Vector2i pos2(const int index)
     {
-        mve::Vector2i vector;
+        nnm::Vector2i vector;
         vector.x = index % sc_chunk_size;
         vector.y = index / sc_chunk_size % sc_chunk_size;
         return vector;
     }
 
     static constexpr int sc_chunk_size = 16;
-    mve::Vector3i m_pos;
+    nnm::Vector3i m_pos;
     std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_block_data = { 0 };
     std::array<uint8_t, sc_chunk_size * sc_chunk_size * sc_chunk_size> m_lighting_data = { 0 };
     int m_block_count = 0;

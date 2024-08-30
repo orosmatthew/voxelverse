@@ -10,7 +10,7 @@ class HUD {
 public:
     HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline);
 
-    void update_debug_player_block_pos(const mve::Vector3i pos)
+    void update_debug_player_block_pos(const nnm::Vector3i pos)
     {
         m_debug_overlay.update_player_block_pos(pos);
     }
@@ -30,7 +30,7 @@ public:
         m_console.update_from_window(window);
     }
 
-    void resize(mve::Vector2i extent);
+    void resize(nnm::Vector2i extent);
 
     void draw() const;
 

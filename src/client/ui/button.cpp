@@ -9,12 +9,12 @@ Button::Button(
     TextPipeline& text_pipeline,
     const std::shared_ptr<mve::Texture>& texture,
     const std::string& text,
-    const mve::Vector2i& size,
+    const nnm::Vector2i& size,
     const float scale)
     : m_text_pipeline(&text_pipeline)
     , m_patch(ui_pipeline, texture, { 2, 2, 2, 2 }, size, scale)
     , m_text(text_pipeline, text, { 0, 0 }, 1.0f, { 0.0f, 0.0f, 0.0f })
-    , m_position(mve::Vector2(0.0f, 0.0f))
+    , m_position(nnm::Vector2(0.0f, 0.0f))
     , m_texture(texture)
     , m_texture_pressed(texture)
     , m_texture_hover(texture)
@@ -30,7 +30,7 @@ void Button::draw() const
     m_patch.draw();
     m_text.draw();
 }
-void Button::set_position(const mve::Vector2f& pos)
+void Button::set_position(const nnm::Vector2f& pos)
 {
     m_position = pos;
     m_patch.set_position(pos);
@@ -60,7 +60,7 @@ void Button::set_hover_texture(std::shared_ptr<mve::Texture> texture)
 }
 void Button::update(const mve::Window& window)
 {
-    const mve::Vector2 mouse_pos = window.mouse_pos();
+    const nnm::Vector2 mouse_pos = window.mouse_pos();
     const bool hover = is_pos_in_button(mouse_pos);
     const bool down = window.is_mouse_button_down(mve::MouseButton::left);
     const bool pressed = window.is_mouse_button_pressed(mve::MouseButton::left);
@@ -121,7 +121,7 @@ void Button::set_pressed_texture(std::shared_ptr<mve::Texture> texture)
 {
     m_texture_pressed = std::move(texture);
 }
-bool Button::is_pos_in_button(const mve::Vector2f& pos) const
+bool Button::is_pos_in_button(const nnm::Vector2f& pos) const
 {
     return pos.x >= m_patch.position().x && pos.y >= m_patch.position().y
         && pos.x <= m_patch.position().x + static_cast<float>(m_patch.size().x) * m_patch.scale()

@@ -98,33 +98,36 @@ public:
 
     void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, float value, bool persist = true);
 
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector2f value, bool persist = true);
-
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector3f value, bool persist = true);
-
-    void update_uniform(UniformBuffer& uniform_buffer, UniformLocation location, Vector4f value, bool persist = true);
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, nnm::Vector2f value, bool persist = true);
 
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix3f& value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, nnm::Vector3f value, bool persist = true);
 
     void update_uniform(
-        UniformBuffer& uniform_buffer, UniformLocation location, const Matrix4f& value, bool persist = true);
+        UniformBuffer& uniform_buffer, UniformLocation location, nnm::Vector4f value, bool persist = true);
+
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, const nnm::Matrix3f& value, bool persist = true);
+
+    void update_uniform(
+        UniformBuffer& uniform_buffer, UniformLocation location, const nnm::Matrix4f& value, bool persist = true);
 
     void bind_descriptor_set(DescriptorSet& descriptor_set) const;
 
     void bind_descriptor_sets(const DescriptorSet& descriptor_set_a, const DescriptorSet& descriptor_set_b) const;
 
-    [[nodiscard]] Vector2i extent() const;
+    [[nodiscard]] nnm::Vector2i extent() const;
 
     Framebuffer create_framebuffer(std::function<void()> callback);
 
-    [[nodiscard]] Vector2i framebuffer_size(const Framebuffer& framebuffer) const;
+    [[nodiscard]] nnm::Vector2i framebuffer_size(const Framebuffer& framebuffer) const;
 
     const Texture& framebuffer_texture(const Framebuffer& framebuffer);
 
     [[nodiscard]] std::string gpu_name() const;
 
-    [[nodiscard]] Vector2i texture_size(const Texture& texture) const;
+    [[nodiscard]] nnm::Vector2i texture_size(const Texture& texture) const;
 
     [[nodiscard]] Msaa max_msaa_samples() const;
 

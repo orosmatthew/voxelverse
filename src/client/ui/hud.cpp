@@ -17,7 +17,7 @@ HUD::HUD(UIPipeline& ui_pipeline, TextPipeline& text_pipeline)
     m_hotbar.set_item(7, 8);
     m_hotbar.set_item(8, 9);
 }
-void HUD::resize(const mve::Vector2i extent)
+void HUD::resize(const nnm::Vector2i extent)
 {
     m_hotbar.resize(extent);
     m_debug_overlay.resize();

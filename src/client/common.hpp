@@ -6,11 +6,19 @@
 #include <filesystem>
 #include <vector>
 
-#include <mve/math/math.hpp>
+#include "common.hpp"
 
-namespace mve {
+#include <nnm/nnm.hpp>
+
+namespace nnm {
 template <class Archive>
 void serialize(Archive& archive, Vector2i& v)
+{
+    archive(v.x, v.y);
+}
+
+template <class Archive, typename Real>
+void serialize(Archive& archive, Vector2<Real>& v)
 {
     archive(v.x, v.y);
 }
@@ -21,20 +29,26 @@ void serialize(Archive& archive, Vector3i& v)
     archive(v.x, v.y, v.z);
 }
 
-template <class Archive>
-void serialize(Archive& archive, Matrix4f& m)
-{
-    archive(m.col0, m.col1, m.col2, m.col3);
-}
-
-template <class Archive>
-void serialize(Archive& archive, Vector4f& v)
+template <class Archive, typename Real>
+void serialize(Archive& archive, Vector4<Real>& v)
 {
     archive(v.x, v.y, v.z, v.w);
 }
 
-template <class Archive>
-void serialize(Archive& archive, Vector3f& v)
+template <class Archive, typename Real>
+void serialize(Archive& archive, Matrix4<Real>& m)
+{
+    archive(m.columns[0], m.columns[1], m.columns[2], m.columns[3]);
+}
+
+template <class Archive, typename Real>
+void serialize(Archive& archive, Transform3<Real>& t)
+{
+    archive(t.matrix);
+}
+
+template <class Archive, typename Real>
+void serialize(Archive& archive, Vector3<Real>& v)
 {
     archive(v.x, v.y, v.z);
 }
@@ -46,41 +60,41 @@ inline std::filesystem::path res_path(const std::filesystem::path& path)
 }
 
 struct Quad {
-    mve::Vector3f top_left;
-    mve::Vector3f top_right;
-    mve::Vector3f bottom_right;
-    mve::Vector3f bottom_left;
+    nnm::Vector3f top_left;
+    nnm::Vector3f top_right;
+    nnm::Vector3f bottom_right;
+    nnm::Vector3f bottom_left;
 };
 
 struct BoundingBox {
-    mve::Vector3f min;
-    mve::Vector3f max;
+    nnm::Vector3f min;
+    nnm::Vector3f max;
 };
 
 struct Rect3 {
-    mve::Vector3f pos;
-    mve::Vector3f size;
+    nnm::Vector3f pos;
+    nnm::Vector3f size;
 };
 
-inline std::vector<std::pair<mve::Vector3f, mve::Vector3f>> rect3_to_edges(const Rect3& rect)
+inline std::vector<std::pair<nnm::Vector3f, nnm::Vector3f>> rect3_to_edges(const Rect3& rect)
 {
-    std::vector<std::pair<mve::Vector3f, mve::Vector3f>> edges;
+    std::vector<std::pair<nnm::Vector3f, nnm::Vector3f>> edges;
     edges.reserve(12);
 
     // Extract position and size of rectangle
-    const mve::Vector3f& p = rect.pos;
-    const mve::Vector3f& s = rect.size;
+    const nnm::Vector3f& p = rect.pos;
+    const nnm::Vector3f& s = rect.size;
 
     // Define corners of rectangle
     const std::array corners
-        = { mve::Vector3f(p.x, p.y, p.z),
-            mve::Vector3f(p.x, p.y, p.z + s.z),
-            mve::Vector3f(p.x, p.y + s.y, p.z),
-            mve::Vector3f(p.x, p.y + s.y, p.z + s.z),
-            mve::Vector3f(p.x + s.x, p.y, p.z),
-            mve::Vector3f(p.x + s.x, p.y, p.z + s.z),
-            mve::Vector3f(p.x + s.x, p.y + s.y, p.z),
-            mve::Vector3f(p.x + s.x, p.y + s.y, p.z + s.z) };
+        = { nnm::Vector3f(p.x, p.y, p.z),
+            nnm::Vector3f(p.x, p.y, p.z + s.z),
+            nnm::Vector3f(p.x, p.y + s.y, p.z),
+            nnm::Vector3f(p.x, p.y + s.y, p.z + s.z),
+            nnm::Vector3f(p.x + s.x, p.y, p.z),
+            nnm::Vector3f(p.x + s.x, p.y, p.z + s.z),
+            nnm::Vector3f(p.x + s.x, p.y + s.y, p.z),
+            nnm::Vector3f(p.x + s.x, p.y + s.y, p.z + s.z) };
 
     // Define edges of rectangle
     edges.emplace_back(corners[0], corners[1]);
@@ -101,7 +115,7 @@ inline std::vector<std::pair<mve::Vector3f, mve::Vector3f>> rect3_to_edges(const
 
 inline Rect3 bounding_box_to_rect3(const BoundingBox& box)
 {
-    const mve::Vector3 bottom_left_back(box.min.x, box.min.y, box.min.z);
+    const nnm::Vector3 bottom_left_back(box.min.x, box.min.y, box.min.z);
     float width = box.max.x - box.min.x;
     float height = box.max.y - box.min.y;
     float depth = box.max.z - box.min.z;
@@ -110,12 +124,12 @@ inline Rect3 bounding_box_to_rect3(const BoundingBox& box)
 
 inline BoundingBox rect3_to_bounding_box(const Rect3& rect)
 {
-    const mve::Vector3 min(rect.pos.x, rect.pos.y, rect.pos.z);
-    const mve::Vector3 max(min.x + rect.size.x, min.y + rect.size.y, min.z + rect.size.z);
+    const nnm::Vector3 min(rect.pos.x, rect.pos.y, rect.pos.z);
+    const nnm::Vector3 max(min.x + rect.size.x, min.y + rect.size.y, min.z + rect.size.z);
     return { min, max };
 }
 
-inline BoundingBox swept_broadphase_box(const mve::Vector3f vel, const BoundingBox& box)
+inline BoundingBox swept_broadphase_box(const nnm::Vector3f vel, const BoundingBox& box)
 {
     BoundingBox broadphase_box;
     broadphase_box.min.x = vel.x > 0.0f ? box.min.x : box.min.x + vel.x;
@@ -129,13 +143,13 @@ inline BoundingBox swept_broadphase_box(const mve::Vector3f vel, const BoundingB
 
 struct SweptBoundingBoxCollision {
     float time {};
-    mve::Vector3f normal;
+    nnm::Vector3f normal;
 };
 
-inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3f vel, const BoundingBox& b1, const BoundingBox& b2)
+inline SweptBoundingBoxCollision swept_bounding_box(nnm::Vector3f vel, const BoundingBox& b1, const BoundingBox& b2)
 {
-    mve::Vector3f inv_entry;
-    mve::Vector3f inv_exit;
+    nnm::Vector3f inv_entry;
+    nnm::Vector3f inv_exit;
 
     auto [pos1, size1] = bounding_box_to_rect3(b1);
     auto [pos2, size2] = bounding_box_to_rect3(b2);
@@ -151,8 +165,8 @@ inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3f vel, const Bou
         }
     }
 
-    mve::Vector3f entry;
-    mve::Vector3f exit;
+    nnm::Vector3f entry;
+    nnm::Vector3f exit;
 
     for (int i = 0; i < 3; i++) {
         if (vel[i] == 0.0f) {
@@ -165,20 +179,20 @@ inline SweptBoundingBoxCollision swept_bounding_box(mve::Vector3f vel, const Bou
         }
     }
 
-    const float entry_time = mve::max(entry.x, mve::max(entry.y, entry.z));
-    const float exit_time = mve::min(exit.x, mve::min(exit.y, exit.z));
+    const float entry_time = nnm::max(entry.x, nnm::max(entry.y, entry.z));
+    const float exit_time = nnm::min(exit.x, nnm::min(exit.y, exit.z));
 
     // If no collision
     SweptBoundingBoxCollision collision;
     if (entry_time > exit_time || entry.x < 0.0f && entry.y < 0.0f && entry.z < 0.0f || entry.x > 1.0f || entry.y > 1.0f
         || entry.z > 1.0f) {
-        collision.normal = mve::Vector3f::zero();
+        collision.normal = nnm::Vector3f::zero();
         collision.time = 1.0f;
         return collision;
     }
     // If collision
-    collision.normal = mve::Vector3f::zero();
-    const mve::Axis3 max_axis = entry.max_axis();
+    collision.normal = nnm::Vector3f::zero();
+    const int max_axis = entry.max_index();
     collision.normal[max_axis] = inv_entry[max_axis] < 0.0f ? 1.0f : -1.0f;
     collision.time = entry_time;
     return collision;
@@ -205,73 +219,73 @@ inline bool collides(const BoundingBox& a, const BoundingBox& b)
     return collision;
 }
 
-inline Quad transform(const Quad& quad, const mve::Matrix4f& matrix)
+inline Quad transform(const Quad& quad, const nnm::Matrix4f& matrix)
 {
     return {
-        quad.top_left.transform(matrix),
-        quad.top_right.transform(matrix),
-        quad.bottom_right.transform(matrix),
-        quad.bottom_left.transform(matrix),
+        quad.top_left.transform(nnm::Transform3f(matrix)),
+        quad.top_right.transform(nnm::Transform3f(matrix)),
+        quad.bottom_right.transform(nnm::Transform3f(matrix)),
+        quad.bottom_left.transform(nnm::Transform3f(matrix)),
     };
 }
 
-inline void transform_vertices(std::vector<mve::Vector3f>& vertices, const mve::Matrix4f& matrix)
+inline void transform_vertices(std::vector<nnm::Vector3f>& vertices, const nnm::Matrix4f& matrix)
 {
-    std::ranges::transform(vertices, vertices.begin(), [&](const mve::Vector3f& vertex) {
-        return vertex.transform(matrix);
+    std::ranges::transform(vertices, vertices.begin(), [&](const nnm::Vector3f& vertex) {
+        return vertex.transform(nnm::Transform3f(matrix));
     });
 }
 
 template <typename Callable>
-concept CallableWithVector2i = requires(Callable callable, mve::Vector2i vector) { callable(vector); };
+concept CallableWithVector2i = requires(Callable callable, nnm::Vector2i vector) { callable(vector); };
 
 template <CallableWithVector2i Callable>
-void for_2d(const mve::Vector2i from, const mve::Vector2i to, Callable callable)
+void for_2d(const nnm::Vector2i from, const nnm::Vector2i to, Callable callable)
 {
     for (int x = from.x; x < to.x; x++) {
         for (int y = from.y; y < to.y; y++) {
-            std::invoke(callable, mve::Vector2i(x, y));
+            std::invoke(callable, nnm::Vector2i(x, y));
         }
     }
 }
 
 template <typename Callable>
-concept CallableWithVector3i = requires(Callable callable, mve::Vector3i vector) { callable(vector); };
+concept CallableWithVector3i = requires(Callable callable, nnm::Vector3i vector) { callable(vector); };
 
 template <CallableWithVector3i Callable>
-void for_3d(const mve::Vector3i from, const mve::Vector3i to, Callable callable)
+void for_3d(const nnm::Vector3i from, const nnm::Vector3i to, Callable callable)
 {
     for (int x = from.x; x < to.x; ++x) {
         for (int y = from.y; y < to.y; ++y) {
             for (int z = from.z; z < to.z; ++z) {
-                std::invoke(callable, mve::Vector3i(x, y, z));
+                std::invoke(callable, nnm::Vector3i(x, y, z));
             }
         }
     }
 }
 
 struct QuadUVs {
-    mve::Vector2f top_left;
-    mve::Vector2f top_right;
-    mve::Vector2f bottom_right;
-    mve::Vector2f bottom_left;
+    nnm::Vector2f top_left;
+    nnm::Vector2f top_right;
+    nnm::Vector2f bottom_right;
+    nnm::Vector2f bottom_left;
 };
 
-inline QuadUVs uvs_from_atlas(const mve::Vector2i atlas_size, const mve::Vector2i pos)
+inline QuadUVs uvs_from_atlas(const nnm::Vector2i atlas_size, const nnm::Vector2i pos)
 {
     const auto atlas_unit
-        = mve::Vector2(1.0f / static_cast<float>(atlas_size.x), 1.0f / static_cast<float>(atlas_size.y));
+        = nnm::Vector2(1.0f / static_cast<float>(atlas_size.x), 1.0f / static_cast<float>(atlas_size.y));
 
     QuadUVs uvs;
-    uvs.top_left = mve::Vector2(static_cast<float>(pos.x) * atlas_unit.x, static_cast<float>(pos.y) * atlas_unit.y);
-    uvs.top_right = uvs.top_left + mve::Vector2(atlas_unit.x, 0.0f);
-    uvs.bottom_right = uvs.top_right + mve::Vector2(0.0f, atlas_unit.y);
-    uvs.bottom_left = uvs.bottom_right + mve::Vector2(-atlas_unit.x, 0.0f);
+    uvs.top_left = nnm::Vector2(static_cast<float>(pos.x) * atlas_unit.x, static_cast<float>(pos.y) * atlas_unit.y);
+    uvs.top_right = uvs.top_left + nnm::Vector2(atlas_unit.x, 0.0f);
+    uvs.bottom_right = uvs.top_right + nnm::Vector2(0.0f, atlas_unit.y);
+    uvs.bottom_left = uvs.bottom_right + nnm::Vector2(-atlas_unit.x, 0.0f);
 
     return uvs;
 }
 
-inline mve::Vector2i block_uv(const uint8_t block_type, const Direction face)
+inline nnm::Vector2i block_uv(const uint8_t block_type, const Direction face)
 {
     switch (block_type) {
     case 1:
@@ -328,16 +342,16 @@ inline bool is_emissive(const uint8_t block_type)
     return block_type == 10;
 }
 
-inline mve::Vector3i chunk_pos_from_block_pos(const mve::Vector3i block_pos)
+inline nnm::Vector3i chunk_pos_from_block_pos(const nnm::Vector3i block_pos)
 {
-    return { static_cast<int>(mve::floor(static_cast<float>(block_pos.x) / 16.0f)),
-             static_cast<int>(mve::floor(static_cast<float>(block_pos.y) / 16.0f)),
-             static_cast<int>(mve::floor(static_cast<float>(block_pos.z) / 16.0f)) };
+    return { static_cast<int>(nnm::floor(static_cast<float>(block_pos.x) / 16.0f)),
+             static_cast<int>(nnm::floor(static_cast<float>(block_pos.y) / 16.0f)),
+             static_cast<int>(nnm::floor(static_cast<float>(block_pos.z) / 16.0f)) };
 }
 
-inline mve::Vector3i block_world_to_local(const mve::Vector3i world_block_pos)
+inline nnm::Vector3i block_world_to_local(const nnm::Vector3i world_block_pos)
 {
-    mve::Vector3i mod = world_block_pos % 16;
+    nnm::Vector3i mod = world_block_pos % 16;
     if (mod.x < 0) {
         mod.x = 16 + mod.x;
     }
@@ -350,25 +364,25 @@ inline mve::Vector3i block_world_to_local(const mve::Vector3i world_block_pos)
     return mod;
 }
 
-inline mve::Vector3i block_local_to_world(const mve::Vector3i chunk_pos, const mve::Vector3i local_block_pos)
+inline nnm::Vector3i block_local_to_world(const nnm::Vector3i chunk_pos, const nnm::Vector3i local_block_pos)
 {
     return { chunk_pos.x * 16 + local_block_pos.x,
              chunk_pos.y * 16 + local_block_pos.y,
              chunk_pos.z * 16 + local_block_pos.z };
 }
 
-inline mve::Vector2i chunk_col_from_block_col(const mve::Vector2i block_col)
+inline nnm::Vector2i chunk_col_from_block_col(const nnm::Vector2i block_col)
 {
-    return { static_cast<int>(mve::floor(static_cast<float>(block_col.x) / 16.0f)),
-             static_cast<int>(mve::floor(static_cast<float>(block_col.y) / 16.0f)) };
+    return { static_cast<int>(nnm::floor(static_cast<float>(block_col.x) / 16.0f)),
+             static_cast<int>(nnm::floor(static_cast<float>(block_col.y) / 16.0f)) };
 }
 
 inline int chunk_height_from_block_height(const int block_height)
 {
-    return static_cast<int>(mve::floor(static_cast<float>(block_height) / 16.0f));
+    return static_cast<int>(nnm::floor(static_cast<float>(block_height) / 16.0f));
 }
 
-inline mve::Vector2i block_local_to_world_col(const mve::Vector2i chunk_pos, const mve::Vector2i local_block_pos)
+inline nnm::Vector2i block_local_to_world_col(const nnm::Vector2i chunk_pos, const nnm::Vector2i local_block_pos)
 {
     return { chunk_pos.x * 16 + local_block_pos.x, chunk_pos.y * 16 + local_block_pos.y };
 }
@@ -382,13 +396,13 @@ inline int block_height_world_to_local(const int world_block_height)
     return mod;
 }
 
-inline bool is_block_pos_local(const mve::Vector3i block_pos)
+inline bool is_block_pos_local(const nnm::Vector3i block_pos)
 {
     return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16 && block_pos.z >= 0
         && block_pos.z < 16;
 }
 
-inline bool is_block_pos_local_col(const mve::Vector2i block_pos)
+inline bool is_block_pos_local_col(const nnm::Vector2i block_pos)
 {
     return block_pos.x >= 0 && block_pos.x < 16 && block_pos.y >= 0 && block_pos.y < 16;
 }

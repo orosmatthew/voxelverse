@@ -19,14 +19,14 @@ WorldGenerator::WorldGenerator(int seed)
     m_struct_noise->SetFrequency(1.0f);
 }
 
-void WorldGenerator::generate_chunk(WorldData& world_data, const mve::Vector2i chunk_pos) const
+void WorldGenerator::generate_chunk(WorldData& world_data, const nnm::Vector2i chunk_pos) const
 {
     if (world_data.contains_column(chunk_pos)) {
         if (world_data.chunk_column_data_at(chunk_pos).gen_level() >= ChunkColumn::generated) {
             return;
         }
     }
-    for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i offset) { generate_trees(world_data, chunk_pos + offset); });
+    for_2d({ -1, -1 }, { 2, 2 }, [&](const nnm::Vector2i offset) { generate_trees(world_data, chunk_pos + offset); });
     ChunkColumn& column = world_data.chunk_column_data_at(chunk_pos);
     apply_sunlight(column);
     // for (int h = -10; h < 10; ++h) {
@@ -35,7 +35,7 @@ void WorldGenerator::generate_chunk(WorldData& world_data, const mve::Vector2i c
     column.set_gen_level(ChunkColumn::GenLevel::generated);
 }
 
-void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos) const
+void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos) const
 {
     if (data.gen_level() >= ChunkColumn::terrain) {
         return;
@@ -44,10 +44,10 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos
 
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
-            const mve::Vector2 scale_oct1 { 0.5f, 1.0f };
-            const mve::Vector2 scale_oct2 { 1.0f, 1.0f };
-            const mve::Vector2 scale_oct3 { 3.0f, 1.0f };
-            const mve::Vector2 noise_pos { static_cast<float>(x + chunk_pos.x * 16),
+            constexpr nnm::Vector2 scale_oct1 { 0.5f, 1.0f };
+            constexpr nnm::Vector2 scale_oct2 { 1.0f, 1.0f };
+            constexpr nnm::Vector2 scale_oct3 { 3.0f, 1.0f };
+            const nnm::Vector2 noise_pos { static_cast<float>(x + chunk_pos.x * 16),
                                            static_cast<float>(y + chunk_pos.y * 16) };
             const float height_oct1
                 = m_noise_oct1->GetNoise(noise_pos.x * scale_oct1.x, noise_pos.y * scale_oct1.x) * 32.0f;
@@ -61,8 +61,8 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos
     }
 
     for (int i = -10; i < 10; i++) {
-        for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const mve::Vector3i pos) {
-            if (const mve::Vector3i world_pos = block_local_to_world({ chunk_pos.x, chunk_pos.y, i }, pos);
+        for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const nnm::Vector3i pos) {
+            if (const nnm::Vector3i world_pos = block_local_to_world({ chunk_pos.x, chunk_pos.y, i }, pos);
                 static_cast<float>(world_pos.z) < heights[pos.x][pos.y] - 4) {
                 data.set_block(world_pos, 2);
             }
@@ -80,10 +80,10 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, mve::Vector2i chunk_pos
     data.set_gen_level(ChunkColumn::GenLevel::terrain);
 }
 
-void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_pos) const
+void WorldGenerator::generate_trees(WorldData& world_data, nnm::Vector2i chunk_pos) const
 {
-    for_2d({ -1, -1 }, { 2, 2 }, [&](const mve::Vector2i offset) {
-        const mve::Vector2i neighbor_pos = chunk_pos + offset;
+    for_2d({ -1, -1 }, { 2, 2 }, [&](const nnm::Vector2i offset) {
+        const nnm::Vector2i neighbor_pos = chunk_pos + offset;
         if (!world_data.contains_column(neighbor_pos)) {
             world_data.create_or_load_chunk(neighbor_pos);
         }
@@ -97,23 +97,23 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
         return;
     }
     std::array<std::array<int, 16>, 16> heights {};
-    for_2d({ 0, 0 }, { 16, 16 }, [&](const mve::Vector2i pos) {
+    for_2d({ 0, 0 }, { 16, 16 }, [&](const nnm::Vector2i pos) {
         for (int h = 9 * 16; h > -10 * 16; h--) {
-            if (column.get_block(mve::Vector3i(chunk_pos.x * 16 + pos.x, chunk_pos.y * 16 + pos.y, h)) == 1) {
+            if (column.get_block(nnm::Vector3i(chunk_pos.x * 16 + pos.x, chunk_pos.y * 16 + pos.y, h)) == 1) {
                 heights[pos.x][pos.y] = h;
                 break;
             }
         }
     });
-    for_2d({ 0, 0 }, { 16, 16 }, [&](mve::Vector2i pos) {
-        const mve::Vector2i world_col_pos = block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
+    for_2d({ 0, 0 }, { 16, 16 }, [&](nnm::Vector2i pos) {
+        const nnm::Vector2i world_col_pos = block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
         if (const float rand
             = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
             rand <= 0.8f) {
             return;
         }
         const int height = heights[pos.x][pos.y];
-        for_3d({ 0, 0, 0 }, { 5, 5, 7 }, [&](const mve::Vector3i struct_pos) {
+        for_3d({ 0, 0, 0 }, { 5, 5, 7 }, [&](const nnm::Vector3i struct_pos) {
             if (c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x] == 0) {
                 return;
             }
@@ -124,7 +124,7 @@ void WorldGenerator::generate_trees(WorldData& world_data, mve::Vector2i chunk_p
             //            struct_pos.y - 2))) {
             //                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z +
             //                height + 1));
-            mve::Vector3i world_pos = block_local_to_world(
+            nnm::Vector3i world_pos = block_local_to_world(
                 { chunk_pos.x, chunk_pos.y, 0 },
                 { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
             world_pos.z = struct_pos.z + height + 1;
