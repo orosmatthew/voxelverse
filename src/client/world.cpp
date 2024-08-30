@@ -143,10 +143,11 @@ void trigger_place_block(
             world_data.set_block(place_pos, block_type);
             const nnm::Vector3i chunk_pos = chunk_pos_from_block_pos({ place_pos.x, place_pos.y, place_pos.z });
 
-            refresh_lighting(world_data, chunk_pos);
+            // TODO
+            // refresh_lighting(world_data, chunk_pos);
 
             for_2d({ -1, -1 }, { 2, 2 }, [&](const nnm::Vector2i& surround_pos) {
-                chunk_controller.queue_recreate_mesh(nnm::Vector2i(chunk_pos.x, chunk_pos.y) + surround_pos);
+                chunk_controller.queue_recreate_mesh(nnm::Vector2i(chunk_pos.x, chunk_pos.z) + surround_pos);
             });
             break;
         }
@@ -169,10 +170,11 @@ void trigger_break_block(const Player& camera, ChunkController& chunk_controller
             const nnm::Vector3i chunk_pos = chunk_pos_from_block_pos(block_pos);
 
             world_data.set_block_local(chunk_pos, local_pos, 0);
-            refresh_lighting(world_data, chunk_pos);
+            // TODO: FIx
+            // refresh_lighting(world_data, chunk_pos);
 
             for_2d({ -1, -1 }, { 2, 2 }, [&](const nnm::Vector2i& surround_pos) {
-                chunk_controller.queue_recreate_mesh(nnm::Vector2i(chunk_pos.x, chunk_pos.y) + surround_pos);
+                chunk_controller.queue_recreate_mesh(nnm::Vector2i(chunk_pos.x, chunk_pos.z) + surround_pos);
             });
             break;
         }

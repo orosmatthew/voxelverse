@@ -12,7 +12,7 @@ void ChunkController::update(
     WorldRenderer& world_renderer,
     const nnm::Vector3i player_chunk)
 {
-    if (const nnm::Vector2i player_chunk_col = { player_chunk.x, player_chunk.y };
+    if (const nnm::Vector2i player_chunk_col = { player_chunk.x, player_chunk.z };
         player_chunk_col != m_player_chunk_col) {
         world_data.set_player_chunk(player_chunk_col);
         m_player_chunk_col = player_chunk_col;
@@ -51,7 +51,7 @@ void ChunkController::update(
 
         if (contains_flag(flags, flag_queued_mesh)) {
             for (int h = -10; h < 10; h++) {
-                world_renderer.push_mesh_update({ col_pos.x, col_pos.y, h });
+                world_renderer.push_mesh_update({ col_pos.x, h, col_pos.y });
             }
             enable_flag(flags, flag_has_mesh);
             disable_flag(flags, flag_queued_mesh);
@@ -83,7 +83,7 @@ void ChunkController::update(
         }
         if (contains_flag(flags, flag_has_mesh)) {
             for (int h = -10; h < 10; h++) {
-                world_renderer.remove_data({ culled_chunk.value().x, culled_chunk.value().y, h });
+                world_renderer.remove_data({ culled_chunk.value().x, h, culled_chunk.value().y });
             }
             disable_flag(flags, flag_has_mesh);
         }

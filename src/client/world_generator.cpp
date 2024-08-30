@@ -35,7 +35,7 @@ void WorldGenerator::generate_chunk(WorldData& world_data, const nnm::Vector2i c
     column.set_gen_level(ChunkColumn::GenLevel::generated);
 }
 
-void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos) const
+void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_col_pos) const
 {
     if (data.gen_level() >= ChunkColumn::terrain) {
         return;
@@ -47,8 +47,8 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos
             constexpr nnm::Vector2 scale_oct1 { 0.5f, 1.0f };
             constexpr nnm::Vector2 scale_oct2 { 1.0f, 1.0f };
             constexpr nnm::Vector2 scale_oct3 { 3.0f, 1.0f };
-            const nnm::Vector2 noise_pos { static_cast<float>(x + chunk_pos.x * 16),
-                                           static_cast<float>(y + chunk_pos.y * 16) };
+            const nnm::Vector2 noise_pos { static_cast<float>(x + chunk_col_pos.x * 16),
+                                           static_cast<float>(y + chunk_col_pos.y * 16) };
             const float height_oct1
                 = m_noise_oct1->GetNoise(noise_pos.x * scale_oct1.x, noise_pos.y * scale_oct1.x) * 32.0f;
             const float height_oct2
@@ -62,14 +62,14 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos
 
     for (int i = -10; i < 10; i++) {
         for_3d({ 0, 0, 0 }, { 16, 16, 16 }, [&](const nnm::Vector3i pos) {
-            if (const nnm::Vector3i world_pos = block_local_to_world({ chunk_pos.x, chunk_pos.y, i }, pos);
-                static_cast<float>(world_pos.z) < heights[pos.x][pos.y] - 4) {
+            if (const nnm::Vector3i world_pos = block_local_to_world({ chunk_col_pos.x, i, chunk_col_pos.y }, pos);
+                static_cast<float>(world_pos.y) < heights[pos.x][pos.z] - 4) {
                 data.set_block(world_pos, 2);
             }
-            else if (static_cast<float>(world_pos.z) < heights[pos.x][pos.y] - 1) {
+            else if (static_cast<float>(world_pos.y) < heights[pos.x][pos.z] - 1) {
                 data.set_block(world_pos, 4);
             }
-            else if (static_cast<float>(world_pos.z) < heights[pos.x][pos.y]) {
+            else if (static_cast<float>(world_pos.y) < heights[pos.x][pos.z]) {
                 data.set_block(world_pos, 1);
             }
             else {
@@ -80,10 +80,10 @@ void WorldGenerator::generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos
     data.set_gen_level(ChunkColumn::GenLevel::terrain);
 }
 
-void WorldGenerator::generate_trees(WorldData& world_data, nnm::Vector2i chunk_pos) const
+void WorldGenerator::generate_trees(WorldData& world_data, nnm::Vector2i chunk_col) const
 {
     for_2d({ -1, -1 }, { 2, 2 }, [&](const nnm::Vector2i offset) {
-        const nnm::Vector2i neighbor_pos = chunk_pos + offset;
+        const nnm::Vector2i neighbor_pos = chunk_col + offset;
         if (!world_data.contains_column(neighbor_pos)) {
             world_data.create_or_load_chunk(neighbor_pos);
         }
@@ -92,21 +92,21 @@ void WorldGenerator::generate_trees(WorldData& world_data, nnm::Vector2i chunk_p
             generate_terrain(neighbor_column, neighbor_pos);
         }
     });
-    ChunkColumn& column = world_data.chunk_column_data_at(chunk_pos);
+    ChunkColumn& column = world_data.chunk_column_data_at(chunk_col);
     if (column.gen_level() >= ChunkColumn::GenLevel::trees) {
         return;
     }
     std::array<std::array<int, 16>, 16> heights {};
-    for_2d({ 0, 0 }, { 16, 16 }, [&](const nnm::Vector2i pos) {
+    for_2d({ 0, 0 }, { 16, 16 }, [&](const nnm::Vector2i col) {
         for (int h = 9 * 16; h > -10 * 16; h--) {
-            if (column.get_block(nnm::Vector3i(chunk_pos.x * 16 + pos.x, chunk_pos.y * 16 + pos.y, h)) == 1) {
-                heights[pos.x][pos.y] = h;
+            if (column.get_block(nnm::Vector3i(chunk_col.x * 16 + col.x, h, chunk_col.y * 16 + col.y)) == 1) {
+                heights[col.x][col.y] = h;
                 break;
             }
         }
     });
     for_2d({ 0, 0 }, { 16, 16 }, [&](nnm::Vector2i pos) {
-        const nnm::Vector2i world_col_pos = block_local_to_world_col({ chunk_pos.x, chunk_pos.y }, { pos.x, pos.y });
+        const nnm::Vector2i world_col_pos = block_local_to_world_col({ chunk_col.x, chunk_col.y }, { pos.x, pos.y });
         if (const float rand
             = m_struct_noise->GetNoise(static_cast<float>(world_col_pos.x), static_cast<float>(world_col_pos.y));
             rand <= 0.8f) {
@@ -124,16 +124,17 @@ void WorldGenerator::generate_trees(WorldData& world_data, nnm::Vector2i chunk_p
             //            struct_pos.y - 2))) {
             //                int chunk_height = WorldData::chunk_height_from_block_height(std::floor(struct_pos.z +
             //                height + 1));
-            nnm::Vector3i world_pos = block_local_to_world(
-                { chunk_pos.x, chunk_pos.y, 0 },
-                { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
-            world_pos.z = struct_pos.z + height + 1;
-            if (is_block_pos_local_col({ world_pos.x, world_pos.y })) {
-                column.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
-            }
-            else {
-                world_data.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
-            }
+            // TODO: Fix tree generation
+            // nnm::Vector3i world_pos = block_local_to_world(
+            //     { chunk_pos.x, chunk_pos.y, 0 },
+            //     { pos.x + struct_pos.x - 2, pos.y + struct_pos.y - 2, struct_pos.z + height + 1 });
+            // world_pos.z = struct_pos.z + height + 1;
+            // if (is_block_pos_local_col({ world_pos.x, world_pos.z })) {
+            //     column.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
+            // }
+            // else {
+            //     world_data.set_block(world_pos, c_tree_struct[struct_pos.z][struct_pos.y][struct_pos.x]);
+            // }
 
             //            }
         });

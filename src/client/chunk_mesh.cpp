@@ -29,6 +29,9 @@ std::array<uint8_t, 4> calc_chunk_face_lighting(
     const nnm::Vector3i local_block_pos,
     const Direction dir)
 {
+    // TODO
+    return { 255, 255, 255, 255 };
+
     const nnm::Vector3i world_pos = block_local_to_world(chunk_pos, local_block_pos);
 
     uint8_t base_lighting = 0;
