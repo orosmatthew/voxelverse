@@ -704,12 +704,16 @@ inline vk::PhysicalDevice pick_vk_physical_device(
     MVE_ASSERT(!physical_devices.empty(), "[Renderer] Failed to find Vulkan device")
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
-        log().debug("[Renderer] GPU Found: {0}", physical_device.getProperties(loader).deviceName);
+        const auto vk_device_name = physical_device.getProperties(loader).deviceName;
+        const auto device_name = std::string(vk_device_name.begin(), vk_device_name.end());
+        log().debug("[Renderer] GPU Found: {0}", device_name);
     }
 
     for (const vk::PhysicalDevice physical_device : physical_devices) {
         if (is_vk_physical_device_suitable(loader, physical_device, surface)) {
-            log().info("[Renderer] Using GPU: {0}", physical_device.getProperties(loader).deviceName);
+            const auto vk_device_name = physical_device.getProperties(loader).deviceName;
+            const auto device_name = std::string(vk_device_name.begin(), vk_device_name.end());
+            log().info("[Renderer] Using GPU: {0}", device_name);
             return physical_device;
         }
     }
