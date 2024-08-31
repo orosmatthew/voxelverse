@@ -30,7 +30,7 @@ void Player::update(const mve::Window& window, const bool capture_input)
     const nnm::Vector2f mouse_delta = capture_input ? window.mouse_delta() : nnm::Vector2f::zero();
     m_head_rotation.x += mouse_delta.x * 0.001f;
     m_head_rotation.y += mouse_delta.y * 0.001f;
-    m_head_rotation.y = nnm::clamp(m_head_rotation.y, nnm::radians(-89.0f), nnm::radians(89.0f));
+    m_head_rotation.y = nnm::clamp(m_head_rotation.y, nnm::radians(0.1f), nnm::radians(179.9f));
     // if (m_head_rotation.y < nnm::radians(0.1f)) {
     //     m_head_rotation.y = 0.1f;
     // }
@@ -61,10 +61,10 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
     nnm::Vector3f dir;
     if (capture_input) {
         if (window.is_key_down(mve::Key::w)) {
-            dir.z += 1.0f;
+            dir.y -= 1.0f;
         }
         if (window.is_key_down(mve::Key::s)) {
-            dir.z -= 1.0f;
+            dir.y += 1.0f;
         }
         if (window.is_key_down(mve::Key::a)) {
             dir.x -= 1.0f;
@@ -73,22 +73,22 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
             dir.x += 1.0f;
         }
         if (m_is_flying && window.is_key_down(mve::Key::space)) {
-            dir.y += 1.0f;
+            dir.z += 1.0f;
         }
         if (m_is_flying && window.is_key_down(mve::Key::left_shift)) {
-            dir.y -= 1.0f;
+            dir.z -= 1.0f;
         }
     }
-    dir = dir.rotate_axis_angle(nnm::Vector3f::axis_y(), m_head_rotation.x);
+    dir = dir.rotate_axis_angle(nnm::Vector3f::axis_z(), m_head_rotation.x);
     if (!m_is_flying) {
         if (on_ground) {
             m_velocity -= m_velocity * m_friction * 0.9f;
         }
         else {
             m_velocity.x -= m_velocity.x * m_friction * 0.1f;
-            m_velocity.z -= m_velocity.z * m_friction * 0.1f;
+            m_velocity.y -= m_velocity.y * m_friction * 0.1f;
         }
-        m_velocity.y -= 0.014f;
+        m_velocity.z -= 0.014f;
     }
     else {
         m_velocity -= m_velocity * m_friction * 0.35f;
@@ -100,14 +100,14 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
                    std::chrono::steady_clock::now() - m_last_jump_time)
                     .count()
                 >= 200) {
-            m_velocity.y = 0.21f;
+            m_velocity.z = 0.21f;
             m_last_jump_time = std::chrono::steady_clock::now();
         }
     }
     if (!m_is_flying) {
         if (on_ground && dir != nnm::Vector3f::zero()) {
             m_velocity += dir.normalize() * m_acceleration
-                * nnm::clamp(m_max_speed - nnm::Vector2(m_velocity.x, m_velocity.z).length(), 0.0f, 1.0f);
+                * nnm::clamp(m_max_speed - nnm::Vector2(m_velocity.x, m_velocity.y).length(), 0.0f, 1.0f);
         }
         else if (!on_ground && dir != nnm::Vector3f::zero()) {
             m_velocity

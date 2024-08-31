@@ -40,16 +40,13 @@ public:
         // const nnm::Basis3f basis = transform.basis();
         // const nnm::Transform3f interpolated_transform = nnm::Transform3f::from_basis_translation(
         //     basis, m_prev_pos.lerp(transform.translation(), interpolation_weight));
-        const nnm::Matrix4f view = transform().unchecked_inverse().matrix;
+        const nnm::Matrix4f view = transform(interpolation_weight).unchecked_inverse().matrix;
         return view;
     }
 
     [[nodiscard]] nnm::Vector3f direction() const
     {
-        const nnm::Basis3f basis = transform().basis();
-        nnm::Vector3f direction { 0, 0, -1 };
-        direction = direction.transform(basis);
-        return direction.normalize();
+        return nnm::Vector3f(0, 0, 1).transform(transform().basis()).normalize();
     }
 
     [[nodiscard]] nnm::Vector3f target() const
@@ -73,10 +70,10 @@ public:
         return m_velocity;
     }
 
-    [[nodiscard]] nnm::Transform3f transform() const
+    [[nodiscard]] nnm::Transform3f transform(const float interpolation_weight = 1.0f) const
     {
-        return nnm::Transform3f::from_rotation_axis_angle(nnm::Vector3f::axis_y(), m_head_rotation.x)
-            .translate(m_pos)
+        return nnm::Transform3f::from_translation(m_prev_pos.lerp(m_pos, interpolation_weight))
+            .rotate_axis_angle_local(nnm::Vector3f::axis_z(), m_head_rotation.x)
             .rotate_axis_angle_local(nnm::Vector3f::axis_x(), m_head_rotation.y);
     }
 
