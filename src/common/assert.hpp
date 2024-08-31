@@ -1,6 +1,6 @@
 #pragma once
 
-#define VV_ENABLE_CHECKS
+// #define VV_ENABLE_CHECKS
 
 #define VV_REL_ASSERT(expr, msg) \
     if (!(expr)) { \

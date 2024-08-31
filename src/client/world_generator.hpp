@@ -21,9 +21,9 @@ public:
     void generate_chunk(WorldData& world_data, nnm::Vector2i chunk_pos) const;
 
 private:
-    void generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_col_pos) const;
+    void generate_terrain(ChunkColumn& data, nnm::Vector2i chunk_pos) const;
 
-    void generate_trees(WorldData& world_data, nnm::Vector2i chunk_col) const;
+    void generate_trees(WorldData& world_data, nnm::Vector2i chunk_pos) const;
 
     // clang-format off
     const uint8_t c_tree_struct[7][5][5]

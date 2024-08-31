@@ -9,7 +9,7 @@ void apply_sunlight(ChunkColumn& chunk)
         const nnm::Vector2i world_col = block_local_to_world_col(chunk.pos(), offset);
         bool covered = false;
         for (int i = 9 * 16; i >= -10 * 16; --i) {
-            const nnm::Vector3i world_pos { world_col.x, i, world_col.y };
+            const nnm::Vector3i world_pos { world_col.x, world_col.y, i };
             if (!covered) {
                 if (!is_transparent(chunk.get_block(world_pos))) {
                     covered = true;
