@@ -2,8 +2,8 @@
 
 // #define VV_ENABLE_CHECKS
 
-#define VV_REL_ASSERT(expr, msg) \
-    if (!(expr)) { \
+#define VV_REL_ASSERT(expr, msg)       \
+    if (!(expr)) {                     \
         throw std::runtime_error(msg); \
     }
 

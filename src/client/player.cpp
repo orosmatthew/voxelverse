@@ -28,9 +28,9 @@ Player::Player()
 void Player::update(const mve::Window& window, const bool capture_input)
 {
     const nnm::Vector2f mouse_delta = capture_input ? window.mouse_delta() : nnm::Vector2f::zero();
-    m_head_rotation.x += mouse_delta.x * 0.001f;
-    m_head_rotation.y += mouse_delta.y * 0.001f;
-    m_head_rotation.y = nnm::clamp(m_head_rotation.y, nnm::radians(0.1f), nnm::radians(179.9f));
+    m_head_rotation.x -= mouse_delta.x * 0.001f;
+    m_head_rotation.y -= mouse_delta.y * 0.001f;
+    m_head_rotation.y = nnm::clamp(m_head_rotation.y, nnm::radians(-89.9f), nnm::radians(89.9f));
     // if (m_head_rotation.y < nnm::radians(0.1f)) {
     //     m_head_rotation.y = 0.1f;
     // }
@@ -61,16 +61,16 @@ void Player::fixed_update(const mve::Window& window, const WorldData& data, cons
     nnm::Vector3f dir;
     if (capture_input) {
         if (window.is_key_down(mve::Key::w)) {
-            dir.y -= 1.0f;
-        }
-        if (window.is_key_down(mve::Key::s)) {
             dir.y += 1.0f;
         }
-        if (window.is_key_down(mve::Key::a)) {
-            dir.x -= 1.0f;
+        if (window.is_key_down(mve::Key::s)) {
+            dir.y -= 1.0f;
         }
         if (window.is_key_down(mve::Key::d)) {
             dir.x += 1.0f;
+        }
+        if (window.is_key_down(mve::Key::a)) {
+            dir.x -= 1.0f;
         }
         if (m_is_flying && window.is_key_down(mve::Key::space)) {
             dir.z += 1.0f;

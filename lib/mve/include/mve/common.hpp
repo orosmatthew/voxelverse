@@ -2,8 +2,8 @@
 
 // #define MVE_ENABLE_VALIDATION
 
-#define MVE_ASSERT(expr, msg) \
-    if (!(expr)) { \
+#define MVE_ASSERT(expr, msg)          \
+    if (!(expr)) {                     \
         throw std::runtime_error(msg); \
     }
 

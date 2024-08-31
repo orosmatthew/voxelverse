@@ -63,7 +63,9 @@ void WorldRenderer::resize()
     constexpr float far = 10000.0f;
 
     m_frustum.update_perspective(angle, ratio, near, far);
-    const auto proj = nnm::Transform3f::from_projection_perspective_right_hand_0to1(angle, ratio, near, far);
+    const auto proj = nnm::Transform3f::from_projection_perspective_right_hand_0to1(angle, ratio, near, far)
+                          .rotate_axis_angle_local(nnm::Vector3f::axis_x(), nnm::pi() / 2.0f)
+                          .scale({ 1, -1, 1 });
     m_global_ubo.update(m_proj_location, proj.matrix);
 }
 void WorldRenderer::set_view(const nnm::Matrix4f& view)

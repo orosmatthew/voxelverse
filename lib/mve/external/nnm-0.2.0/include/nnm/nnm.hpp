@@ -2745,7 +2745,7 @@ public:
 template <typename Real = float>
 Matrix2<Real> operator*(const Real value, const Matrix2<Real>& matrix)
 {
-    Matrix2 result;
+    Matrix2<Real> result;
     for (int c = 0; c < 2; ++c) {
         for (int r = 0; r < 2; ++r) {
             result.at(c, r) = value * matrix.at(c, r);
@@ -2757,7 +2757,7 @@ Matrix2<Real> operator*(const Real value, const Matrix2<Real>& matrix)
 template <typename Real = float>
 Matrix2<Real> operator/(const Real value, const Matrix2<Real>& matrix)
 {
-    Matrix2 result;
+    Matrix2<Real> result;
     for (int c = 0; c < 2; ++c) {
         for (int r = 0; r < 2; ++r) {
             result.at(c, r) = value / matrix.at(c, r);
@@ -3361,7 +3361,7 @@ public:
 template <typename Real = float>
 Matrix3<Real> operator*(const Real value, const Matrix3<Real>& matrix)
 {
-    Matrix3 result;
+    Matrix3<Real> result;
     for (int c = 0; c < 3; ++c) {
         for (int r = 0; r < 3; ++r) {
             result.at(c, r) = value * matrix.at(c, r);
@@ -3373,7 +3373,7 @@ Matrix3<Real> operator*(const Real value, const Matrix3<Real>& matrix)
 template <typename Real = float>
 Matrix3<Real> operator/(const Real value, const Matrix3<Real>& matrix)
 {
-    Matrix3 result;
+    Matrix3<Real> result;
     for (int c = 0; c < 3; ++c) {
         for (int r = 0; r < 3; ++r) {
             result.at(c, r) = value / matrix.at(c, r);
@@ -4311,7 +4311,7 @@ public:
 template <typename Real = float>
 Matrix4<Real> operator*(const Real value, const Matrix4<Real>& matrix)
 {
-    Matrix4 result;
+    Matrix4<Real> result;
     for (int c = 0; c < 4; ++c) {
         for (int r = 0; r < 4; ++r) {
             result.at(c, r) = value * matrix.at(c, r);
@@ -4323,7 +4323,7 @@ Matrix4<Real> operator*(const Real value, const Matrix4<Real>& matrix)
 template <typename Real = float>
 Matrix4<Real> operator/(const Real value, const Matrix4<Real>& matrix)
 {
-    Matrix4 result;
+    Matrix4<Real> result;
     for (int c = 0; c < 4; ++c) {
         for (int r = 0; r < 4; ++r) {
             result.at(c, r) = value / matrix.at(c, r);
@@ -4665,7 +4665,7 @@ constexpr Vector2<Real>::Vector2(const Vector2i& vector)
 template <typename Real>
 Matrix2<Real> Vector2<Real>::outer(const Vector2& other) const
 {
-    Matrix2 result;
+    Matrix2<Real> result;
     for (int c = 0; c < 2; ++c) {
         for (int r = 0; r < 2; ++r) {
             result.at(c, r) = at(c) * other.at(r);
@@ -4741,7 +4741,7 @@ constexpr Vector3<Real>::Vector3(const Vector3i& vector)
 template <typename Real>
 Matrix3<Real> Vector3<Real>::outer(const Vector3& other) const
 {
-    Matrix3 result;
+    Matrix3<Real> result;
     for (int c = 0; c < 3; ++c) {
         for (int r = 0; r < 3; ++r) {
             result.at(c, r) = at(c) * other.at(r);

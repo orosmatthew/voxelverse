@@ -46,7 +46,7 @@ public:
 
     [[nodiscard]] nnm::Vector3f direction() const
     {
-        return nnm::Vector3f(0, 0, 1).transform(transform().basis()).normalize();
+        return nnm::Vector3f(0, 1, 0).transform(transform().basis()).normalize();
     }
 
     [[nodiscard]] nnm::Vector3f target() const

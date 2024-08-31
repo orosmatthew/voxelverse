@@ -320,8 +320,8 @@ ChunkFaceData create_chunk_face_mesh(
     data.colors[3] = { static_cast<float>(lighting[3]) / 255.0f,
                        static_cast<float>(lighting[3]) / 255.0f,
                        static_cast<float>(lighting[3]) / 255.0f };
-    // data.indices = { 0, 3, 2, 0, 2, 1 };
-    data.indices = { 0, 2, 3, 0, 1, 2 };
+    data.indices = { 0, 3, 2, 0, 2, 1 };
+    // data.indices = { 0, 2, 3, 0, 1, 2 };
     return data;
 }
 
