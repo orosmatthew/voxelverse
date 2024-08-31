@@ -117,13 +117,13 @@ WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(
 WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(const nnm::Vector3f from, const nnm::Vector3f to, const float width)
 {
     const nnm::Vector3f dir = (to - from).normalize().abs();
-    const nnm::QuaternionF quat = nnm::QuaternionF::from_vector_to_vector({ 0, 0, 1 }, dir);
-    const auto basis = nnm::Basis3f::from_rotation_quaternion(quat);
+    const nnm::QuaternionF quaternion = nnm::QuaternionF::from_vector_to_vector({ 0, 0, 1 }, dir);
+    const auto basis = nnm::Basis3f::from_rotation_quaternion(quaternion);
 
     const auto matrix
         = nnm::Transform3f()
               .transform(nnm::Transform3f::from_basis(basis))
-              .rotate_axis_angle({ 0, 1, 0 }, nnm::radians(90.0f))
+              .rotate_axis_angle_local({ 0, 1, 0 }, nnm::radians(90.0f))
               .translate((to + from) / 2.0f);
     MeshData rect_mesh = create_rect_mesh(from.distance(to) + width, width, matrix);
     return rect_mesh;
