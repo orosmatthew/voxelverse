@@ -1,12 +1,10 @@
+/* NNM - "No Nonsense Math"
+ * v0.3.0
+ * Copyright (c) 2024-present Matthew Oros
+ */
+
 #ifndef NNM_HPP
 #define NNM_HPP
-
-#ifdef near
-#undef near
-#endif
-#ifdef far
-#undef far
-#endif
 
 #include <cmath>
 #include <functional>
@@ -74,12 +72,18 @@ constexpr int abs(const int value)
 template <typename Real = float>
 constexpr Real max(const Real a, const Real b)
 {
-    return std::max(a, b);
+    if (a > b) {
+        return a;
+    }
+    return b;
 }
 
 constexpr int max(const int a, const int b)
 {
-    return std::max(a, b);
+    if (a > b) {
+        return a;
+    }
+    return b;
 }
 
 template <typename Real = float>
@@ -240,12 +244,18 @@ Real acos(const Real value)
 template <typename Real = float>
 constexpr Real min(const Real a, const Real b)
 {
-    return std::min(a, b);
+    if (a < b) {
+        return a;
+    }
+    return b;
 }
 
 constexpr int min(const int a, const int b)
 {
-    return std::min(a, b);
+    if (a < b) {
+        return a;
+    }
+    return b;
 }
 
 template <typename Real = float>
@@ -4409,68 +4419,107 @@ public:
         return from_basis(Basis3<Real>::from_shear_z(angle_x, angle_y));
     }
 
-    static Transform3 from_projection_perspective_left_hand_neg1to1(
-        const Real fov, const Real aspect_ratio, const Real near, const Real far)
+    static Transform3 from_perspective_left_hand_neg1to1(
+        const Real fov, const Real aspect_ratio, const Real near_clip, const Real far_clip)
     {
         auto matrix = Matrix4<Real>::zero();
         const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
         matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
         matrix.at(1, 1) = static_cast<Real>(1.0) / tan_half_fov;
-        matrix.at(2, 2) = (far + near) / (far - near);
-        matrix.at(2, 3) = static_cast<Real>(1.0);
-        matrix.at(3, 2) = static_cast<Real>(2.0) * far * near / (far - near);
-        return Transform3(matrix);
-    }
-
-    static Transform3 from_projection_perspective_left_hand_0to1(
-        const Real fov, const Real aspect_ratio, const Real near, const Real far)
-    {
-        auto matrix = Matrix4<Real>::zero();
-        const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
-        matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
-        matrix.at(1, 1) = static_cast<Real>(1.0) / tan_half_fov;
-        matrix.at(2, 2) = far / (far - near);
-        matrix.at(2, 3) = static_cast<Real>(1.0);
-        matrix.at(3, 2) = far * near / (far - near);
-        return Transform3(matrix);
-    }
-
-    static Transform3 from_projection_perspective_right_hand_neg1to1(
-        const Real fov, const Real aspect_ratio, const Real near, const Real far)
-    {
-        auto matrix = Matrix4<Real>::zero();
-        const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
-        matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
-        matrix.at(1, 1) = -static_cast<Real>(1.0) / tan_half_fov;
-        matrix.at(2, 2) = -(far + near) / (far - near);
+        matrix.at(2, 2) = -(far_clip + near_clip) / (far_clip - near_clip);
         matrix.at(2, 3) = -static_cast<Real>(1.0);
-        matrix.at(3, 2) = -(static_cast<Real>(2.0) * far * near) / (far - near);
+        matrix.at(3, 2) = -(static_cast<Real>(2.0) * far_clip * near_clip) / (far_clip - near_clip);
         return Transform3(matrix);
     }
 
-    static Transform3 from_projection_perspective_right_hand_0to1(
-        const Real fov, const Real aspect_ratio, const Real near, const Real far)
+    static Transform3 from_perspective_left_hand_0to1(
+        const Real fov, const Real aspect_ratio, const Real near_clip, const Real far_clip)
     {
         auto matrix = Matrix4<Real>::zero();
         const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
         matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
-        matrix.at(1, 1) = -static_cast<Real>(1.0) / tan_half_fov;
-        matrix.at(2, 2) = far / (far - near);
-        matrix.at(2, 3) = static_cast<Real>(1.0);
-        matrix.at(3, 2) = -(far * near) / (far - near);
+        matrix.at(1, 1) = static_cast<Real>(1.0) / tan_half_fov;
+        matrix.at(2, 2) = -far_clip / (far_clip - near_clip);
+        matrix.at(2, 3) = -static_cast<Real>(1.0);
+        matrix.at(3, 2) = -(far_clip * near_clip) / (far_clip - near_clip);
         return Transform3(matrix);
     }
 
-    static Transform3 from_projection_orthographic(
-        const Real left, const Real right, const Real bottom, const Real top, const Real near, const Real far)
+    static Transform3 from_perspective_right_hand_neg1to1(
+        const Real fov, const Real aspect_ratio, const Real near_clip, const Real far_clip)
+    {
+        auto matrix = Matrix4<Real>::zero();
+        const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
+        matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
+        matrix.at(1, 1) = static_cast<Real>(1.0) / tan_half_fov;
+        matrix.at(2, 2) = (far_clip + near_clip) / (far_clip - near_clip);
+        matrix.at(2, 3) = static_cast<Real>(1.0);
+        matrix.at(3, 2) = -(static_cast<Real>(2.0) * far_clip * near_clip) / (far_clip - near_clip);
+        return Transform3(matrix);
+    }
+
+    static Transform3 from_perspective_right_hand_0to1(
+        const Real fov, const Real aspect_ratio, const Real near_clip, const Real far_clip)
+    {
+        auto matrix = Matrix4<Real>::zero();
+        const Real tan_half_fov = tan(fov / static_cast<Real>(2.0));
+        matrix.at(0, 0) = static_cast<Real>(1.0) / (aspect_ratio * tan_half_fov);
+        matrix.at(1, 1) = static_cast<Real>(1.0) / tan_half_fov;
+        matrix.at(2, 2) = far_clip / (far_clip - near_clip);
+        matrix.at(2, 3) = static_cast<Real>(1.0);
+        matrix.at(3, 2) = -(far_clip * near_clip) / (far_clip - near_clip);
+        return Transform3(matrix);
+    }
+
+    static Transform3 from_orthographic_left_hand_neg1to1(
+        const Real left, const Real right, const Real bottom, const Real top, const Real near_clip, const Real far_clip)
     {
         auto matrix = Matrix4<Real>::identity();
         matrix.at(0, 0) = static_cast<Real>(2.0) / (right - left);
         matrix.at(1, 1) = static_cast<Real>(2.0) / (top - bottom);
-        matrix.at(2, 2) = -static_cast<Real>(2.0) / (far - near);
-        matrix.at(3, 0) = -((right + left) / (right - left));
-        matrix.at(3, 1) = -((top + bottom) / (top - bottom));
-        matrix.at(3, 2) = -((far + near) / (far - near));
+        matrix.at(2, 2) = -static_cast<Real>(2.0) / (far_clip - near_clip);
+        matrix.at(3, 0) = -(right + left) / (right - left);
+        matrix.at(3, 1) = -(top + bottom) / (top - bottom);
+        matrix.at(3, 2) = -(far_clip + near_clip) / (far_clip - near_clip);
+        return Transform3(matrix);
+    }
+
+    static Transform3 from_orthographic_left_hand_0to1(
+        const Real left, const Real right, const Real bottom, const Real top, const Real near_clip, const Real far_clip)
+    {
+        auto matrix = Matrix4<Real>::identity();
+        matrix.at(0, 0) = static_cast<Real>(2.0) / (right - left);
+        matrix.at(1, 1) = static_cast<Real>(2.0) / (top - bottom);
+        matrix.at(2, 2) = -static_cast<Real>(1.0) / (far_clip - near_clip);
+        matrix.at(3, 0) = -(right + left) / (right - left);
+        matrix.at(3, 1) = -(top + bottom) / (top - bottom);
+        matrix.at(3, 2) = -near_clip / (far_clip - near_clip);
+        return Transform3(matrix);
+    }
+
+    static Transform3 from_orthographic_right_hand_neg1to1(
+        const Real left, const Real right, const Real bottom, const Real top, const Real near_clip, const Real far_clip)
+    {
+        auto matrix = Matrix4<Real>::identity();
+        matrix.at(0, 0) = static_cast<Real>(2.0) / (right - left);
+        matrix.at(1, 1) = static_cast<Real>(2.0) / (top - bottom);
+        matrix.at(2, 2) = static_cast<Real>(2.0) / (far_clip - near_clip);
+        matrix.at(3, 0) = -(right + left) / (right - left);
+        matrix.at(3, 1) = -(top + bottom) / (top - bottom);
+        matrix.at(3, 2) = -(far_clip + near_clip) / (far_clip - near_clip);
+        return Transform3(matrix);
+    }
+
+    static Transform3 from_orthographic_right_hand_0to1(
+        const Real left, const Real right, const Real bottom, const Real top, const Real near_clip, const Real far_clip)
+    {
+        auto matrix = Matrix4<Real>::identity();
+        matrix.at(0, 0) = static_cast<Real>(2.0) / (right - left);
+        matrix.at(1, 1) = static_cast<Real>(2.0) / (top - bottom);
+        matrix.at(2, 2) = static_cast<Real>(1.0) / (far_clip - near_clip);
+        matrix.at(3, 0) = -(right + left) / (right - left);
+        matrix.at(3, 1) = -(top + bottom) / (top - bottom);
+        matrix.at(3, 2) = -near_clip / (far_clip - near_clip);
         return Transform3(matrix);
     }
 

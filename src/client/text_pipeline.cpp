@@ -98,7 +98,7 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)
 
 void TextPipeline::resize()
 {
-    const auto proj = nnm::Transform3f::from_projection_orthographic(
+    const auto proj = nnm::Transform3f::from_orthographic_right_hand_0to1(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,

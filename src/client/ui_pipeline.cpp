@@ -26,7 +26,7 @@ UIPipeline::UIPipeline(mve::Renderer& renderer)
 
 void UIPipeline::resize()
 {
-    const auto proj = nnm::Transform3f::from_projection_orthographic(
+    const auto proj = nnm::Transform3f::from_orthographic_right_hand_0to1(
         0.0f,
         static_cast<float>(m_renderer->extent().x),
         0.0f,
