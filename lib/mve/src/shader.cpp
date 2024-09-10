@@ -1,5 +1,6 @@
 #include <mve/shader.hpp>
 
+#include <format>
 #include <fstream>
 #include <optional>
 #include <vector>
@@ -13,7 +14,7 @@ namespace mve {
 
 Shader::Shader(const std::filesystem::path& file_path)
 {
-    log().debug("Loading shader: " + file_path.string());
+    Logger::debug(std::format("[Shader] Loading shader: {}", file_path.string()));
 
     std::ifstream file(file_path, std::ios::binary);
 
@@ -49,7 +50,7 @@ static ShaderDescriptorType convert_descriptor_type(const SpvReflectDescriptorTy
 }
 
 static std::optional<ShaderBindingBlock> create_binding_block( // NOLINT(*-no-recursion)
-    SpvReflectBlockVariable reflect_block)
+    const SpvReflectBlockVariable& reflect_block)
 {
     std::unordered_map<std::string, ShaderBindingBlock> members;
     for (uint32_t m = 0; m < reflect_block.member_count; m++) {
@@ -110,6 +111,7 @@ void Shader::create_reflection_data()
 
     m_reflection_data.sets = std::move(sets);
 }
+
 const std::unordered_map<uint32_t, ShaderDescriptorSet>& Shader::descriptor_sets() const
 {
     return m_reflection_data.sets;
@@ -119,131 +121,11 @@ bool Shader::has_descriptor_set(const uint32_t set) const
 {
     return m_reflection_data.sets.contains(set);
 }
+
 const ShaderDescriptorSet& Shader::descriptor_set(const uint32_t set) const
 {
     return m_reflection_data.sets.at(set);
 }
 
-ShaderDescriptorSet::ShaderDescriptorSet(
-    const uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings)
-    : m_set(set)
-    , m_bindings(std::move(bindings))
-{
-}
-uint32_t ShaderDescriptorSet::set() const
-{
-    return m_set;
-}
 
-const ShaderDescriptorBinding& ShaderDescriptorSet::binding(const uint32_t binding) const
-{
-    return m_bindings.at(binding);
-}
-
-const std::unordered_map<uint32_t, ShaderDescriptorBinding>& ShaderDescriptorSet::bindings() const
-{
-    return m_bindings;
-}
-uint32_t ShaderDescriptorSet::binding_count() const
-{
-    return m_bindings.size();
-}
-
-ShaderDescriptorBinding::ShaderDescriptorBinding(
-    std::string name, uint32_t binding, ShaderDescriptorType type, std::optional<ShaderBindingBlock> block)
-    : m_name(std::move(name))
-    , m_binding(binding)
-    , m_type(type)
-    , m_block(std::move(block))
-{
-}
-std::string ShaderDescriptorBinding::name() const
-{
-    return m_name;
-}
-uint32_t ShaderDescriptorBinding::binding() const
-{
-    return m_binding;
-}
-const ShaderDescriptorType& ShaderDescriptorBinding::type() const
-{
-    return m_type;
-}
-const ShaderBindingBlock& ShaderDescriptorBinding::block() const
-{
-    return m_block.value();
-}
-const ShaderBindingBlock& ShaderDescriptorBinding::member(const std::string& name) const
-{
-    return m_block.value().member(name);
-}
-const std::unordered_map<std::string, ShaderBindingBlock>& ShaderDescriptorBinding::members() const
-{
-    return m_block.value().members();
-}
-
-ShaderBindingBlock::ShaderBindingBlock(
-    std::string name,
-    const uint32_t size,
-    const uint32_t offset,
-    std::unordered_map<std::string, ShaderBindingBlock> members)
-    : m_name(std::move(name))
-    , m_size(size)
-    , m_offset(offset)
-    , m_members(std::move(members))
-{
-}
-
-const ShaderBindingBlock& ShaderBindingBlock::member(const std::string& name) const
-{
-    return m_members.at(name);
-}
-std::string ShaderBindingBlock::name() const
-{
-    return m_name;
-}
-uint32_t ShaderBindingBlock::size() const
-{
-    return m_size;
-}
-uint32_t ShaderBindingBlock::offset() const
-{
-    return m_offset;
-}
-
-const std::unordered_map<std::string, ShaderBindingBlock>& ShaderBindingBlock::members() const
-{
-    return m_members;
-}
-UniformLocation ShaderBindingBlock::location() const
-{
-    return UniformLocation(offset());
-}
-
-UniformLocation::UniformLocation()
-    : m_value()
-{
-}
-UniformLocation::UniformLocation(const uint32_t value)
-    : m_initialized(true)
-    , m_value(value)
-{
-}
-void UniformLocation::set(const uint32_t value)
-{
-    m_initialized = true;
-    m_value = value;
-}
-uint32_t UniformLocation::value() const
-{
-    return m_value;
-}
-bool UniformLocation::operator==(const UniformLocation& other) const
-{
-    return m_value == other.m_value;
-}
-bool UniformLocation::operator<(const UniformLocation& other) const
-{
-    return m_value < other.m_value;
-}
 }

@@ -28,7 +28,7 @@ public:
 
     void set_scale(float scale);
 
-    void update_texture(const mve::Texture& texture) const;
+    void update_texture(const mve::Texture& texture);
 
     [[nodiscard]] nnm::Vector2f position() const
     {

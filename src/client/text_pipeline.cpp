@@ -25,32 +25,32 @@ TextPipeline::TextPipeline(mve::Renderer& renderer, const int point_size)
     m_global_descriptor_set.write_binding(m_vert_shader.descriptor_set(0).binding(0), m_global_ubo);
 
     mve::VertexData vertex_data(c_vertex_layout);
-    vertex_data.push_back({ 0.0f, -1.0f, 0.0f });
-    vertex_data.push_back({ 0.0f, 0.0f });
-    vertex_data.push_back({ 1.0f, -1.0f, 0.0f });
-    vertex_data.push_back({ 1.0f, 0.0f });
-    vertex_data.push_back({ 1.0f, 0.0f, 0.0f });
-    vertex_data.push_back({ 1.0f, 1.0f });
-    vertex_data.push_back({ 0.0f, 0.0f, 0.0f });
-    vertex_data.push_back({ 0.0f, 1.0f });
+    vertex_data.push({ 0.0f, -1.0f, 0.0f });
+    vertex_data.push({ 0.0f, 0.0f });
+    vertex_data.push({ 1.0f, -1.0f, 0.0f });
+    vertex_data.push({ 1.0f, 0.0f });
+    vertex_data.push({ 1.0f, 0.0f, 0.0f });
+    vertex_data.push({ 1.0f, 1.0f });
+    vertex_data.push({ 0.0f, 0.0f, 0.0f });
+    vertex_data.push({ 0.0f, 1.0f });
     m_vertex_buffer = renderer.create_vertex_buffer(vertex_data);
-    m_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_index_buffer = renderer.create_index_buffer(std::array<uint32_t, 6> { 0, 3, 2, 0, 2, 1 });
 
     m_global_ubo.update(
         m_vert_shader.descriptor_set(0).binding(0).member("view").location(),
         nnm::Transform3f().translate({ 0.0f, 0.0f, -1.0f }).matrix);
 
     mve::VertexData cursor_data(c_vertex_layout);
-    cursor_data.push_back({ -0.05f, -1.0f, 0.0f });
-    cursor_data.push_back({ 0.0f, 0.0f });
-    cursor_data.push_back({ 0.05f, -1.0f, 0.0f });
-    cursor_data.push_back({ 1.0f, 0.0f });
-    cursor_data.push_back({ 0.05f, 0.0f, 0.0f });
-    cursor_data.push_back({ 1.0f, 1.0f });
-    cursor_data.push_back({ -0.05f, 0.0f, 0.0f });
-    cursor_data.push_back({ 0.0f, 1.0f });
+    cursor_data.push({ -0.05f, -1.0f, 0.0f });
+    cursor_data.push({ 0.0f, 0.0f });
+    cursor_data.push({ 0.05f, -1.0f, 0.0f });
+    cursor_data.push({ 1.0f, 0.0f });
+    cursor_data.push({ 0.05f, 0.0f, 0.0f });
+    cursor_data.push({ 1.0f, 1.0f });
+    cursor_data.push({ -0.05f, 0.0f, 0.0f });
+    cursor_data.push({ 0.0f, 1.0f });
     m_cursor_vertex_buffer = renderer.create_vertex_buffer(cursor_data);
-    m_cursor_index_buffer = renderer.create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_cursor_index_buffer = renderer.create_index_buffer(std::array<uint32_t, 6> { 0, 3, 2, 0, 2, 1 });
 
     FT_Library font_lib;
     FT_Error result = FT_Init_FreeType(&font_lib);

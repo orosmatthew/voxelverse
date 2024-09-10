@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.hpp"
+#include "fwd.hpp"
 
 namespace mve {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.hpp"
+#include "fwd.hpp"
 
 namespace mve {
 
@@ -47,25 +47,29 @@ inline bool DescriptorSet::operator==(const DescriptorSet& other) const
 {
     return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
+
 inline bool DescriptorSet::operator<(const DescriptorSet& other) const
 {
     return m_handle < other.m_handle;
 }
+
 inline size_t DescriptorSet::handle() const
 {
     return m_handle;
 }
+
 inline bool DescriptorSet::is_valid() const
 {
     return m_renderer != nullptr;
 }
+
 inline void DescriptorSet::write_binding(
-    const ShaderDescriptorBinding& descriptor_binding, const UniformBuffer& uniform_buffer) const
+    const ShaderDescriptorBinding& descriptor_binding, const UniformBuffer& uniform_buffer)
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, uniform_buffer);
 }
-inline void DescriptorSet::write_binding(
-    const ShaderDescriptorBinding& descriptor_binding, const Texture& texture) const
+
+inline void DescriptorSet::write_binding(const ShaderDescriptorBinding& descriptor_binding, const Texture& texture)
 {
     m_renderer->write_descriptor_binding(*this, descriptor_binding, texture);
 }
@@ -75,6 +79,7 @@ inline DescriptorSet::DescriptorSet(Renderer& renderer, const size_t handle)
     , m_handle(handle)
 {
 }
+
 inline void DescriptorSet::invalidate()
 {
     m_renderer = nullptr;

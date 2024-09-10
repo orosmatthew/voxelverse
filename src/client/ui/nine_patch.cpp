@@ -69,9 +69,9 @@ NinePatch::NinePatch(
 
     mve::VertexData vertex_data(UIPipeline::vertex_layout());
     for (int i = 0; i < 16; i++) {
-        vertex_data.push_back(nnm::Vector3(vertices[i].x, vertices[i].y, 0.0f));
-        vertex_data.push_back(nnm::Vector3(1.0f, 1.0f, 1.0f));
-        vertex_data.push_back(uvs[i]);
+        vertex_data.push(nnm::Vector3(vertices[i].x, vertices[i].y, 0.0f));
+        vertex_data.push(nnm::Vector3(1.0f, 1.0f, 1.0f));
+        vertex_data.push(uvs[i]);
     }
     m_vertex_buffer = ui_pipeline.renderer().create_vertex_buffer(vertex_data);
     m_index_buffer = ui_pipeline.renderer().create_index_buffer(indices);
@@ -103,7 +103,7 @@ void NinePatch::set_scale(const float scale)
             .matrix);
 }
 
-void NinePatch::update_texture(const mve::Texture& texture) const
+void NinePatch::update_texture(const mve::Texture& texture)
 {
     // TODO: This texture could be different size from original
     m_uniform_data.descriptor_set.write_binding(m_pipeline->texture_binding(), texture);

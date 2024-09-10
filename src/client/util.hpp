@@ -7,7 +7,7 @@
 namespace mve {
 
 struct ModelData {
-    VertexLayout vertex_layout;
+    std::vector<VertexAttributeType> vertex_layout;
     VertexData vertex_data;
     std::vector<uint32_t> indices;
 };

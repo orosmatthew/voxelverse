@@ -2,27 +2,27 @@
 add_library(glfw ${GLFW_LIBRARY_TYPE}
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3.h"
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3native.h"
-                 internal.h platform.h mappings.h
-                 context.c init.c input.c monitor.c platform.c vulkan.c window.c
-                 egl_context.c osmesa_context.c null_platform.h null_joystick.h
-                 null_init.c null_monitor.c null_window.c null_joystick.c)
+        internal.h platform.h mappings.h
+        context.c init.c input.c monitor.c platform.c vulkan.c window.c
+        egl_context.c osmesa_context.c null_platform.h null_joystick.h
+        null_init.c null_monitor.c null_window.c null_joystick.c)
 
 # The time, thread and module code is shared between all backends on a given OS,
 # including the null backend, which still needs those bits to be functional
 if (APPLE)
     target_sources(glfw PRIVATE cocoa_time.h cocoa_time.c posix_thread.h
-                                posix_module.c posix_thread.c)
+            posix_module.c posix_thread.c)
 elseif (WIN32)
     target_sources(glfw PRIVATE win32_time.h win32_thread.h win32_module.c
-                                win32_time.c win32_thread.c)
+            win32_time.c win32_thread.c)
 else()
     target_sources(glfw PRIVATE posix_time.h posix_thread.h posix_module.c
-                                posix_time.c posix_thread.c)
+            posix_time.c posix_thread.c)
 endif()
 
 add_custom_target(update_mappings
     COMMAND "${CMAKE_COMMAND}" -P "${GLFW_SOURCE_DIR}/CMake/GenerateMappings.cmake" mappings.h.in mappings.h
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    WORKING_DIRECTORY "."
     COMMENT "Updating gamepad mappings from upstream repository"
     SOURCES mappings.h.in "${GLFW_SOURCE_DIR}/CMake/GenerateMappings.cmake"
     VERBATIM)
@@ -32,28 +32,28 @@ set_target_properties(update_mappings PROPERTIES FOLDER "GLFW3")
 if (GLFW_BUILD_COCOA)
     target_compile_definitions(glfw PRIVATE _GLFW_COCOA)
     target_sources(glfw PRIVATE cocoa_platform.h cocoa_joystick.h cocoa_init.m
-                                cocoa_joystick.m cocoa_monitor.m cocoa_window.m
-                                nsgl_context.m)
+            cocoa_joystick.m cocoa_monitor.m cocoa_window.m
+            nsgl_context.m)
 endif()
 
 if (GLFW_BUILD_WIN32)
     target_compile_definitions(glfw PRIVATE _GLFW_WIN32)
     target_sources(glfw PRIVATE win32_platform.h win32_joystick.h win32_init.c
-                                win32_joystick.c win32_monitor.c win32_window.c
-                                wgl_context.c)
+            win32_joystick.c win32_monitor.c win32_window.c
+            wgl_context.c)
 endif()
 
 if (GLFW_BUILD_X11)
     target_compile_definitions(glfw PRIVATE _GLFW_X11)
     target_sources(glfw PRIVATE x11_platform.h xkb_unicode.h x11_init.c
-                                x11_monitor.c x11_window.c xkb_unicode.c
-                                glx_context.c)
+            x11_monitor.c x11_window.c xkb_unicode.c
+            glx_context.c)
 endif()
 
 if (GLFW_BUILD_WAYLAND)
     target_compile_definitions(glfw PRIVATE _GLFW_WAYLAND)
     target_sources(glfw PRIVATE wl_platform.h xkb_unicode.h wl_init.c
-                                wl_monitor.c wl_window.c xkb_unicode.c)
+            wl_monitor.c wl_window.c xkb_unicode.c)
 endif()
 
 if (GLFW_BUILD_X11 OR GLFW_BUILD_WAYLAND)
@@ -140,7 +140,7 @@ target_link_libraries(glfw PRIVATE Threads::Threads)
 # Workaround for CMake not knowing about .m files before version 3.16
 if (CMAKE_VERSION VERSION_LESS "3.16" AND APPLE)
     set_source_files_properties(cocoa_init.m cocoa_joystick.m cocoa_monitor.m
-                                cocoa_window.m nsgl_context.m PROPERTIES
+            cocoa_window.m nsgl_context.m PROPERTIES
                                 LANGUAGE C)
 endif()
 

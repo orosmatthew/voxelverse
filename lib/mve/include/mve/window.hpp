@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -251,6 +250,8 @@ class Window {
 public:
     Window(const std::string& title, nnm::Vector2i size, bool resizable = true);
 
+    ~Window();
+
     [[nodiscard]] GLFWwindow* glfw_handle() const;
 
     [[nodiscard]] nnm::Vector2i size() const;
@@ -349,16 +350,22 @@ public:
 
     [[nodiscard]] nnm::Vector2f get_cursor_pos(bool clamped_to_window = true) const;
 
-    [[nodiscard]] std::vector<std::string> input_stream() const
-    {
-        return m_input_stream;
-    }
+    [[nodiscard]] const std::vector<char32_t>& input_char_stream() const;
 
 private:
-    using UniqueGlfwWindow = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>;
+    template <typename T>
+    struct Buffered {
+        T current;
+        T buffered;
+
+        void swap()
+        {
+            std::swap(current, buffered);
+        }
+    };
 
     const bool m_resizable;
-    UniqueGlfwWindow m_glfw_window;
+    GLFWwindow* m_glfw_window;
     std::optional<std::function<void(nnm::Vector2i)>> m_resize_callback;
     bool m_hidden;
     bool m_minimized;
@@ -367,34 +374,26 @@ private:
     bool m_cursor_hidden;
     bool m_cursor_in_window;
     bool m_event_waiting;
-    nnm::Vector2f m_current_scroll_offset {};
-    nnm::Vector2f m_scroll_offset {};
+    Buffered<nnm::Vector2f> m_scroll_offset;
     nnm::Vector2i m_pos;
     nnm::Vector2i m_size;
     nnm::Vector2i m_windowed_size;
     bool m_fullscreen;
     nnm::Vector2i m_min_size;
-    std::set<Key> m_current_keys_down {};
-    std::set<Key> m_keys_down {};
-    std::set<Key> m_keys_pressed {};
-    std::set<Key> m_current_keys_released {};
-    std::set<Key> m_keys_released {};
-    std::set<Key> m_current_keys_repeated {};
-    std::set<Key> m_keys_repeated {};
+    Buffered<std::vector<Key>> m_keys_down {};
+    std::vector<Key> m_keys_pressed {};
+    Buffered<std::vector<Key>> m_keys_released {};
+    Buffered<std::vector<Key>> m_keys_repeated {};
 
-    std::set<MouseButton> m_current_mouse_buttons_down {};
-    std::set<MouseButton> m_mouse_buttons_down {};
-    std::set<MouseButton> m_current_mouse_buttons_released {};
-    std::set<MouseButton> m_mouse_buttons_pressed {};
-    std::set<MouseButton> m_mouse_buttons_released {};
+    Buffered<std::vector<MouseButton>> m_mouse_buttons_down {};
+    std::vector<MouseButton> m_mouse_buttons_pressed {};
+    Buffered<std::vector<MouseButton>> m_mouse_buttons_released {};
 
-    nnm::Vector2f m_current_mouse_pos;
+    Buffered<nnm::Vector2f> m_mouse_pos;
     nnm::Vector2f m_mouse_pos_prev;
     nnm::Vector2f m_mouse_delta;
-    nnm::Vector2f m_mouse_pos;
 
-    std::vector<std::string> m_current_input_stream {};
-    std::vector<std::string> m_input_stream {};
+    Buffered<std::vector<char32_t>> m_input_char_stream;
 
     static void glfw_framebuffer_resize_callback(GLFWwindow* window, int width, int height);
 

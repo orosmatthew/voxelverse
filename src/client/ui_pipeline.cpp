@@ -40,21 +40,21 @@ void UIPipeline::update_framebuffer_texture(const mve::Texture& texture, const n
 {
     m_global_descriptor_set.write_binding(m_fragment_shader.descriptor_set(0).binding(1), texture);
     mve::VertexData world_data(vertex_layout());
-    world_data.push_back(nnm::Vector3(0.0f, 0.0f, 0.0f));
-    world_data.push_back({ 1, 1, 1 });
-    world_data.push_back({ 0.0f, 0.0f });
-    world_data.push_back(nnm::Vector3(static_cast<float>(size.x), 0.0f, 0.0f));
-    world_data.push_back({ 1, 1, 1 });
-    world_data.push_back({ 1.0f, 0.0f });
-    world_data.push_back(nnm::Vector3(static_cast<float>(size.x), static_cast<float>(size.y), 0.0f));
-    world_data.push_back({ 1, 1, 1 });
-    world_data.push_back({ 1.0f, 1.0f });
-    world_data.push_back(nnm::Vector3(0.0f, static_cast<float>(size.y), 0.0f));
-    world_data.push_back({ 1, 1, 1 });
-    world_data.push_back({ 0.0f, 1.0f });
+    world_data.push(nnm::Vector3(0.0f, 0.0f, 0.0f));
+    world_data.push({ 1, 1, 1 });
+    world_data.push({ 0.0f, 0.0f });
+    world_data.push(nnm::Vector3(static_cast<float>(size.x), 0.0f, 0.0f));
+    world_data.push({ 1, 1, 1 });
+    world_data.push({ 1.0f, 0.0f });
+    world_data.push(nnm::Vector3(static_cast<float>(size.x), static_cast<float>(size.y), 0.0f));
+    world_data.push({ 1, 1, 1 });
+    world_data.push({ 1.0f, 1.0f });
+    world_data.push(nnm::Vector3(0.0f, static_cast<float>(size.y), 0.0f));
+    world_data.push({ 1, 1, 1 });
+    world_data.push({ 0.0f, 1.0f });
     if (!m_world.has_value()) {
         World world { .vertex_buffer = m_renderer->create_vertex_buffer(world_data),
-                      .index_buffer = m_renderer->create_index_buffer({ 0, 3, 2, 0, 2, 1 }),
+                      .index_buffer = m_renderer->create_index_buffer(std::array<uint32_t, 6> { 0, 3, 2, 0, 2, 1 }),
                       .descriptor_set = m_graphics_pipeline.create_descriptor_set(m_vertex_shader.descriptor_set(1)),
                       .uniform_buffer = m_renderer->create_uniform_buffer(m_vertex_shader.descriptor_set(1).binding(0)),
                       .model_location = m_vertex_shader.descriptor_set(1).binding(0).member("model").location() };

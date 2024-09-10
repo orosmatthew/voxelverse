@@ -19,17 +19,38 @@ enum class ShaderDescriptorType {
 
 class UniformLocation {
 public:
-    UniformLocation();
+    UniformLocation()
+        : m_value()
+    {
+    }
 
-    explicit UniformLocation(uint32_t value);
+    explicit UniformLocation(const uint32_t value)
+        : m_initialized(true)
+        , m_value(value)
 
-    void set(uint32_t value);
+    {
+    }
 
-    [[nodiscard]] uint32_t value() const;
+    void set(const uint32_t value)
+    {
+        m_initialized = true;
+        m_value = value;
+    }
 
-    [[nodiscard]] bool operator==(const UniformLocation& other) const;
+    [[nodiscard]] uint32_t value() const
+    {
+        return m_value;
+    }
 
-    [[nodiscard]] bool operator<(const UniformLocation& other) const;
+    [[nodiscard]] bool operator==(const UniformLocation& other) const
+    {
+        return m_value == other.m_value;
+    }
+
+    [[nodiscard]] bool operator<(const UniformLocation& other) const
+    {
+        return m_value < other.m_value;
+    }
 
 private:
     bool m_initialized = false;
@@ -39,19 +60,46 @@ private:
 class ShaderBindingBlock {
 public:
     ShaderBindingBlock(
-        std::string name, uint32_t size, uint32_t offset, std::unordered_map<std::string, ShaderBindingBlock> members);
+        std::string name,
+        const uint32_t size,
+        const uint32_t offset,
+        std::unordered_map<std::string, ShaderBindingBlock> members)
+        : m_name(std::move(name))
+        , m_size(size)
+        , m_offset(offset)
+        , m_members(std::move(members))
+    {
+    }
 
-    [[nodiscard]] std::string name() const;
+    [[nodiscard]] std::string name() const
+    {
+        return m_name;
+    }
 
-    [[nodiscard]] uint32_t size() const;
+    [[nodiscard]] uint32_t size() const
+    {
+        return m_size;
+    }
 
-    [[nodiscard]] uint32_t offset() const;
+    [[nodiscard]] uint32_t offset() const
+    {
+        return m_offset;
+    }
 
-    [[nodiscard]] UniformLocation location() const;
+    [[nodiscard]] UniformLocation location() const
+    {
+        return UniformLocation(offset());
+    }
 
-    [[nodiscard]] const ShaderBindingBlock& member(const std::string& name) const;
+    [[nodiscard]] const ShaderBindingBlock& member(const std::string& name) const
+    {
+        return m_members.at(name);
+    }
 
-    [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const;
+    [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const
+    {
+        return m_members;
+    }
 
 private:
     std::string m_name;
@@ -63,19 +111,43 @@ private:
 class ShaderDescriptorBinding {
 public:
     ShaderDescriptorBinding(
-        std::string name, uint32_t binding, ShaderDescriptorType type, std::optional<ShaderBindingBlock> block);
+        std::string name, uint32_t binding, ShaderDescriptorType type, std::optional<ShaderBindingBlock> block)
+        : m_name(std::move(name))
+        , m_binding(binding)
+        , m_type(type)
+        , m_block(std::move(block))
+    {
+    }
 
-    [[nodiscard]] std::string name() const;
+    [[nodiscard]] std::string name() const
+    {
+        return m_name;
+    }
 
-    [[nodiscard]] uint32_t binding() const;
+    [[nodiscard]] uint32_t binding() const
+    {
+        return m_binding;
+    }
 
-    [[nodiscard]] const ShaderDescriptorType& type() const;
+    [[nodiscard]] const ShaderDescriptorType& type() const
+    {
+        return m_type;
+    }
 
-    [[nodiscard]] const ShaderBindingBlock& block() const;
+    [[nodiscard]] const ShaderBindingBlock& block() const
+    {
+        return m_block.value();
+    }
 
-    [[nodiscard]] const ShaderBindingBlock& member(const std::string& name) const;
+    [[nodiscard]] const ShaderBindingBlock& member(const std::string& name) const
+    {
+        return m_block.value().member(name);
+    }
 
-    [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const;
+    [[nodiscard]] const std::unordered_map<std::string, ShaderBindingBlock>& members() const
+    {
+        return m_block.value().members();
+    }
 
 private:
     std::string m_name;
@@ -86,25 +158,37 @@ private:
 
 class ShaderDescriptorSet {
 public:
-    ShaderDescriptorSet(uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings);
+    ShaderDescriptorSet(const uint32_t set, std::unordered_map<uint32_t, ShaderDescriptorBinding> bindings)
+        : m_set(set)
+        , m_bindings(std::move(bindings))
+    {
+    }
 
-    [[nodiscard]] uint32_t set() const;
+    [[nodiscard]] uint32_t set() const
+    {
+        return m_set;
+    }
 
-    [[nodiscard]] uint32_t binding_count() const;
+    [[nodiscard]] uint32_t binding_count() const
+    {
+        return static_cast<uint32_t>(m_bindings.size());
+    }
 
-    [[nodiscard]] const ShaderDescriptorBinding& binding(uint32_t binding) const;
+    [[nodiscard]] const ShaderDescriptorBinding& binding(const uint32_t binding) const
+    {
+        return m_bindings.at(binding);
+    }
 
-    [[nodiscard]] const std::unordered_map<uint32_t, ShaderDescriptorBinding>& bindings() const;
+    [[nodiscard]] const std::unordered_map<uint32_t, ShaderDescriptorBinding>& bindings() const
+    {
+        return m_bindings;
+    }
 
 private:
     const uint32_t m_set;
     const std::unordered_map<uint32_t, ShaderDescriptorBinding> m_bindings;
 };
 
-// TODO: Move shader reflection data to its own class
-/**
- * @brief Shader for use in renderer
- */
 class Shader {
 public:
     explicit Shader(const std::filesystem::path& file_path);

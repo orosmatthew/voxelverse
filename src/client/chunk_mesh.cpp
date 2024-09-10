@@ -432,10 +432,10 @@ std::optional<ChunkBufferData> create_chunk_buffer_data(const nnm::Vector3i chun
 
     mve::VertexData vertex_data(WorldRenderer::vertex_layout());
     for (int i = 0; i < mesh.vertices.size(); i++) {
-        vertex_data.push_back(mesh.vertices.at(i) + nnm::Vector3f(chunk_pos) * 16.0f);
-        vertex_data.push_back(mesh.colors.at(i));
-        vertex_data.push_back(mesh.uvs.at(i));
-        vertex_data.push_back(1.0f);
+        vertex_data.push(mesh.vertices.at(i) + nnm::Vector3f(chunk_pos) * 16.0f);
+        vertex_data.push(mesh.colors.at(i));
+        vertex_data.push(mesh.uvs.at(i));
+        vertex_data.push(1.0f);
     }
     return ChunkBufferData {
         .chunk_pos = chunk_pos, .vertex_data = std::move(vertex_data), .index_data = std::move(mesh.indices)

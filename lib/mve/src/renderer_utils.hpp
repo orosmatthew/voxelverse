@@ -3,7 +3,7 @@
 #include <set>
 
 #include <mve/common.hpp>
-#include <mve/detail/defs.hpp>
+#include <mve/detail/fwd.hpp>
 #include <mve/shader.hpp>
 
 #include "logger.hpp"
@@ -203,7 +203,7 @@ inline vk::Format find_depth_format(const vk::DispatchLoaderDynamic& loader, con
 }
 
 inline Image create_image(
-    const VmaAllocator allocator,
+    const VmaAllocator allocator, // NOLINT(*-misplaced-const)
     const uint32_t width,
     const uint32_t height,
     const uint32_t mip_levels,
@@ -322,7 +322,7 @@ inline void end_single_submit(
 inline RenderImage create_color_image(
     const vk::DispatchLoaderDynamic& loader,
     const vk::Device device,
-    const VmaAllocator allocator,
+    const VmaAllocator allocator, // NOLINT(*-misplaced-const)
     const vk::Extent2D swapchain_extent,
     const vk::Format swapchain_format,
     const vk::SampleCountFlagBits samples)
@@ -342,6 +342,33 @@ inline RenderImage create_color_image(
         loader, device, color_image.vk_handle, swapchain_format, vk::ImageAspectFlagBits::eColor, 1);
 
     return { color_image, image_view };
+}
+
+inline DepthImage create_depth_image(
+    const vk::DispatchLoaderDynamic& loader,
+    const vk::PhysicalDevice physical_device,
+    const vk::Device device,
+    const VmaAllocator vma_allocator, // NOLINT(*-misplaced-const)
+    const vk::Extent2D extent,
+    const vk::SampleCountFlagBits samples)
+{
+    const vk::Format depth_format = find_depth_format(loader, physical_device);
+
+    const Image depth_image = create_image(
+        vma_allocator,
+        extent.width,
+        extent.height,
+        1,
+        samples,
+        depth_format,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment,
+        true);
+
+    const vk::ImageView depth_image_view
+        = create_image_view(loader, device, depth_image.vk_handle, depth_format, vk::ImageAspectFlagBits::eDepth, 1);
+
+    return { depth_image, depth_image_view };
 }
 
 inline void cmd_generate_mipmaps(
@@ -486,16 +513,16 @@ inline VkBool32 vk_debug_callback(
     [[maybe_unused]] void* user_data)
 {
     if (msg_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        log().warn("[Vulkan Debug] " + std::string(callback_data->pMessage));
+        Logger::warning(std::format("[Vulkan Debug] {}", std::string(callback_data->pMessage)));
     }
 
     return false;
 }
 
 // ReSharper disable once CppDFAUnreachableFunctionCall
-inline std::vector<const char*> get_vk_validation_layer_exts()
+inline std::array<const char*, 1> get_vk_validation_layer_extensions()
 {
-    return std::vector { "VK_LAYER_KHRONOS_validation" };
+    return std::array { "VK_LAYER_KHRONOS_validation" };
 }
 
 // ReSharper disable once CppDFAUnreachableFunctionCall
@@ -508,7 +535,7 @@ inline bool has_validation_layer_support(const vk::DispatchLoaderDynamic& loader
 
     const std::vector<vk::LayerProperties> available_layers = std::move(available_layers_result.value);
 
-    for (const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
+    for (const std::array<const char*, 1> validation_layers = get_vk_validation_layer_extensions();
          const std::string& validation_layer : validation_layers) {
         if (!std::ranges::any_of(available_layers, [&](const vk::LayerProperties& available_layer) {
                 if (std::strlen(available_layer.layerName.data()) != validation_layer.size()) {
@@ -527,25 +554,28 @@ inline bool has_validation_layer_support(const vk::DispatchLoaderDynamic& loader
     return true;
 }
 
-inline std::vector<const char*> get_vk_instance_required_exts()
+inline std::vector<const char*> get_vk_instance_required_extensions()
 {
     uint32_t glfw_ext_count = 0;
-    const char** glfw_exts = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
+    const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
 
-    std::vector exts(glfw_exts, glfw_exts + glfw_ext_count);
+    std::vector extensions(glfw_extensions, glfw_extensions + glfw_ext_count);
 
-    exts.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 #ifdef MVE_ENABLE_VALIDATION
-    exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
-    return exts;
+    return extensions;
 }
 
 inline vk::Instance create_vk_instance(
     const std::string& app_name, const int app_version_major, const int app_version_minor, const int app_version_patch)
 {
+    if (const VkResult result = volkInitialize(); result != VK_SUCCESS) {
+        throw std::runtime_error("[Renderer] Failed to initialize Volk");
+    }
     const vk::DispatchLoaderDynamic temp_loader(vkGetInstanceProcAddr);
     MVE_VAL_ASSERT(
         has_validation_layer_support(temp_loader), "[Renderer] Validation layers requested but not available")
@@ -555,32 +585,33 @@ inline vk::Instance create_vk_instance(
               .setPApplicationName(app_name.c_str())
               .setApplicationVersion(VK_MAKE_VERSION(app_version_major, app_version_minor, app_version_patch))
               .setPEngineName("Mini Vulkan Engine")
-              .setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
+              .setEngineVersion(VK_MAKE_VERSION(0, 0, 1))
               .setApiVersion(VK_API_VERSION_1_1);
 
-    const std::vector<const char*> exts = get_vk_instance_required_exts();
+    const std::vector<const char*> extensions = get_vk_instance_required_extensions();
 
 #ifdef MVE_ENABLE_VALIDATION
-    const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
+    const std::array<const char*, 1> validation_layers = get_vk_validation_layer_extensions();
 
     auto instance_create_info
         = vk::InstanceCreateInfo()
               .setPApplicationInfo(&application_info)
-              .setEnabledExtensionCount(exts.size())
-              .setPpEnabledExtensionNames(exts.data())
-              .setEnabledLayerCount(validation_layers.size())
+              .setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()))
+              .setPpEnabledExtensionNames(extensions.data())
+              .setEnabledLayerCount(static_cast<uint32_t>(validation_layers.size()))
               .setPpEnabledLayerNames(validation_layers.data());
 
 #else
     auto instance_create_info
         = vk::InstanceCreateInfo()
               .setPApplicationInfo(&application_info)
-              .setEnabledExtensionCount(exts.size())
-              .setPpEnabledExtensionNames(exts.data())
+              .setEnabledExtensionCount(static_cast<uint32_t>(extensions.size()))
+              .setPpEnabledExtensionNames(extensions.data())
               .setEnabledLayerCount(0);
 #endif
     const vk::ResultValue<vk::Instance> instance_result = createInstance(instance_create_info, nullptr, temp_loader);
     MVE_ASSERT(instance_result.result == vk::Result::eSuccess, "[Renderer] Failed to create instance")
+    volkLoadInstance(instance_result.value);
     return instance_result.value;
 }
 
@@ -605,7 +636,7 @@ inline vk::DebugUtilsMessengerEXT create_vk_debug_messenger(const vk::Instance i
     return { debug_messenger };
 }
 
-inline std::vector<const char*> get_vk_device_required_exts()
+inline std::vector<const char*> get_vk_device_required_extensions()
 {
     return std::vector { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 }
@@ -668,16 +699,17 @@ inline bool is_vk_physical_device_suitable(
 {
     QueueFamilyIndices indices = get_vk_queue_family_indices(loader, physical_device, surface);
 
-    vk::ResultValue<std::vector<vk::ExtensionProperties>> available_exts_result
+    vk::ResultValue<std::vector<vk::ExtensionProperties>> available_extensions_result
         = physical_device.enumerateDeviceExtensionProperties(nullptr, loader);
     MVE_ASSERT(
-        available_exts_result.result == vk::Result::eSuccess, "[Renderer] Failed to get device extension properties")
+        available_extensions_result.result == vk::Result::eSuccess,
+        "[Renderer] Failed to get device extension properties")
 
-    std::vector<vk::ExtensionProperties> available_exts = std::move(available_exts_result.value);
+    std::vector<vk::ExtensionProperties> available_extensions = std::move(available_extensions_result.value);
 
-    for (std::vector<const char*> required_exts = get_vk_device_required_exts();
-         const std::string& required_ext : required_exts) {
-        if (!std::ranges::any_of(std::as_const(available_exts), [&](const vk::ExtensionProperties& ext_props) {
+    for (std::vector<const char*> required_extensions = get_vk_device_required_extensions();
+         const std::string& required_ext : required_extensions) {
+        if (!std::ranges::any_of(std::as_const(available_extensions), [&](const vk::ExtensionProperties& ext_props) {
                 return required_ext == ext_props.extensionName;
             })) {
             return false;
@@ -692,30 +724,67 @@ inline bool is_vk_physical_device_suitable(
     return indices.is_complete() && is_swapchain_adequate && supported_features.samplerAnisotropy;
 }
 
+inline vk::PhysicalDeviceType device_type_to_vk(const DeviceType device_type)
+{
+    switch (device_type) {
+    case DeviceType::integrated_gpu:
+        return vk::PhysicalDeviceType::eIntegratedGpu;
+    case DeviceType::discrete_gpu:
+        return vk::PhysicalDeviceType::eDiscreteGpu;
+    case DeviceType::virtual_gpu:
+        return vk::PhysicalDeviceType::eVirtualGpu;
+    case DeviceType::cpu:
+        return vk::PhysicalDeviceType::eCpu;
+    default:
+        return vk::PhysicalDeviceType::eDiscreteGpu;
+    }
+}
+
 inline vk::PhysicalDevice pick_vk_physical_device(
-    const vk::Instance instance, const vk::DispatchLoaderDynamic& loader, const vk::SurfaceKHR surface)
+    const vk::Instance instance,
+    const vk::DispatchLoaderDynamic& loader,
+    const vk::SurfaceKHR surface,
+    const DeviceType preferred_device_type)
 {
     vk::ResultValue<std::vector<vk::PhysicalDevice>> physical_devices_result
         = instance.enumeratePhysicalDevices(loader);
     MVE_ASSERT(
         physical_devices_result.result == vk::Result::eSuccess, "[Renderer] Failed to get physical devices (GPUs)")
 
-    const std::vector<vk::PhysicalDevice> physical_devices = std::move(physical_devices_result.value);
+    std::vector<vk::PhysicalDevice> physical_devices = std::move(physical_devices_result.value);
     MVE_ASSERT(!physical_devices.empty(), "[Renderer] Failed to find Vulkan device")
 
     for (vk::PhysicalDevice physical_device : physical_devices) {
         const auto vk_device_name = physical_device.getProperties(loader).deviceName;
-        const auto device_name = std::string(vk_device_name.begin(), vk_device_name.end());
-        log().debug("[Renderer] GPU Found: {0}", device_name);
+        const auto device_name = std::string(vk_device_name.data(), std::strlen(vk_device_name));
+        Logger::debug(std::format("[Renderer] GPU Found: {}", device_name));
+    }
+
+    physical_devices.erase(
+        std::ranges::remove_if(
+            physical_devices,
+            [&](const vk::PhysicalDevice& physical_device) {
+                return !is_vk_physical_device_suitable(loader, physical_device, surface);
+            })
+            .begin(),
+        physical_devices.end());
+
+    if (preferred_device_type != DeviceType::first) {
+        const vk::PhysicalDeviceType vk_preferred_device_type = device_type_to_vk(preferred_device_type);
+        std::ranges::sort(physical_devices, [&](const vk::PhysicalDevice& a, const vk::PhysicalDevice& b) {
+            if (a.getProperties(loader).deviceType == vk_preferred_device_type
+                && b.getProperties(loader).deviceType != vk_preferred_device_type) {
+                return true;
+            }
+            return false;
+        });
     }
 
     for (const vk::PhysicalDevice physical_device : physical_devices) {
-        if (is_vk_physical_device_suitable(loader, physical_device, surface)) {
-            const auto vk_device_name = physical_device.getProperties(loader).deviceName;
-            const auto device_name = std::string(vk_device_name.begin(), vk_device_name.end());
-            log().info("[Renderer] Using GPU: {0}", device_name);
-            return physical_device;
-        }
+        const auto vk_device_name = physical_device.getProperties(loader).deviceName;
+        const auto device_name = std::string(vk_device_name.data(), std::strlen(vk_device_name));
+        Logger::info(std::format("[Renderer] Using GPU: {}", device_name));
+        return physical_device;
     }
 
     MVE_ASSERT(false, "[Renderer] Failed to find a suitable Vulkan device")
@@ -749,30 +818,31 @@ inline vk::Device create_vk_logical_device(
     device_features.samplerAnisotropy = VK_TRUE;
     device_features.sampleRateShading = VK_TRUE;
 
-    std::vector<const char*> required_exts = get_vk_device_required_exts();
+    std::vector<const char*> required_extensions = get_vk_device_required_extensions();
 
-    required_exts.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+    required_extensions.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
 #ifdef MVE_ENABLE_VALIDATION
-    const std::vector<const char*> validation_layers = get_vk_validation_layer_exts();
+    const std::array<const char*, 1> validation_layers = get_vk_validation_layer_extensions();
 
     auto device_create_info
         = vk::DeviceCreateInfo()
               .setPQueueCreateInfos(queue_create_infos.data())
-              .setQueueCreateInfoCount(queue_create_infos.size())
+              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos.size()))
               .setPEnabledFeatures(&device_features)
-              .setEnabledExtensionCount(required_exts.size())
-              .setPpEnabledExtensionNames(required_exts.data())
-              .setEnabledLayerCount(validation_layers.size())
+              .setEnabledExtensionCount(static_cast<uint32_t>(required_extensions.size()))
+              .setPpEnabledExtensionNames(required_extensions.data())
+              // ReSharper disable once CppRedundantCastExpression
+              .setEnabledLayerCount(static_cast<uint32_t>(validation_layers.size()))
               .setPpEnabledLayerNames(validation_layers.data());
 #else
     auto device_create_info
         = vk::DeviceCreateInfo()
               .setPQueueCreateInfos(queue_create_infos.data())
-              .setQueueCreateInfoCount(queue_create_infos.size())
+              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos.size()))
               .setPEnabledFeatures(&device_features)
-              .setEnabledExtensionCount(required_exts.size())
-              .setPpEnabledExtensionNames(required_exts.data())
+              .setEnabledExtensionCount(static_cast<uint32_t>(required_extensions.size()))
+              .setPpEnabledExtensionNames(required_extensions.data())
               .setEnabledLayerCount(0);
 #endif
 
@@ -914,17 +984,19 @@ inline std::vector<vk::ImageView> create_vk_swapchain_image_views(
     return image_views;
 }
 
-inline vk::VertexInputBindingDescription create_vk_binding_description(const VertexLayout& layout)
+inline vk::VertexInputBindingDescription create_vk_binding_description(
+    const std::span<const VertexAttributeType> layout)
 {
     const auto binding_description
         = vk::VertexInputBindingDescription()
               .setBinding(0)
-              .setStride(get_vertex_layout_bytes(layout))
+              .setStride(vertex_layout_bytes(layout))
               .setInputRate(vk::VertexInputRate::eVertex);
     return binding_description;
 }
 
-inline std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_descriptions(const VertexLayout& layout)
+inline std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_descriptions(
+    const std::span<const VertexAttributeType> layout)
 {
     auto attribute_descriptions = std::vector<vk::VertexInputAttributeDescription>();
     attribute_descriptions.reserve(layout.size());
@@ -938,15 +1010,15 @@ inline std::vector<vk::VertexInputAttributeDescription> create_vk_attribute_desc
             description.setFormat(vk::Format::eR32Sfloat);
             offset += sizeof(float);
             break;
-        case VertexAttributeType::vec2:
+        case VertexAttributeType::vector2:
             description.setFormat(vk::Format::eR32G32Sfloat);
             offset += sizeof(nnm::Vector2f);
             break;
-        case VertexAttributeType::vec3:
+        case VertexAttributeType::vector3:
             description.setFormat(vk::Format::eR32G32B32Sfloat);
             offset += sizeof(nnm::Vector3f);
             break;
-        case VertexAttributeType::vec4:
+        case VertexAttributeType::vector4:
             description.setFormat(vk::Format::eR32G32B32A32Sfloat);
             offset += sizeof(nnm::Vector4f);
             break;
@@ -965,7 +1037,7 @@ inline vk::Pipeline create_vk_graphics_pipeline(
     const Shader& fragment_shader,
     vk::PipelineLayout pipeline_layout,
     vk::RenderPass render_pass,
-    const VertexLayout& vertex_layout,
+    const std::span<const VertexAttributeType> vertex_layout,
     vk::SampleCountFlagBits samples,
     bool depth_test)
 {
@@ -1012,7 +1084,7 @@ inline vk::Pipeline create_vk_graphics_pipeline(
         = vk::PipelineVertexInputStateCreateInfo()
               .setVertexBindingDescriptionCount(1)
               .setPVertexBindingDescriptions(&binding_description)
-              .setVertexAttributeDescriptionCount(attribute_descriptions.size())
+              .setVertexAttributeDescriptionCount(static_cast<uint32_t>(attribute_descriptions.size()))
               .setPVertexAttributeDescriptions(attribute_descriptions.data());
 
     auto input_assembly_info
@@ -1023,7 +1095,7 @@ inline vk::Pipeline create_vk_graphics_pipeline(
     std::vector dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 
     auto dynamic_state_info = vk::PipelineDynamicStateCreateInfo()
-                                  .setDynamicStateCount(dynamic_states.size())
+                                  .setDynamicStateCount(static_cast<uint32_t>(dynamic_states.size()))
                                   .setPDynamicStates(dynamic_states.data());
 
     auto viewport_state = vk::PipelineViewportStateCreateInfo().setViewportCount(1).setScissorCount(1);
@@ -1366,7 +1438,7 @@ inline std::vector<vk::CommandBuffer> create_vk_command_buffers(
 }
 
 inline Buffer create_buffer(
-    const VmaAllocator allocator,
+    const VmaAllocator allocator, // NOLINT(*-misplaced-const)
     const size_t size,
     const VkBufferUsageFlags usage,
     const VmaMemoryUsage memory_usage,

@@ -43,12 +43,12 @@ public:
 
     void draw(const Player& camera);
 
-    static mve::VertexLayout vertex_layout()
+    static std::array<mve::VertexAttributeType, 4> vertex_layout()
     {
         return {
-            mve::VertexAttributeType::vec3, // Position
-            mve::VertexAttributeType::vec3, // Color
-            mve::VertexAttributeType::vec2, // UV
+            mve::VertexAttributeType::vector3, // Position
+            mve::VertexAttributeType::vector3, // Color
+            mve::VertexAttributeType::vector2, // UV
             mve::VertexAttributeType::scalar // Lighting
         };
     }

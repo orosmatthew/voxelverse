@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <mve/renderer.hpp>
 
 class TextBuffer;
@@ -85,9 +87,9 @@ private:
         std::string text;
     };
 
-    const mve::VertexLayout c_vertex_layout = {
-        mve::VertexAttributeType::vec3, // Position
-        mve::VertexAttributeType::vec2 // UV
+    const std::array<mve::VertexAttributeType, 2> c_vertex_layout = {
+        mve::VertexAttributeType::vector3, // Position
+        mve::VertexAttributeType::vector2 // UV
     };
 
     mve::Renderer* m_renderer;

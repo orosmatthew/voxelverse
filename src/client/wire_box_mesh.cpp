@@ -40,10 +40,10 @@ WireBoxMesh::WireBoxMesh(
     }
 
     for (const nnm::Vector3f& vertex : combined_data.vertices) {
-        data.push_back(vertex);
-        data.push_back(color); // TODO: Fix broken color
-        data.push_back({ 0, 0 });
-        data.push_back(1.0f);
+        data.push(vertex);
+        data.push(color); // TODO: Fix broken color
+        data.push({ 0, 0 });
+        data.push(1.0f);
     }
 
     m_uniform_buffer.update(m_model_location, nnm::Matrix4f::identity());

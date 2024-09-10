@@ -15,24 +15,24 @@ Crosshair::Crosshair(UIPipeline& pipeline)
     m_uniform_data.descriptor_set.write_binding(pipeline.texture_binding(), m_texture);
 
     constexpr float cross_scale = 25.0f;
-    const nnm::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
+    constexpr nnm::Vector3 cross_color { 0.75f, 0.75f, 0.75f };
 
     mve::VertexData cross_data(UIPipeline::vertex_layout());
-    cross_data.push_back(nnm::Vector3f(-0.5f, -0.5f, 0.0f) * cross_scale);
-    cross_data.push_back(cross_color);
-    cross_data.push_back({ 0.0f, 0.0f });
-    cross_data.push_back(nnm::Vector3f(0.5f, -0.5f, 0.0f) * cross_scale);
-    cross_data.push_back(cross_color);
-    cross_data.push_back({ 1.0f, 0.0f });
-    cross_data.push_back(nnm::Vector3f(0.5f, 0.5f, 0.0f) * cross_scale);
-    cross_data.push_back(cross_color);
-    cross_data.push_back({ 1.0f, 1.0f });
-    cross_data.push_back(nnm::Vector3f(-0.5f, 0.5f, 0.0f) * cross_scale);
-    cross_data.push_back(cross_color);
-    cross_data.push_back({ 0.0f, 1.0f });
+    cross_data.push(nnm::Vector3f(-0.5f, -0.5f, 0.0f) * cross_scale);
+    cross_data.push(cross_color);
+    cross_data.push({ 0.0f, 0.0f });
+    cross_data.push(nnm::Vector3f(0.5f, -0.5f, 0.0f) * cross_scale);
+    cross_data.push(cross_color);
+    cross_data.push({ 1.0f, 0.0f });
+    cross_data.push(nnm::Vector3f(0.5f, 0.5f, 0.0f) * cross_scale);
+    cross_data.push(cross_color);
+    cross_data.push({ 1.0f, 1.0f });
+    cross_data.push(nnm::Vector3f(-0.5f, 0.5f, 0.0f) * cross_scale);
+    cross_data.push(cross_color);
+    cross_data.push({ 0.0f, 1.0f });
 
     m_vertex_buffer = pipeline.renderer().create_vertex_buffer(cross_data);
-    m_index_buffer = pipeline.renderer().create_index_buffer({ 0, 3, 2, 0, 2, 1 });
+    m_index_buffer = pipeline.renderer().create_index_buffer(std::array<uint32_t, 6> { 0, 3, 2, 0, 2, 1 });
 }
 
 void Crosshair::draw() const

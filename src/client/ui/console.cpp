@@ -68,10 +68,9 @@ void Console::del()
 
 void Console::update_from_window(const mve::Window& window)
 {
-    for (const std::string& str : window.input_stream()) {
-        for (const char c : str) {
-            input_char(c);
-        }
+    for (const char32_t c : window.input_char_stream()) {
+        // TODO: Handle wide characters properly
+        input_char(static_cast<char>(c));
     }
     if (window.is_key_pressed(mve::Key::backspace) || window.is_key_repeated(mve::Key::backspace)) {
         backspace();
@@ -82,12 +81,12 @@ void Console::update_from_window(const mve::Window& window)
     const std::optional<int> pos = m_input_text.cursor_pos();
     if (pos.has_value() && window.is_key_pressed(mve::Key::left) || window.is_key_repeated(mve::Key::left)) {
         int new_pos = *pos - 1;
-        new_pos = std::clamp(new_pos, 0, static_cast<int>(m_input_str.length()));
+        new_pos = nnm::clamp(new_pos, 0, static_cast<int>(m_input_str.length()));
         m_input_text.set_cursor_pos(new_pos);
     }
     if (pos.has_value() && window.is_key_pressed(mve::Key::right) || window.is_key_repeated(mve::Key::right)) {
         int new_pos = *pos + 1;
-        new_pos = std::clamp(new_pos, 0, static_cast<int>(m_input_str.length()));
+        new_pos = nnm::clamp(new_pos, 0, static_cast<int>(m_input_str.length()));
         m_input_text.set_cursor_pos(new_pos);
     }
 }

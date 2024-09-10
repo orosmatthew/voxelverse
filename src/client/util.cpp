@@ -20,10 +20,9 @@ ModelData load_model(const std::filesystem::path& path)
         throw std::runtime_error("[TinyObj] " + warning + " " + error);
     }
 
-    VertexLayout vertex_layout {};
-    vertex_layout.push_back(VertexAttributeType::vec3); // 3D position
-    vertex_layout.push_back(VertexAttributeType::vec3); // Color
-    vertex_layout.push_back(VertexAttributeType::vec2); // Texture coord
+    std::vector vertex_layout { VertexAttributeType::vector3, // 3D position
+                                VertexAttributeType::vector3, // Color
+                                VertexAttributeType::vector2 }; // Texture coord
 
     struct Vertex {
         nnm::Vector3f position;
@@ -70,9 +69,9 @@ ModelData load_model(const std::filesystem::path& path)
 
     VertexData data(vertex_layout);
     for (const auto& [position, color, texture_coord] : vertices) {
-        data.push_back(position);
-        data.push_back(color);
-        data.push_back(texture_coord);
+        data.push(position);
+        data.push(color);
+        data.push(texture_coord);
     }
     return { vertex_layout, data, indices };
 }

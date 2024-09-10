@@ -1,10 +1,10 @@
 #pragma once
 
-#include "defs.hpp"
+#include "fwd.hpp"
 
 namespace mve {
 
-inline IndexBuffer::IndexBuffer(Renderer& renderer, const std::vector<uint32_t>& indices)
+inline IndexBuffer::IndexBuffer(Renderer& renderer, const std::span<uint32_t> indices)
 {
     *this = std::move(renderer.create_index_buffer(indices));
 }
@@ -20,6 +20,7 @@ inline IndexBuffer::~IndexBuffer()
 {
     destroy();
 }
+
 inline void IndexBuffer::destroy()
 {
     if (m_renderer != nullptr) {
@@ -55,15 +56,18 @@ inline bool IndexBuffer::operator==(const IndexBuffer& other) const
 {
     return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
+
 inline bool IndexBuffer::operator<(const IndexBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
+
 inline IndexBuffer::IndexBuffer(Renderer& renderer, const size_t handle)
     : m_renderer(&renderer)
     , m_handle(handle)
 {
 }
+
 inline void IndexBuffer::invalidate()
 {
     m_renderer = nullptr;

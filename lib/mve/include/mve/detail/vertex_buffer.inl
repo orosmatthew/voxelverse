@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.hpp"
+#include "fwd.hpp"
 
 namespace mve {
 
@@ -20,16 +20,19 @@ inline VertexBuffer::~VertexBuffer()
 {
     destroy();
 }
+
 inline void VertexBuffer::destroy()
 {
     if (m_renderer != nullptr) {
         m_renderer->destroy(*this);
     }
 }
+
 inline size_t VertexBuffer::handle() const
 {
     return m_handle;
 }
+
 inline bool VertexBuffer::is_valid() const
 {
     return m_renderer != nullptr;
@@ -48,10 +51,12 @@ inline VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other) noexcept
 
     return *this;
 }
+
 inline bool VertexBuffer::operator==(const VertexBuffer& other) const
 {
     return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
+
 inline bool VertexBuffer::operator<(const VertexBuffer& other) const
 {
     return m_handle < other.m_handle;
@@ -62,6 +67,7 @@ inline VertexBuffer::VertexBuffer(Renderer& renderer, const size_t handle)
     , m_handle(handle)
 {
 }
+
 inline void VertexBuffer::invalidate()
 {
     m_renderer = nullptr;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <mve/renderer.hpp>
 
 struct UIUniformData {
@@ -46,12 +48,12 @@ public:
         return *m_renderer;
     }
 
-    static mve::VertexLayout vertex_layout()
+    static std::array<mve::VertexAttributeType, 3> vertex_layout()
     {
         return {
-            mve::VertexAttributeType::vec3, // Position
-            mve::VertexAttributeType::vec3, // Color
-            mve::VertexAttributeType::vec2 // UV
+            mve::VertexAttributeType::vector3, // Position
+            mve::VertexAttributeType::vector3, // Color
+            mve::VertexAttributeType::vector2 // UV
         };
     }
 

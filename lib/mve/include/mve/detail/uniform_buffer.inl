@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.hpp"
+#include "fwd.hpp"
 
 namespace mve {
 
@@ -20,6 +20,7 @@ inline UniformBuffer::~UniformBuffer()
 {
     destroy();
 }
+
 inline void UniformBuffer::destroy()
 {
     if (m_renderer != nullptr) {
@@ -40,26 +41,37 @@ inline UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other) noexcept
 
     return *this;
 }
+
 inline bool UniformBuffer::operator==(const UniformBuffer& other) const
 {
     return m_renderer == other.m_renderer && m_handle == other.m_handle;
 }
+
 inline bool UniformBuffer::operator<(const UniformBuffer& other) const
 {
     return m_handle < other.m_handle;
 }
+
 inline size_t UniformBuffer::handle() const
 {
     return m_handle;
 }
+
 inline bool UniformBuffer::is_valid() const
 {
     return m_renderer != nullptr;
 }
+
 inline void UniformBuffer::update(const UniformLocation location, const nnm::Matrix4f& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+
+inline void UniformBuffer::update(const UniformLocation location, const bool value, const bool persist)
+{
+    m_renderer->update_uniform(*this, location, value, persist);
+}
+
 inline void UniformBuffer::update(const UniformLocation location, const nnm::Matrix3f& value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
@@ -69,18 +81,22 @@ inline void UniformBuffer::update(const UniformLocation location, const nnm::Vec
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+
 inline void UniformBuffer::update(const UniformLocation location, const nnm::Vector3f value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+
 inline void UniformBuffer::update(const UniformLocation location, const nnm::Vector2f value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+
 inline void UniformBuffer::update(const UniformLocation location, const float value, const bool persist)
 {
     m_renderer->update_uniform(*this, location, value, persist);
 }
+
 inline void UniformBuffer::invalidate()
 {
     m_renderer = nullptr;
