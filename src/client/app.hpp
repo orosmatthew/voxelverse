@@ -3,7 +3,7 @@
 #include <mve/window.hpp>
 
 #include "../common/fixed_loop.hpp"
-#include "../server/server.hpp"
+// #include "../server/server.hpp"
 #include "ui_pipeline.hpp"
 #include "world.hpp"
 #include "world_renderer.hpp"
@@ -22,14 +22,14 @@ public:
     void main_loop();
 
 private:
-    void handle_networking() const;
+    // void handle_networking() const;
 
     void draw();
 
     mve::Window m_window;
     mve::Renderer m_renderer;
-    Server m_server;
-    ENetHost* m_client;
+    // Server m_server;
+    // ENetHost* m_client;
     UIPipeline m_ui_pipeline;
     TextPipeline m_text_pipeline;
     World m_world;

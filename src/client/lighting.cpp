@@ -37,8 +37,10 @@ void propagate_light(WorldData& world_data, const nnm::Vector3i chunk_pos)
     {
         int i = 0;
         for_3d({ -1, -1, -1 }, { 2, 2, 2 }, [&](const nnm::Vector3i pos) {
-            surr_pos[i] = pos;
-            ++i;
+            if (pos != nnm::Vector3i::zero()) {
+                surr_pos[i] = pos;
+                ++i;
+            }
         });
     }
 
