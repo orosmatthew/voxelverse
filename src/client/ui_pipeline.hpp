@@ -15,10 +15,6 @@ public:
 
     void resize();
 
-    void update_framebuffer_texture(const mve::Texture& texture, nnm::Vector2i size);
-
-    void draw_world() const;
-
     void draw(
         const mve::DescriptorSet& descriptor_set,
         const mve::VertexBuffer& vertex_buffer,

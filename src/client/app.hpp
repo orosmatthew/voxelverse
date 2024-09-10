@@ -33,7 +33,6 @@ private:
     UIPipeline m_ui_pipeline;
     TextPipeline m_text_pipeline;
     World m_world;
-    mve::Framebuffer m_world_framebuffer;
     util::FixedLoop m_fixed_loop;
     std::chrono::high_resolution_clock::time_point m_begin_time;
     int m_frame_count = 0;

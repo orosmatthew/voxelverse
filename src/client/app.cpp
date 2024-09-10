@@ -12,16 +12,10 @@ App::App()
     , m_ui_pipeline(m_renderer)
     , m_text_pipeline(m_renderer, 36)
     , m_world(m_renderer, m_ui_pipeline, m_text_pipeline, 32)
-    , m_world_framebuffer { m_renderer.create_framebuffer() }
     , m_fixed_loop(60.0f)
     , m_begin_time(std::chrono::high_resolution_clock::now())
 {
     LOG->set_level(spdlog::level::info);
-
-    m_world_framebuffer.set_resize_callback([this] {
-        m_ui_pipeline.update_framebuffer_texture(
-            m_world_framebuffer.texture(), m_renderer.framebuffer_size(m_world_framebuffer));
-    });
 
     m_window.set_min_size({ 800, 600 });
     m_window.disable_cursor();
@@ -74,15 +68,9 @@ void App::draw()
 {
     m_renderer.begin_frame(m_window);
 
-    m_renderer.begin_render_pass_framebuffer(m_world_framebuffer);
-
-    m_world.draw();
-
-    m_renderer.end_render_pass();
-
     m_renderer.begin_render_pass_present();
 
-    m_ui_pipeline.draw_world();
+    m_world.draw();
 
     m_renderer.end_render_pass();
 
