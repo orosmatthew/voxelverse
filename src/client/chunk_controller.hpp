@@ -68,7 +68,7 @@ private:
     void on_player_chunk_change();
 
     inline static const std::array<nnm::Vector2i, 4> sc_nbor_offsets { { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } } };
-    static constexpr int sc_full_nbors = sc_nbor_offsets.size();
+    static constexpr auto sc_full_nbors = static_cast<int>(sc_nbor_offsets.size());
 
     nnm::Vector2i m_player_chunk_col = { std::numeric_limits<int>::max(), std::numeric_limits<int>::max() };
     std::vector<nnm::Vector2i> m_sorted_chunks_in_range {};

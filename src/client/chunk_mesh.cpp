@@ -10,7 +10,7 @@
 
 void combine_mesh_data(ChunkMeshData& data, const ChunkMeshData& other)
 {
-    const uint32_t indices_offset = data.vertices.size();
+    const auto indices_offset = static_cast<uint32_t>(data.vertices.size());
     for (int i = 0; i < other.vertices.size(); i++) {
         data.vertices.push_back(other.vertices[i]);
         data.colors.push_back(other.colors[i]);
@@ -327,7 +327,7 @@ ChunkFaceData create_chunk_face_mesh(
 
 void add_face_to_mesh(ChunkMeshData& data, const ChunkFaceData& face)
 {
-    const uint32_t indices_offset = data.vertices.size();
+    const auto indices_offset = static_cast<uint32_t>(data.vertices.size());
     for (int i = 0; i < face.vertices.size(); i++) {
         data.vertices.push_back(face.vertices[i]);
         data.colors.push_back(face.colors[i]);

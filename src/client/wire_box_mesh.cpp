@@ -130,7 +130,7 @@ WireBoxMesh::MeshData WireBoxMesh::create_rect_mesh(const nnm::Vector3f from, co
 
 void WireBoxMesh::combine_mesh_data(MeshData& data, const MeshData& other)
 {
-    const uint32_t indices_offset = data.vertices.size();
+    const auto indices_offset = static_cast<uint32_t>(data.vertices.size());
     for (const nnm::Vector3f& vertex : other.vertices) {
         data.vertices.push_back(vertex);
     }

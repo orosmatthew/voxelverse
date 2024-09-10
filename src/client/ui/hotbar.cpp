@@ -92,7 +92,7 @@ void Hotbar::update_hotbar_select(const int pos)
 nnm::Vector3f Hotbar::scale() const
 {
     return (nnm::Vector3f::all(static_cast<float>(m_renderer_extent.x)) / 1000.0f)
-        .clamp(nnm::Vector3f::all(0.1), nnm::Vector3f::all(1.0f));
+        .clamp(nnm::Vector3f::all(0.1f), nnm::Vector3f::all(1.0f));
 }
 nnm::Vector3f Hotbar::translation() const
 {

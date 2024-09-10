@@ -29,7 +29,7 @@ public:
 
     [[nodiscard]] nnm::Vector2f size() const
     {
-        return nnm::Vector2f(m_patch.size() * m_patch.scale());
+        return nnm::Vector2f(nnm::Vector2f(m_patch.size()) * m_patch.scale());
     }
 
     [[nodiscard]] nnm::Vector2f position() const

@@ -49,8 +49,8 @@ ModelData load_model(const std::filesystem::path& path)
             vertex.texture_coord
                 = { attrib.texcoords[2 * texcoord_index + 0], 1.0f - attrib.texcoords[2 * texcoord_index + 1] };
 
-            std::optional<size_t> duplicate_index;
-            for (size_t i = 0; i < vertices.size(); i++) {
+            std::optional<uint32_t> duplicate_index;
+            for (uint32_t i = 0; i < vertices.size(); i++) {
                 if (vertex == vertices.at(i)) {
                     duplicate_index = i;
                     break;
@@ -61,7 +61,7 @@ ModelData load_model(const std::filesystem::path& path)
                 indices.push_back(duplicate_index.value());
             }
             else {
-                indices.push_back(vertices.size());
+                indices.push_back(static_cast<uint32_t>(vertices.size()));
                 vertices.push_back(vertex);
             }
         }
