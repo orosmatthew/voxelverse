@@ -23,6 +23,7 @@
 #include "resource_arena.hpp"
 #include "structs.hpp"
 
+// ReSharper disable CppUseStructuredBinding
 // ReSharper disable CppMemberFunctionMayBeConst
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
@@ -116,7 +117,6 @@ struct Renderer::Impl {
         const size_t size,
         const uint32_t frame_index) const
     {
-        // ReSharper disable once CppUseStructuredBinding
         const UniformBufferImpl& buffer = *frames_in_flight.at(frame_index).uniform_buffers.at(handle);
         memcpy(&buffer.mapped_ptr[location.value()], data_ptr, size);
     }
@@ -202,17 +202,13 @@ struct Renderer::Impl {
 
     void recreate_framebuffers(Renderer& renderer)
     {
-        std::vector<std::pair<Handle, std::optional<std::function<void()>>>> ids_to_recreate;
         for (Handle i = 0; i < framebuffers.data().size(); i++) {
             if (framebuffers.data()[i].has_value()) {
-                ids_to_recreate.emplace_back(i, framebuffers.get(i).callback);
                 for (const vk::Framebuffer& buffer : framebuffers.get(i).vk_framebuffers) {
                     vk_device.destroy(buffer, nullptr, vk_loader);
                 }
+                framebuffers.get(i) = std::move(create_framebuffer_impl(renderer, vk_loader));
             }
-        }
-        for (const auto& id : ids_to_recreate | std::views::keys) {
-            framebuffers.get(id) = std::move(create_framebuffer_impl(renderer, vk_loader));
         }
         for (const std::optional<FramebufferImpl>& framebuffer : framebuffers.data()) {
             std::invoke(*framebuffer->callback);
@@ -329,7 +325,7 @@ struct Renderer::Impl {
 
     void wait_ready() const
     {
-        // ReSharper disable once CppUseStructuredBinding
+
         const FrameInFlight& frame = frames_in_flight[current_draw_state.frame_index];
         const vk::Result fence_wait_result
             = vk_device.waitForFences(frame.in_flight_fence, true, UINT64_MAX, vk_loader);
@@ -342,7 +338,8 @@ struct Renderer::Impl {
         const Shader& vertex_shader,
         const Shader& fragment_shader)
     {
-        std::vector<vk::DescriptorSetLayoutBinding> bindings;
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings;
+        size_t bindings_count = 0;
         if (vertex_shader.has_descriptor_set(set)) {
             for (const ShaderDescriptorSet& vertex_set = vertex_shader.descriptor_set(set);
                  const auto& shader_binding : vertex_set.bindings() | std::views::values) {
@@ -361,7 +358,7 @@ struct Renderer::Impl {
                     binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
                     break;
                 }
-                bindings.push_back(binding);
+                bindings[bindings_count++] = binding;
             }
         }
         if (fragment_shader.has_descriptor_set(set)) {
@@ -382,11 +379,13 @@ struct Renderer::Impl {
                     binding.setStageFlags(vk::ShaderStageFlagBits::eFragment);
                     break;
                 }
-                bindings.push_back(binding);
+                bindings[bindings_count++] = binding;
             }
         }
 
-        const auto layout_info = vk::DescriptorSetLayoutCreateInfo().setBindings(bindings);
+        const auto layout_info = vk::DescriptorSetLayoutCreateInfo()
+                                     .setPBindings(bindings.data())
+                                     .setBindingCount(static_cast<uint32_t>(bindings_count));
 
         const vk::ResultValue<vk::DescriptorSetLayout> descriptor_set_layout_result
             = vk_device.createDescriptorSetLayout(layout_info, nullptr, loader);
@@ -404,18 +403,20 @@ struct Renderer::Impl {
     Handle create_graphics_pipeline_layout(
         const vk::DispatchLoaderDynamic& loader, const Shader& vertex_shader, const Shader& fragment_shader)
     {
-        std::vector<Handle> layouts;
+        std::array<Handle, 4> layouts {};
+        size_t layouts_count = 0;
         std::unordered_map<Handle, Handle> descriptor_set_layouts;
 
-        for (uint32_t i = 0; i <= 3; i++) {
+        for (uint32_t i = 0; i < 4; i++) {
             if (vertex_shader.has_descriptor_set(i) || fragment_shader.has_descriptor_set(i)) {
                 Handle descriptor_set_layout = create_descriptor_set_layout(loader, i, vertex_shader, fragment_shader);
-                layouts.push_back(descriptor_set_layout);
+                layouts[layouts_count++] = descriptor_set_layout;
                 descriptor_set_layouts.insert({ i, descriptor_set_layout });
             }
         }
 
-        const vk::PipelineLayout vk_layout = create_vk_pipeline_layout(vk_loader, layouts);
+        const vk::PipelineLayout vk_layout
+            = create_vk_pipeline_layout(vk_loader, std::span(layouts.begin(), layouts_count));
 
         Handle handle = graphics_pipeline_layouts.allocate(GraphicsPipelineLayoutImpl {
             .vk_handle = vk_layout, .descriptor_set_layouts = std::move(descriptor_set_layouts) });
@@ -426,16 +427,18 @@ struct Renderer::Impl {
     }
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
-        const vk::DispatchLoaderDynamic& loader, const std::vector<Handle>& layouts) const
+        const vk::DispatchLoaderDynamic& loader, std::span<const Handle> layouts) const
     {
-        std::vector<vk::DescriptorSetLayout> vk_layouts;
-        std::ranges::transform(layouts, std::back_inserter(vk_layouts), [&](const Handle handle) {
-            return descriptor_set_layouts.get(handle);
-        });
+        std::array<vk::DescriptorSetLayout, 4> vk_layouts {};
+        size_t vk_layouts_count = 0;
+        for (const Handle handle : layouts) {
+            vk_layouts[vk_layouts_count++] = descriptor_set_layouts.get(handle);
+        }
 
         const auto pipeline_layout_info
             = vk::PipelineLayoutCreateInfo()
-                  .setSetLayouts(vk_layouts)
+                  .setPSetLayouts(vk_layouts.data())
+                  .setSetLayoutCount(static_cast<uint32_t>(vk_layouts_count))
                   .setPushConstantRangeCount(0)
                   .setPPushConstantRanges(nullptr);
 
@@ -607,7 +610,6 @@ Renderer::~Renderer()
 
     m_impl->descriptor_set_allocator.cleanup(m_impl->vk_loader, m_impl->vk_device);
 
-    // ReSharper disable once CppUseStructuredBinding
     for (FrameInFlight& frame : m_impl->frames_in_flight) {
         for (std::optional<UniformBufferImpl>& uniform_buffer : frame.uniform_buffers) {
             if (uniform_buffer.has_value()) {
@@ -661,7 +663,6 @@ Renderer::~Renderer()
     m_impl->vk_device.destroy(m_impl->vk_render_pass, nullptr, m_impl->vk_loader);
     m_impl->vk_device.destroy(m_impl->vk_render_pass_framebuffer, nullptr, m_impl->vk_loader);
 
-    // ReSharper disable once CppUseStructuredBinding
     for (const FrameInFlight& frame : m_impl->frames_in_flight) {
         m_impl->vk_device.destroy(frame.render_finished_semaphore, nullptr, m_impl->vk_loader);
         m_impl->vk_device.destroy(frame.image_available_semaphore, nullptr, m_impl->vk_loader);
@@ -772,7 +773,6 @@ void Renderer::begin_frame(const Window& window)
 
     m_impl->current_draw_state.is_drawing = true;
 
-    // ReSharper disable once CppUseStructuredBinding
     FrameInFlight& frame = m_impl->frames_in_flight[m_impl->current_draw_state.frame_index];
 
     m_impl->wait_ready();
@@ -908,19 +908,9 @@ void Renderer::begin_frame(const Window& window)
         }
         else if (const auto deferred_destroy_descriptor_set = std::get_if<DeferredDestroyDescriptorSet>(&*it)) {
             if (deferred_destroy_descriptor_set->frame_count > m_impl->frames_in_flight_count) {
-                // TODO: Refactor this dynamic allocation
-                std::vector<DescriptorSetImpl> sets_to_delete;
-                std::ranges::transform(
-                    std::as_const(m_impl->frames_in_flight),
-                    std::back_inserter(sets_to_delete),
-                    [&](const FrameInFlight& f) {
-                        return *f.descriptor_sets.at(deferred_destroy_descriptor_set->handle);
-                    });
-                // ReSharper disable once CppUseStructuredBinding
                 for (FrameInFlight& f : m_impl->frames_in_flight) {
+                    const DescriptorSetImpl set = *f.descriptor_sets[deferred_destroy_descriptor_set->handle];
                     f.descriptor_sets[deferred_destroy_descriptor_set->handle].reset();
-                }
-                for (DescriptorSetImpl set : sets_to_delete) {
                     m_impl->descriptor_set_allocator.free(m_impl->vk_loader, m_impl->vk_device, set);
                 }
                 it = m_impl->deferred_operations.erase(it);
@@ -933,8 +923,6 @@ void Renderer::begin_frame(const Window& window)
         else if (const auto deferred_destroy_graphics_pipeline = std::get_if<DeferredDestroyGraphicsPipeline>(&*it)) {
             if (deferred_destroy_graphics_pipeline->frame_count > m_impl->frames_in_flight_count) {
                 // Descriptor set layouts
-                // TODO: remove this dynamic allocation
-                std::vector<Handle> deleted_descriptor_set_layout_handles;
                 for (auto& set_layout :
                      m_impl->graphics_pipeline_layouts
                              .get(m_impl->graphics_pipelines.get(deferred_destroy_graphics_pipeline->handle).layout)
@@ -942,10 +930,7 @@ void Renderer::begin_frame(const Window& window)
                          | std::views::values) {
                     m_impl->vk_device.destroy(
                         m_impl->descriptor_set_layouts.get(set_layout), nullptr, m_impl->vk_loader);
-                    deleted_descriptor_set_layout_handles.push_back(set_layout);
-                }
-                for (Handle descriptor_set_layout_handle : deleted_descriptor_set_layout_handles) {
-                    m_impl->descriptor_set_layouts.free(descriptor_set_layout_handle);
+                    m_impl->descriptor_set_layouts.free(set_layout);
                 }
 
                 // Pipeline layout
@@ -973,13 +958,13 @@ void Renderer::begin_frame(const Window& window)
         }
         else if (const auto deferred_destroy_uniform_buffer = std::get_if<DeferredDestroyUniformBuffer>(&*it)) {
             if (deferred_destroy_uniform_buffer->frame_count > m_impl->frames_in_flight_count) {
-                // ReSharper disable once CppUseStructuredBinding
+
                 for (const FrameInFlight& f : m_impl->frames_in_flight) {
                     auto [buffer, size, mapped_ptr] = *f.uniform_buffers.at(deferred_destroy_uniform_buffer->handle);
                     vmaUnmapMemory(m_impl->vma_allocator, buffer.vma_allocation);
                     vmaDestroyBuffer(m_impl->vma_allocator, buffer.vk_handle, buffer.vma_allocation);
                 }
-                // ReSharper disable once CppUseStructuredBinding
+
                 for (FrameInFlight& f : m_impl->frames_in_flight) {
                     f.uniform_buffers[deferred_destroy_uniform_buffer->handle].reset();
                 }
@@ -1033,8 +1018,8 @@ void Renderer::begin_frame(const Window& window)
         = m_impl->current_draw_state.command_buffer.begin(buffer_begin_info, m_impl->vk_loader);
     MVE_ASSERT(begin_result == vk::Result::eSuccess, "[Renderer] Failed to begin command buffer recording")
 
-    static std::vector<DeferredOperation> temp_deferred;
-    temp_deferred.clear();
+    thread_local std::vector<DeferredOperation> next_deferred;
+    next_deferred.clear();
     for (const DeferredOperation& deferred : m_impl->deferred_operations) {
         if (const auto deferred_copy = std::get_if<DeferredCopyStagingBuffer>(&deferred)) {
             cmd_copy_buffer(
@@ -1065,7 +1050,7 @@ void Renderer::begin_frame(const Window& window)
                 0,
                 nullptr,
                 m_impl->vk_loader);
-            temp_deferred.emplace_back(DeferredDestroyBuffer {
+            next_deferred.emplace_back(DeferredDestroyBuffer {
                 .buffer = deferred_copy->staging_buffer, .frame_index = m_impl->current_draw_state.frame_index });
         }
         else if (const auto deferred_image = std::get_if<DeferredCopyBufferImage>(&deferred)) {
@@ -1096,14 +1081,14 @@ void Renderer::begin_frame(const Window& window)
                 deferred_image->dst_image.height,
                 deferred_image->mip_levels);
 
-            temp_deferred.emplace_back(DeferredDestroyBuffer {
+            next_deferred.emplace_back(DeferredDestroyBuffer {
                 .buffer = deferred_image->staging_buffer, .frame_index = m_impl->current_draw_state.frame_index });
         }
         else {
-            temp_deferred.emplace_back(deferred);
+            next_deferred.emplace_back(deferred);
         }
     }
-    std::swap(temp_deferred, m_impl->deferred_operations);
+    std::swap(next_deferred, m_impl->deferred_operations);
 }
 
 void Renderer::end_frame(const Window& window)
@@ -1111,7 +1096,6 @@ void Renderer::end_frame(const Window& window)
     const vk::Result end_result = m_impl->current_draw_state.command_buffer.end(m_impl->vk_loader);
     MVE_ASSERT(end_result == vk::Result::eSuccess, "[Renderer] Failed to end command buffer recording")
 
-    // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& frame = m_impl->frames_in_flight[m_impl->current_draw_state.frame_index];
 
     const vk::Semaphore wait_semaphores[] = { frame.image_available_semaphore };
@@ -1308,7 +1292,6 @@ DescriptorSet Renderer::create_descriptor_set(
             m_impl->descriptor_set_allocator.create(m_impl->vk_loader, m_impl->vk_device, layout));
     }
 
-    // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& ref_frame = m_impl->frames_in_flight.at(0);
     std::optional<Handle> id;
     for (Handle i = 0; i < ref_frame.descriptor_sets.size(); i++) {
@@ -1319,13 +1302,13 @@ DescriptorSet Renderer::create_descriptor_set(
     }
     if (!id.has_value()) {
         id = ref_frame.descriptor_sets.size();
-        // ReSharper disable once CppUseStructuredBinding
+
         for (FrameInFlight& frame : m_impl->frames_in_flight) {
             frame.descriptor_sets.emplace_back();
         }
     }
     int i = 0;
-    // ReSharper disable once CppUseStructuredBinding
+
     for (FrameInFlight& frame : m_impl->frames_in_flight) {
         frame.descriptor_sets[*id] = descriptor_sets.at(i);
         i++;
@@ -1377,7 +1360,6 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
 
     const uint32_t struct_size = descriptor_binding.block().size();
 
-    // ReSharper disable once CppUseStructuredBinding
     const FrameInFlight& ref_frame = m_impl->frames_in_flight.at(0);
     std::optional<Handle> id;
     for (Handle i = 0; i < ref_frame.uniform_buffers.size(); i++) {
@@ -1388,13 +1370,13 @@ UniformBuffer Renderer::create_uniform_buffer(const ShaderDescriptorBinding& des
     }
     if (!id.has_value()) {
         id = ref_frame.uniform_buffers.size();
-        // ReSharper disable once CppUseStructuredBinding
+
         for (FrameInFlight& frame : m_impl->frames_in_flight) {
             frame.uniform_buffers.emplace_back();
         }
     }
     int i = 0;
-    // ReSharper disable once CppUseStructuredBinding
+
     for (FrameInFlight& frame : m_impl->frames_in_flight) {
         const Buffer buffer = create_buffer(
             m_impl->vma_allocator,
