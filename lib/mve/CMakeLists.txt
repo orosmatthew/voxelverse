@@ -14,12 +14,10 @@ add_library(mve STATIC
         external/vma-3.1.0/src/vk_mem_alloc.cpp
         external/spirv-reflect-1.3.290/src/spirv_reflect.c
         external/volk-1.3.270/src/volk.c
-        src/descriptor_set_allocator.cpp
         src/logger.cpp
         src/monitor.cpp
         src/renderer.cpp
         src/shader.cpp
-        src/vertex_data.cpp
         src/window.cpp)
 
 target_link_libraries(mve glfw)

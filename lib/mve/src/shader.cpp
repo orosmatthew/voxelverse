@@ -127,5 +127,4 @@ const ShaderDescriptorSet& Shader::descriptor_set(const uint32_t set) const
     return m_reflection_data.sets.at(set);
 }
 
-
 }

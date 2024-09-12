@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 
@@ -61,7 +60,6 @@ private:
 
     static Logger& get()
     {
-        std::lock_guard lock(m_mutex);
         if (!m_instance.has_value()) {
             m_instance = std::unique_ptr<Logger>(new Logger());
         }
@@ -84,7 +82,6 @@ private:
     }
 
     LogLevel m_level = LogLevel::info;
-    static std::mutex m_mutex;
     static std::optional<std::unique_ptr<Logger>> m_instance;
 };
 

@@ -205,8 +205,8 @@ struct Renderer::Impl {
         std::vector<std::pair<Handle, std::optional<std::function<void()>>>> ids_to_recreate;
         for (Handle i = 0; i < framebuffers.data().size(); i++) {
             if (framebuffers.data()[i].has_value()) {
-                ids_to_recreate.emplace_back(i + 1, framebuffers.get(i + 1).callback);
-                for (const vk::Framebuffer& buffer : framebuffers.get(i + 1).vk_framebuffers) {
+                ids_to_recreate.emplace_back(i, framebuffers.get(i).callback);
+                for (const vk::Framebuffer& buffer : framebuffers.get(i).vk_framebuffers) {
                     vk_device.destroy(buffer, nullptr, vk_loader);
                 }
             }
@@ -215,9 +215,7 @@ struct Renderer::Impl {
             framebuffers.get(id) = std::move(create_framebuffer_impl(renderer, vk_loader));
         }
         for (const std::optional<FramebufferImpl>& framebuffer : framebuffers.data()) {
-            if (framebuffer.has_value() && framebuffer->callback.has_value()) {
-                std::invoke(*framebuffer->callback);
-            }
+            std::invoke(*framebuffer->callback);
         }
     }
 
@@ -340,7 +338,7 @@ struct Renderer::Impl {
 
     Handle create_descriptor_set_layout(
         const vk::DispatchLoaderDynamic& loader,
-        uint32_t set,
+        const uint32_t set,
         const Shader& vertex_shader,
         const Shader& fragment_shader)
     {
@@ -463,7 +461,7 @@ Renderer::Renderer(
     vk::SurfaceKHR vk_surface = create_vk_surface(vk_instance, window.glfw_handle());
     vk::PhysicalDevice vk_physical_device
         = pick_vk_physical_device(vk_instance, vk_loader, vk_surface, preferred_device_type);
-    vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+    auto msaa_samples = vk::SampleCountFlagBits::e1;
     QueueFamilyIndices queue_family_indices = get_vk_queue_family_indices(vk_loader, vk_physical_device, vk_surface);
     vk::Device vk_device = create_vk_logical_device(vk_loader, vk_physical_device, queue_family_indices);
     volkLoadDevice(vk_device);
@@ -687,15 +685,14 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
     m_impl->deferred_operations.emplace_back(DeferredDestroyVertexBuffer { handle });
 }
 
-void Renderer::begin_render_pass_present() const
+void Renderer::begin_render_pass_present(const std::array<float, 4>& clear_color) const
 {
     MVE_ASSERT(
         m_impl->current_draw_state.is_drawing,
         "[Renderer] Cannot begin render pass without first calling begin_frame()");
-    // auto clear_color = vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.0f, 0.0f, 0.0f, 1.0f }));
 
     std::array<vk::ClearValue, 2> clear_values {};
-    clear_values[0].setColor(vk::ClearColorValue(std::array { 0.0f, 0.0f, 0.0f, 1.0f }));
+    clear_values[0].setColor(vk::ClearColorValue(clear_color));
     clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
 
     const auto render_pass_begin_info

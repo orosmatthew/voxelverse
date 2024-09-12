@@ -4,6 +4,7 @@ mve::Monitor::Monitor(GLFWmonitor* monitor)
     : m_monitor(monitor)
 {
 }
+
 int mve::Monitor::count()
 {
     int monitor_count;
@@ -23,6 +24,7 @@ nnm::Vector2i mve::Monitor::position() const
     glfwGetMonitorPos(m_monitor, &pos.x, &pos.y);
     return pos;
 }
+
 nnm::Vector2i mve::Monitor::physical_size() const
 {
     nnm::Vector2i physical_size;
@@ -53,6 +55,7 @@ int mve::Monitor::refresh_rate() const
     const GLFWvidmode* mode = glfwGetVideoMode(m_monitor);
     return mode->refreshRate;
 }
+
 std::string mve::Monitor::name() const
 {
     return glfwGetMonitorName(m_monitor);

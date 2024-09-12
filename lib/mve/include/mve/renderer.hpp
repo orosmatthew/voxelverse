@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mve/detail/fwd.hpp>
+#include <mve/detail/resources.hpp>
 
 namespace mve {
 
@@ -17,7 +17,6 @@ struct Version {
     int patch;
 };
 
-
 class Renderer {
 public:
     Renderer(
@@ -30,7 +29,7 @@ public:
 
     void begin_frame(const Window& window);
 
-    void begin_render_pass_present() const;
+    void begin_render_pass_present(const std::array<float, 4>& clear_color) const;
 
     void begin_render_pass_framebuffer(const Framebuffer& framebuffer) const;
 
@@ -151,5 +150,4 @@ private:
 };
 }
 
-// ReSharper disable once CppUnusedIncludeDirective
-#include <mve/detail/resources.hpp>
+#include <mve/detail/resources.inl>

@@ -3,7 +3,7 @@
 #include <set>
 
 #include <mve/common.hpp>
-#include <mve/detail/fwd.hpp>
+#include <mve/detail/resources.hpp>
 #include <mve/shader.hpp>
 
 #include "logger.hpp"

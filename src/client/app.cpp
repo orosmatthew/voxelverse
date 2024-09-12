@@ -68,7 +68,8 @@ void App::draw()
 {
     m_renderer.begin_frame(m_window);
 
-    m_renderer.begin_render_pass_present();
+    constexpr std::array sky_color { 142.0f / 255.0f, 186.0f / 255.0f, 1.0f, 1.0f };
+    m_renderer.begin_render_pass_present(sky_color);
 
     m_world.draw();
 

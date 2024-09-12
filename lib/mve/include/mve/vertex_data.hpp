@@ -3,7 +3,7 @@
 #include <span>
 #include <vector>
 
-#include "common.hpp"
+#include <mve/common.hpp>
 
 #include <nnm/nnm.hpp>
 
