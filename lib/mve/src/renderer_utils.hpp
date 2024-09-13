@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <utility>
 
 #include <mve/common.hpp>
 #include <mve/detail/resources.hpp>
@@ -177,7 +178,7 @@ inline void cmd_transition_image_layout(
 inline vk::Format find_supported_format(
     const vk::DispatchLoaderDynamic& loader,
     const vk::PhysicalDevice physical_device,
-    const std::vector<vk::Format>& formats,
+    const std::span<const vk::Format> formats,
     const vk::ImageTiling tiling,
     const vk::FormatFeatureFlags features)
 {
@@ -193,7 +194,8 @@ inline vk::Format find_supported_format(
 
 inline vk::Format find_depth_format(const vk::DispatchLoaderDynamic& loader, const vk::PhysicalDevice physical_device)
 {
-    const std::vector formats = { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint };
+    constexpr std::array formats
+        = { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint };
     return find_supported_format(
         loader,
         physical_device,
@@ -636,9 +638,9 @@ inline vk::DebugUtilsMessengerEXT create_vk_debug_messenger(const vk::Instance i
     return { debug_messenger };
 }
 
-inline std::vector<const char*> get_vk_device_required_extensions()
+inline std::array<const char*, 1> get_vk_device_required_extensions()
 {
-    return std::vector { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    return std::array { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 }
 
 inline QueueFamilyIndices get_vk_queue_family_indices(
@@ -707,7 +709,7 @@ inline bool is_vk_physical_device_suitable(
 
     std::vector<vk::ExtensionProperties> available_extensions = std::move(available_extensions_result.value);
 
-    for (std::vector<const char*> required_extensions = get_vk_device_required_extensions();
+    for (std::array<const char*, 1> required_extensions = get_vk_device_required_extensions();
          const std::string& required_ext : required_extensions) {
         if (!std::ranges::any_of(std::as_const(available_extensions), [&](const vk::ExtensionProperties& ext_props) {
                 return required_ext == ext_props.extensionName;
@@ -795,32 +797,34 @@ inline vk::Device create_vk_logical_device(
     vk::PhysicalDevice physical_device,
     QueueFamilyIndices queue_family_indices)
 {
-    std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
 
     assert(queue_family_indices.is_complete());
 
-    std::set _queue_families
+    std::array queue_families
         = { queue_family_indices.graphics_family.value(), queue_family_indices.present_family.value() };
+    size_t queue_families_count
+        = queue_family_indices.graphics_family.value() != queue_family_indices.present_family.value() ? 2 : 1;
 
     float queue_priority = 1.0f;
 
-    for (uint32_t queue_family : _queue_families) {
+    std::array<vk::DeviceQueueCreateInfo, 2> queue_create_infos;
+    size_t queue_create_infos_count = 0;
+
+    for (int i = 0; i < queue_families_count; ++i) {
         auto queue_create_info
             = vk::DeviceQueueCreateInfo()
-                  .setQueueFamilyIndex(queue_family)
+                  .setQueueFamilyIndex(queue_families[i])
                   .setQueueCount(1)
                   .setPQueuePriorities(&queue_priority);
-
-        queue_create_infos.push_back(queue_create_info);
+        queue_create_infos[queue_create_infos_count++] = queue_create_info;
     }
 
     vk::PhysicalDeviceFeatures device_features;
     device_features.samplerAnisotropy = VK_TRUE;
     device_features.sampleRateShading = VK_TRUE;
 
-    std::vector<const char*> required_extensions = get_vk_device_required_extensions();
-
-    required_extensions.push_back(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+    std::array<const char*, 1> device_required_extensions = get_vk_device_required_extensions();
+    std::array required_extensions { device_required_extensions[0], VK_EXT_MEMORY_BUDGET_EXTENSION_NAME };
 
 #ifdef MVE_ENABLE_VALIDATION
     const std::array<const char*, 1> validation_layers = get_vk_validation_layer_extensions();
@@ -828,18 +832,17 @@ inline vk::Device create_vk_logical_device(
     auto device_create_info
         = vk::DeviceCreateInfo()
               .setPQueueCreateInfos(queue_create_infos.data())
-              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos.size()))
+              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos_count))
               .setPEnabledFeatures(&device_features)
               .setEnabledExtensionCount(static_cast<uint32_t>(required_extensions.size()))
               .setPpEnabledExtensionNames(required_extensions.data())
-              // ReSharper disable once CppRedundantCastExpression
               .setEnabledLayerCount(static_cast<uint32_t>(validation_layers.size()))
               .setPpEnabledLayerNames(validation_layers.data());
 #else
     auto device_create_info
         = vk::DeviceCreateInfo()
               .setPQueueCreateInfos(queue_create_infos.data())
-              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos.size()))
+              .setQueueCreateInfoCount(static_cast<uint32_t>(queue_create_infos_count))
               .setPEnabledFeatures(&device_features)
               .setEnabledExtensionCount(static_cast<uint32_t>(required_extensions.size()))
               .setPpEnabledExtensionNames(required_extensions.data())
@@ -1092,7 +1095,7 @@ inline vk::Pipeline create_vk_graphics_pipeline(
               .setTopology(vk::PrimitiveTopology::eTriangleList)
               .setPrimitiveRestartEnable(false);
 
-    std::vector dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+    std::array dynamic_states = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 
     auto dynamic_state_info = vk::PipelineDynamicStateCreateInfo()
                                   .setDynamicStateCount(static_cast<uint32_t>(dynamic_states.size()))
@@ -1560,9 +1563,9 @@ inline std::vector<vk::DescriptorSet> create_vk_descriptor_sets(
     const vk::Device device,
     const vk::DescriptorSetLayout layout,
     const vk::DescriptorPool pool,
-    const int count)
+    const size_t count)
 {
-    const auto layouts = std::vector(count, layout);
+    const std::vector layouts { count, layout };
 
     const auto alloc_info
         = vk::DescriptorSetAllocateInfo()

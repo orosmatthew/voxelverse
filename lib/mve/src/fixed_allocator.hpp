@@ -3,23 +3,18 @@
 namespace mve::detail {
 
 template <typename T>
-class ResourceArena {
+class FixedAllocator {
 public:
     template <typename... Args>
     Handle allocate(Args&&... args)
     {
-        std::optional<size_t> empty_index;
-        for (size_t i = 0; i < m_data.size(); ++i) {
-            if (!m_data[i].has_value()) {
-                empty_index = i;
-                break;
-            }
+        if (!m_free_indices.empty()) {
+            size_t index = m_free_indices.back();
+            m_free_indices.pop_back();
+            m_data[index] = T { std::forward<Args>(args)... };
+            return index + 1;
         }
-        if (empty_index.has_value()) {
-            m_data[*empty_index] = T { std::forward<Args>(args)... };
-            return *empty_index + 1;
-        }
-        m_data.emplace_back(std::forward<Args>(args)...);
+        m_data.emplace_back(T { std::forward<Args>(args)... });
         return m_data.size();
     }
 
@@ -27,15 +22,16 @@ public:
     {
         MVE_VAL_ASSERT(
             handle >= 1 && handle <= m_data.size() && m_data.at(handle - 1).has_value(),
-            "[Resource Allocator] Attempt to free invalid handle");
+            "[FixedAllocator] Attempt to free invalid handle");
         m_data[handle - 1].reset();
+        m_free_indices.push_back(handle - 1);
     }
 
     T& get(const Handle handle)
     {
         MVE_VAL_ASSERT(
             handle >= 1 && handle <= m_data.size() && m_data.at(handle - 1).has_value(),
-            "[Resource Allocator] Attempt to get invalid handle");
+            "[FixedAllocator] Attempt to get invalid handle");
         return *m_data[handle - 1];
     }
 
@@ -43,7 +39,7 @@ public:
     {
         MVE_VAL_ASSERT(
             handle >= 1 && handle <= m_data.size() && m_data.at(handle - 1).has_value(),
-            "[Resource Allocator] Attempt to get invalid handle");
+            "[FixedAllocator] Attempt to get invalid handle");
         return *m_data[handle - 1];
     }
 
@@ -59,6 +55,7 @@ public:
 
 private:
     std::vector<std::optional<T>> m_data;
+    std::vector<size_t> m_free_indices;
 };
 
 }

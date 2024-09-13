@@ -4,14 +4,6 @@
 
 namespace mve::detail {
 
-static constexpr size_t max_uniform_value_size = std::max(
-    { sizeof(float),
-      sizeof(nnm::Vector2f),
-      sizeof(nnm::Vector3f),
-      sizeof(nnm::Vector4f),
-      sizeof(nnm::Matrix3f),
-      sizeof(nnm::Matrix4f) });
-
 enum class DescriptorBindingType { uniform_buffer, texture };
 
 struct Image {
@@ -128,7 +120,7 @@ struct DeferredUniformUpdateData {
     int counter {};
     Handle handle {};
     UniformLocation location;
-    std::array<std::byte, max_uniform_value_size> data {};
+    Handle data_handle {};
     size_t data_size {};
 };
 

@@ -1,5 +1,7 @@
 #include <mve/monitor.hpp>
 
+#include <GLFW/glfw3.h>
+
 mve::Monitor::Monitor(GLFWmonitor* monitor)
     : m_monitor(monitor)
 {

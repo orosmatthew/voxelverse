@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include <GLFW/glfw3.h>
+
 #include <mve/common.hpp>
 #include <nnm/nnm.hpp>
 

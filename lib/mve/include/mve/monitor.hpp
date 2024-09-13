@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include <GLFW/glfw3.h>
-
 #include <nnm/nnm.hpp>
+
+struct GLFWmonitor;
 
 namespace mve {
 

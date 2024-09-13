@@ -37,9 +37,11 @@ if (MVE_BUILD_EXAMPLES)
     if (WIN32)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -stdlib=libc++ -lc++abi")
-        endif ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+            # https://developercommunity.visualstudio.com/t/Access-violation-in-_Thrd_yield-after-up/10664660
+            add_definitions(-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
         endif ()
     endif ()
 

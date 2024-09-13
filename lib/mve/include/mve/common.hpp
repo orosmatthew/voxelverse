@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#define MVE_ENABLE_VALIDATION
+// #define MVE_ENABLE_VALIDATION
 
 #define MVE_ASSERT(expr, msg)          \
     if (!(expr)) {                     \

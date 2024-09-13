@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <mve/detail/resources.hpp>
 
 namespace mve {
@@ -29,9 +31,10 @@ public:
 
     void begin_frame(const Window& window);
 
-    void begin_render_pass_present(const std::array<float, 4>& clear_color) const;
+    void begin_render_pass_present(const std::optional<std::array<float, 4>>& clear_color = std::nullopt) const;
 
-    void begin_render_pass_framebuffer(const Framebuffer& framebuffer) const;
+    void begin_render_pass_framebuffer(
+        const Framebuffer& framebuffer, const std::optional<std::array<float, 4>>& clear_color = std::nullopt) const;
 
     void draw_vertex_buffer(const VertexBuffer& vertex_buffer);
 

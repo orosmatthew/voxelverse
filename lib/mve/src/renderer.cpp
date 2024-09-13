@@ -3,7 +3,6 @@
 #include <fstream>
 #include <ranges>
 #include <set>
-#include <utility>
 #include <vector>
 
 #include <mve/detail/include_vulkan.hpp>
@@ -19,8 +18,8 @@
 #include <nnm/nnm.hpp>
 
 #include "descriptor_set_allocator.hpp"
+#include "fixed_allocator.hpp"
 #include "renderer_utils.hpp"
-#include "resource_arena.hpp"
 #include "structs.hpp"
 
 // ReSharper disable CppUseStructuredBinding
@@ -60,14 +59,15 @@ struct Renderer::Impl {
     vk::SampleCountFlagBits msaa_samples;
     RenderImage color_image;
     std::vector<FrameInFlight> frames_in_flight;
-    ResourceArena<VertexBufferImpl> vertex_buffers;
-    ResourceArena<IndexBufferImpl> index_buffers;
-    ResourceArena<vk::DescriptorSetLayout> descriptor_set_layouts;
-    ResourceArena<GraphicsPipelineImpl> graphics_pipelines;
-    ResourceArena<GraphicsPipelineLayoutImpl> graphics_pipeline_layouts;
-    ResourceArena<FramebufferImpl> framebuffers;
-    ResourceArena<TextureImpl> textures;
+    FixedAllocator<VertexBufferImpl> vertex_buffers;
+    FixedAllocator<IndexBufferImpl> index_buffers;
+    FixedAllocator<vk::DescriptorSetLayout> descriptor_set_layouts;
+    FixedAllocator<GraphicsPipelineImpl> graphics_pipelines;
+    FixedAllocator<GraphicsPipelineLayoutImpl> graphics_pipeline_layouts;
+    FixedAllocator<FramebufferImpl> framebuffers;
+    FixedAllocator<TextureImpl> textures;
     std::vector<DeferredOperation> deferred_operations;
+    FixedAllocator<std::array<std::byte, 65536>> uniform_update_data;
 
     void bind_descriptor_sets(const uint32_t num, const std::array<const DescriptorSet*, 4>& descriptor_sets) const
     {
@@ -98,15 +98,15 @@ struct Renderer::Impl {
     void update_uniform(
         UniformBuffer& uniform_buffer, const UniformLocation location, T value, const bool persist = true)
     {
-        static_assert(sizeof(T) <= max_uniform_value_size);
-        const uint64_t handle = uniform_buffer.handle();
-        std::array<std::byte, max_uniform_value_size> data; // NOLINT(*-pro-type-member-init)
-        memcpy(data.data(), &value, sizeof(T));
+        static_assert(sizeof(T) <= 65536);
+        const Handle handle = uniform_buffer.handle();
+        const Handle data_handle = uniform_update_data.allocate();
+        memcpy(uniform_update_data.get(data_handle).data(), &value, sizeof(T));
         deferred_operations.emplace_back(DeferredUniformUpdateData {
             .counter = persist ? frames_in_flight_count : 1,
             .handle = handle,
             .location = location,
-            .data = data,
+            .data_handle = data_handle,
             .data_size = sizeof(T) });
     }
 
@@ -204,14 +204,18 @@ struct Renderer::Impl {
     {
         for (Handle i = 0; i < framebuffers.data().size(); i++) {
             if (framebuffers.data()[i].has_value()) {
-                for (const vk::Framebuffer& buffer : framebuffers.get(i).vk_framebuffers) {
+                std::optional<std::function<void()>> callback = std::move(framebuffers.get(i + 1).callback);
+                for (const vk::Framebuffer& buffer : framebuffers.get(i + 1).vk_framebuffers) {
                     vk_device.destroy(buffer, nullptr, vk_loader);
                 }
-                framebuffers.get(i) = std::move(create_framebuffer_impl(renderer, vk_loader));
+                framebuffers.get(i + 1) = std::move(create_framebuffer_impl(renderer, vk_loader));
+                framebuffers.get(i + 1).callback = std::move(callback);
             }
         }
         for (const std::optional<FramebufferImpl>& framebuffer : framebuffers.data()) {
-            std::invoke(*framebuffer->callback);
+            if (framebuffer->callback.has_value()) {
+                std::invoke(*framebuffer->callback);
+            }
         }
     }
 
@@ -427,7 +431,7 @@ struct Renderer::Impl {
     }
 
     [[nodiscard]] vk::PipelineLayout create_vk_pipeline_layout(
-        const vk::DispatchLoaderDynamic& loader, std::span<const Handle> layouts) const
+        const vk::DispatchLoaderDynamic& loader, const std::span<const Handle> layouts) const
     {
         std::array<vk::DescriptorSetLayout, 4> vk_layouts {};
         size_t vk_layouts_count = 0;
@@ -686,14 +690,15 @@ void Renderer::destroy(VertexBuffer& vertex_buffer)
     m_impl->deferred_operations.emplace_back(DeferredDestroyVertexBuffer { handle });
 }
 
-void Renderer::begin_render_pass_present(const std::array<float, 4>& clear_color) const
+void Renderer::begin_render_pass_present(const std::optional<std::array<float, 4>>& clear_color) const
 {
     MVE_ASSERT(
         m_impl->current_draw_state.is_drawing,
         "[Renderer] Cannot begin render pass without first calling begin_frame()");
 
     std::array<vk::ClearValue, 2> clear_values {};
-    clear_values[0].setColor(vk::ClearColorValue(clear_color));
+    clear_values[0].setColor(
+        vk::ClearColorValue(clear_color.has_value() ? *clear_color : std::array { 0.0f, 0.0f, 0.0f, 1.0f }));
     clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
 
     const auto render_pass_begin_info
@@ -724,16 +729,16 @@ void Renderer::begin_render_pass_present(const std::array<float, 4>& clear_color
     m_impl->current_draw_state.command_buffer.setScissor(0, { scissor }, m_impl->vk_loader);
 }
 
-void Renderer::begin_render_pass_framebuffer(const Framebuffer& framebuffer) const
+void Renderer::begin_render_pass_framebuffer(
+    const Framebuffer& framebuffer, const std::optional<std::array<float, 4>>& clear_color) const
 {
     MVE_ASSERT(
         m_impl->current_draw_state.is_drawing,
         "[Renderer] Cannot begin render pass without first calling begin_frame()");
 
-    constexpr auto clear_color = vk::ClearColorValue(std::array { 0.0f, 0.0f, 0.0f, 1.0f });
-
     std::array<vk::ClearValue, 2> clear_values {};
-    clear_values[0].setColor(clear_color);
+    clear_values[0].setColor(
+        vk::ClearColorValue(clear_color.has_value() ? *clear_color : std::array { 0.0f, 0.0f, 0.0f, 1.0f }));
     clear_values[1].setDepthStencil(vk::ClearDepthStencilValue(1.0f, 0));
 
     const auto render_pass_begin_info
@@ -867,10 +872,16 @@ void Renderer::begin_frame(const Window& window)
             }
         }
         else if (const auto deferred_uniform = std::get_if<DeferredUniformUpdateData>(&*it)) {
-            auto& [counter, handle, location, data, data_size] = *deferred_uniform;
-            m_impl->update_uniform(handle, location, data.data(), data_size, m_impl->current_draw_state.frame_index);
+            auto& [counter, handle, location, data_handle, data_size] = *deferred_uniform;
+            m_impl->update_uniform(
+                handle,
+                location,
+                m_impl->uniform_update_data.get(data_handle).data(),
+                data_size,
+                m_impl->current_draw_state.frame_index);
             counter--;
             if (counter <= 0) {
+                m_impl->uniform_update_data.free(data_handle);
                 it = m_impl->deferred_operations.erase(it);
             }
             else {
