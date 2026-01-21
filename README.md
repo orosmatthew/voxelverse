@@ -38,7 +38,7 @@ executable, you must have the executable within the same directory of `res/`.
 ## Technologies Used
 
 * Custom Vulkan abstraction (MVE - Mini Vulkan Engine `/lib/mve`)
-* Custom math library (`/lib/mve/math`)
+* [nnm](https://github.com/orosmatthew/nnm) No-nonsense Math. My custom math library.
 * [Vulkan](https://www.lunarg.com/vulkan-sdk/) graphics API
 * [LevelDB](https://github.com/google/leveldb) for save files
 * [GLFW](https://www.glfw.org/) for windowing
